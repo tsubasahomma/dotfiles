@@ -1,0 +1,6 @@
+[user]
+    email = {{ .email | quote }}
+    signingkey = {{ .paths.home }}/.ssh/id_ed25519_{{ .primary_id }}.pub
+
+[core]
+    sshCommand = "ssh -i {{ .paths.home }}/.ssh/id_ed25519_{{ .primary_id }}.pub -o IdentitiesOnly=yes"

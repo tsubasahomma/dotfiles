@@ -1,0 +1,36 @@
+{{ if .is_wsl -}}
+#!/bin/zsh
+# [chezmoi-script]: Source: '.chezmoiscripts/run_...' vs Dry-run: '.chezmoiscripts/...'
+# [Rationale]: https://www.chezmoi.io/reference/special-directories/chezmoiscripts/
+
+set -euo pipefail
+
+WIN_USER_PROFILE=$(powershell.exe -NoProfile -Command "Write-Host \$env:USERPROFILE" | tr -d '\r')
+RELAY_BIN_WIN="${WIN_USER_PROFILE}\\AppData\\Local\\Microsoft\\WindowsApps\\npiperelay.exe"
+RELAY_BIN_WSL=$(wslpath -u "$RELAY_BIN_WIN")
+
+if [[ ! -f "$RELAY_BIN_WSL" ]]; then
+  exit 0
+fi
+
+AGENT_SOCK="{{ .paths.home }}/.1password/agent.sock"
+
+cat << EOF > "{{ .paths.xdg_config }}/systemd/user/1password-bridge.service"
+[Unit]
+Description=1Password SSH Agent Bridge (WSL2 to Windows)
+After=network.target
+
+[Service]
+ExecStartPre=/usr/bin/rm -f "$AGENT_SOCK"
+ExecStart=/usr/bin/socat UNIX-LISTEN:"$AGENT_SOCK",fork EXEC:"'$RELAY_BIN_WSL' -ei -s //./pipe/openssh-ssh-agent",nofork
+Restart=always
+RestartSec=5
+StartLimitIntervalSec=0
+
+[Install]
+WantedBy=default.target
+EOF
+
+systemctl --user daemon-reload
+systemctl --user enable --now 1password-bridge.service
+{{ end -}}

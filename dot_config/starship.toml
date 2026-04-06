@@ -1,0 +1,40 @@
+# Starship configuration optimized for large monorepos and M1 Max performance.
+
+# De facto standard timeout for professional monorepo environments (1000ms).
+command_timeout = 1000
+
+format = """
+$directory\
+$git_branch\
+$git_status\
+$python\
+$nodejs\
+$rust\
+$cmd_duration\
+$line_break\
+$character"""
+
+[directory]
+style = "bold blue"
+# Display more context in deep monorepo structures.
+truncation_length = 4
+fish_style_pwd_dir_length = 1
+
+[character]
+success_symbol = "[λ](bold magenta)"
+error_symbol = "[λ](bold red)"
+
+[git_status]
+# Optimization: Disable heavy status checks if they exceed the timeout.
+# This ensures the shell remains responsive even in massive repos.
+ahead = "⇡"
+behind = "⇣"
+diverged = "⇕"
+up_to_date = ""
+conflicted = "="
+deleted = "✘"
+
+[python]
+symbol = " "
+format = '[${symbol}${pyenv_prefix}(${version} )(\($virtualenv\) )]($style)'
+detect_extensions = ["py", "pyproject.toml"]

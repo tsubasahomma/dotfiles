@@ -1,0 +1,13 @@
+# --- System Noise ---
+.DS_Store
+Thumbs.db
+
+# --- Repomix & State ---
+repomix-output.xml
+repomix-instruction.md
+.chezmoistate.json
+
+# --- Sensitive Assets (Redundant Safety) ---
+*.pem
+*.key
+.env*

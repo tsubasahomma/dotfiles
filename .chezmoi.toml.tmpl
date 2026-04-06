@@ -1,0 +1,98 @@
+# [Rationale]: Identity Provisioning Logic (Phase 7).
+# To ensure 100% convergence in headless CI environments where /dev/tty is absent.
+# Local defaults are strictly generic to maintain OSS integrity.
+
+{{ $osid := .chezmoi.os }}
+{{ $arch := .chezmoi.arch }}
+{{ $home := .chezmoi.homeDir }}
+
+{{ $gh_user := "" }}
+{{ $name := "" }}
+{{ $email := "" }}
+{{ $primary_id := "" }}
+
+{{ if env "CI" }}
+# [Rationale]: Headless CI Mode. Use deterministic mock values.
+{{   $gh_user = "dotfiles-ci-bot" }}
+{{   $name = "CI Compliance Bot" }}
+{{   $email = "bot@example.com" }}
+{{   $primary_id = "ci-test" }}
+{{ else }}
+# [Rationale]: Interactive Mode. Defaults are generic placeholders for OSS.
+{{   $gh_user = promptStringOnce . "gh_user" "GitHub Username" "your-github-username" }}
+{{   $name = promptStringOnce . "name" "Full Name for Git" "Jane Doe" }}
+{{   $email = promptStringOnce . "email" "Primary Email for Git" "jane.doe@example.com" }}
+{{   $primary_id = promptStringOnce . "primary_id" "Primary 1Password dotfiles-id" "personal" }}
+{{ end }}
+
+# [Rationale]: Platform & Path Resolution
+{{ $is_wsl := false }}
+{{ if eq $osid "linux" }}
+{{   if hasKey .chezmoi.kernel "osrelease" }}
+{{     if contains "microsoft" (.chezmoi.kernel.osrelease | lower) }}
+{{       $is_wsl = true }}
+{{     end }}
+{{   end }}
+{{ end }}
+
+{{ $windows_user := "" }}
+{{ if $is_wsl }}
+{{   $windows_user = env "WINDOWS_USER" }}
+{{   if not $windows_user }}
+{{     $windows_user = (output "powershell.exe" "-NoProfile" "-Command" "[System.Environment]::UserName" | trim) }}
+{{   end }}
+{{ end }}
+
+{{ $brew_prefix := "/usr/local" }}
+{{ $op_bin := "" }}
+{{ if eq $osid "darwin" }}
+{{   if eq $arch "arm64" }}
+{{     $brew_prefix = "/opt/homebrew" }}
+{{     $op_bin = "/opt/homebrew/bin/op" }}
+{{   else }}
+{{     $op_bin = "/usr/local/bin/op" }}
+{{   end }}
+{{ else if eq $osid "linux" }}
+{{   $brew_prefix = "/home/linuxbrew/.linuxbrew" }}
+{{ end }}
+
+{{ if $is_wsl }}
+{{   $op_bin = "op.exe" }}
+{{ end }}
+
+{{ $op_sign := "" }}
+{{ $ssh_auth_sock := "" }}
+{{ if eq $osid "darwin" }}
+{{   $op_sign = "/Applications/1Password.app/Contents/MacOS/op-ssh-sign" }}
+{{   $ssh_auth_sock = (joinPath $home "Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock") }}
+{{ else if $is_wsl }}
+{{   $op_sign = (joinPath "/mnt/c/Users" $windows_user "AppData/Local/Microsoft/WindowsApps/op-ssh-sign-wsl.exe") }}
+{{   $ssh_auth_sock = (joinPath $home ".1password/agent.sock") }}
+{{ end }}
+
+[data]
+    osid = {{ $osid | quote }}
+    arch = {{ $arch | quote }}
+    is_wsl = {{ $is_wsl }}
+    brew_prefix = {{ $brew_prefix | quote }}
+    windows_user = {{ $windows_user | quote }}
+    ssh_auth_sock = {{ $ssh_auth_sock | quote }}
+    gh_user = {{ $gh_user | quote }}
+    name = {{ $name | quote }}
+    email = {{ $email | quote }}
+    primary_id = {{ $primary_id | quote }}
+    gh_root = "src/github.com/{{ $gh_user }}"
+
+    [data.paths]
+        home = {{ $home | quote }}
+        op = {{ $op_bin | quote }}
+        op_sign = {{ $op_sign | quote }}
+        xdg_config = {{ (joinPath $home ".config") | quote }}
+        xdg_data = {{ (joinPath $home ".local/share") | quote }}
+        xdg_state = {{ (joinPath $home ".local/state") | quote }}
+        xdg_cache = {{ (joinPath $home ".cache") | quote }}
+        mise = {{ (joinPath $home ".local/bin/mise") | quote }}
+        jq = {{ (joinPath $home ".local/bin/jq") | quote }}
+
+[edit]
+    command = "nvim"

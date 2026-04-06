@@ -1,0 +1,23 @@
+# [Rationale]: Absolute EOL normalization for cross-platform convergence
+* text=auto eol=lf
+
+# [Rationale]: Force LF for shell scripts and templates to prevent execution failure on Linux
+*.sh text eol=lf
+*.sh.tmpl text eol=lf
+*.zsh text eol=lf
+*.zsh.tmpl text eol=lf
+
+# [Rationale]: Prevent binary corruption in templates (if any)
+*.png binary
+*.jpg binary
+
+# [Rationale]: GitHub Linguist Overrides
+# Mark data and templates as their underlying language for better UI
+.chezmoidata.yaml linguist-language=yaml
+*.sh.tmpl linguist-language=shell
+*.lua.tmpl linguist-language=lua
+
+# [Rationale]: Exclude meta-tools from source archives (git archive)
+.github/ export-ignore
+.repomixignore export-ignore
+repomix.config.json export-ignore

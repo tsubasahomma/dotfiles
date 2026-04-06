@@ -1,0 +1,26 @@
+# [Rationale]: Declarative infrastructure for macOS GTM Ops workstation (2026).
+# Homebrew is strictly limited to OS-level system dependencies and GUI Casks.
+# Pure CLI tools have been migrated to the hermetic 'mise' toolchain.
+
+# System Cryptography & Certificates
+# [Rationale]: Pre-condition the environment to ensure modern crypto standards for tools like mise.
+# [LLM Context]: This is critical for resolving ECDSA public key parsing errors in headless CI runners.
+brew "ca-certificates"
+brew "openssl@3"
+
+# Core System & Network
+brew "git"
+brew "socat"
+
+# Media & Document Processing
+brew "imagemagick"
+brew "ghostscript"
+brew "tectonic"
+
+# Casks (GUI Apps & Fonts)
+cask "1password-cli"
+cask "font-jetbrains-mono-nerd-font"
+
+# [Rationale]: WezTerm Stable is too dated for modern Kitty graphics extensions.
+# wezterm@nightly provides the necessary protocol implementation for snacks.nvim.
+cask "wezterm@nightly"

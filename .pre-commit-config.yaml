@@ -1,0 +1,29 @@
+# [Rationale]: Zero-Speculation Local-First Hook Configuration.
+# Leverage binaries managed by 'mise' to ensure 1:1 parity between dev and CI.
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+
+  - repo: local
+    hooks:
+      - id: shfmt
+        name: shfmt
+        entry: shfmt
+        language: system
+        # [Rationale]: Explicitly target .tmpl files as shell scripts
+        files: \.(sh|zsh|zshrc|zshenv)(\.tmpl)?$
+        args: ["-i", "2", "-ci", "-sr", "-w"]
+
+      - id: stylua
+        name: stylua
+        entry: stylua
+        language: system
+        # [Rationale]: Explicitly target .lua.tmpl files
+        files: \.lua(\.tmpl)?$
+        # [Rationale]: No --config-path needed. StyLua auto-detects .editorconfig by default.
+        args: []

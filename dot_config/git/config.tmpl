@@ -1,0 +1,89 @@
+[user]
+    name = {{ .name | quote }}
+    # [Security]: Global email omitted to enforce context awareness.
+
+[gpg]
+    format = ssh
+
+[gpg "ssh"]
+    program = {{ .paths.op_sign | quote }}
+    allowedSignersFile = {{ .paths.xdg_config }}/git/allowed_signers
+
+[commit]
+    gpgsign = true
+
+[core]
+    editor = nvim
+    pager = delta
+    fsmonitor = true
+    untrackedCache = true
+
+[index]
+    threads = true
+
+[interactive]
+    diffFilter = delta --color-only
+
+[delta]
+    navigate = true
+    side-by-side = true
+    line-numbers = true
+    syntax-theme = Catppuccin Mocha
+
+[merge]
+    conflictstyle = zdiff3
+
+[diff]
+    colorMoved = default
+    algorithm = patience
+
+[pull]
+    rebase = true
+
+[fetch]
+    prune = true
+
+[push]
+    autoSetupRemote = true
+    followTags = true
+
+[rebase]
+    autoStash = true
+    updateRefs = true
+
+[init]
+    defaultBranch = main
+
+[column]
+    ui = auto
+
+[branch]
+    sort = -committerdate
+
+[alias]
+    st = status -sb
+    last = log -1 HEAD --stat
+    fix = !git-absorb
+    amend = commit --amend --no-edit
+    lg = log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit --date=relative
+    adog = log --graph --all --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit --date=relative
+
+# ================================================================
+# Hybrid Routing: Managed vs Unmanaged Contexts
+# ================================================================
+
+# 1. Managed Personal Context (Provisioned by chezmoi)
+# [Rationale]: Automatically apply personal identity to the primary workspace.
+[includeIf "gitdir:{{ .paths.home }}/{{ .gh_root }}/**"]
+    path = {{ .paths.xdg_config }}/git/config_personal
+
+# 2. Infrastructure Source Context (Self-Referential)
+# [Rationale]: The dotfiles repository itself is a personal project.
+# Using {{ .chezmoi.sourceDir }} ensures OS Agnostic path resolution without hardcoding.
+[includeIf "gitdir:{{ .chezmoi.sourceDir }}/**"]
+    path = {{ .paths.xdg_config }}/git/config_personal
+
+# 3. Unmanaged / Local Absorber (User Freedom)
+# [Rationale]: Fallback for non-managed environments (e.g., work, freelance).
+[include]
+    path = ~/.gitconfig.local

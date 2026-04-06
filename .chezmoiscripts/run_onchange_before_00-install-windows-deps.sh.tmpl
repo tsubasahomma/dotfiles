@@ -1,0 +1,28 @@
+{{ if .is_wsl -}}
+#!/bin/zsh
+# [chezmoi-script]: Source: '.chezmoiscripts/run_...' vs Dry-run: '.chezmoiscripts/...'
+# [Rationale]: https://www.chezmoi.io/reference/special-directories/chezmoiscripts/
+# [Rationale]: Idempotent installation of Windows-side dependencies from WSL.
+# [2026 Best Practice]: Leverage winget.exe for OS-level app management.
+
+set -euo pipefail
+
+function install_winget_app() {
+  local app_id=$1
+  if ! winget.exe list --id "$app_id" &> /dev/null; then
+    echo "Installing $app_id on Windows..."
+    winget.exe install --id "$app_id" --silent --accept-package-agreements --accept-source-agreements
+  else
+    echo "✅ $app_id is already installed on Windows."
+  fi
+}
+
+# 1. Core Security Layer
+install_winget_app "1Password.1Password"
+install_winget_app "1Password.1PasswordCLI"
+
+# 2. Bridge Tools
+install_winget_app "9P6S9S590L96" # npiperelay (Store ID) if needed, or rely on 1Password built-in.
+
+echo "Windows dependency check complete."
+{{ end -}}

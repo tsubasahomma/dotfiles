@@ -1,0 +1,35 @@
+{{- /* 1. Platform Normalization (Directly using built-in variables) */ -}}
+{{- $hash_key := printf "%s-%s" .chezmoi.os .chezmoi.arch -}}
+
+{{- $os := "linux" -}}
+{{- if eq .chezmoi.os "darwin" }}{{ $os = "macos" }}{{ end -}}
+
+{{- /* mise architecture naming convention */ -}}
+{{- $mise_arch := "x64" -}}
+{{- if eq .chezmoi.arch "arm64" }}{{ $mise_arch = "arm64" }}{{ end -}}
+
+{{- /* jq architecture naming convention */ -}}
+{{- $jq_arch := "amd64" -}}
+{{- if eq .chezmoi.arch "arm64" }}{{ $jq_arch = "arm64" }}{{ end -}}
+
+{{- /* 2. Resource Definitions */ -}}
+
+{{- /* mise bootstrap binary */ -}}
+{{- $mise_hash := index .tool_integrity.mise.hashes $hash_key -}}
+{{- if $mise_hash }}
+[".local/bin/mise"]
+    type = "file"
+    url = {{ printf "https://github.com/jdx/mise/releases/download/v%s/mise-v%s-%s-%s" .tool_integrity.mise.version .tool_integrity.mise.version $os $mise_arch | quote }}
+    executable = true
+    sha256 = {{ $mise_hash | quote }}
+{{- end }}
+
+{{- /* jq bootstrap binary */ -}}
+{{- $jq_hash := index .tool_integrity.jq.hashes $hash_key -}}
+{{- if $jq_hash }}
+[".local/bin/jq"]
+    type = "file"
+    url = {{ printf "https://github.com/jqlang/jq/releases/download/jq-%s/jq-%s-%s" .tool_integrity.jq.version $os $jq_arch | quote }}
+    executable = true
+    sha256 = {{ $jq_hash | quote }}
+{{- end }}

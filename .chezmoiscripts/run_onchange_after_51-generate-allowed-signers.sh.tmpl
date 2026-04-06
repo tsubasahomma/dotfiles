@@ -1,0 +1,27 @@
+#!/bin/zsh
+# [chezmoi-script]: Source: '.chezmoiscripts/run_...' vs Dry-run: '.chezmoiscripts/...'
+# [Rationale]: Generates the authorized signers list from exported SSH public keys to enable local signature verification.
+# [Security]: This script relies on public keys exported in Phase 50. It does not handle private keys.
+
+set -euo pipefail
+
+ALLOWED_SIGNERS="{{ .paths.xdg_config }}/git/allowed_signers"
+PUBKEY_DIR="{{ .paths.home }}/.ssh"
+EMAIL={{ .email | quote }}
+
+echo "🔐 [Identity] Generating Git allowed_signers for $EMAIL..."
+
+mkdir -p "$(dirname "$ALLOWED_SIGNERS")"
+: > "$ALLOWED_SIGNERS"
+
+# Iterate through all discovered identities to build the trust chain.
+for pubkey in "$PUBKEY_DIR"/id_ed25519_*.pub; do
+  if [[ -f "$pubkey" ]]; then
+    # Git allowed_signers format: <email> namespaces="git" <key_type> <key_blob>
+    key_content=$(cat "$pubkey" | awk '{print $1, $2}')
+    echo "$EMAIL namespaces=\"git\" $key_content" >> "$ALLOWED_SIGNERS"
+  fi
+done
+
+chmod 644 "$ALLOWED_SIGNERS"
+echo "✅ [Identity] allowed_signers updated successfully."

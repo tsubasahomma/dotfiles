@@ -1,0 +1,74 @@
+#!/bin/zsh
+# [chezmoi-script]: Source: '.chezmoiscripts/run_...' vs Dry-run: '.chezmoiscripts/...'
+# [Rationale]: Uses explicitly mapped binaries for zero-speculation identity extraction.
+
+set -euo pipefail
+
+if [[ "${CI:-}" == "true" ]]; then
+  echo "⚠️  [CI] Execution context detected. Bypassing 1Password SSH key export."
+  exit 0
+fi
+
+OP_BIN="{{ .paths.op }}"
+JQ_BIN="{{ .paths.jq }}"
+
+{{ if .is_wsl -}}
+OP_BIN="op.exe"
+{{ end -}}
+
+if [[ ! -x "$JQ_BIN" ]]; then
+  echo "❌ [Error] 'jq' is not found at $JQ_BIN."
+  exit 1
+fi
+
+umask 077
+TARGET_DIR="{{ .paths.home }}/.ssh"
+mkdir -p "$TARGET_DIR"
+
+typeset -A resolved_keys
+
+echo "🔍 [Discovery] Scanning 1Password for Identity Pointers (Tag: {{ .ssh_keys.discovery_tag }})..."
+
+typeset accounts
+if ! accounts=$("$OP_BIN" account list --format json | "$JQ_BIN" -r '.[].url'); then
+  exit 0
+fi
+
+for url in ${(f)accounts}; do
+  typeset items
+  if ! items=$("$OP_BIN" item list --tags "{{ .ssh_keys.discovery_tag }}" --account "$url" --format json 2> /dev/null); then
+    continue
+  fi
+
+  typeset item_ids
+  item_ids=$(echo "$items" | "$JQ_BIN" -r '.[].id // empty')
+
+  for id in ${(f)item_ids}; do
+    if [[ -z "$id" ]]; then continue; fi
+
+    typeset dotfiles_id
+    dotfiles_id=$("$OP_BIN" item get "$id" --account "$url" --format json | "$JQ_BIN" -r '.fields[]? | select(.label == "dotfiles-id") | .value // empty')
+
+    if [[ -n "$dotfiles_id" ]]; then
+      if [[ ! "$dotfiles_id" =~ ^[a-zA-Z0-9_-]+$ ]]; then
+        echo "⚠️  [Warning] Skipping invalid dotfiles-id format: '$dotfiles_id'"
+        continue
+      fi
+
+      if [[ -n "${resolved_keys[$dotfiles_id]:-}" ]]; then
+        echo "❌ [Error] Duplicate identity found for '$dotfiles_id'. Aborting."
+        exit 1
+      fi
+
+      typeset filename="id_ed25519_${dotfiles_id}.pub"
+      typeset target_path="$TARGET_DIR/$filename"
+
+      typeset pubkey
+      if pubkey=$("$OP_BIN" item get "$id" --account "$url" --fields label="public key" 2> /dev/null); then
+        echo "$pubkey" > "$target_path"
+        echo "✅ [Export] Discovered '$dotfiles_id' -> Wrote to $filename"
+        resolved_keys[$dotfiles_id]="resolved"
+      fi
+    fi
+  done
+done

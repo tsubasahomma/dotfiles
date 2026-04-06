@@ -1,0 +1,42 @@
+{{ if eq .osid "darwin" -}}
+#!/bin/zsh
+# [chezmoi-script]: Source: '.chezmoiscripts/run_...' vs Dry-run: '.chezmoiscripts/...'
+# [Rationale]: https://www.chezmoi.io/reference/special-directories/chezmoiscripts/
+# dot_config/homebrew/Brewfile.tmpl hash: {{ include "dot_config/homebrew/Brewfile.tmpl" | sha256sum }}
+
+set -euo pipefail
+
+# Absolute paths to bypass local PATH corruption during initial bootstrap
+CURL_BIN="/usr/bin/curl"
+BASH_BIN="/bin/bash"
+
+if ! command -v brew &> /dev/null; then
+  echo "📦 [Infrastructure] Installing Homebrew..."
+  "$BASH_BIN" -c "$("$CURL_BIN" -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+fi
+
+# Explicitly load Homebrew environment to prevent race conditions for subsequent commands
+if [[ -x "/opt/homebrew/bin/brew" ]]; then
+  eval "$(/opt/homebrew/bin/brew shellenv)"
+elif [[ -x "/usr/local/bin/brew" ]]; then
+  eval "$(/usr/local/bin/brew shellenv)"
+fi
+
+BREW_REPO=$(brew --repository)
+git -C "$BREW_REPO" fetch --all --prune
+git -C "$BREW_REPO" tag -d main origin/main 2> /dev/null || true
+git -C "$BREW_REPO" reset --hard refs/remotes/origin/master
+brew update
+
+brew untap homebrew/bundle homebrew/cask-fonts 2> /dev/null || true
+brew uninstall --cask wezterm 2> /dev/null || true
+
+TEMP_BREWFILE=$(mktemp)
+cat << EOF > "$TEMP_BREWFILE"
+{{ include "dot_config/homebrew/Brewfile.tmpl" }}
+EOF
+
+export HOMEBREW_BUNDLE_NO_LOCK=1
+brew bundle install --file="$TEMP_BREWFILE"
+rm "$TEMP_BREWFILE"
+{{ end -}}

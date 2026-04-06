@@ -1,0 +1,23 @@
+# --- System Noise ---
+.DS_Store
+Thumbs.db
+
+# --- Development Artefacts ---
+.chezmoistate.json
+node_modules/
+__pycache__/
+*.pyc
+.venv/
+.python-version
+
+# --- AI & Editor Contexts ---
+repomix-*.xml
+repomix-output.*
+.vscode/
+.history/
+.cursorrules
+
+# --- Secret Safety Net ---
+.env
+*.pem
+*.key

@@ -1,0 +1,46 @@
+#!/bin/zsh
+# [chezmoi-script]: Source: '.chezmoiscripts/run_...' vs Dry-run: '.chezmoiscripts/...'
+# [Rationale]: Invokes runtimes directly via the mise absolute binary to guarantee execution scope.
+# dot_config/mise/config.toml.tmpl hash: {{ include "dot_config/mise/config.toml.tmpl" | sha256sum }}
+
+set -euo pipefail
+
+export PNPM_HOME="{{ .paths.xdg_data }}/pnpm"
+export PATH="$PNPM_HOME:{{ .paths.home }}/.local/bin:$PATH"
+
+MISE_BIN="{{ .paths.mise }}"
+
+if [[ ! -x "$MISE_BIN" ]]; then
+  echo "❌ [Error] Hermetic mise binary not found at $MISE_BIN."
+  exit 1
+fi
+
+echo "📦 [Runtime Phase 0] Provisioning Core Runtimes sequentially..."
+for tool in go python rust node; do
+  MISE_CONFIG_FILE=/dev/null "$MISE_BIN" install "$tool"
+done
+
+echo "📦 [Runtime Phase 1] Installing/Updating CLI tools via static mise binary..."
+"$MISE_BIN" install
+
+NVIM_VENV="{{ .paths.xdg_data }}/nvim/venv"
+
+echo "📦 [Runtime Phase 2] Provisioning Neovim Python Provider..."
+if [[ -d "$NVIM_VENV" ]] && [[ ! -x "$NVIM_VENV/bin/python" ]]; then
+  echo "⚠️  [Runtime] Detected broken venv at $NVIM_VENV. Recreating..."
+  rm -rf "$NVIM_VENV"
+fi
+
+if [ ! -d "$NVIM_VENV" ]; then
+  "$MISE_BIN" exec uv -- uv venv "$NVIM_VENV" --python 3.13
+fi
+
+"$MISE_BIN" exec uv -- uv pip install --python "$NVIM_VENV" pynvim --upgrade
+
+echo "📦 [Runtime Phase 3] Configuring pnpm global directory..."
+"$MISE_BIN" exec pnpm -- pnpm config set global-bin-dir "$PNPM_HOME"
+
+echo "📦 [Runtime Phase 4] Finalizing Executable Bindings..."
+"$MISE_BIN" reshim
+
+echo "✅ [Runtime] Runtime setup complete."

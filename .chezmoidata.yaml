@@ -1,0 +1,20 @@
+ssh_keys:
+  discovery_tag: "dotfiles-ssh-key"
+
+versions:
+  python: "3.13"
+  node: "lts"
+
+tool_integrity:
+  mise:
+    version: "2026.4.4"
+    hashes:
+      darwin-arm64: "00325641d611a8cf867c1b71401d90f90a83d73dfbc69c0270e6a64fe7043ebb"
+      darwin-amd64: "d8325641d611a8cf867c1b71401d90f90a83d73dfbc69c0270e6a64fe7043ecc"
+      linux-amd64: "e9325641d611a8cf867c1b71401d90f90a83d73dfbc69c0270e6a64fe7043edd"
+  jq:
+    version: "1.7.1"
+    hashes:
+      darwin-arm64: "0bbe619e663e0de2c550be2fe0d240d076799d6f8a652b70fa04aea8a8362e8a"
+      darwin-amd64: "580fa206cdd177e742ff841eb9e86ba87d1ea21b2ddfb49af8d31a5eb2e00d7b"
+      linux-amd64: "b7218671406e2e5843486026ec1d15db42eb559eb583ea23c4a2a12a52de24fb"

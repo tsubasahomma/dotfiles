@@ -1,0 +1,32 @@
+# [Rationale]: Modular & XDG-compliant SSH configuration (2026).
+# [Security]: Hardened defaults with ControlPersist for GTM Ops performance.
+
+# ================================================================
+# 1. Modular Configurations (Highest Priority)
+# ================================================================
+Include {{ .paths.xdg_config }}/ssh/conf.d/*
+
+# ================================================================
+# 2. Global Defaults (Fallback)
+# ================================================================
+Host *
+    # --- Performance: Connection Multiplexing ---
+    ControlMaster auto
+    ControlPath {{ .paths.xdg_state }}/ssh/sockets/%r@%h:%p
+    ControlPersist 1h
+
+    # --- Security & Identity ---
+    IdentitiesOnly yes
+    IdentityAgent {{ .ssh_auth_sock | quote }}
+    ForwardAgent yes
+
+    # --- Reliability & Automation ---
+    # [2026 Best Practice]: Avoid hang on new hosts while maintaining security.
+    StrictHostKeyChecking accept-new
+    ServerAliveInterval 60
+    ServerAliveCountMax 5
+    HashKnownHosts yes
+
+    # --- XDG Compliance ---
+    # [Rationale]: Prevent ~/.ssh/known_hosts pollution.
+    UserKnownHostsFile {{ .paths.xdg_state }}/ssh/known_hosts

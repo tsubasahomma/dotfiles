@@ -1,0 +1,13 @@
+#!/bin/zsh
+# [chezmoi-script]: Source: '.chezmoiscripts/run_...' vs Dry-run: '.chezmoiscripts/...'
+# [Rationale]: https://www.chezmoi.io/reference/special-directories/chezmoiscripts/
+# [Rationale]: Guarantee the existence of the managed personal workspace.
+
+set -euo pipefail
+
+GH_ROOT="{{ .paths.home }}/{{ .gh_root }}"
+
+if [[ ! -d "$GH_ROOT" ]]; then
+  echo "📁 [Workspace] Provisioning managed personal directory: $GH_ROOT"
+  mkdir -p "$GH_ROOT"
+fi

@@ -1,0 +1,68 @@
+# [Rationale]: Optimized for < 50ms startup and XDG Base Directory compliance.
+# [2026 Best Practice]: Path resolution driven by Foundation Schema.
+
+# --- XDG Base Directory Enforcement ---
+export XDG_CONFIG_HOME="{{ .paths.xdg_config }}"
+export XDG_DATA_HOME="{{ .paths.xdg_data }}"
+export XDG_STATE_HOME="{{ .paths.xdg_state }}"
+export XDG_CACHE_HOME="{{ .paths.xdg_cache }}"
+
+# --- Path Optimization ---
+typeset -U path PATH
+path=(
+  "{{ .brew_prefix }}/bin"
+  "$HOME/.local/bin"
+  "$XDG_DATA_HOME/mise/shims"
+  "$XDG_DATA_HOME/pnpm"
+  $path
+)
+
+# --- SSH & 1Password Integration ---
+export SSH_AUTH_SOCK="{{ .ssh_auth_sock }}"
+export PNPM_HOME="$XDG_DATA_HOME/pnpm"
+
+# --- Tooling Initialization (Guarded) ---
+if (( $+commands[mise] )); then
+  eval "$(mise activate zsh)"
+fi
+
+if (( $+commands[zoxide] )); then
+  eval "$(zoxide init zsh)"
+fi
+
+if (( $+commands[starship] )); then
+  eval "$(starship init zsh)"
+else
+  PROMPT='%n@%m %1~ %# '
+fi
+
+# --- Completion Management (XDG Cached) ---
+ZSH_COMPDUMP_DIR="$XDG_CACHE_HOME/zsh"
+
+function _load_completion() {
+  local cmd=$1
+  local comp_file="$ZSH_COMPDUMP_DIR/_$cmd"
+  if (( $+commands[$cmd] )); then
+    [[ -f "$comp_file" ]] || ${(P)2} > "$comp_file"
+    source "$comp_file"
+  fi
+}
+
+_load_completion "gh" "gh completion -s zsh"
+_load_completion "uv" "uv generate-shell-completion zsh"
+(( $+commands[pnpm] )) && pnpm completion zsh > /dev/null 2>&1
+
+# --- Performance-tuned Compinit ---
+autoload -Uz compinit
+if [[ -n ${ZDOTDIR:-$HOME}/.zcompdump(#qN.m-1) ]]; then
+  compinit -C -d "$ZSH_COMPDUMP_DIR/zcompdump"
+else
+  compinit -d "$ZSH_COMPDUMP_DIR/zcompdump"
+fi
+
+# --- Environment Persistence ---
+HISTSIZE=100000
+SAVEHIST=100000
+HISTFILE="$XDG_STATE_HOME/zsh/history"
+setopt HIST_IGNORE_ALL_DUPS
+setopt SHARE_HISTORY
