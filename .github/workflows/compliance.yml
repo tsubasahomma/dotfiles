@@ -66,7 +66,8 @@ jobs:
       - name: Prepare Identity Mock
         run: |
           mkdir -p ~/.ssh
-          touch ~/.ssh/id_ed25519_ci-test.pub
+          # [Rationale]: Inject a valid SSH public key format for Phase 51 parsing.
+          echo "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICITESTMOCKKEY ci-test@example.com" > ~/.ssh/id_ed25519_ci-test.pub
           chmod 700 ~/.ssh
           chmod 600 ~/.ssh/id_ed25519_ci-test.pub
 

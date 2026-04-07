@@ -1,7 +1,6 @@
 [user]
     name = {{ .name }}
-    # [Security]: Email is context-dependent via includeIf below.
-    signingkey = {{ .paths.home }}/.ssh/id_ed25519_personal.pub
+    signingkey = {{ .paths.home }}/.ssh/id_ed25519_{{ .primary_id }}.pub
 
 [commit]
     gpgsign = true
