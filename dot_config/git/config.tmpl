@@ -10,6 +10,9 @@
 
 [gpg]
     format = ssh
+    # [Rationale]: Null-GPG Protocol. Silences execution errors for unmanageable PGP signatures (e.g., GitHub Web Merges)
+    # without breaking the hermetic environment (Zero GPG dependency).
+    program = {{ .paths.true_cmd | quote }}
 
 [gpg "ssh"]
     program = {{ .paths.op_sign | quote }}

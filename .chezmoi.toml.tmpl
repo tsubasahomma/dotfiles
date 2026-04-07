@@ -74,6 +74,9 @@
 {{   $ssh_auth_sock = (joinPath $home ".1password/agent.sock") }}
 {{ end }}
 
+{{/* Null-GPG Protocol Dependency */}}
+{{ $true_cmd := lookPath "true" | default "/usr/bin/true" }}
+
 [data]
     osid = {{ $osid | quote }}
     arch = {{ $arch | quote }}
@@ -97,6 +100,7 @@
         xdg_cache = {{ (joinPath $home ".cache") | quote }}
         mise = {{ (joinPath $home ".local/bin/mise") | quote }}
         jq = {{ (joinPath $home ".local/bin/jq") | quote }}
+        true_cmd = {{ $true_cmd | quote }}
 
 [edit]
     command = "nvim"
