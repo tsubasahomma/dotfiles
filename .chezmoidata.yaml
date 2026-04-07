@@ -4,8 +4,14 @@ ssh_keys:
 versions:
   python: "3.13"
   node: "lts"
+  op: "2.33.1"
 
 tool_integrity:
+  op:
+    version: "2.33.1"
+    hashes:
+      darwin-arm64: "8106127624bf55f0bf5ae6f8e2c56398e01db75d64c3088eface33885c854351"
+      linux-amd64: "0fc50cb22d791b5ee5e1421d97e96595fd61ca56ae92271bd1b28bb884971726"
   mise:
     version: "2026.4.4"
     hashes:

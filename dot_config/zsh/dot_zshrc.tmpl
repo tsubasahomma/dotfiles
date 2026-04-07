@@ -10,8 +10,8 @@ export XDG_CACHE_HOME="{{ .paths.xdg_cache }}"
 # --- Path Optimization ---
 typeset -U path PATH
 path=(
-  "{{ .brew_prefix }}/bin"
   "$HOME/.local/bin"
+  "{{ .brew_prefix }}/bin"
   "$XDG_DATA_HOME/mise/shims"
   "$XDG_DATA_HOME/pnpm"
   $path
