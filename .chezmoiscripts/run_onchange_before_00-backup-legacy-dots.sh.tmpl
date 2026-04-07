@@ -1,41 +1,36 @@
-#!/bin/zsh
-# [chezmoi-script]: Source: '.chezmoiscripts/run_...' vs Dry-run: '.chezmoiscripts/...'
-# [Rationale]: https://www.chezmoi.io/reference/special-directories/chezmoiscripts/
-# [Rationale]: Defensive Migration to prevent silent data loss.
-# [Staff Engineer Note]: Prefix 'run_onchange_before_' ensures execution before .chezmoiremove.
+#!/bin/sh
+# [chezmoi-script]: L0 (POSIX Shell) Tiering
+# [Rationale]: Guaranteed execution even without Zsh/Mise environment.
+# [Staff Engineer Note]: Refactored to eliminate Zsh-specific array/typeset syntax.
 
-set -euo pipefail
+set -eu
 
-# [SSOT]: Use path variables defined in .chezmoi.toml.tmpl for hermeticity.
 BACKUP_ROOT="{{ .paths.xdg_state }}/chezmoi/backup/legacy_$(date +%Y%m%d_%H%M%S)"
+backup_executed=false
 
-# Define exact paths targeted for Purge (.chezmoiremove) or Symlink overwrite
-# [2026 Best Practice]: Explicitly type standard arrays at top-level using typeset -a
-typeset -a legacy_files=(
-  "{{ .paths.home }}/.zshrc"
-  "{{ .paths.home }}/.gitconfig"
-  "{{ .paths.home }}/.gitconfig_jitera"
-  "{{ .paths.home }}/.Brewfile"
-  "{{ .paths.home }}/mise.toml"
+# POSIX-compliant list of targets
+set -- \
+  "{{ .paths.home }}/.zshrc" \
+  "{{ .paths.home }}/.gitconfig" \
+  "{{ .paths.home }}/.gitconfig_jitera" \
+  "{{ .paths.home }}/.Brewfile" \
+  "{{ .paths.home }}/mise.toml" \
   "{{ .paths.home }}/.ssh/config"
-)
 
-typeset backup_executed=false
-
-for target in "${legacy_files[@]}"; do
+for target; do
   # Target exists AND is a regular file (not a symlink managed by chezmoi)
-  if [[ -f "$target" && ! -L "$target" ]]; then
-    if [[ "$backup_executed" == "false" ]]; then
+  if [ -f "$target" ] && [ ! -L "$target" ]; then
+    if [ "$backup_executed" = "false" ]; then
       mkdir -p "$BACKUP_ROOT"
       backup_executed=true
     fi
 
     echo "📦 [Defensive Migration] Archiving: $target"
 
-    typeset target_dir
     target_dir=$(dirname "$target")
-    if [[ "$target_dir" != "{{ .paths.home }}" ]]; then
-      typeset rel_dir="${target_dir#{{ .paths.home }}/}"
+    if [ "$target_dir" != "{{ .paths.home }}" ]; then
+      # POSIX prefix removal
+      rel_dir="${target_dir#{{ .paths.home }}/}"
       mkdir -p "$BACKUP_ROOT/$rel_dir"
       mv "$target" "$BACKUP_ROOT/$rel_dir/$(basename "$target")"
     else
@@ -44,17 +39,18 @@ for target in "${legacy_files[@]}"; do
   fi
 done
 
-# Backup legacy ssh conf.d directory if it exists and is not a symlink
-if [[ -d "{{ .paths.home }}/.ssh/conf.d" && ! -L "{{ .paths.home }}/.ssh/conf.d" ]]; then
-  if [[ "$backup_executed" == "false" ]]; then
+# Backup legacy ssh conf.d directory
+LEGACY_SSH_DIR="{{ .paths.home }}/.ssh/conf.d"
+if [ -d "$LEGACY_SSH_DIR" ] && [ ! -L "$LEGACY_SSH_DIR" ]; then
+  if [ "$backup_executed" = "false" ]; then
     mkdir -p "$BACKUP_ROOT"
     backup_executed=true
   fi
   mkdir -p "$BACKUP_ROOT/.ssh"
-  echo "📦 [Defensive Migration] Archiving legacy directory: {{ .paths.home }}/.ssh/conf.d"
-  mv "{{ .paths.home }}/.ssh/conf.d" "$BACKUP_ROOT/.ssh/conf.d"
+  echo "📦 [Defensive Migration] Archiving legacy directory: $LEGACY_SSH_DIR"
+  mv "$LEGACY_SSH_DIR" "$BACKUP_ROOT/.ssh/conf.d"
 fi
 
-if [[ "$backup_executed" == "true" ]]; then
+if [ "$backup_executed" = "true" ]; then
   echo "✅ Legacy configurations safely archived to: $BACKUP_ROOT"
 fi

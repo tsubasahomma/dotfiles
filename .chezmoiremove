@@ -1,6 +1,1 @@
-# [Rationale]: Declarative cleanup of legacy non-XDG files from $HOME.
-.zshrc
 .gitconfig
-.gitconfig_jitera
-.Brewfile
-mise.toml

@@ -1,6 +1,5 @@
-# [Rationale]: Identity Provisioning Logic (Phase 7).
-# To ensure 100% convergence in headless CI environments where /dev/tty is absent.
-# Local defaults are strictly generic to maintain OSS integrity.
+# [Rationale]: Identity Provisioning Logic (Phase 8).
+# Fully automated binary hermeticity for 1Password CLI with legacy schema support.
 
 {{ $osid := .chezmoi.os }}
 {{ $arch := .chezmoi.arch }}
@@ -12,20 +11,17 @@
 {{ $primary_id := "" }}
 
 {{ if env "CI" }}
-# [Rationale]: Headless CI Mode. Use deterministic mock values.
 {{   $gh_user = "dotfiles-ci-bot" }}
 {{   $name = "CI Compliance Bot" }}
 {{   $email = "bot@example.com" }}
 {{   $primary_id = "ci-test" }}
 {{ else }}
-# [Rationale]: Interactive Mode. Defaults are generic placeholders for OSS.
 {{   $gh_user = promptStringOnce . "gh_user" "GitHub Username" "your-github-username" }}
 {{   $name = promptStringOnce . "name" "Full Name for Git" "Jane Doe" }}
 {{   $email = promptStringOnce . "email" "Primary Email for Git" "jane.doe@example.com" }}
 {{   $primary_id = promptStringOnce . "primary_id" "Primary 1Password dotfiles-id" "personal" }}
 {{ end }}
 
-# [Rationale]: Platform & Path Resolution
 {{ $is_wsl := false }}
 {{ if eq $osid "linux" }}
 {{   if hasKey .chezmoi.kernel "osrelease" }}
@@ -44,20 +40,28 @@
 {{ end }}
 
 {{ $brew_prefix := "/usr/local" }}
-{{ $op_bin := "" }}
 {{ if eq $osid "darwin" }}
 {{   if eq $arch "arm64" }}
 {{     $brew_prefix = "/opt/homebrew" }}
-{{     $op_bin = "/opt/homebrew/bin/op" }}
-{{   else }}
-{{     $op_bin = "/usr/local/bin/op" }}
 {{   end }}
 {{ else if eq $osid "linux" }}
 {{   $brew_prefix = "/home/linuxbrew/.linuxbrew" }}
 {{ end }}
 
-{{ if $is_wsl }}
-{{   $op_bin = "op.exe" }}
+{{/* Binary Path Resolution (Hermetic First) */}}
+{{ $local_bin := joinPath $home ".local/bin" }}
+{{ $op_bin := joinPath $local_bin "op" }}
+
+{{/* Fallback logic for initial bootstrap */}}
+{{ if not (stat $op_bin) }}
+{{   if eq $osid "darwin" }}
+{{     $op_bin = joinPath $brew_prefix "bin/op" }}
+{{     if not (stat $op_bin) }}{{ $op_bin = "/usr/local/bin/op" }}{{ end }}
+{{   else if $is_wsl }}
+{{     $op_bin = "op.exe" }}
+{{   else }}
+{{     $op_bin = "op" }}
+{{   end }}
 {{ end }}
 
 {{ $op_sign := "" }}

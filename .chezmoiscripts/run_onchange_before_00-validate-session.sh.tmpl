@@ -1,82 +1,76 @@
-#!/bin/zsh
-# [chezmoi-script]: Source: '.chezmoiscripts/run_...' vs Dry-run: '.chezmoiscripts/...'
-# [Rationale]: Strictly enforces schema-driven absolute paths to avoid PATH resolution errors.
+#!/bin/sh
+# [chezmoi-script]: L0 (POSIX Shell) Tiering
+# [Rationale]: Refactored to eliminate Zsh expand flags and typeset keywords.
 
-set -euo pipefail
+set -eu
 
 OP_BIN="{{ .paths.op }}"
 JQ_BIN="{{ .paths.jq }}"
 
 echo "🔍 [Network] Pre-caching GitHub known_hosts (Phase 00 Trust Anchor)..."
-# [Rationale]: Construct the trust chain deterministically *before* any git fetch/clone operations occur.
-typeset ssh_state_dir="{{ .paths.xdg_state }}/ssh"
+ssh_state_dir="{{ .paths.xdg_state }}/ssh"
 mkdir -p "$ssh_state_dir"
 
-if ! ssh-keygen -F github.com -f "$ssh_state_dir/known_hosts" &> /dev/null; then
+if ! ssh-keygen -F github.com -f "$ssh_state_dir/known_hosts" > /dev/null 2>&1; then
   ssh-keyscan -H github.com >> "$ssh_state_dir/known_hosts" 2> /dev/null
   echo "✅ [Network] GitHub host key cached to XDG_STATE_HOME."
 else
   echo "✅ [Network] GitHub host key is already present."
 fi
 
-if [[ "${SKIP_OP_VALIDATION:-}" == "true" || "${CI:-}" == "true" ]]; then
+if [ "${SKIP_OP_VALIDATION:-}" = "true" ] || [ "${CI:-}" = "true" ]; then
   echo "⚠️  [Validation] Skipping 1Password session check (Bypass enabled)."
   exit 0
 fi
 
 echo "🔍 [Validation] Verifying 1Password CLI session..."
 
-if [[ ! -x "$OP_BIN" ]]; then
+# Check for executable bit rather than relying on PATH
+if [ ! -x "$OP_BIN" ]; then
   {{ if .is_wsl -}}
-  if ! command -v op.exe &> /dev/null; then
-    echo "❌ [Error] 1Password CLI ('op.exe') is not installed or available in PATH."
+  # WSL special case: check for op.exe in Windows PATH if not hermetic yet
+  if ! command -v op.exe > /dev/null 2>&1; then
+    echo "❌ [Error] 1Password CLI ('op.exe') is not installed."
     exit 1
   fi
   OP_BIN="op.exe"
   {{ else -}}
   echo "❌ [Error] 1Password CLI is not installed at $OP_BIN."
-  echo "👉 Action: Install it via Brew or Winget before proceeding."
   exit 1
   {{ end -}}
 fi
 
-if ! "$OP_BIN" account get &> /dev/null; then
+if ! "$OP_BIN" account get > /dev/null 2>&1; then
   echo "❌ [Error] 1Password session is locked or inactive."
   echo "👉 Action: Run 'op signin' or unlock the 1Password desktop app."
   exit 1
 fi
 
-typeset primary_id="{{ .primary_id }}"
-echo "🔍 [Validation] Verifying Identity Pointer '$primary_id' across all 1Password accounts..."
+primary_id="{{ .primary_id }}"
+echo "🔍 [Validation] Verifying Identity Pointer '$primary_id'..."
 
-typeset accounts
-if ! accounts=$("$OP_BIN" account list --format json | "$JQ_BIN" -r '.[].url'); then
-  echo "❌ [Error] Failed to fetch 1Password accounts."
-  exit 1
-fi
+id_found=false
+accounts=$("$OP_BIN" account list --format json | "$JQ_BIN" -r '.[].url')
 
-typeset id_found=false
-
-for url in ${(f)accounts}; do
-  typeset item_ids
+# POSIX-compliant loop for newline-separated strings
+for url in $accounts; do
   item_ids=$("$OP_BIN" item list --tags "{{ .ssh_keys.discovery_tag }}" --account "$url" --format json 2> /dev/null | "$JQ_BIN" -r '.[].id // empty')
 
-  for id in ${(f)item_ids}; do
-    if [[ -z "$id" ]]; then continue; fi
+  for id in $item_ids; do
+    if [ -z "$id" ]; then continue; fi
 
-    typeset dotfiles_id
     dotfiles_id=$("$OP_BIN" item get "$id" --account "$url" --format json 2> /dev/null | "$JQ_BIN" -r '.fields[]? | select(.label == "dotfiles-id") | .value // empty')
 
-    if [[ "$dotfiles_id" == "$primary_id" ]]; then
+    if [ "$dotfiles_id" = "$primary_id" ]; then
       id_found=true
       break 2
     fi
   done
 done
 
-if [[ "$id_found" != "true" ]]; then
-  echo "❌ [Error] Identity Pointer mismatch. '$primary_id' was not found in any 1Password account."
+if [ "$id_found" != "true" ]; then
+  echo "❌ [Error] Identity Pointer mismatch. '$primary_id' was not found."
   exit 1
 fi
 
-echo "✅ [Validation] 1Password session & Identity Pointer '$primary_id' verified. Proceeding."
+echo "✅ [Validation] 1Password session & Identity Pointer '$primary_id' verified."
