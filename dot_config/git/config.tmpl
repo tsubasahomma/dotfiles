@@ -1,22 +1,28 @@
 [user]
-    name = {{ .name | quote }}
-    # [Security]: Global email omitted to enforce context awareness.
+    name = {{ .name }}
+    # [Security]: Email is context-dependent via includeIf below.
+    signingkey = {{ .paths.home }}/.ssh/id_ed25519_personal.pub
+
+[commit]
+    gpgsign = true
+
+[tag]
+    gpgsign = true
 
 [gpg]
     format = ssh
 
 [gpg "ssh"]
     program = {{ .paths.op_sign | quote }}
-    allowedSignersFile = {{ .paths.xdg_config }}/git/allowed_signers
-
-[commit]
-    gpgsign = true
+    allowedSignersFile = {{ (joinPath .paths.xdg_config "git/allowed_signers") | quote }}
 
 [core]
     editor = nvim
     pager = delta
     fsmonitor = true
     untrackedCache = true
+    ignorecase = false
+    precomposeunicode = true
 
 [index]
     threads = true
@@ -68,22 +74,12 @@
     lg = log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit --date=relative
     adog = log --graph --all --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit --date=relative
 
-# ================================================================
-# Hybrid Routing: Managed vs Unmanaged Contexts
-# ================================================================
-
-# 1. Managed Personal Context (Provisioned by chezmoi)
-# [Rationale]: Automatically apply personal identity to the primary workspace.
+# --- Context-Aware Identity Routing ---
 [includeIf "gitdir:{{ .paths.home }}/{{ .gh_root }}/**"]
-    path = {{ .paths.xdg_config }}/git/config_personal
+    path = {{ (joinPath .paths.xdg_config "git/config_personal") | quote }}
 
-# 2. Infrastructure Source Context (Self-Referential)
-# [Rationale]: The dotfiles repository itself is a personal project.
-# Using {{ .chezmoi.sourceDir }} ensures OS Agnostic path resolution without hardcoding.
 [includeIf "gitdir:{{ .chezmoi.sourceDir }}/**"]
-    path = {{ .paths.xdg_config }}/git/config_personal
+    path = {{ (joinPath .paths.xdg_config "git/config_personal") | quote }}
 
-# 3. Unmanaged / Local Absorber (User Freedom)
-# [Rationale]: Fallback for non-managed environments (e.g., work, freelance).
 [include]
     path = ~/.gitconfig.local
