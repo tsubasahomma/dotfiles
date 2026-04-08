@@ -27,12 +27,13 @@ Execution follows a strict sequential phase-gate model to resolve binary depende
 
 Secrets and private keys are never written to disk. The system leverages the **1Password SSH Agent** for all cryptographic operations.
 
-### Identity Lifecycle & Trust Chain
+### Personal Sovereign Identity (VADKD v5.1 Protocol)
 
-Identity resolution is a two-stage process designed to be environment-agnostic:
+The platform implements the **Vault-Aware Dynamic Key Discovery (VADKD)** protocol, strictly separating the "Human Entity" from the "Cryptographic Resource". It is designed to automate a single, lifelong personal identity while leaving work or transient identities to deterministic manual overrides.
 
-1. **Export (Phase 50)**: Extracts public keys into `~/.ssh/id_ed25519_{{ .primary_id }}.pub`. In headless CI environments, a mock key is injected to bypass 1Password dependencies.
-2. **Aggregation (Phase 51)**: Generates `~/.config/git/allowed_signers` by scanning the SSH directory. This programmatic generation eliminates template duality and natively supports multi-key environments.
+1. **Identity Resolution (Profile)**: `chezmoi` scans 1Password for a single item tagged `dotfiles-github-profile`. This acts as the SSOT for `dotfiles_gh_user`, `dotfiles_gh_name`, `dotfiles_gh_email`, and the `dotfiles_link_id` (a pointer to the primary SSH key).
+2. **Resource Resolution (SSH Keys)**: `chezmoi` discovers _all_ items tagged `dotfiles-ssh-key`. It extracts the `key_type`, `vault.id`, and `dotfiles_link_id` to construct mathematically collision-free filenames: `id_<key_type>_<vault_id>_<link_id>.pub`.
+3. **Deterministic Linkage**: The platform maps the `dotfiles_link_id` from the Profile to the corresponding SSH Key to finalize the Git signing payload.
 
 ### External Protocol Boundary (The "Null-GPG" Pattern)
 
@@ -41,12 +42,12 @@ To maintain strict binary hermeticity (zero GPG dependency) while co-existing wi
 - **Self-Signing (Internal Trust)**: Exclusively enforced via the SSH protocol for all local commits.
 - **Foreign Verification (External Trust)**: GitHub's PGP signatures (e.g., generated during Web Squash Merges) are gracefully ignored via a "Null-GPG" redirection. By pointing `gpg.program` to the OS-native `true` binary, the local Git environment accepts these commits as "unverified but valid," preventing execution crashes without polluting the system with GPG tooling.
 
-### Hybrid Identity Routing (Git)
+### Directory-Driven Routing (Policy Layer)
 
-The platform enforces context awareness by omitting a global `user.email`. Routing is determined by the filesystem path:
+The platform enforces context awareness using Git's `includeIf`.
 
-- **Managed Context**: Repositories under `~/src/github.com/{{ .gh_user }}` and the dotfiles source directory automatically assume the personal identity.
-- **Unmanaged Context (The Absorber)**: External or work-related projects use `~/.gitconfig.local` for manual identity overriding, maintaining host integrity.
+- **Managed Context (Safe Zone)**: Repositories under `~/src/github.com/<gh_user>` and the dotfiles source directory automatically assume the Personal Sovereign Identity and its bound SSH key.
+- **Unmanaged Context (The Escape Hatch)**: Work or external projects fall outside the Safe Zone. Users manually create a `.gitconfig.local` to bind their company email and a secondary exported SSH key (e.g., `id_ed25519_work.pub`), guaranteeing zero accidental cross-contamination.
 
 ## 4. Filesystem Standards (XDG Compliance)
 

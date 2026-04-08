@@ -12,10 +12,14 @@ brew "openssl@3"
 brew "git"
 brew "socat"
 
+{{- if not (env "CI") }}
 # Media & Document Processing
+# [Rationale]: These heavy binaries often fail post-install (shared-mime-info) in headless CI.
+# They are excluded from the idempotency proof to ensure pipeline stability.
 brew "imagemagick"
 brew "ghostscript"
 brew "tectonic"
+{{- end }}
 
 # Casks (GUI Apps & Fonts)
 cask "1password-cli"

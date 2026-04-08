@@ -1,82 +1,152 @@
-# [Rationale]: Identity Provisioning Logic (Phase 8).
-# Fully automated binary hermeticity for 1Password CLI with legacy schema support.
+# =============================================================================
+# [Architecture]: Deterministic Infrastructure | Identity Provisioning (Phase 9.1.1)
+# [Rationale]: Personal Sovereign Identity & VADKD v5.1 Protocol.
+# [Security]: Safe iteration over 1Password fields to handle null/missing labels.
+# =============================================================================
 
-{{ $osid := .chezmoi.os }}
-{{ $arch := .chezmoi.arch }}
-{{ $home := .chezmoi.homeDir }}
+{{- /* --- 1. Platform Normalization --- */ -}}
+{{- $osid := .chezmoi.os -}}
+{{- $arch := .chezmoi.arch -}}
+{{- $home := .chezmoi.homeDir -}}
 
-{{ $gh_user := "" }}
-{{ $name := "" }}
-{{ $email := "" }}
-{{ $primary_id := "" }}
+{{- $is_wsl := false -}}
+{{- if eq $osid "linux" -}}
+{{-   if hasKey .chezmoi.kernel "osrelease" -}}
+{{-     if contains "microsoft" (.chezmoi.kernel.osrelease | lower) -}}
+{{-       $is_wsl = true -}}
+{{-     end -}}
+{{-   end -}}
+{{- end -}}
 
-{{ if env "CI" }}
-{{   $gh_user = "dotfiles-ci-bot" }}
-{{   $name = "CI Compliance Bot" }}
-{{   $email = "bot@example.com" }}
-{{   $primary_id = "ci-test" }}
-{{ else }}
-{{   $gh_user = promptStringOnce . "gh_user" "GitHub Username" "your-github-username" }}
-{{   $name = promptStringOnce . "name" "Full Name for Git" "Jane Doe" }}
-{{   $email = promptStringOnce . "email" "Primary Email for Git" "jane.doe@example.com" }}
-{{   $primary_id = promptStringOnce . "primary_id" "Primary 1Password dotfiles-id" "personal" }}
-{{ end }}
+{{- $windows_user := "" -}}
+{{- if $is_wsl -}}
+{{-   $windows_user = env "WINDOWS_USER" -}}
+{{-   if not $windows_user -}}
+{{-     $windows_user = (output "powershell.exe" "-NoProfile" "-Command" "[System.Environment]::UserName" | trim) -}}
+{{-   end -}}
+{{- end -}}
 
-{{ $is_wsl := false }}
-{{ if eq $osid "linux" }}
-{{   if hasKey .chezmoi.kernel "osrelease" }}
-{{     if contains "microsoft" (.chezmoi.kernel.osrelease | lower) }}
-{{       $is_wsl = true }}
-{{     end }}
-{{   end }}
-{{ end }}
+{{- $brew_prefix := "/usr/local" -}}
+{{- if eq $osid "darwin" -}}
+{{-   if eq $arch "arm64" }}{{ $brew_prefix = "/opt/homebrew" }}{{ end -}}
+{{- else if eq $osid "linux" -}}
+{{-   $brew_prefix = "/home/linuxbrew/.linuxbrew" -}}
+{{- end -}}
 
-{{ $windows_user := "" }}
-{{ if $is_wsl }}
-{{   $windows_user = env "WINDOWS_USER" }}
-{{   if not $windows_user }}
-{{     $windows_user = (output "powershell.exe" "-NoProfile" "-Command" "[System.Environment]::UserName" | trim) }}
-{{   end }}
-{{ end }}
+{{- /* --- 2. Hermetic Path Resolution --- */ -}}
+{{- $local_bin := joinPath $home ".local/bin" -}}
+{{- $op_bin := joinPath $local_bin "op" -}}
 
-{{ $brew_prefix := "/usr/local" }}
-{{ if eq $osid "darwin" }}
-{{   if eq $arch "arm64" }}
-{{     $brew_prefix = "/opt/homebrew" }}
-{{   end }}
-{{ else if eq $osid "linux" }}
-{{   $brew_prefix = "/home/linuxbrew/.linuxbrew" }}
-{{ end }}
+{{- if not (stat $op_bin) -}}
+{{-   if eq $osid "darwin" -}}
+{{-     $op_bin = joinPath $brew_prefix "bin/op" -}}
+{{-     if not (stat $op_bin) }}{{ $op_bin = "/usr/local/bin/op" }}{{ end -}}
+{{-   else if $is_wsl -}}
+{{-     $op_bin = "op.exe" -}}
+{{-   else -}}
+{{-     $op_bin = "op" -}}
+{{-   end -}}
+{{- end -}}
 
-{{/* Binary Path Resolution (Hermetic First) */}}
-{{ $local_bin := joinPath $home ".local/bin" }}
-{{ $op_bin := joinPath $local_bin "op" }}
+{{- $op_sign := "" -}}
+{{- $ssh_auth_sock := "" -}}
+{{- if eq $osid "darwin" -}}
+{{-   $op_sign = "/Applications/1Password.app/Contents/MacOS/op-ssh-sign" -}}
+{{-   $ssh_auth_sock = (joinPath $home "Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock") -}}
+{{- else if $is_wsl -}}
+{{-   $op_sign = (joinPath "/mnt/c/Users" $windows_user "AppData/Local/Microsoft/WindowsApps/op-ssh-sign-wsl.exe") -}}
+{{-   $ssh_auth_sock = (joinPath $home ".1password/agent.sock") -}}
+{{- end -}}
 
-{{/* Fallback logic for initial bootstrap */}}
-{{ if not (stat $op_bin) }}
-{{   if eq $osid "darwin" }}
-{{     $op_bin = joinPath $brew_prefix "bin/op" }}
-{{     if not (stat $op_bin) }}{{ $op_bin = "/usr/local/bin/op" }}{{ end }}
-{{   else if $is_wsl }}
-{{     $op_bin = "op.exe" }}
-{{   else }}
-{{     $op_bin = "op" }}
-{{   end }}
-{{ end }}
+{{- $true_cmd := lookPath "true" | default "/usr/bin/true" -}}
 
-{{ $op_sign := "" }}
-{{ $ssh_auth_sock := "" }}
-{{ if eq $osid "darwin" }}
-{{   $op_sign = "/Applications/1Password.app/Contents/MacOS/op-ssh-sign" }}
-{{   $ssh_auth_sock = (joinPath $home "Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock") }}
-{{ else if $is_wsl }}
-{{   $op_sign = (joinPath "/mnt/c/Users" $windows_user "AppData/Local/Microsoft/WindowsApps/op-ssh-sign-wsl.exe") }}
-{{   $ssh_auth_sock = (joinPath $home ".1password/agent.sock") }}
-{{ end }}
+{{- /* --- 3. VADKD v5.1 State Machine --- */ -}}
+{{- $gh_user := "" -}}
+{{- $name := "" -}}
+{{- $email := "" -}}
+{{- $link_id := "" -}}
+{{- $key_type := "" -}}
+{{- $vault_id := "" -}}
+{{- $is_authenticated := false -}}
 
-{{/* Null-GPG Protocol Dependency */}}
-{{ $true_cmd := lookPath "true" | default "/usr/bin/true" }}
+{{- if env "CI" -}}
+    {{- $gh_user = "dotfiles-ci-bot" -}}
+    {{- $name = "CI Compliance Bot" -}}
+    {{- $email = "bot@example.com" -}}
+    {{- $link_id = "ci-test" -}}
+    {{- $key_type = "ed25519" -}}
+    {{- $vault_id = "civault123" -}}
+    {{- $is_authenticated = true -}}
+{{- else -}}
+    {{- $op_status := "locked" -}}
+    {{- if stat $op_bin -}}
+        {{- $op_status = output "sh" "-c" (printf "%s account get >/dev/null 2>&1 && echo 'ready' || echo 'locked'" $op_bin) | trim -}}
+    {{- else if lookPath $op_bin -}}
+        {{- $op_status = output "sh" "-c" (printf "%s account get >/dev/null 2>&1 && echo 'ready' || echo 'locked'" $op_bin) | trim -}}
+    {{- end -}}
 
+    {{- if eq $op_status "ready" -}}
+        {{- $accounts := output $op_bin "account" "list" "--format" "json" | mustFromJson -}}
+
+        {{- /* STEP 1: Find the Unique Identity Profile */ -}}
+        {{- range $accounts -}}
+            {{- if not $is_authenticated -}}
+                {{- $discovery := output $op_bin "item" "list" "--tags" "dotfiles-github-profile" "--account" .url "--format" "json" | mustFromJson -}}
+                {{- if gt (len $discovery) 0 -}}
+                    {{- $item := index $discovery 0 -}}
+                    {{- $profile_item := output $op_bin "item" "get" $item.id "--account" .url "--format" "json" | mustFromJson -}}
+                    {{- range $profile_item.fields -}}
+                        {{- /* [Security]: Use 'index' to safely handle fields with null/missing labels (e.g., OTP) */ -}}
+                        {{- $label := index . "label" -}}
+                        {{- if eq $label "dotfiles_gh_user"   }}{{ $gh_user = .value   }}{{ end -}}
+                        {{- if eq $label "dotfiles_gh_name"   }}{{ $name = .value      }}{{ end -}}
+                        {{- if eq $label "dotfiles_gh_email"  }}{{ $email = .value     }}{{ end -}}
+                        {{- if eq $label "dotfiles_link_id"   }}{{ $link_id = .value   }}{{ end -}}
+                    {{- end -}}
+                    {{- $is_authenticated = true -}}
+                {{- end -}}
+            {{- end -}}
+        {{- end -}}
+
+        {{- /* STEP 2: Find the linked SSH Key Resource */ -}}
+        {{- if and $is_authenticated (ne $link_id "") -}}
+            {{- range $accounts -}}
+                {{- $url := .url -}}
+                {{- $keys := output $op_bin "item" "list" "--tags" "dotfiles-ssh-key" "--account" $url "--format" "json" | mustFromJson -}}
+                {{- range $keys -}}
+                    {{- $k_item := output $op_bin "item" "get" .id "--account" $url "--format" "json" | mustFromJson -}}
+                    {{- $k_link_id := "" -}}
+                    {{- $k_type := "ed25519" -}}
+                    {{- range $k_item.fields -}}
+                        {{- $label := index . "label" -}}
+                        {{- if eq $label "dotfiles_link_id" }}{{ $k_link_id = .value }}{{ end -}}
+                        {{- if eq $label "key type" }}{{ $k_type = .value }}{{ end -}}
+                    {{- end -}}
+
+                    {{- if eq $k_link_id $link_id -}}
+                        {{- $key_type = $k_type -}}
+                        {{- $vault_id = .vault.id -}}
+                    {{- end -}}
+                {{- end -}}
+            {{- end -}}
+        {{- end -}}
+    {{- end -}}
+{{- end -}}
+
+{{- /* --- 4. Convergence Gatekeeper Output --- */ -}}
+{{- if not $is_authenticated -}}
+    {{- writeToStdout "\n⚠️  [Identity] 1Password session locked or 'dotfiles-github-profile' missing.\n" -}}
+    {{- $gh_user = "pending" -}}
+    {{- $name = "Pending Identity" -}}
+    {{- $email = "pending@example.com" -}}
+    {{- $link_id = "pending" -}}
+    {{- $key_type = "ed25519" -}}
+    {{- $vault_id = "unknown" -}}
+{{- else if not (env "CI") -}}
+    {{- writeToStdout (printf "\n✅ [Identity] Sovereign Trust Anchor established for: %s (Pointer: %s)\n\n" $email $link_id) -}}
+{{- end -}}
+
+# --- Foundation Schema ---
 [data]
     osid = {{ $osid | quote }}
     arch = {{ $arch | quote }}
@@ -84,10 +154,15 @@
     brew_prefix = {{ $brew_prefix | quote }}
     windows_user = {{ $windows_user | quote }}
     ssh_auth_sock = {{ $ssh_auth_sock | quote }}
+
     gh_user = {{ $gh_user | quote }}
     name = {{ $name | quote }}
     email = {{ $email | quote }}
-    primary_id = {{ $primary_id | quote }}
+
+    # [Rationale]: Expose link_id to the template scope so that validation scripts can access it.
+    link_id = {{ $link_id | quote }}
+
+    ssh_key_name = {{ printf "id_%s_%s_%s.pub" $key_type $vault_id $link_id | quote }}
     gh_root = "src/github.com/{{ $gh_user }}"
 
     [data.paths]

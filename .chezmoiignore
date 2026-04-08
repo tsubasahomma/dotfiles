@@ -3,3 +3,5 @@ DEVELOPER_OS.md
 repomix-output.xml
 .gitignore
 .chezmoidata.yaml
+# [Rationale]: Prevent script templates from being deployed as physical files to $HOME.
+.chezmoiscripts

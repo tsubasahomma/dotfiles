@@ -1,5 +1,6 @@
 #!/bin/sh
 # [chezmoi-script]: L0 (POSIX Shell) Tiering
+# [Architecture]: Validation Phase synchronized with VADKD v5.1 Protocol.
 # [Rationale]: Refactored to eliminate Zsh expand flags and typeset keywords.
 
 set -eu
@@ -46,8 +47,8 @@ if ! "$OP_BIN" account get > /dev/null 2>&1; then
   exit 1
 fi
 
-primary_id="{{ .primary_id }}"
-echo "🔍 [Validation] Verifying Identity Pointer '$primary_id'..."
+link_id="{{ .link_id }}"
+echo "🔍 [Validation] Verifying Identity Pointer '$link_id'..."
 
 id_found=false
 accounts=$("$OP_BIN" account list --format json | "$JQ_BIN" -r '.[].url')
@@ -59,9 +60,10 @@ for url in $accounts; do
   for id in $item_ids; do
     if [ -z "$id" ]; then continue; fi
 
-    dotfiles_id=$("$OP_BIN" item get "$id" --account "$url" --format json 2> /dev/null | "$JQ_BIN" -r '.fields[]? | select(.label == "dotfiles-id") | .value // empty')
+    # [VADKD v5.1]: Update label from 'dotfiles-id' to 'dotfiles_link_id'
+    item_link_id=$("$OP_BIN" item get "$id" --account "$url" --format json 2> /dev/null | "$JQ_BIN" -r '.fields[]? | select(.label == "dotfiles_link_id") | .value // empty')
 
-    if [ "$dotfiles_id" = "$primary_id" ]; then
+    if [ "$item_link_id" = "$link_id" ]; then
       id_found=true
       break 2
     fi
@@ -69,8 +71,8 @@ for url in $accounts; do
 done
 
 if [ "$id_found" != "true" ]; then
-  echo "❌ [Error] Identity Pointer mismatch. '$primary_id' was not found."
+  echo "❌ [Error] Identity Pointer mismatch. '$link_id' was not found."
   exit 1
 fi
 
-echo "✅ [Validation] 1Password session & Identity Pointer '$primary_id' verified."
+echo "✅ [Validation] 1Password session & Identity Pointer '$link_id' verified."

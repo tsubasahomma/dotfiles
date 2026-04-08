@@ -1,6 +1,7 @@
 [user]
-    name = {{ .name }}
-    signingkey = {{ .paths.home }}/.ssh/id_ed25519_{{ .primary_id }}.pub
+    # [LLM Context]: user.email is intentionally omitted here to enforce Identity-driven Routing.
+    # It is injected dynamically based on directory context via includeIf below.
+    name = {{ .name | quote }}
 
 [commit]
     gpgsign = true
@@ -11,7 +12,6 @@
 [gpg]
     format = ssh
     # [Rationale]: Null-GPG Protocol. Silences execution errors for unmanageable PGP signatures (e.g., GitHub Web Merges)
-    # without breaking the hermetic environment (Zero GPG dependency).
     program = {{ .paths.true_cmd | quote }}
 
 [gpg "ssh"]
@@ -76,12 +76,19 @@
     lg = log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit --date=relative
     adog = log --graph --all --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit --date=relative
 
-# --- Context-Aware Identity Routing ---
+# ================================================================
+# Context-Aware Identity Routing (Policy Layer)
+# ================================================================
+
+# [Rationale]: "The Safe Zone".
+# Forces the Personal Sovereign Identity (and its SSH Key) for repositories inside the gh_root.
 [includeIf "gitdir:{{ .paths.home }}/{{ .gh_root }}/**"]
     path = {{ (joinPath .paths.xdg_config "git/config_personal") | quote }}
 
 [includeIf "gitdir:{{ .chezmoi.sourceDir }}/**"]
     path = {{ (joinPath .paths.xdg_config "git/config_personal") | quote }}
 
+# [Rationale]: "The Escape Hatch".
+# Unmanaged zones (like work projects) are handled by manual local configs.
 [include]
     path = ~/.gitconfig.local
