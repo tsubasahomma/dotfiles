@@ -2,6 +2,7 @@
 #!/bin/zsh
 # [chezmoi-script]: Source: '.chezmoiscripts/run_...' vs Dry-run: '.chezmoiscripts/...'
 # [Rationale]: https://www.chezmoi.io/reference/special-directories/chezmoiscripts/
+# [Rationale]: Execute Brew Bundle by rendering the Brewfile template with current context.
 # dot_config/homebrew/Brewfile.tmpl hash: {{ include "dot_config/homebrew/Brewfile.tmpl" | sha256sum }}
 
 set -euo pipefail
@@ -19,7 +20,7 @@ fi
 if [[ -x "/opt/homebrew/bin/brew" ]]; then
   eval "$(/opt/homebrew/bin/brew shellenv)"
 elif [[ -x "/usr/local/bin/brew" ]]; then
-  eval "$(/usr/local/bin/brew shellenv)"
+  eval "$(/opt/homebrew/bin/brew shellenv)"
 fi
 
 BREW_REPO=$(brew --repository)
@@ -32,8 +33,11 @@ brew untap homebrew/bundle homebrew/cask-fonts 2> /dev/null || true
 brew uninstall --cask wezterm 2> /dev/null || true
 
 TEMP_BREWFILE=$(mktemp)
-cat << EOF > "$TEMP_BREWFILE"
-{{ include "dot_config/homebrew/Brewfile.tmpl" }}
+# [Rationale]: Use 'includeTemplate' instead of 'include' to ensure Go tags in the Brewfile
+# are evaluated by chezmoi before being passed to the Ruby-based 'brew bundle' engine.
+# [Security]: Quoting 'EOF' prevents shell expansion of the rendered template content.
+cat << 'EOF' > "$TEMP_BREWFILE"
+{{ includeTemplate "dot_config/homebrew/Brewfile.tmpl" . }}
 EOF
 
 export HOMEBREW_BUNDLE_NO_LOCK=1

@@ -73,11 +73,12 @@ jobs:
 
       - name: Initialize Chezmoi
         run: |
+          # [Rationale]: Synchronized with VADKD v5.1 Protocol state machine.
+          # Removed deprecated 'primary_id' to eliminate schema drift.
           chezmoi init --no-tty \
             --promptString gh_user=dotfiles-ci-bot \
             --promptString name="CI Compliance Bot" \
-            --promptString email="bot@example.com" \
-            --promptString primary_id=ci-test
+            --promptString email="bot@example.com"
 
       - name: Static Analysis
         run: |
