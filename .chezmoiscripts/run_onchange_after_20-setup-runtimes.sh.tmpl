@@ -15,11 +15,6 @@ if [[ ! -x "$MISE_BIN" ]]; then
   exit 1
 fi
 
-echo "📦 [Runtime Phase 0] Provisioning Core Runtimes sequentially..."
-for tool in go python rust node; do
-  MISE_CONFIG_FILE=/dev/null "$MISE_BIN" install "$tool"
-done
-
 echo "📦 [Runtime Phase 1] Installing/Updating CLI tools via static mise binary..."
 "$MISE_BIN" install
 
@@ -32,15 +27,16 @@ if [[ -d "$NVIM_VENV" ]] && [[ ! -x "$NVIM_VENV/bin/python" ]]; then
 fi
 
 if [ ! -d "$NVIM_VENV" ]; then
-  "$MISE_BIN" exec uv -- uv venv "$NVIM_VENV" --python 3.13
+  # [Rationale]: Use the target interpreter to resolve its own absolute path.
+  # This is the single most deterministic method to avoid shim-mismatches or
+  # metadata lookup failures in GHA's clean environment.
+  MISE_PYTHON_BIN=$("$MISE_BIN" exec python -- python -c "import sys; print(sys.executable)")
+  "$MISE_BIN" exec uv -- uv venv "$NVIM_VENV" --python "$MISE_PYTHON_BIN"
 fi
 
 "$MISE_BIN" exec uv -- uv pip install --python "$NVIM_VENV" pynvim --upgrade
 
 echo "📦 [Runtime Phase 3] Configuring pnpm global directory..."
 "$MISE_BIN" exec pnpm -- pnpm config set global-bin-dir "$PNPM_HOME"
-
-echo "📦 [Runtime Phase 4] Finalizing Executable Bindings..."
-"$MISE_BIN" reshim
 
 echo "✅ [Runtime] Runtime setup complete."

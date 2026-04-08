@@ -22,9 +22,10 @@
 [".local/bin/op"]
     type = "archive-file"
     url = {{ printf "https://cache.agilebits.com/dist/1P/op2/pkg/v%s/op_%s_%s_v%s.zip" .tool_integrity.op.version $os_op $arch .tool_integrity.op.version | quote }}
-    executable = true
     path = "op"
-    sha256 = {{ $op_hash | quote }}
+    # [Architecture]: Define 'checksum' as a table to match chezmoi v2.70+ strict struct definition.
+    [".local/bin/op".checksum]
+        sha256 = {{ $op_hash | quote }}
 {{- end }}
 
 {{- /* mise bootstrap binary */ -}}
@@ -34,7 +35,8 @@
     type = "file"
     url = {{ printf "https://github.com/jdx/mise/releases/download/v%s/mise-v%s-%s-%s" .tool_integrity.mise.version .tool_integrity.mise.version $os_std $mise_arch | quote }}
     executable = true
-    sha256 = {{ $mise_hash | quote }}
+    [".local/bin/mise".checksum]
+        sha256 = {{ $mise_hash | quote }}
 {{- end }}
 
 {{- /* jq bootstrap binary */ -}}
@@ -44,5 +46,6 @@
     type = "file"
     url = {{ printf "https://github.com/jqlang/jq/releases/download/jq-%s/jq-%s-%s" .tool_integrity.jq.version $os_std $arch | quote }}
     executable = true
-    sha256 = {{ $jq_hash | quote }}
+    [".local/bin/jq".checksum]
+        sha256 = {{ $jq_hash | quote }}
 {{- end }}

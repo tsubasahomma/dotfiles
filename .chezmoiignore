@@ -7,3 +7,5 @@ repomix-output.xml
 .chezmoiscripts
 # [Rationale]: Prevent internal data lists from polluting the XDG config directory.
 dot_config/apt/packages.list.tmpl
+# [Rationale]: GitHub Actions workflows are for the repository CI, not for the target $HOME.
+.github
