@@ -18,4 +18,13 @@ config.window_padding = {
 config.hide_tab_bar_if_only_one_tab = true
 config.bold_brightens_ansi_colors = true
 
+-- [Architecture]: WSL Integration for Windows Hosts
+-- [Rationale]: WezTerm on Windows defaults to the native host shell (cmd.exe).
+-- We explicitly set the default domain to WSL to ensure the 'Eternal Platform'
+-- (Zsh environment) is the entry point.
+-- The distribution name 'Ubuntu' is confirmed via host APT logs (jammy).
+if wezterm.target_triple:find("windows") then
+  config.default_domain = "WSL:Ubuntu"
+end
+
 return config

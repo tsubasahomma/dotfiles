@@ -1,0 +1,23 @@
+{{ if .is_wsl -}}
+#!/bin/zsh
+# [Architecture]: Cross-OS Configuration Bridge (WSL2 to Windows Host)
+# [Rationale]: Synchronize the rendered WezTerm config to the Windows profile to ensure
+# the 'Eternal Platform' (Zsh) is correctly utilized as the default domain.
+# [Trigger]: Configuration hash check.
+# dot_config/wezterm/wezterm.lua.tmpl hash: {{ include "dot_config/wezterm/wezterm.lua.tmpl" | sha256sum }}
+
+set -euo pipefail
+
+SRC_CONFIG="{{ .paths.xdg_config }}/wezterm/wezterm.lua"
+DST_CONFIG_WIN="/mnt/c/Users/{{ .windows_user }}/.wezterm.lua"
+
+if [[ -f "$SRC_CONFIG" ]]; then
+  echo "🌉 [Infrastructure] Syncing WezTerm configuration to Windows host..."
+  # [Rationale]: Use 'cp' for deterministic state injection.
+  # Symlinks across NTFS/Ext4 boundaries often trigger permission or visibility issues for GUI apps.
+  cp -f "$SRC_CONFIG" "$DST_CONFIG_WIN"
+  echo "✅ [Infrastructure] Configuration successfully injected to $DST_CONFIG_WIN."
+else
+  echo "⚠️  [Infrastructure] Rendered config not found at $SRC_CONFIG. Bridge skipped."
+fi
+{{ end -}}
