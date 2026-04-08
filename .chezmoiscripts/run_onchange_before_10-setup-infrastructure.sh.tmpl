@@ -1,13 +1,11 @@
 {{ if eq .osid "darwin" -}}
 #!/bin/zsh
-# [chezmoi-script]: Source: '.chezmoiscripts/run_...' vs Dry-run: '.chezmoiscripts/...'
-# [Rationale]: https://www.chezmoi.io/reference/special-directories/chezmoiscripts/
-# [Rationale]: Execute Brew Bundle by rendering the Brewfile template with current context.
+# [chezmoi-script]: Tier 1 (Zsh)
+# [Rationale]: Managed via Brew Bundle.
 # dot_config/homebrew/Brewfile.tmpl hash: {{ include "dot_config/homebrew/Brewfile.tmpl" | sha256sum }}
 
 set -euo pipefail
 
-# Absolute paths to bypass local PATH corruption during initial bootstrap
 CURL_BIN="/usr/bin/curl"
 BASH_BIN="/bin/bash"
 
@@ -16,26 +14,14 @@ if ! command -v brew &> /dev/null; then
   "$BASH_BIN" -c "$("$CURL_BIN" -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 fi
 
-# Explicitly load Homebrew environment to prevent race conditions for subsequent commands
 if [[ -x "/opt/homebrew/bin/brew" ]]; then
   eval "$(/opt/homebrew/bin/brew shellenv)"
 elif [[ -x "/usr/local/bin/brew" ]]; then
   eval "$(/opt/homebrew/bin/brew shellenv)"
 fi
 
-BREW_REPO=$(brew --repository)
-git -C "$BREW_REPO" fetch --all --prune
-git -C "$BREW_REPO" tag -d main origin/main 2> /dev/null || true
-git -C "$BREW_REPO" reset --hard refs/remotes/origin/master
 brew update
-
-brew untap homebrew/bundle homebrew/cask-fonts 2> /dev/null || true
-brew uninstall --cask wezterm 2> /dev/null || true
-
 TEMP_BREWFILE=$(mktemp)
-# [Rationale]: Use 'includeTemplate' instead of 'include' to ensure Go tags in the Brewfile
-# are evaluated by chezmoi before being passed to the Ruby-based 'brew bundle' engine.
-# [Security]: Quoting 'EOF' prevents shell expansion of the rendered template content.
 cat << 'EOF' > "$TEMP_BREWFILE"
 {{ includeTemplate "dot_config/homebrew/Brewfile.tmpl" . }}
 EOF
@@ -43,4 +29,44 @@ EOF
 export HOMEBREW_BUNDLE_NO_LOCK=1
 brew bundle install --file="$TEMP_BREWFILE"
 rm "$TEMP_BREWFILE"
+
+{{ else if eq .osid "linux" -}}
+#!/bin/bash
+# [chezmoi-script]: L0 (POSIX Shell/Bash fallback)
+# [Rationale]: Uses Bash to guarantee execution before Zsh is present in the system shells.
+
+set -euo pipefail
+
+echo "📦 [Infrastructure] Provisioning Linux Base Dependencies via APT..."
+
+# [Rationale]: Ensure package lists are fresh before installation.
+sudo apt-get update -y
+
+# [Architecture]: System Core Packages required by Mise & SSH Bridge.
+# build-essential & libssl-dev: Critical for Mise toolchain builds.
+# socat: Critical for 1Password SSH Agent bridge via npiperelay.
+# zsh: Critical shell infrastructure for Tier 1+ scripts.
+sudo apt-get install -y \
+  build-essential \
+  libssl-dev \
+  ca-certificates \
+  socat \
+  git \
+  zsh
+
+# [Rationale]: Defensive registration of Zsh path.
+if ! grep -q "/usr/bin/zsh" /etc/shells; then
+  echo "/usr/bin/zsh" | sudo tee -a /etc/shells
+fi
+
+# [Architecture]: Deterministic Shell Enforcement
+# [Rationale]: Ensure the default login shell matches the dotfiles' primary runtime.
+# Evaluated defensively to maintain absolute idempotency.
+CURRENT_SHELL=$(grep "^$USER:" /etc/passwd | cut -d: -f7)
+if [ "$CURRENT_SHELL" != "/usr/bin/zsh" ]; then
+  echo "🔄 [Infrastructure] Changing default shell to /usr/bin/zsh..."
+  sudo chsh -s /usr/bin/zsh "$USER"
+fi
+
+echo "✅ [Infrastructure] Linux base provisioning complete."
 {{ end -}}

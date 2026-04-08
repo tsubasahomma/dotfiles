@@ -1,3 +1,13 @@
 {{- if eq .osid "darwin" -}}
 /Applications/WezTerm.app/Contents/MacOS/wezterm
+{{- else if .is_wsl -}}
+{{- /* [Architecture]: Deterministic Target Resolution (Zero-Trust Interop) */ -}}
+{{- /* [Rationale]: Prevent silent AST evaluation failures by using raw string literals and explicit fail-fast logic. */ -}}
+{{- $ps_cmd := `[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; "$env:ProgramFiles\WezTerm\wezterm.exe"` -}}
+{{- $win_path := output "powershell.exe" "-NoProfile" "-NonInteractive" "-Command" $ps_cmd | trim -}}
+{{- if $win_path -}}
+{{-   output "wslpath" "-u" $win_path | trim -}}
+{{- else -}}
+{{-   fail "[FATAL] Failed to resolve WezTerm path via PowerShell Interop. Interop might be disabled or hanging." -}}
+{{- end -}}
 {{- end -}}

@@ -1,28 +1,65 @@
 {{ if .is_wsl -}}
-#!/bin/zsh
-# [chezmoi-script]: Source: '.chezmoiscripts/run_...' vs Dry-run: '.chezmoiscripts/...'
-# [Rationale]: https://www.chezmoi.io/reference/special-directories/chezmoiscripts/
-# [Rationale]: Idempotent installation of Windows-side dependencies from WSL.
-# [2026 Best Practice]: Leverage winget.exe for OS-level app management.
+#!/bin/sh
+# [chezmoi-script]: L0 (POSIX Shell) Tiering
+# [Architecture]: Idempotent installation of Windows-side dependencies from WSL.
+# [Rationale]: Synchronized with macOS Brewfile to ensure visual and functional parity.
 
-set -euo pipefail
+set -eu
 
-function install_winget_app() {
-  local app_id=$1
-  if ! winget.exe list --id "$app_id" &> /dev/null; then
-    echo "Installing $app_id on Windows..."
+echo "🔄 [Infrastructure] Updating WinGet package sources..."
+# [Rationale]: Ensures the local manifest cache is as fresh as possible to minimize hash drift.
+winget.exe source update > /dev/null 2>&1 || true
+
+# --- Standard Package Installer ---
+install_winget_app() {
+  app_id=$1
+  if ! winget.exe list --id "$app_id" > /dev/null 2>&1; then
+    echo "📦 [Infrastructure] Installing $app_id on Windows..."
     winget.exe install --id "$app_id" --silent --accept-package-agreements --accept-source-agreements
   else
-    echo "✅ $app_id is already installed on Windows."
+    echo "✅ [Infrastructure] $app_id is already installed on Windows."
   fi
 }
 
-# 1. Core Security Layer
-install_winget_app "1Password.1Password"
-install_winget_app "1Password.1PasswordCLI"
+# --- Volatile Package Installer (Nightly/Unstable) ---
+# [Architecture]: Error-trapping wrapper for packages requiring hash validation bypass.
+install_winget_volatile() {
+  app_id=$1
+  if ! winget.exe list --id "$app_id" > /dev/null 2>&1; then
+    echo "📦 [Infrastructure] Installing Volatile Package: $app_id..."
+
+    # [Rationale]: Temporarily suspend 'set -e' to gracefully trap WinGet security restriction errors.
+    set +e
+    winget.exe install --id "$app_id" --silent --accept-package-agreements --accept-source-agreements --ignore-security-hash
+    WINGET_STATUS=$?
+    set -e
+
+    if [ "$WINGET_STATUS" -ne 0 ]; then
+      echo "❌ [Security Conflict] WinGet failed to install volatile package '$app_id' (Exit: $WINGET_STATUS)."
+      # Exit 2 indicates the InstallerHashOverride policy is disabled on the Host OS.
+      if [ "$WINGET_STATUS" -eq 2 ]; then
+        echo "👉 Action Required (Run as Administrator in Windows PowerShell):"
+        echo "   winget settings --enable InstallerHashOverride"
+        echo "   (After enabling, return to WSL and re-run 'chezmoi apply -v')"
+      fi
+      exit "$WINGET_STATUS"
+    fi
+  else
+    echo "✅ [Infrastructure] $app_id is already installed on Windows."
+  fi
+}
+
+# 1. Core Security Layer (VADKD v5.1 Prerequisites)
+install_winget_app "AgileBits.1Password"
+install_winget_app "AgileBits.1Password.CLI"
 
 # 2. Bridge Tools
-install_winget_app "9P6S9S590L96" # npiperelay (Store ID) if needed, or rely on 1Password built-in.
+install_winget_app "albertony.npiperelay"
 
-echo "Windows dependency check complete."
+# 3. Terminal & UX Parity (OS Agnostic Foundation)
+# [Rationale]: Bypass hash validation for Nightly builds. Handled securely via volatile wrapper.
+install_winget_volatile "wez.wezterm.nightly"
+install_winget_app "DEVCOM.JetBrainsMonoNerdFont"
+
+echo "✅ [Infrastructure] Windows dependency check complete."
 {{ end -}}

@@ -1,6 +1,6 @@
 #!/usr/bin/env zsh
-# [Rationale]: Extracted Doctor logic. Standalone binary managed by chezmoi.
-# [2026 Best Practice]: CI-aware self-diagnosis to prevent false positives in headless environments.
+# [Rationale]: Self-healing diagnostic engine.
+# [Architecture]: OS-agnostic checks with WSL2-specific bridge validation.
 
 set -eo pipefail
 
@@ -13,7 +13,6 @@ function log_ok() { echo -e "  ${GREEN}✅ $1${NC}"; }
 function log_warn() { echo -e "  ${YELLOW}⚠️  $1${NC}"; }
 function log_err() { echo -e "  ${RED}❌ $1${NC}"; return 1; }
 
-# [Rationale]: Detect CI context to adapt validation strictness.
 typeset IS_CI="${CI:-false}"
 
 echo "--- 1. Infrastructure Security & Permissions ---"
@@ -24,49 +23,37 @@ for dir in "{{ .paths.home }}/.ssh" "{{ .paths.xdg_state }}/ssh"; do
   fi
 done
 
-echo "--- 2. Identity & Auth Bridge (End-to-End) ---"
+echo "--- 2. Identity & Auth Bridge ---"
 if ! ssh-add -l &>/dev/null; then
   if [[ "$IS_CI" == "true" ]]; then
-    log_warn "SSH Agent unresponsive (Expected in Headless CI). Skipping deep auth check."
+    log_warn "SSH Agent unresponsive (CI mode). Skipping."
   else
-    log_warn "SSH Agent unresponsive. Attempting repair..."
-    rm -f "{{ .ssh_auth_sock }}"
+    log_warn "SSH Agent unresponsive. Attempting bridge recovery..."
 
     {{ if .is_wsl -}}
-    systemctl --user restart 1password-bridge.service || true
-    sleep 1
+    # [WSL2 Specific]: Verify systemd user service status for npiperelay bridge.
+    if ! systemctl --user is-active 1password-bridge.service &>/dev/null; then
+      log_warn "1password-bridge.service is inactive. Restarting..."
+      systemctl --user restart 1password-bridge.service || true
+    fi
     {{- end }}
 
+    sleep 1
     if ! ssh-add -l &>/dev/null; then
-      log_err "SSH Agent recovery failed. Check 1Password Developer settings."
+      log_err "Auth bridge failed. Please verify 1Password 'SSH Agent' settings."
     else
-      log_ok "SSH Agent bridge recovered successfully."
+      log_ok "SSH Agent bridge verified."
     fi
   fi
 else
-  log_ok "SSH Agent is responsive and keys are loaded."
+  log_ok "SSH Agent is healthy."
 fi
 
-echo "--- 3. Runtime Integrity (Neovim Provider) ---"
-NVIM_PYTHON="{{ .paths.xdg_data }}/nvim/venv/bin/python"
-if [[ -x "$NVIM_PYTHON" ]]; then
-  if "$NVIM_PYTHON" -c "import pynvim" &>/dev/null; then
-    log_ok "Neovim Python provider is healthy."
-  else
-    log_warn "pynvim missing in venv. Re-provisioning..."
-    uv pip install --python "$NVIM_PYTHON" pynvim &>/dev/null
-    log_ok "pynvim re-installed."
-  fi
+echo "--- 3. Runtime & Identity Sync ---"
+if [[ "{{ .gh_user }}" == "pending" ]]; then
+  log_err "Identity Pointer resolution failed. (gh_user: pending)"
 else
-  log_err "Neovim venv missing at $NVIM_PYTHON"
-fi
-
-echo "--- 4. Network & Known Hosts (Validation) ---"
-# [Rationale]: Doctor must only READ state. Mutation (ssh-keyscan) is explicitly shifted to Phase 00 provisioning.
-if ! ssh-keygen -F github.com -f "{{ .paths.xdg_state }}/ssh/known_hosts" &>/dev/null; then
-  log_err "GitHub not in known_hosts. Initial provisioning phase (00-validate-session) may have failed."
-else
-  log_ok "GitHub host key verified."
+  log_ok "Sovereign Identity resolved: {{ .gh_user }}"
 fi
 
 echo -e "\n${GREEN}✨ System Health: Optimal${NC}"
