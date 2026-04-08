@@ -5,3 +5,5 @@ repomix-output.xml
 .chezmoidata.yaml
 # [Rationale]: Prevent script templates from being deployed as physical files to $HOME.
 .chezmoiscripts
+# [Rationale]: Prevent internal data lists from polluting the XDG config directory.
+dot_config/apt/packages.list.tmpl

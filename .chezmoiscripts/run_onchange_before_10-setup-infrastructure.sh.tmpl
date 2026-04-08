@@ -34,6 +34,7 @@ rm "$TEMP_BREWFILE"
 #!/bin/bash
 # [chezmoi-script]: L0 (POSIX Shell/Bash fallback)
 # [Rationale]: Uses Bash to guarantee execution before Zsh is present in the system shells.
+# [Trigger]: Linux package list hash: {{ include "dot_config/apt/packages.list.tmpl" | sha256sum }}
 
 set -euo pipefail
 
@@ -42,17 +43,17 @@ echo "📦 [Infrastructure] Provisioning Linux Base Dependencies via APT..."
 # [Rationale]: Ensure package lists are fresh before installation.
 sudo apt-get update -y
 
-# [Architecture]: System Core Packages required by Mise & SSH Bridge.
-# build-essential & libssl-dev: Critical for Mise toolchain builds.
-# socat: Critical for 1Password SSH Agent bridge via npiperelay.
-# zsh: Critical shell infrastructure for Tier 1+ scripts.
-sudo apt-get install -y \
-  build-essential \
-  libssl-dev \
-  ca-certificates \
-  socat \
-  git \
-  zsh
+# [Architecture]: Loop-based installation from externalized package list.
+# Renders the template into a temporary list to avoid physical file dependencies.
+TEMP_PKG_LIST=$(mktemp)
+cat << 'EOF' > "$TEMP_PKG_LIST"
+{{ include "dot_config/apt/packages.list.tmpl" }}
+EOF
+
+# [Rationale]: Filter comments and empty lines, then batch install.
+# --no-run-if-empty prevents execution failure if the list is completely empty.
+grep -vE '^\s*(#|$)' "$TEMP_PKG_LIST" | xargs --no-run-if-empty sudo apt-get install -y
+rm "$TEMP_PKG_LIST"
 
 # [Rationale]: Defensive registration of Zsh path.
 if ! grep -q "/usr/bin/zsh" /etc/shells; then
