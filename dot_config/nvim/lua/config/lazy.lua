@@ -11,6 +11,9 @@ if not vim.loop.fs_stat(lazypath) then
 end
 vim.opt.rtp:prepend(lazypath)
 
+-- [Rationale]: Detect CI environment to disable non-deterministic background tasks.
+local is_ci = os.getenv("CI") == "true"
+
 -- Initialize lazy.nvim with correct path conventions and noise suppression.
 require("lazy").setup({
   spec = {
@@ -47,7 +50,8 @@ require("lazy").setup({
     enabled = false,
     hererocks = false,
   },
-  checker = { enabled = true },
+  -- [Rationale]: Disable auto-checker in CI to maintain absolute idempotency.
+  checker = { enabled = not is_ci },
   performance = {
     rtp = {
       disabled_plugins = {

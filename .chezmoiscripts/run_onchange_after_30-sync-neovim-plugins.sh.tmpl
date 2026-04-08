@@ -1,0 +1,26 @@
+#!/bin/zsh
+# [Architecture]: Deterministic Mason & Lazy Synchronization.
+# [Rationale]: Forces Mason to complete all package installations synchronously before exit.
+# [Trigger: Lockfile]: {{ include "dot_config/nvim/lazy-lock.json" | sha256sum }}
+# [Trigger: Config Contents]: {{ range (glob (joinPath .chezmoi.sourceDir "dot_config/nvim/lua/**/*.lua") | sortAlpha) }}{{ . | include | sha256sum }}{{ end }}
+
+set -euo pipefail
+
+MISE_BIN="{{ .paths.mise }}"
+
+echo "📦 [Neovim] Synchronizing plugins and tools..."
+"$MISE_BIN" exec neovim -- nvim --headless \
+  "+Lazy! restore" \
+  +"lua if require('mason-registry').refresh then require('mason-registry').refresh() end" \
+  "+MasonUpdate" \
+  +qa
+
+# [Architecture]: CI Idempotency Guard
+# [Rationale]: Neovim may dynamically update the lockfile if upstream commits are pruned/missing.
+# We forcefully revert the disk state to match the template source ONLY in CI to guarantee convergence,
+# while preserving the developer experience of manual plugin updates locally.
+if [[ "${CI:-false}" == "true" ]]; then
+  cp "{{ .chezmoi.sourceDir }}/dot_config/nvim/lazy-lock.json" "$HOME/.config/nvim/lazy-lock.json"
+fi
+
+echo "✅ [Neovim] Plugin state is now deterministic."

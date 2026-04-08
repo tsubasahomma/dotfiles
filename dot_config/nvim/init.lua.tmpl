@@ -2,6 +2,7 @@
 -- [Pre-condition]: Neovim isolated venv managed via setup-runtimes script.
 
 -- Explicitly define the Python provider to prevent collision with project-local venvs.
+-- Path is dynamically resolved via chezmoi to ensure OS Agnostic behavior.
 vim.g.python3_host_prog = "{{ .paths.xdg_data }}/nvim/venv/bin/python"
 
 -- Initialize the plugin manager and core configurations.

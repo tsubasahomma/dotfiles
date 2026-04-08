@@ -3,9 +3,11 @@
 [tools]
 node = "lts"
 rust = "latest"
-neovim = "latest"
+# [Rationale]: Explicitly use 'aqua' backend to bypass 'vfox' API rate limiting (403) in CI.
+"aqua:neovim/neovim" = "latest"
 python = "3.13"
 go = "latest"
+uv = "latest"
 
 # Git Infrastructure & TUI
 tree-sitter = "latest"
@@ -25,15 +27,12 @@ fzf = "latest"
 "cargo:git-delta" = "latest"
 "cargo:git-absorb" = "latest"
 
-# [Rationale]: Formatting Engines (2026 Best Practice).
-# Necessary for "Format on Save" functionality in Neovim/VSCode.
+# Formatting Engines
 shfmt = "latest"
 stylua = "latest"
-
-# [Rationale]: Industry standard formatter for Markdown, JSON, and YAML.
 "npm:prettier" = "latest"
 
-# Neovim Language Providers & GTM Ops Tools
+# Neovim Language Providers
 "npm:neovim" = "latest"
 "npm:@mermaid-js/mermaid-cli" = "latest"
 "npm:repomix" = "latest"
@@ -42,7 +41,6 @@ stylua = "latest"
 "go:github.com/noahgorstein/jqp" = "latest"
 "go:github.com/mikefarah/yq/v4" = "latest"
 "go:github.com/rs/curlie" = "latest"
-# jq is bootstrapped directly to ~/.local/bin/jq via Phase 0 to prevent cyclic dependencies.
 
 [settings]
 auto_install = true
