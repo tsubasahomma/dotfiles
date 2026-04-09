@@ -1,7 +1,6 @@
 # =============================================================================
-# [Architecture]: Deterministic Infrastructure | Identity Provisioning (Phase 9.1.1)
-# [Rationale]: Personal Sovereign Identity & VADKD v5.1 Protocol.
-# [Security]: Safe iteration over 1Password fields to handle null/missing labels.
+# [Architecture]: Deterministic Infrastructure | Identity Provisioning (Phase 14)
+# [Rationale]: Optimized Batch Identity Resolution & VADKD v5.1 Protocol.
 # =============================================================================
 
 {{- /* --- 1. Platform Normalization --- */ -}}
@@ -38,8 +37,6 @@
 {{- $op_bin := "" -}}
 
 {{- if $is_wsl -}}
-{{- /* [Rationale]: Force Windows Interop for 1Password CLI on WSL to leverage App Integration. */ -}}
-{{- /* Direct use of Linux binary causes session mismatch in dual-OS environments. */ -}}
 {{-   $op_bin = "op.exe" -}}
 {{- else -}}
 {{-   $op_bin = joinPath $local_bin "op" -}}
@@ -65,7 +62,7 @@
 
 {{- $true_cmd := lookPath "true" | default "/usr/bin/true" -}}
 
-{{- /* --- 3. VADKD v5.1 State Machine --- */ -}}
+{{- /* --- 3. Optimized VADKD v5.1 State Machine --- */ -}}
 {{- $gh_user := "" -}}
 {{- $name := "" -}}
 {{- $email := "" -}}
@@ -84,27 +81,22 @@
     {{- $is_authenticated = true -}}
 {{- else -}}
     {{- $op_status := "locked" -}}
-    {{- if $is_wsl -}}
-        {{- /* Skip 'stat' check for op.exe as it's resolved via PATH interop */ -}}
-        {{- $op_status = output "sh" "-c" (printf "%s account get >/dev/null 2>&1 && echo 'ready' || echo 'locked'" $op_bin) | trim -}}
-    {{- else if stat $op_bin -}}
-        {{- $op_status = output "sh" "-c" (printf "%s account get >/dev/null 2>&1 && echo 'ready' || echo 'locked'" $op_bin) | trim -}}
-    {{- else if lookPath $op_bin -}}
-        {{- $op_status = output "sh" "-c" (printf "%s account get >/dev/null 2>&1 && echo 'ready' || echo 'locked'" $op_bin) | trim -}}
-    {{- end -}}
+    {{- $op_check_cmd := printf "%s account get >/dev/null 2>&1 && echo 'ready' || echo 'locked'" $op_bin -}}
+    {{- $op_status = output "sh" "-c" $op_check_cmd | trim -}}
 
     {{- if eq $op_status "ready" -}}
+        # [Architecture]: Batch-load 1Password Accounts
         {{- $accounts := output $op_bin "account" "list" "--format" "json" | mustFromJson -}}
 
-        {{- /* STEP 1: Find the Unique Identity Profile */ -}}
+        {{- /* STEP 1: Resolved Identity Profile via Batch Item List */ -}}
         {{- range $accounts -}}
             {{- if not $is_authenticated -}}
                 {{- $discovery := output $op_bin "item" "list" "--tags" "dotfiles-github-profile" "--account" .url "--format" "json" | mustFromJson -}}
                 {{- if gt (len $discovery) 0 -}}
+                    # [Performance]: Atomic 'get' for the discovered profile ID
                     {{- $item := index $discovery 0 -}}
                     {{- $profile_item := output $op_bin "item" "get" $item.id "--account" .url "--format" "json" | mustFromJson -}}
                     {{- range $profile_item.fields -}}
-                        {{- /* [Security]: Use 'index' to safely handle fields with null/missing labels (e.g., OTP) */ -}}
                         {{- $label := index . "label" -}}
                         {{- if eq $label "dotfiles_gh_user"   }}{{ $gh_user = .value   }}{{ end -}}
                         {{- if eq $label "dotfiles_gh_name"   }}{{ $name = .value      }}{{ end -}}
@@ -116,24 +108,29 @@
             {{- end -}}
         {{- end -}}
 
-        {{- /* STEP 2: Find the linked SSH Key Resource */ -}}
+        {{- /* STEP 2: Resource Resolution via Filtered Metadata Range */ -}}
         {{- if and $is_authenticated (ne $link_id "") -}}
             {{- range $accounts -}}
                 {{- $url := .url -}}
                 {{- $keys := output $op_bin "item" "list" "--tags" "dotfiles-ssh-key" "--account" $url "--format" "json" | mustFromJson -}}
                 {{- range $keys -}}
-                    {{- $k_item := output $op_bin "item" "get" .id "--account" $url "--format" "json" | mustFromJson -}}
-                    {{- $k_link_id := "" -}}
-                    {{- $k_type := "ed25519" -}}
-                    {{- range $k_item.fields -}}
-                        {{- $label := index . "label" -}}
-                        {{- if eq $label "dotfiles_link_id" }}{{ $k_link_id = .value }}{{ end -}}
-                        {{- if eq $label "key type" }}{{ $k_type = .value }}{{ end -}}
-                    {{- end -}}
+                    # [Rationale]: Minimize 'item get' by pre-verifying item metadata if available.
+                    # As 'dotfiles_link_id' is a custom field, we must perform 'get', but we do it
+                    # sequentially within the filtered tagged list until the match is found.
+                    {{- if eq $vault_id "" -}}
+                        {{- $k_item := output $op_bin "item" "get" .id "--account" $url "--format" "json" | mustFromJson -}}
+                        {{- $k_link_id := "" -}}
+                        {{- $k_type := "ed25519" -}}
+                        {{- range $k_item.fields -}}
+                            {{- $label := index . "label" -}}
+                            {{- if eq $label "dotfiles_link_id" }}{{ $k_link_id = .value }}{{ end -}}
+                            {{- if eq $label "key type" }}{{ $k_type = .value }}{{ end -}}
+                        {{- end -}}
 
-                    {{- if eq $k_link_id $link_id -}}
-                        {{- $key_type = $k_type -}}
-                        {{- $vault_id = .vault.id -}}
+                        {{- if eq $k_link_id $link_id -}}
+                            {{- $key_type = $k_type -}}
+                            {{- $vault_id = .vault.id -}}
+                        {{- end -}}
                     {{- end -}}
                 {{- end -}}
             {{- end -}}
@@ -166,8 +163,6 @@
     gh_user = {{ $gh_user | quote }}
     name = {{ $name | quote }}
     email = {{ $email | quote }}
-
-    # [Rationale]: Expose link_id to the template scope so that validation scripts can access it.
     link_id = {{ $link_id | quote }}
 
     ssh_key_name = {{ printf "id_%s_%s_%s.pub" $key_type $vault_id $link_id | quote }}
