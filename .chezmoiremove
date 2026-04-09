@@ -1,1 +1,10 @@
+# [Architecture]: Chezmoi Removal Manifest (Target-Path Convention)
+# [Rationale]: Patterns below MUST match the TARGET path (relative to $HOME).
+# [Reference]: https://www.chezmoi.io/reference/target-types/#remove-entry
+
 .gitconfig
+
+# [Architecture]: Legacy Zsh Purge
+# ZDOTDIR is strictly exported to $XDG_CONFIG_HOME/zsh via ~/.zshenv.
+# Any lingering ~/.zshrc creates severe operational ambiguity and is strictly purged.
+.zshrc

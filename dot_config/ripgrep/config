@@ -1,0 +1,7 @@
+# ripgrep configuration file (XDG compliant)
+
+# Use smart case sensing
+--smart-case
+
+# Exclude .git directories
+--glob=!.git/*

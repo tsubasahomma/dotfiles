@@ -1,0 +1,44 @@
+#!/bin/zsh
+# [Architecture]: Compile-time Completion & Init Engine (Performance Hardened)
+# [Rationale]: Generates static scripts and pre-compiles them into byte-code (.zwc)
+# to minimize I/O and parse time during shell startup.
+# [Reference: Zsh Performance]: https://htr3n.github.io/2018/07/faster-zsh/
+# [Trigger]: {{ include "dot_config/mise/config.toml.tmpl" | sha256sum }}
+
+set -euo pipefail
+
+MISE_BIN="{{ .paths.mise }}"
+CACHE_DIR="{{ .paths.xdg_cache }}/zsh"
+COMP_DIR="$CACHE_DIR/completions"
+INIT_DIR="$CACHE_DIR/init"
+ZCOMPDUMP="$CACHE_DIR/zcompdump"
+
+echo "⚙️  [Infrastructure] Provisioning static Zsh assets..."
+
+mkdir -p "$COMP_DIR" "$INIT_DIR"
+
+# --- Phase 1: Completion Generation ---
+"$MISE_BIN" exec gh -- gh completion -s zsh > "$COMP_DIR/_gh"
+"$MISE_BIN" exec ripgrep -- rg --generate complete-zsh > "$COMP_DIR/_rg"
+"$MISE_BIN" exec fd -- fd --gen-completions zsh > "$COMP_DIR/_fd"
+"$MISE_BIN" exec uv -- uv generate-shell-completion zsh > "$COMP_DIR/_uv"
+
+# --- Phase 2: Static Init Generation & Compilation ---
+"$MISE_BIN" activate zsh > "$INIT_DIR/mise.zsh"
+"$MISE_BIN" exec zoxide -- zoxide init zsh > "$INIT_DIR/zoxide.zsh"
+"$MISE_BIN" exec starship -- starship init zsh --print-full-init > "$INIT_DIR/starship.zsh"
+
+# [Architecture]: Byte-code Compilation
+# Compiling into .zwc allows Zsh to memory-map the init scripts.
+for f in "$INIT_DIR"/*.zsh; do
+  zcompile -U "$f"
+done
+
+# [Self-Healing Logic]: Cache Invalidation
+if [[ -f "$ZCOMPDUMP" ]]; then
+  echo "🧹 [Infrastructure] Invalidating Zsh compdump cache..."
+  rm -f "$ZCOMPDUMP"
+  rm -f "${ZCOMPDUMP}.zwc" 2>/dev/null
+fi
+
+echo "✅ [Infrastructure] All static assets and byte-codes provisioned."

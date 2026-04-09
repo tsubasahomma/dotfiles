@@ -2,7 +2,7 @@
 export ZDOTDIR="{{ .paths.xdg_config }}/zsh"
 
 # [Architecture]: Deep XDG Integration (Phase 15)
-# [Rationale]: Ensure all non-interactive toolchains (mise, uv, pnpm)
+# [Rationale]: Ensure all non-interactive toolchains (mise, uv, pnpm, ripgrep)
 # recognize XDG paths without a full TTY.
 export XDG_CONFIG_HOME="{{ .paths.xdg_config }}"
 export XDG_DATA_HOME="{{ .paths.xdg_data }}"
@@ -14,3 +14,6 @@ export SSH_AUTH_SOCK="{{ .ssh_auth_sock }}"
 
 # [Rationale]: Node.js Toolchain Persistence.
 export PNPM_HOME="{{ .paths.xdg_data }}/pnpm"
+
+# [Architecture]: Ripgrep Configuration Linkage
+export RIPGREP_CONFIG_PATH="$XDG_CONFIG_HOME/ripgrep/config"
