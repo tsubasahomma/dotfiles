@@ -1,19 +1,21 @@
 #!/bin/sh
 # [chezmoi-script]: L0 (POSIX Shell) Tiering
 # [Architecture]: Validation Phase synchronized with VADKD v5.1 Protocol.
-# [Rationale]: Refactored to eliminate Zsh expand flags and typeset keywords.
-# Includes Self-Bootstrapping logic for 'jq' to resolve chicken-and-egg execution order.
+# [Rationale]: Optimized to rely exclusively on the resolved state from .chezmoi.toml.
+# Zero redundant 1Password API calls during script execution.
 
 set -eu
 
 OP_BIN="{{ .paths.op }}"
 JQ_BIN="{{ .paths.jq }}"
 
-{{/* Resolve OS and Arch for jq download URL via Template Engine */}}
-{{ $os_std := "linux" -}}
-{{ if eq .chezmoi.os "darwin" }}{{ $os_std = "macos" }}{{ end -}}
-{{ $arch := "amd64" -}}
-{{ if eq .chezmoi.arch "arm64" }}{{ $arch = "arm64" }}{{ end -}}
+{{/* Resolve Platform context for URLs and Integrity Hashes */}}
+{{- $hash_key := printf "%s-%s" .chezmoi.os .chezmoi.arch -}}
+{{- $jq_hash := index .tool_integrity.jq.hashes $hash_key -}}
+{{- $os_std := "linux" -}}
+{{- if eq .chezmoi.os "darwin" }}{{ $os_std = "macos" }}{{ end -}}
+{{- $arch := "amd64" -}}
+{{- if eq .chezmoi.arch "arm64" }}{{ $arch = "arm64" }}{{ end -}}
 JQ_URL="https://github.com/jqlang/jq/releases/download/jq-{{ .tool_integrity.jq.version }}/jq-{{ $os_std }}-{{ $arch }}"
 
 echo "🔍 [Network] Pre-caching GitHub known_hosts (Phase 00 Trust Anchor)..."
@@ -32,22 +34,44 @@ if [ "${SKIP_OP_VALIDATION:-}" = "true" ] || [ "${CI:-}" = "true" ]; then
   exit 0
 fi
 
-# [Architecture]: Self-Bootstrapping jq
-# Executes only on initial provisioning when the binary is absent.
+# [Architecture]: Verifiable Self-Bootstrapping jq
+# [Rationale]: Bootstrapped in L0 to guarantee availability for L1 scripts (e.g., Phase 50).
 if [ ! -x "$JQ_BIN" ]; then
-  echo "📦 [Bootstrap] Downloading jq (v{{ .tool_integrity.jq.version }}) to resolve execution dependency..."
+  echo "📦 [Bootstrap] Downloading jq (v{{ .tool_integrity.jq.version }}) with integrity verification..."
   mkdir -p "$(dirname "$JQ_BIN")"
   curl -fsSL "$JQ_URL" -o "$JQ_BIN"
   chmod +x "$JQ_BIN"
-  echo "✅ [Bootstrap] jq hermetic binary provisioned at $JQ_BIN."
+
+  # [Integrity]: Hardened SHA-256 Check (Supports sha256sum or shasum)
+  # [LLM Context]: macOS provides /sbin/sha256sum and /usr/bin/shasum physically (Verified 2026-04-09).
+  EXPECTED_HASH="{{ $jq_hash }}"
+  ACTUAL_HASH=""
+
+  if command -v sha256sum > /dev/null 2>&1; then
+    ACTUAL_HASH=$(sha256sum "$JQ_BIN" | cut -d' ' -f1)
+  elif command -v shasum > /dev/null 2>&1; then
+    ACTUAL_HASH=$(shasum -a 256 "$JQ_BIN" | cut -d' ' -f1)
+  else
+    echo "❌ [Security Error] No SHA-256 verification tool found (sha256sum or shasum) in PATH."
+    rm -f "$JQ_BIN"
+    exit 1
+  fi
+
+  if [ "$ACTUAL_HASH" != "$EXPECTED_HASH" ]; then
+    echo "❌ [Security Error] jq binary integrity check failed!"
+    echo "   Expected: $EXPECTED_HASH"
+    echo "   Actual:   $ACTUAL_HASH"
+    rm -f "$JQ_BIN"
+    exit 1
+  fi
+  echo "✅ [Bootstrap] jq hermetic binary provisioned and verified."
 fi
 
 echo "🔍 [Validation] Verifying 1Password CLI session..."
 
-# Check for executable bit rather than relying on PATH
+# [Interop]: Use op.exe on WSL to leverage system integration
 if [ ! -x "$OP_BIN" ]; then
   {{ if .is_wsl -}}
-  # WSL special case: check for op.exe in Windows PATH if not hermetic yet
   if ! command -v op.exe > /dev/null 2>&1; then
     echo "❌ [Error] 1Password CLI ('op.exe') is not installed."
     exit 1
@@ -59,37 +83,24 @@ if [ ! -x "$OP_BIN" ]; then
   {{ end -}}
 fi
 
+# =============================================================================
+# [Validation Gates]
+# =============================================================================
+
+# 1. Session Liveness Check
+# [LLM Context]: Physical output proved `op account get` deterministically returns Exit 1 when locked. (Verified 2026-04-09)
 if ! "$OP_BIN" account get > /dev/null 2>&1; then
   echo "❌ [Error] 1Password session is locked or inactive."
   echo "👉 Action: Run 'op signin' or unlock the 1Password desktop app."
   exit 1
 fi
 
+# 2. Identity Convergence Check
+# [Rationale]: .chezmoi.toml evaluates and injects this variable. 'pending' implies resolution failure.
 link_id="{{ .link_id }}"
-echo "🔍 [Validation] Verifying Identity Pointer '$link_id'..."
-
-id_found=false
-accounts=$("$OP_BIN" account list --format json | "$JQ_BIN" -r '.[].url')
-
-# POSIX-compliant loop for newline-separated strings
-for url in $accounts; do
-  item_ids=$("$OP_BIN" item list --tags "{{ .ssh_keys.discovery_tag }}" --account "$url" --format json 2> /dev/null | "$JQ_BIN" -r '.[].id // empty')
-
-  for id in $item_ids; do
-    if [ -z "$id" ]; then continue; fi
-
-    # [VADKD v5.1]: Update label from 'dotfiles-id' to 'dotfiles_link_id'
-    item_link_id=$("$OP_BIN" item get "$id" --account "$url" --format json 2> /dev/null | "$JQ_BIN" -r '.fields[]? | select(.label == "dotfiles_link_id") | .value // empty')
-
-    if [ "$item_link_id" = "$link_id" ]; then
-      id_found=true
-      break 2
-    fi
-  done
-done
-
-if [ "$id_found" != "true" ]; then
-  echo "❌ [Error] Identity Pointer mismatch. '$link_id' was not found."
+if [ "$link_id" = "pending" ] || [ -z "$link_id" ]; then
+  echo "❌ [Error] Identity Pointer resolution failed in Foundation Schema."
+  echo "👉 Action: Ensure 1Password is unlocked, then execute: chezmoi init"
   exit 1
 fi
 
