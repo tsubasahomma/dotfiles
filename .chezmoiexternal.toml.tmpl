@@ -1,10 +1,15 @@
+# =============================================================================
+# [Architecture]: Legacy Purge | Phase 18 Deterministic Edition
+# [Rationale]: Elimination of redundant binary management.
+# [Reference]: https://www.chezmoi.io/reference/special-files/chezmoiexternal-format/
+# =============================================================================
+
 {{- /* 1. Platform Normalization */ -}}
 {{- $hash_key := printf "%s-%s" .chezmoi.os .chezmoi.arch -}}
 
 {{- /* Tool-specific OS identifiers */ -}}
 {{- $os_std := "linux" -}}
 {{- if eq .chezmoi.os "darwin" }}{{ $os_std = "macos" }}{{ end -}}
-{{- $os_op := .chezmoi.os -}}
 
 {{- /* Architecture naming conventions */ -}}
 {{- $arch := "amd64" -}}
@@ -16,17 +21,9 @@
 
 {{- /* 2. Resource Definitions */ -}}
 
-{{- /* 1Password CLI bootstrap (Hermetic) */ -}}
-{{- $op_hash := index .tool_integrity.op.hashes $hash_key -}}
-{{- if $op_hash }}
-[".local/bin/op"]
-    type = "archive-file"
-    url = {{ printf "https://cache.agilebits.com/dist/1P/op2/pkg/v%s/op_%s_%s_v%s.zip" .tool_integrity.op.version $os_op $arch .tool_integrity.op.version | quote }}
-    path = "op"
-    # [Architecture]: Define 'checksum' as a table to match chezmoi v2.70+ strict struct definition.
-    [".local/bin/op".checksum]
-        sha256 = {{ $op_hash | quote }}
-{{- end }}
+{{- /* [Rationale]: op and jq have been purged from this layer.
+       op is now handled by L0.5 Bootstrap in .chezmoi.toml.tmpl.
+       jq is replaced by built-in template functions. */ -}}
 
 {{- /* mise bootstrap binary */ -}}
 {{- $mise_hash := index .tool_integrity.mise.hashes $hash_key -}}
@@ -37,15 +34,4 @@
     executable = true
     [".local/bin/mise".checksum]
         sha256 = {{ $mise_hash | quote }}
-{{- end }}
-
-{{- /* jq bootstrap binary */ -}}
-{{- $jq_hash := index .tool_integrity.jq.hashes $hash_key -}}
-{{- if $jq_hash }}
-[".local/bin/jq"]
-    type = "file"
-    url = {{ printf "https://github.com/jqlang/jq/releases/download/jq-%s/jq-%s-%s" .tool_integrity.jq.version $os_std $arch | quote }}
-    executable = true
-    [".local/bin/jq".checksum]
-        sha256 = {{ $jq_hash | quote }}
 {{- end }}

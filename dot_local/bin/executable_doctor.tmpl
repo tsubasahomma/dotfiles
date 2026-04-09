@@ -1,45 +1,48 @@
-#!/usr/bin/env zsh
+#!/bin/sh
 # [Rationale]: Self-healing diagnostic engine.
-# [Architecture]: OS-agnostic checks with WSL2-specific bridge validation.
+# [Architecture]: POSIX-compliant (sh) OS-agnostic checks.
+# [Reference]: https://pubs.opengroup.org/onlinepubs/9699919799/utilities/sh.html
 
-set -eo pipefail
+set -u
 
 GREEN='\033[0;32m'
 RED='\033[0;31m'
 YELLOW='\033[1;33m'
 NC='\033[0m'
 
-function log_ok() { echo -e "  ${GREEN}✅ $1${NC}"; }
-function log_warn() { echo -e "  ${YELLOW}⚠️  $1${NC}"; }
-function log_err() { echo -e "  ${RED}❌ $1${NC}"; return 1; }
+# [Rationale]: Use printf for portable escape sequence handling.
+log_ok() { printf "  ${GREEN}✅ %s${NC}\n" "$1"; }
+log_warn() { printf "  ${YELLOW}⚠️  %s${NC}\n" "$1"; }
+log_err() { printf "  ${RED}❌ %s${NC}\n" "$1"; return 1; }
 
-typeset IS_CI="${CI:-false}"
+IS_CI="${CI:-false}"
 
 echo "--- 1. Infrastructure Security & Permissions ---"
 for dir in "{{ .paths.home }}/.ssh" "{{ .paths.xdg_state }}/ssh"; do
-  if [[ -d "$dir" ]]; then
+  if [ -d "$dir" ]; then
     chmod 700 "$dir"
     log_ok "Hardened permissions for $dir (700)"
   fi
 done
 
 echo "--- 2. Identity & Auth Bridge ---"
-if ! ssh-add -l &>/dev/null; then
-  if [[ "$IS_CI" == "true" ]]; then
+if ! ssh-add -l > /dev/null 2>&1; then
+  if [ "$IS_CI" = "true" ]; then
     log_warn "SSH Agent unresponsive (CI mode). Skipping."
   else
     log_warn "SSH Agent unresponsive. Attempting bridge recovery..."
 
     {{ if .is_wsl -}}
-    # [WSL2 Specific]: Verify systemd user service status for npiperelay bridge.
-    if ! systemctl --user is-active 1password-bridge.service &>/dev/null; then
-      log_warn "1password-bridge.service is inactive. Restarting..."
-      systemctl --user restart 1password-bridge.service || true
+    if command -v systemctl >/dev/null 2>&1; then
+      if ! systemctl --user is-active 1password-bridge.service > /dev/null 2>&1; then
+        log_warn "1password-bridge.service is inactive. Restarting..."
+        systemctl --user restart 1password-bridge.service || true
+      fi
     fi
     {{- end }}
 
     sleep 1
-    if ! ssh-add -l &>/dev/null; then
+    if ! ssh-add -l > /dev/null 2>&1; then
       log_err "Auth bridge failed. Please verify 1Password 'SSH Agent' settings."
     else
       log_ok "SSH Agent bridge verified."
@@ -50,17 +53,17 @@ else
 fi
 
 echo "--- 3. Runtime & Identity Sync ---"
-if [[ "{{ .gh_user }}" == "pending" ]]; then
-  log_err "Identity Pointer resolution failed. (gh_user: pending)"
-else
-  log_ok "Sovereign Identity resolved: {{ .gh_user }}"
-fi
+{{ if eq .gh_user "wsl-bootstrap" -}}
+log_warn "Identity Pointer is in WSL Bootstrap fallback mode. (Awaiting op.exe)"
+{{- else -}}
+log_ok "Sovereign Identity resolved: {{ .gh_user }}"
+{{- end }}
 
 echo "--- 4. Neovim Deterministic State ---"
 LOCK_FILE="{{ .paths.xdg_config }}/nvim/lazy-lock.json"
-if [[ -f "$LOCK_FILE" ]]; then
-  if chezmoi managed "$LOCK_FILE" &>/dev/null; then
-    if chezmoi verify "$LOCK_FILE" &>/dev/null; then
+if [ -f "$LOCK_FILE" ]; then
+  if chezmoi managed "$LOCK_FILE" > /dev/null 2>&1; then
+    if chezmoi verify "$LOCK_FILE" > /dev/null 2>&1; then
       log_ok "lazy-lock.json is synchronized with Foundation Schema."
     else
       log_warn "lazy-lock.json has uncommitted local changes. Run 'chezmoi add $LOCK_FILE'."
@@ -73,8 +76,8 @@ else
 fi
 
 NVIM_PYTHON="{{ .paths.xdg_data }}/nvim/venv/bin/python"
-if [[ -x "$NVIM_PYTHON" ]]; then
-  if "$NVIM_PYTHON" -c "import pynvim" &>/dev/null; then
+if [ -x "$NVIM_PYTHON" ]; then
+  if "$NVIM_PYTHON" -c "import pynvim" > /dev/null 2>&1; then
     log_ok "Hermetic Python Provider is ready ($NVIM_PYTHON)"
   else
     log_err "pynvim module is missing in the Hermetic Provider."
@@ -83,4 +86,4 @@ else
   log_err "Hermetic Python Provider not found at $NVIM_PYTHON"
 fi
 
-echo -e "\n${GREEN}✨ System Health: Optimal${NC}"
+printf "\n${GREEN}✨ System Health: Optimal${NC}\n"

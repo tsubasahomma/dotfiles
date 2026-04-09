@@ -1,59 +1,89 @@
 #!/bin/zsh
-# [Architecture]: Resource Export Engine | VADKD v5.1 Protocol.
-# [Rationale]: Replaced 'echo' with 'printf' to prevent Zsh from mangling JSON escaping.
+# =============================================================================
+# [Architecture]: Atomic Identity Pipeline | Phase 20.1 (Multi-Account O(1) Batch)
+# [Rationale]: Resolves secrets across ALL signed-in 1Password accounts.
+#              Complexity: O(2A) where A is the number of accounts, independent of item count N.
+# [Reference]: https://developer.1password.com/docs/cli/reference/commands/inject
+# =============================================================================
 
 set -euo pipefail
 
-if [[ "${CI:-}" == "true" ]]; then exit 0; fi
+# --- 1. CI / Bootstrapping Guards ---
+if [[ "${CI:-false}" == "true" ]]; then
+  echo "⚠️  [Identity] CI environment detected. Skipping SSH key export."
+  exit 0
+fi
 
+{{ if eq .gh_user "wsl-bootstrap" -}}
+echo "⚠️  [Identity] WSL Bootstrap Mode: Skipping SSH key export until op.exe is provisioned."
+exit 0
+{{- end }}
+
+# --- 2. Toolchain Resolution ---
 OP_BIN="{{ .paths.op }}"
-JQ_BIN="{{ .paths.jq }}"
-{{ if .is_wsl }}OP_BIN="op.exe"{{ end }}
+JQ_BIN=$(command -v jq || true)
 
-umask 077
+if [[ ! -x "$OP_BIN" ]] || [[ -z "$JQ_BIN" ]] || [[ ! -x "$JQ_BIN" ]]; then
+  echo "❌ [Fatal] Required binaries not found. (op: $OP_BIN, jq: $JQ_BIN)"
+  exit 1
+fi
+
 TARGET_DIR="{{ .paths.home }}/.ssh"
 mkdir -p "$TARGET_DIR"
+chmod 700 "$TARGET_DIR"
 
-typeset -A resolved_keys
+echo "🔐 [Identity] Provisioning identity resources via Multi-Account Batch Pipeline..."
 
-echo "🔍 [Discovery] Scanning 1Password for Identity Resources via VADKD v5.1 Protocol..."
+# --- 3. Multi-Account Discovery ---
+# [Rationale]: Use '.url' as the identifier since Audit 3 confirmed 'shorthand' might be null.
+ACCOUNTS=$("$OP_BIN" account list --format json | "$JQ_BIN" -r '.[].url')
 
-typeset accounts
-if ! accounts=$("$OP_BIN" account list --format json | "$JQ_BIN" -r '.[].url'); then exit 0; fi
+if [[ -z "$ACCOUNTS" ]]; then
+  echo "⚠️  [Identity] No signed-in 1Password accounts found."
+  exit 0
+fi
 
-for url in ${(f)accounts}; do
-  typeset items
-  if ! items=$("$OP_BIN" item list --tags "dotfiles-ssh-key" --account "$url" --format json 2> /dev/null); then continue; fi
+# --- 4. Iterative Batch Processing ---
+while read -r account_url; do
+  echo "🔍 [Account] Scanning: $account_url"
 
-  # [Rationale]: printf %s preserves raw JSON structure including escaped backslashes.
-  printf '%s\n' "$items" | "$JQ_BIN" -c '.[]' | while read -r item; do
-    id=$(printf '%s\n' "$item" | "$JQ_BIN" -r '.id')
-    v_id=$(printf '%s\n' "$item" | "$JQ_BIN" -r '.vault.id')
+  # Account-specific Identity Discovery (Network Request 1/2 per account)
+  items_json=$("$OP_BIN" item list --tags dotfiles-ssh-key --account "$account_url" --format json 2>/dev/null || echo "[]")
 
-    if [[ -z "$id" ]]; then continue; fi
+  item_count=$(echo "$items_json" | "$JQ_BIN" 'length')
+  if [[ "$item_count" -eq 0 ]]; then
+    echo "  ⏭️  No matching SSH keys in this account."
+    continue
+  fi
 
-    fields=$("$OP_BIN" item get "$id" --account "$url" --format json | "$JQ_BIN" -c '.fields[]?')
+  echo "  📦 Found $item_count items. Resolving via Batch Inject..."
 
-    link_id=$(printf '%s\n' "$fields" | "$JQ_BIN" -r 'select(.label=="dotfiles_link_id") | .value // empty')
-    k_type=$(printf '%s\n' "$fields" | "$JQ_BIN" -r 'select(.label=="key type") | .value // empty')
+  # Account-specific Batch Injection (Network Request 2/2 per account)
+  # [Architecture]: Using Go Template escapes {{ "{{" }} to protect the op:// syntax from chezmoi's rendering.
+  TEMPLATE=$("$JQ_BIN" -r '.[] | "\(.id)\t\(.vault.id)\t{{ "{{" }}op://\(.vault.id)/\(.id)/dotfiles_link_id{{ "}}" }}\t{{ "{{" }}op://\(.vault.id)/\(.id)/key type{{ "}}" }}\t{{ "{{" }}op://\(.vault.id)/\(.id)/public key{{ "}}" }}"' <<< "$items_json")
 
-    if [[ -n "$link_id" ]]; then
-      if [[ ! "$link_id" =~ ^[a-zA-Z0-9_-]+$ ]]; then continue; fi
-      if [[ -z "$k_type" ]]; then k_type="ed25519"; fi
+  if ! RESOLVED_TSV=$(echo "$TEMPLATE" | "$OP_BIN" inject --account "$account_url" 2>/dev/null); then
+    echo "  ❌ [Error] Failed to batch-resolve secrets for $account_url."
+    continue
+  fi
 
-      filename="id_${k_type}_${v_id}_${link_id}.pub"
-      target_path="$TARGET_DIR/$filename"
+  # Atomic File Export
+  echo "$RESOLVED_TSV" | while IFS=$'\t' read -r item_id vault_id link_id k_type pubkey; do
+    # Strip potential carriage returns
+    link_id="${link_id%$'\r'}"
+    k_type="${k_type%$'\r'}"
+    pubkey="${pubkey%$'\r'}"
 
-      if [[ -n "${resolved_keys[$filename]:-}" ]]; then
-        echo "❌ [Error] Duplicate resource collision for '$filename'. Aborting."
-        exit 1
-      fi
-
-      if pubkey=$("$OP_BIN" item get "$id" --account "$url" --fields label="public key" 2> /dev/null); then
-        echo "$pubkey" > "$target_path"
-        echo "✅ [Export] Discovered Resource '$link_id' ($k_type) -> Wrote to $filename"
-        resolved_keys[$filename]="resolved"
-      fi
+    if [[ -z "$link_id" ]] || [[ -z "$pubkey" ]]; then
+      continue
     fi
+
+    PUBKEY_FILE="$TARGET_DIR/id_${k_type}_${vault_id}_${link_id}.pub"
+    echo "  ✅ [Export] Syncing: $link_id ($k_type)"
+    echo "$pubkey" > "$PUBKEY_FILE"
+    chmod 600 "$PUBKEY_FILE"
   done
-done
+
+done <<< "$ACCOUNTS"
+
+echo "✅ [Identity] All identities across all accounts have been synchronized."

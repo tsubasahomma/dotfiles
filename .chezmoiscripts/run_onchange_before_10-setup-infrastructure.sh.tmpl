@@ -2,13 +2,20 @@
 #!/bin/zsh
 # [chezmoi-script]: Tier 1 (Zsh)
 # [Architecture]: macOS Provisioning Engine.
-# [Rationale]: Managed via Brew Bundle. Strictly scoped to macOS target.
+# [Rationale]: Managed via Brew Bundle.
 # dot_config/homebrew/Brewfile.tmpl hash: {{ include "dot_config/homebrew/Brewfile.tmpl" | sha256sum }}
 
 set -euo pipefail
 
-CURL_BIN="/usr/bin/curl"
-BASH_BIN="/bin/bash"
+# [Architecture]: Localized Binary Resolution (Commodity)
+# [Rationale]: 100% reliant on 'lookPath' without hardcoded fallbacks to eliminate Path Precedence Hallucinations.
+CURL_BIN="{{ lookPath "curl" }}"
+BASH_BIN="{{ lookPath "bash" }}"
+
+if [ -z "$CURL_BIN" ] || [ -z "$BASH_BIN" ]; then
+  echo "❌ [Fatal] Essential commodity binaries (curl, bash) not found in PATH."
+  exit 1
+fi
 
 # [Architecture]: Package Manager Abstraction for Darwin.
 install_packages() {
@@ -24,6 +31,7 @@ install_packages() {
 
 if ! command -v brew &> /dev/null; then
   echo "📦 [Infrastructure] Installing Homebrew..."
+  # [Rationale]: Execute brew installer with dynamic bash/curl.
   "$BASH_BIN" -c "$("$CURL_BIN" -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 fi
 
@@ -68,7 +76,6 @@ fi
 . "$OS_RELEASE_PATH"
 
 # [Architecture]: Positive Package Manager Detection.
-# Validates support for the current distribution ID.
 case "$ID" in
   ubuntu|debian) PM="apt" ;;
   fedora|rhel)   PM="dnf" ;;
@@ -81,7 +88,6 @@ esac
 
 # --- 2. Package Manager Abstraction ---
 
-# [Rationale]: Unified interface for package installation across Linux distributions.
 install_packages() {
   packages="$*"
   echo "📦 [Infrastructure] Installing packages via $PM: $packages"
@@ -89,15 +95,12 @@ install_packages() {
   case "$PM" in
     apt)
       sudo apt-get update -y
-      # shellcheck disable=SC2086
       sudo apt-get install -y $packages
       ;;
     dnf)
-      # shellcheck disable=SC2086
       sudo dnf install -y $packages
       ;;
     pacman)
-      # shellcheck disable=SC2086
       sudo pacman -S --noconfirm $packages
       ;;
   esac
@@ -110,7 +113,6 @@ cat << 'EOF' > "$TEMP_PKG_LIST"
 {{ includeTemplate "linux-packages.list.tmpl" . }}
 EOF
 
-# Extract non-comment/non-empty lines.
 TARGET_PKGS=$(grep -vE '^\s*(#|$)' "$TEMP_PKG_LIST" | xargs)
 if [ -n "$TARGET_PKGS" ]; then
   install_packages "$TARGET_PKGS"
