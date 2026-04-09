@@ -30,10 +30,14 @@ jobs:
       matrix:
         os: [ubuntu-24.04, macos-14]
     runs-on: ${{ matrix.os }}
+    env:
+      # [Rationale]: Opt into Node.js 24 to resolve deprecation warnings for Node.js 20.
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        # [Rationale]: Version 6.0.2 supports Node.js 24 natively.
+        uses: actions/checkout@v6.0.2
         with:
           # [Rationale]: Fetch full history for chezmoi's potential git-based operations.
           fetch-depth: 0

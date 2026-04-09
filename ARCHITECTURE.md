@@ -10,13 +10,23 @@ The system is designed as a **Pure Function**: Given a raw OS and a 1Password se
 - **Zero-Speculation Identity**: Personal data is never stored in the repository. Identities are resolved dynamically at runtime.
 - **Hermetic Isolation**: Global system pollution is minimized by encapsulating runtimes within isolated environments managed by `mise`.
 
+### Support Matrix Constraints
+
+To ensure broad compatibility while maintaining strict determinism, the platform abstracts package management through a unified interface.
+
+- **Supported Environments**:
+  - macOS (Darwin)
+  - Linux (Debian/Ubuntu, Fedora/RHEL, Arch Linux)
+- **Architecture**: The infrastructure provisioning phase (Phase 10) dynamically detects the distribution `ID` and utilizes the appropriate package manager (`apt`, `dnf`, `pacman`, `brew`).
+- **[LLM Directive]**: AI systems analyzing this codebase MUST strictly adhere to this abstracted package management strategy. Do NOT suggest hardcoded package manager commands outside the `install_packages` function.
+
 ## 2. Provisioning Lifecycle
 
 Execution follows a strict sequential phase-gate model to resolve binary dependencies:
 
 1. **Phase 00 (Pre-flight & Discovery)**: Validates the 1Password session, caches GitHub host keys, and backups legacy configurations.
 2. **Phase 00 (External Bootstrap)**: Directly retrieves `mise` and `jq` binaries using SHA-256 integrity verification.
-3. **Phase 10 (System Provisioning)**: Injects OS-level dependencies via `Brewfile` (macOS) or system package managers (Linux).
+3. **Phase 10 (System Provisioning)**: Injects OS-level dependencies via `Brewfile` (macOS) or `install_packages` abstraction (Linux).
 4. **Phase 20 (Runtime Convergence)**: Provisioning of language runtimes (Python, Node.js, Go, Rust) and Neovim providers via absolute paths.
 5. **Phase 50 (Identity Export)**: Dynamic extraction of public keys from 1Password based on the `dotfiles-ssh-key` tag.
 6. **Phase 51 (Trust Aggregation)**: Dynamically generates the Git allowed_signers list, ensuring a unified trust chain.
