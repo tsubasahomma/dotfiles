@@ -1,6 +1,8 @@
 # =============================================================================
-# [Architecture]: Deterministic Infrastructure | Identity Provisioning (Phase 14)
-# [Rationale]: Optimized Batch Identity Resolution & VADKD v5.1 Protocol.
+# [Architecture]: Foundation Schema | Phase 20 Deterministic Edition
+# [Rationale]: Full Schema Restoration, L0.5 Bootstrap, & WSL Deadlock Escape Hatch.
+# [Reference]: https://www.chezmoi.io/reference/commands/init/
+# [Reference]: https://www.chezmoi.io/reference/templates/functions/fromYaml/
 # =============================================================================
 
 {{- /* --- 1. Platform Normalization --- */ -}}
@@ -32,24 +34,43 @@
 {{-   $brew_prefix = "/home/linuxbrew/.linuxbrew" -}}
 {{- end -}}
 
-{{- /* --- 2. Hermetic Path Resolution --- */ -}}
+{{- /* --- 2. Manual Data Injection & L0.5 Bootstrap --- */ -}}
+{{- $data := (include ".chezmoidata.yaml" | fromYaml) -}}
 {{- $local_bin := joinPath $home ".local/bin" -}}
-{{- $op_bin := "" -}}
+{{- $op_bin := joinPath $local_bin "op" -}}
 
 {{- if $is_wsl -}}
 {{-   $op_bin = "op.exe" -}}
-{{- else -}}
-{{-   $op_bin = joinPath $local_bin "op" -}}
-{{-   if not (stat $op_bin) -}}
-{{-     if eq $osid "darwin" -}}
-{{-       $op_bin = joinPath $brew_prefix "bin/op" -}}
-{{-       if not (stat $op_bin) }}{{ $op_bin = "/usr/local/bin/op" }}{{ end -}}
-{{-     else -}}
-{{-       $op_bin = "op" -}}
-{{-     end -}}
+{{- end -}}
+
+{{- $is_ci := env "CI" | default "false" | eq "true" -}}
+
+{{- /* [Architecture]: WSL Deadlock Prevention */ -}}
+{{- $is_op_available := true -}}
+{{- if $is_wsl -}}
+{{-   if eq (lookPath $op_bin) "" -}}
+{{-     $is_op_available = false -}}
 {{-   end -}}
 {{- end -}}
 
+{{- if and (not $is_ci) (not $is_wsl) -}}
+    {{- if not (stat $op_bin) -}}
+        {{- $op_version := $data.tool_integrity.op.version -}}
+        {{- $hash_key := printf "%s-%s" .chezmoi.os .chezmoi.arch -}}
+        {{- $op_hash := index $data.tool_integrity.op.hashes $hash_key -}}
+        {{- $os_op := .chezmoi.os -}}
+        {{- $arch_op := "amd64" -}}{{ if eq .chezmoi.arch "arm64" }}{{ $arch_op = "arm64" }}{{ end -}}
+        {{- $op_url := printf "https://cache.agilebits.com/dist/1P/op2/pkg/v%s/op_%s_%s_v%s.zip" $op_version $os_op $arch_op $op_version -}}
+
+        {{- /* [Execution]: Portable Hash Audit & Unzip Fallback. */ -}}
+        {{- $bootstrap_cmd := printf "mkdir -p '%s' && curl -fsSL '%s' -o /tmp/op.zip && ACTUAL=$(sha256sum /tmp/op.zip 2>/dev/null | cut -d' ' -f1 || shasum -a 256 /tmp/op.zip | cut -d' ' -f1) && [ \"$ACTUAL\" = '%s' ] && { command -v unzip >/dev/null 2>&1 && unzip -q -o /tmp/op.zip -d /tmp/op_ext || python3 -m zipfile -e /tmp/op.zip /tmp/op_ext; } && mv /tmp/op_ext/op '%s' && chmod +x '%s' && rm -rf /tmp/op.zip /tmp/op_ext" $local_bin $op_url $op_hash $op_bin $op_bin -}}
+        {{- $bootstrap_res := output "sh" "-c" $bootstrap_cmd -}}
+    {{- end -}}
+{{- end -}}
+
+{{- $true_cmd := lookPath "true" | default "/usr/bin/true" -}}
+
+{{- /* Identity Bridge Configuration */ -}}
 {{- $op_sign := "" -}}
 {{- $ssh_auth_sock := "" -}}
 {{- if eq $osid "darwin" -}}
@@ -60,95 +81,53 @@
 {{-   $ssh_auth_sock = (joinPath $home ".1password/agent.sock") -}}
 {{- end -}}
 
-{{- $true_cmd := lookPath "true" | default "/usr/bin/true" -}}
-
-{{- /* --- 3. Optimized VADKD v5.1 State Machine --- */ -}}
+{{- /* --- 3. Sovereign Profile Resolution (VADKD v5.1) --- */ -}}
 {{- $gh_user := "" -}}
 {{- $name := "" -}}
 {{- $email := "" -}}
 {{- $link_id := "" -}}
-{{- $key_type := "" -}}
+{{- $key_type := "ed25519" -}}
 {{- $vault_id := "" -}}
-{{- $is_authenticated := false -}}
 
-{{- if env "CI" -}}
+{{- if $is_ci -}}
     {{- $gh_user = "dotfiles-ci-bot" -}}
     {{- $name = "CI Compliance Bot" -}}
     {{- $email = "bot@example.com" -}}
     {{- $link_id = "ci-test" -}}
-    {{- $key_type = "ed25519" -}}
-    {{- $vault_id = "civault123" -}}
-    {{- $is_authenticated = true -}}
+    {{- $vault_id = "unknown" -}}
+{{- else if not $is_op_available -}}
+    {{- $gh_user = "wsl-bootstrap" -}}
+    {{- $name = "WSL Pending Identity" -}}
+    {{- $email = "wsl-bootstrap@example.com" -}}
+    {{- $link_id = "wsl-pending" -}}
+    {{- $vault_id = "unknown" -}}
 {{- else -}}
-    {{- $op_status := "locked" -}}
-    {{- $op_check_cmd := printf "%s account get >/dev/null 2>&1 && echo 'ready' || echo 'locked'" $op_bin -}}
-    {{- $op_status = output "sh" "-c" $op_check_cmd | trim -}}
+    {{- $op_status := output "sh" "-c" (printf "%s account get >/dev/null 2>&1 && echo 'ready' || echo 'locked'" $op_bin) | trim -}}
+    {{- if eq $op_status "locked" -}}
+        {{- fail "\n❌ [Fatal] 1Password session is locked.\n👉 Action: Run 'op signin' or unlock the desktop app, then run 'chezmoi init' again.\n" -}}
+    {{- end -}}
 
-    {{- if eq $op_status "ready" -}}
-        # [Architecture]: Batch-load 1Password Accounts
-        {{- $accounts := output $op_bin "account" "list" "--format" "json" | mustFromJson -}}
+    {{- $profile_list_raw := output "sh" "-c" (printf "%s item list --tags dotfiles-github-profile --format json" $op_bin) | fromJson -}}
+    {{- if eq (len $profile_list_raw) 0 -}}
+        {{- fail "\n❌ [Fatal] Sovereign Identity Profile ('dotfiles-github-profile') not found in 1Password.\n" -}}
+    {{- end -}}
 
-        {{- /* STEP 1: Resolved Identity Profile via Batch Item List */ -}}
-        {{- range $accounts -}}
-            {{- if not $is_authenticated -}}
-                {{- $discovery := output $op_bin "item" "list" "--tags" "dotfiles-github-profile" "--account" .url "--format" "json" | mustFromJson -}}
-                {{- if gt (len $discovery) 0 -}}
-                    # [Performance]: Atomic 'get' for the discovered profile ID
-                    {{- $item := index $discovery 0 -}}
-                    {{- $profile_item := output $op_bin "item" "get" $item.id "--account" .url "--format" "json" | mustFromJson -}}
-                    {{- range $profile_item.fields -}}
-                        {{- $label := index . "label" -}}
-                        {{- if eq $label "dotfiles_gh_user"   }}{{ $gh_user = .value   }}{{ end -}}
-                        {{- if eq $label "dotfiles_gh_name"   }}{{ $name = .value      }}{{ end -}}
-                        {{- if eq $label "dotfiles_gh_email"  }}{{ $email = .value     }}{{ end -}}
-                        {{- if eq $label "dotfiles_link_id"   }}{{ $link_id = .value   }}{{ end -}}
-                    {{- end -}}
-                    {{- $is_authenticated = true -}}
-                {{- end -}}
-            {{- end -}}
-        {{- end -}}
+    {{- $profile_id := (index $profile_list_raw 0).id -}}
+    {{- $profile := output "sh" "-c" (printf "%s item get %s --format json" $op_bin $profile_id) | fromJson -}}
 
-        {{- /* STEP 2: Resource Resolution via Filtered Metadata Range */ -}}
-        {{- if and $is_authenticated (ne $link_id "") -}}
-            {{- range $accounts -}}
-                {{- $url := .url -}}
-                {{- $keys := output $op_bin "item" "list" "--tags" "dotfiles-ssh-key" "--account" $url "--format" "json" | mustFromJson -}}
-                {{- range $keys -}}
-                    # [Rationale]: Minimize 'item get' by pre-verifying item metadata if available.
-                    # As 'dotfiles_link_id' is a custom field, we must perform 'get', but we do it
-                    # sequentially within the filtered tagged list until the match is found.
-                    {{- if eq $vault_id "" -}}
-                        {{- $k_item := output $op_bin "item" "get" .id "--account" $url "--format" "json" | mustFromJson -}}
-                        {{- $k_link_id := "" -}}
-                        {{- $k_type := "ed25519" -}}
-                        {{- range $k_item.fields -}}
-                            {{- $label := index . "label" -}}
-                            {{- if eq $label "dotfiles_link_id" }}{{ $k_link_id = .value }}{{ end -}}
-                            {{- if eq $label "key type" }}{{ $k_type = .value }}{{ end -}}
-                        {{- end -}}
-
-                        {{- if eq $k_link_id $link_id -}}
-                            {{- $key_type = $k_type -}}
-                            {{- $vault_id = .vault.id -}}
-                        {{- end -}}
-                    {{- end -}}
-                {{- end -}}
-            {{- end -}}
+    {{- range $profile.fields -}}
+        {{- if hasKey . "label" -}}
+            {{- if eq .label "dotfiles_gh_user"  }}{{ $gh_user = .value }}{{ end -}}
+            {{- if eq .label "dotfiles_gh_name"  }}{{ $name = .value    }}{{ end -}}
+            {{- if eq .label "dotfiles_gh_email" }}{{ $email = .value   }}{{ end -}}
+            {{- if eq .label "dotfiles_link_id"  }}{{ $link_id = .value }}{{ end -}}
         {{- end -}}
     {{- end -}}
-{{- end -}}
+    {{- $vault_id = $profile.vault.id -}}
 
-{{- /* --- 4. Convergence Gatekeeper Output --- */ -}}
-{{- if not $is_authenticated -}}
-    {{- writeToStdout "\n⚠️  [Identity] 1Password session locked or 'dotfiles-github-profile' missing.\n" -}}
-    {{- $gh_user = "pending" -}}
-    {{- $name = "Pending Identity" -}}
-    {{- $email = "pending@example.com" -}}
-    {{- $link_id = "pending" -}}
-    {{- $key_type = "ed25519" -}}
-    {{- $vault_id = "unknown" -}}
-{{- else if not (env "CI") -}}
-    {{- writeToStdout (printf "\n✅ [Identity] Sovereign Trust Anchor established for: %s (Pointer: %s)\n\n" $email $link_id) -}}
+    {{- if eq $gh_user "" -}}
+        {{- fail "\n❌ [Fatal] Sovereign Identity Profile ('dotfiles-github-profile') is incomplete.\n" -}}
+    {{- end -}}
 {{- end -}}
 
 # --- Foundation Schema ---
@@ -177,7 +156,6 @@
         xdg_state = {{ (joinPath $home ".local/state") | quote }}
         xdg_cache = {{ (joinPath $home ".cache") | quote }}
         mise = {{ (joinPath $home ".local/bin/mise") | quote }}
-        jq = {{ (joinPath $home ".local/bin/jq") | quote }}
         true_cmd = {{ $true_cmd | quote }}
 
 [edit]

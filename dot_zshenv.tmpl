@@ -1,2 +1,16 @@
-# [Rationale]: XDG Base Directory bootstrap. Minimal footprint in $HOME.
+{{- /* [Rationale]: XDG Base Directory bootstrap. Minimal footprint in $HOME. */ -}}
 export ZDOTDIR="{{ .paths.xdg_config }}/zsh"
+
+# [Architecture]: Deep XDG Integration (Phase 15)
+# [Rationale]: Ensure all non-interactive toolchains (mise, uv, pnpm)
+# recognize XDG paths without a full TTY.
+export XDG_CONFIG_HOME="{{ .paths.xdg_config }}"
+export XDG_DATA_HOME="{{ .paths.xdg_data }}"
+export XDG_STATE_HOME="{{ .paths.xdg_state }}"
+export XDG_CACHE_HOME="{{ .paths.xdg_cache }}"
+
+# [Rationale]: Identity Bridge Persistence for SSH operations.
+export SSH_AUTH_SOCK="{{ .ssh_auth_sock }}"
+
+# [Rationale]: Node.js Toolchain Persistence.
+export PNPM_HOME="{{ .paths.xdg_data }}/pnpm"

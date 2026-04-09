@@ -67,6 +67,16 @@ jobs:
 
       - name: Bootstrap Sovereign Tools
         run: |
+          # [Diagnostic Phase]: Audit the remote jq binary before atomic bootstrap
+          JQ_URL="https://github.com/jqlang/jq/releases/download/jq-1.8.1/jq-macos-arm64"
+          echo "🔍 [Audit] Checking remote header: $JQ_URL"
+          curl -sIL "$JQ_URL" | grep -i "content-length\|content-type"
+
+          # [Rationale]: Log actual hash for comparison with .chezmoidata.yaml
+          curl -fsSL "$JQ_URL" -o /tmp/jq_audit
+          echo "📏 [Audit] Actual SHA-256: $(shasum -a 256 /tmp/jq_audit | cut -d' ' -f1)"
+          echo "📄 [Audit] File Identity: $(file /tmp/jq_audit)"
+
           # [Rationale]: Avoid pre-installed bloat. Deploy hermetic binaries directly.
           curl https://mise.jdx.dev/install.sh | sh
           sh -c "$(curl -fsLS get.chezmoi.io)" -- -b "$HOME/.local/bin"

@@ -1,25 +1,14 @@
 # [Rationale]: Optimized for < 50ms startup and XDG Base Directory compliance.
-# [2026 Best Practice]: Path resolution driven by Foundation Schema.
-
-# --- XDG Base Directory Enforcement ---
-export XDG_CONFIG_HOME="{{ .paths.xdg_config }}"
-export XDG_DATA_HOME="{{ .paths.xdg_data }}"
-export XDG_STATE_HOME="{{ .paths.xdg_state }}"
-export XDG_CACHE_HOME="{{ .paths.xdg_cache }}"
+# [2026 Best Practice]: Primary exports have been moved to .zshenv for toolchain visibility.
 
 # --- Path Optimization ---
+# [Rationale]: Clean path definition. 'mise activate' will handle shims automatically.
 typeset -U path PATH
 path=(
   "$HOME/.local/bin"
   "{{ .brew_prefix }}/bin"
-  "$XDG_DATA_HOME/mise/shims"
-  "$XDG_DATA_HOME/pnpm"
   $path
 )
-
-# --- SSH & 1Password Integration ---
-export SSH_AUTH_SOCK="{{ .ssh_auth_sock }}"
-export PNPM_HOME="$XDG_DATA_HOME/pnpm"
 
 # --- Tooling Initialization (Guarded) ---
 if (( $+commands[mise] )); then

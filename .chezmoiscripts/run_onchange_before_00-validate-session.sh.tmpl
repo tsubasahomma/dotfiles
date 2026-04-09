@@ -1,22 +1,10 @@
 #!/bin/sh
 # [chezmoi-script]: L0 (POSIX Shell) Tiering
 # [Architecture]: Validation Phase synchronized with VADKD v5.1 Protocol.
-# [Rationale]: Optimized to rely exclusively on the resolved state from .chezmoi.toml.
-# Zero redundant 1Password API calls during script execution.
+# [Rationale]: Bootstrap logic has been elevated to the L0.5 Template Rendering engine.
+# This script is now purely responsible for external network trust anchors.
 
 set -eu
-
-OP_BIN="{{ .paths.op }}"
-JQ_BIN="{{ .paths.jq }}"
-
-{{/* Resolve Platform context for URLs and Integrity Hashes */}}
-{{- $hash_key := printf "%s-%s" .chezmoi.os .chezmoi.arch -}}
-{{- $jq_hash := index .tool_integrity.jq.hashes $hash_key -}}
-{{- $os_std := "linux" -}}
-{{- if eq .chezmoi.os "darwin" }}{{ $os_std = "macos" }}{{ end -}}
-{{- $arch := "amd64" -}}
-{{- if eq .chezmoi.arch "arm64" }}{{ $arch = "arm64" }}{{ end -}}
-JQ_URL="https://github.com/jqlang/jq/releases/download/jq-{{ .tool_integrity.jq.version }}/jq-{{ $os_std }}-{{ $arch }}"
 
 echo "🔍 [Network] Pre-caching GitHub known_hosts (Phase 00 Trust Anchor)..."
 ssh_state_dir="{{ .paths.xdg_state }}/ssh"
@@ -29,79 +17,22 @@ else
   echo "✅ [Network] GitHub host key is already present."
 fi
 
+# [Architecture]: Deterministic Bypass for CI and WSL Escape Hatch
 if [ "${SKIP_OP_VALIDATION:-}" = "true" ] || [ "${CI:-}" = "true" ]; then
-  echo "⚠️  [Validation] Skipping 1Password session check (Bypass enabled)."
+  echo "⚠️  [Validation] Skipping 1Password session check (CI/SKIP mode)."
   exit 0
 fi
 
-# [Architecture]: Verifiable Self-Bootstrapping jq
-# [Rationale]: Bootstrapped in L0 to guarantee availability for L1 scripts (e.g., Phase 50).
-if [ ! -x "$JQ_BIN" ]; then
-  echo "📦 [Bootstrap] Downloading jq (v{{ .tool_integrity.jq.version }}) with integrity verification..."
-  mkdir -p "$(dirname "$JQ_BIN")"
-  curl -fsSL "$JQ_URL" -o "$JQ_BIN"
-  chmod +x "$JQ_BIN"
+{{ if eq .gh_user "wsl-bootstrap" -}}
+echo "⚠️  [Validation] WSL Bootstrap Mode: Bypassing 1Password session check."
+exit 0
+{{- end }}
 
-  # [Integrity]: Hardened SHA-256 Check (Supports sha256sum or shasum)
-  # [LLM Context]: macOS provides /sbin/sha256sum and /usr/bin/shasum physically (Verified 2026-04-09).
-  EXPECTED_HASH="{{ $jq_hash }}"
-  ACTUAL_HASH=""
-
-  if command -v sha256sum > /dev/null 2>&1; then
-    ACTUAL_HASH=$(sha256sum "$JQ_BIN" | cut -d' ' -f1)
-  elif command -v shasum > /dev/null 2>&1; then
-    ACTUAL_HASH=$(shasum -a 256 "$JQ_BIN" | cut -d' ' -f1)
-  else
-    echo "❌ [Security Error] No SHA-256 verification tool found (sha256sum or shasum) in PATH."
-    rm -f "$JQ_BIN"
-    exit 1
-  fi
-
-  if [ "$ACTUAL_HASH" != "$EXPECTED_HASH" ]; then
-    echo "❌ [Security Error] jq binary integrity check failed!"
-    echo "   Expected: $EXPECTED_HASH"
-    echo "   Actual:   $ACTUAL_HASH"
-    rm -f "$JQ_BIN"
-    exit 1
-  fi
-  echo "✅ [Bootstrap] jq hermetic binary provisioned and verified."
-fi
-
+# Canonical Session Check
 echo "🔍 [Validation] Verifying 1Password CLI session..."
-
-# [Interop]: Use op.exe on WSL to leverage system integration
-if [ ! -x "$OP_BIN" ]; then
-  {{ if .is_wsl -}}
-  if ! command -v op.exe > /dev/null 2>&1; then
-    echo "❌ [Error] 1Password CLI ('op.exe') is not installed."
-    exit 1
-  fi
-  OP_BIN="op.exe"
-  {{ else -}}
-  echo "❌ [Error] 1Password CLI is not installed at $OP_BIN."
-  exit 1
-  {{ end -}}
-fi
-
-# =============================================================================
-# [Validation Gates]
-# =============================================================================
-
-# 1. Session Liveness Check
-# [LLM Context]: Physical output proved `op account get` deterministically returns Exit 1 when locked. (Verified 2026-04-09)
-if ! "$OP_BIN" account get > /dev/null 2>&1; then
+if ! "{{ .paths.op }}" account get > /dev/null 2>&1; then
   echo "❌ [Error] 1Password session is locked or inactive."
-  echo "👉 Action: Run 'op signin' or unlock the 1Password desktop app."
   exit 1
 fi
 
-# 2. Identity Convergence Check
-# [Rationale]: .chezmoi.toml evaluates and injects this variable. 'pending' implies resolution failure.
-link_id="{{ .link_id }}"
-if [ "$link_id" = "pending" ] || [ -z "$link_id" ]; then
-  echo "❌ [Error] Identity Pointer resolution failed in Foundation Schema."
-  echo "👉 Action: Ensure 1Password is unlocked, then execute: chezmoi init"
-  exit 1
-fi
-
-echo "✅ [Validation] 1Password session & Identity Pointer '$link_id' verified."
+echo "✅ [Validation] 1Password session verified."
