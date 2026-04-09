@@ -1,11 +1,18 @@
+# [Architecture]: Chezmoi Ignore Patterns (Target-Path Convention)
+# [Rationale]: Patterns below MUST match the TARGET path (relative to $HOME),
+# NOT the source path in the repository (e.g., use '.config/foo', NOT 'dot_config/foo').
+
 README.md
 DEVELOPER_OS.md
 repomix-output.xml
 .gitignore
 .chezmoidata.yaml
+
 # [Rationale]: Prevent script templates from being deployed as physical files to $HOME.
 .chezmoiscripts
+
 # [Rationale]: Prevent internal data lists from polluting the XDG config directory.
-dot_config/apt/packages.list.tmpl
+.config/linux
+
 # [Rationale]: GitHub Actions workflows are for the repository CI, not for the target $HOME.
 .github

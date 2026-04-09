@@ -15,15 +15,15 @@ repos:
         name: shfmt
         entry: shfmt
         language: system
-        # [Rationale]: Explicitly target .tmpl files as shell scripts
-        files: \.(sh|zsh|zshrc|zshenv)(\.tmpl)?$
+        # [Rationale]: Target only pure shell scripts. Templates are excluded to avoid AST collision.
+        files: \.(sh|zsh|zshrc|zshenv)$
         args: ["-i", "2", "-ci", "-sr", "-w"]
 
       - id: stylua
         name: stylua
         entry: stylua
         language: system
-        # [Rationale]: Explicitly target .lua.tmpl files
-        files: \.lua(\.tmpl)?$
+        # [Rationale]: Target only pure lua files. Templates are excluded to avoid AST collision.
+        files: \.lua$
         # [Rationale]: No --config-path needed. StyLua auto-detects .editorconfig by default.
         args: []

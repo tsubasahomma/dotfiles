@@ -1,13 +1,26 @@
 {{ if eq .osid "darwin" -}}
 #!/bin/zsh
 # [chezmoi-script]: Tier 1 (Zsh)
-# [Rationale]: Managed via Brew Bundle.
+# [Architecture]: macOS Provisioning Engine.
+# [Rationale]: Managed via Brew Bundle. Strictly scoped to macOS target.
 # dot_config/homebrew/Brewfile.tmpl hash: {{ include "dot_config/homebrew/Brewfile.tmpl" | sha256sum }}
 
 set -euo pipefail
 
 CURL_BIN="/usr/bin/curl"
 BASH_BIN="/bin/bash"
+
+# [Architecture]: Package Manager Abstraction for Darwin.
+install_packages() {
+  if [ -f "$1" ]; then
+    echo "📦 [Infrastructure] Installing Brewfile bundle: $1"
+    export HOMEBREW_BUNDLE_NO_LOCK=1
+    brew bundle install --file="$1"
+  else
+    echo "📦 [Infrastructure] Installing brew packages: $*"
+    brew install "$@"
+  fi
+}
 
 if ! command -v brew &> /dev/null; then
   echo "📦 [Infrastructure] Installing Homebrew..."
@@ -17,7 +30,7 @@ fi
 if [[ -x "/opt/homebrew/bin/brew" ]]; then
   eval "$(/opt/homebrew/bin/brew shellenv)"
 elif [[ -x "/usr/local/bin/brew" ]]; then
-  eval "$(/opt/homebrew/bin/brew shellenv)"
+  eval "$(/usr/local/bin/brew shellenv)"
 fi
 
 brew update
@@ -26,48 +39,104 @@ cat << 'EOF' > "$TEMP_BREWFILE"
 {{ includeTemplate "dot_config/homebrew/Brewfile.tmpl" . }}
 EOF
 
-export HOMEBREW_BUNDLE_NO_LOCK=1
-brew bundle install --file="$TEMP_BREWFILE"
+install_packages "$TEMP_BREWFILE"
 rm "$TEMP_BREWFILE"
 
 {{ else if eq .osid "linux" -}}
-#!/bin/bash
-# [chezmoi-script]: L0 (POSIX Shell/Bash fallback)
-# [Rationale]: Uses Bash to guarantee execution before Zsh is present in the system shells.
-# [Trigger]: Linux package list hash: {{ include "dot_config/apt/packages.list.tmpl" | sha256sum }}
+#!/bin/sh
+# [chezmoi-script]: L0 (POSIX Shell) Tiering
+# [Architecture]: OS-Agnostic Linux Provisioning Engine.
+# [Rationale]: Dynamic PM discovery and package abstraction.
+# [Trigger]: Linux package list hash: {{ includeTemplate "linux-packages.list.tmpl" . | sha256sum }}
 
-set -euo pipefail
+set -eu
 
-echo "📦 [Infrastructure] Provisioning Linux Base Dependencies via APT..."
+# --- 1. Infrastructure Discovery ---
 
-# [Rationale]: Ensure package lists are fresh before installation.
-sudo apt-get update -y
+OS_RELEASE_PATH=""
+if [ -r "/etc/os-release" ]; then
+  OS_RELEASE_PATH="/etc/os-release"
+elif [ -r "/usr/lib/os-release" ]; then
+  OS_RELEASE_PATH="/usr/lib/os-release"
+fi
 
-# [Architecture]: Loop-based installation from externalized package list.
-# Renders the template into a temporary list to avoid physical file dependencies.
+if [ -z "$OS_RELEASE_PATH" ]; then
+  echo "❌ [Fatal] OS identification file missing."
+  exit 1
+fi
+
+. "$OS_RELEASE_PATH"
+
+# [Architecture]: Positive Package Manager Detection.
+# Validates support for the current distribution ID.
+case "$ID" in
+  ubuntu|debian) PM="apt" ;;
+  fedora|rhel)   PM="dnf" ;;
+  arch)          PM="pacman" ;;
+  *)
+    echo "❌ [Fatal] Unsupported distribution: $ID"
+    exit 1
+    ;;
+esac
+
+# --- 2. Package Manager Abstraction ---
+
+# [Rationale]: Unified interface for package installation across Linux distributions.
+install_packages() {
+  packages="$*"
+  echo "📦 [Infrastructure] Installing packages via $PM: $packages"
+
+  case "$PM" in
+    apt)
+      sudo apt-get update -y
+      # shellcheck disable=SC2086
+      sudo apt-get install -y $packages
+      ;;
+    dnf)
+      # shellcheck disable=SC2086
+      sudo dnf install -y $packages
+      ;;
+    pacman)
+      # shellcheck disable=SC2086
+      sudo pacman -S --noconfirm $packages
+      ;;
+  esac
+}
+
+# --- 3. Execution ---
+
 TEMP_PKG_LIST=$(mktemp)
 cat << 'EOF' > "$TEMP_PKG_LIST"
-{{ include "dot_config/apt/packages.list.tmpl" }}
+{{ includeTemplate "linux-packages.list.tmpl" . }}
 EOF
 
-# [Rationale]: Filter comments and empty lines, then batch install.
-# --no-run-if-empty prevents execution failure if the list is completely empty.
-grep -vE '^\s*(#|$)' "$TEMP_PKG_LIST" | xargs --no-run-if-empty sudo apt-get install -y
-rm "$TEMP_PKG_LIST"
+# Extract non-comment/non-empty lines.
+TARGET_PKGS=$(grep -vE '^\s*(#|$)' "$TEMP_PKG_LIST" | xargs)
+if [ -n "$TARGET_PKGS" ]; then
+  install_packages "$TARGET_PKGS"
+fi
+rm -f "$TEMP_PKG_LIST"
 
-# [Rationale]: Defensive registration of Zsh path.
-if ! grep -q "/usr/bin/zsh" /etc/shells; then
-  echo "/usr/bin/zsh" | sudo tee -a /etc/shells
+# --- 4. Deterministic Shell Management ---
+ZSH_PATH=$(command -v zsh || true)
+
+if [ -z "$ZSH_PATH" ]; then
+  echo "❌ [Error] Zsh was not found after installation phase."
+  exit 1
 fi
 
-# [Architecture]: Deterministic Shell Enforcement
-# [Rationale]: Ensure the default login shell matches the dotfiles' primary runtime.
-# Evaluated defensively to maintain absolute idempotency.
-CURRENT_SHELL=$(grep "^$USER:" /etc/passwd | cut -d: -f7)
-if [ "$CURRENT_SHELL" != "/usr/bin/zsh" ]; then
-  echo "🔄 [Infrastructure] Changing default shell to /usr/bin/zsh..."
-  sudo chsh -s /usr/bin/zsh "$USER"
+if ! grep -q "$ZSH_PATH" /etc/shells; then
+  echo "🔐 [Infrastructure] Registering $ZSH_PATH in /etc/shells..."
+  echo "$ZSH_PATH" | sudo tee -a /etc/shells
 fi
 
-echo "✅ [Infrastructure] Linux base provisioning complete."
+CURRENT_USER_SHELL=$(getent passwd "$USER" | cut -d: -f7)
+if [ "$CURRENT_USER_SHELL" != "$ZSH_PATH" ]; then
+  echo "🔄 [Infrastructure] Transitioning default shell to $ZSH_PATH..."
+  sudo chsh -s "$ZSH_PATH" "$USER"
+else
+  echo "✅ [Infrastructure] Default shell is already deterministic ($ZSH_PATH)."
+fi
+
+echo "✨ [Infrastructure] Linux base provisioning complete ($ID)."
 {{ end -}}
