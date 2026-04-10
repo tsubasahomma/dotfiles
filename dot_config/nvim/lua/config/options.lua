@@ -1,28 +1,35 @@
--- Global leader keys for structured keybindings.
+-- [Naming]: Leader keys must be set before any plugin loads.
 vim.g.mapleader = " "
 vim.g.maplocalleader = "\\"
 
 local opt = vim.opt
 
--- System integration and persistence.
-opt.clipboard = "unnamedplus" -- Synchronize with the system clipboard.
-opt.undofile = true -- Maintain undo history across sessions.
+-- General Preferences
+opt.clipboard = "unnamedplus"
+opt.undofile = true
 opt.undolevels = 10000
+opt.scrolloff = 8
 
--- Indentation and tab behavior (standardized to 2 spaces).
-opt.expandtab = true -- Use spaces instead of tabs.
-opt.shiftwidth = 2 -- Number of spaces for each indentation level.
-opt.tabstop = 2 -- Number of spaces that a <Tab> counts for.
-opt.smartindent = true -- Insert indents automatically where appropriate.
+-- Indentation (Standard: 2 spaces)
+opt.expandtab = true
+opt.shiftwidth = 2
+opt.tabstop = 2
+opt.smartindent = true
 
--- User Interface settings for high-performance visual feedback.
-opt.number = true -- Show absolute line numbers.
-opt.relativenumber = true -- Show relative line numbers for efficient motion.
-opt.cursorline = true -- Highlight the current line.
-opt.scrolloff = 8 -- Keep at least 8 lines above/below the cursor.
-opt.signcolumn = "yes" -- Always show the sign column to prevent layout shifts.
-opt.termguicolors = true -- Enable 24-bit RGB color in the TUI.
+-- UI Improvements
+opt.number = true
+opt.relativenumber = true
+opt.cursorline = true
+opt.signcolumn = "yes"
+opt.termguicolors = true
 
--- Search behavior.
-opt.ignorecase = true -- Ignore case in search patterns.
-opt.smartcase = true -- Override 'ignorecase' if the search pattern contains upper case characters.
+-- Search Logic
+opt.ignorecase = true
+opt.smartcase = true
+
+-- [Strategy]: 2026 Sovereign Spell Enforcement
+-- [Rationale]: Deprecate native 'spell' to eliminate UI noise (red underlines).
+-- Shift to Contextual LSPs (Harper/Typos) for non-destructive grammar/typo audit.
+opt.spell = false
+opt.spelllang = { "en" }
+opt.spelloptions = "camel"

@@ -1,22 +1,22 @@
-# [Rationale]: SSOT for developer tools. Eliminates imperative installation commands.
-# Centralized all core CLI tooling to decouple from OS-level package managers.
+# [Architecture]: Single Source of Truth (SSOT) for Toolchains.
+# [Note]: Neovim is pinned to 'stable' (v0.12.x).
+# Upstream binary relocation defects are mitigated in init.lua.
 [tools]
 node = "lts"
 rust = "latest"
-# [Rationale]: Explicitly use 'aqua' backend to bypass 'vfox' API rate limiting (403) in CI.
-"aqua:neovim/neovim" = "latest"
+neovim = "stable"
 python = "3.13"
 go = "latest"
 uv = "latest"
 
-# Git Infrastructure & TUI
+# Development Infrastructure
 tree-sitter = "latest"
 lazygit = "latest"
 gh = "latest"
 "go:github.com/jesseduffield/lazydocker" = "latest"
 pre-commit = "latest"
 
-# Modern CLI Tools
+# Modern CLI Utilities
 zoxide = "latest"
 eza = "latest"
 bat = "latest"
@@ -27,17 +27,17 @@ fzf = "latest"
 "cargo:git-delta" = "latest"
 "cargo:git-absorb" = "latest"
 
-# Formatting Engines
+# Formatting & Linting Engines
 shfmt = "latest"
 stylua = "latest"
 "npm:prettier" = "latest"
 
-# Neovim Language Providers
+# Neovim Ecosystem Providers
 "npm:neovim" = "latest"
 "npm:@mermaid-js/mermaid-cli" = "latest"
 "npm:repomix" = "latest"
 
-# API & Data Processing
+# Data Processing
 "go:github.com/noahgorstein/jqp" = "latest"
 "go:github.com/mikefarah/yq/v4" = "latest"
 "go:github.com/rs/curlie" = "latest"
@@ -48,5 +48,5 @@ experimental = true
 asdf_compat = false
 
 [tasks.doctor]
-description = "System Health Check & Self-Healing Engine (Phase 4)"
+description = "System Health Check & Self-Healing Engine"
 run = "doctor"
