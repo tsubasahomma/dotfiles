@@ -4,7 +4,11 @@
 
 .gitconfig
 
-# [Architecture]: Legacy Zsh Purge
+# [Architecture]: Legacy Shell Purge (XDG Purism)
 # ZDOTDIR is strictly exported to $XDG_CONFIG_HOME/zsh via ~/.zshenv.
-# Any lingering ~/.zshrc creates severe operational ambiguity and is strictly purged.
+# Any lingering traditional shell configuration creates severe operational ambiguity
+# and is strictly purged to maintain a deterministic system state.
 .zshrc
+.bashrc
+.bash_profile
+.profile

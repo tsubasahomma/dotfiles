@@ -15,6 +15,13 @@ fpath=(
   $fpath
 )
 
+# --- Phase 4: Sovereign Execute (Zero-File Secrets) ---
+# [Architecture]: Memory-Only Secret Resolution via 1Password CLI
+# [Rationale]: Eliminates disk-based credential exposure. Wraps execution context
+# to dynamically resolve op:// URIs stored in environment variables.
+# [Reference]: https://developer.1password.com/docs/cli/best-practices#use-op-run-to-inject-secrets
+alias vrun='op run -- '
+
 # --- Static Tooling Initialization (No Fork) ---
 ZSH_INIT_DIR="$XDG_CACHE_HOME/zsh/init"
 

@@ -1,3 +1,9 @@
+-- [Architecture]: I/O Minimalist Bootstrap & Caching
+-- [Rationale]: Enable native Lua loader immediately to bypass file stat operations.
+if vim.loader then
+  vim.loader.enable()
+end
+
 -- [Architecture]: Infrastructure Layer / Environment Sanitization
 -- [Rationale]: Mitigate Upstream Binary Relocation Defects (v0.11.x - v0.12.x).
 -- Releases often leak build-time CI paths (/runner/work) into 'package.path'.
@@ -38,10 +44,15 @@ local function reconstruct_package_path()
   package.path = table.concat(clean_paths, ";")
 end
 
--- Reconstruct search space before any module resolution (Phase 0).
-reconstruct_package_path()
+-- [Optimization]: Lazy Execution
+-- Reconstruct search space ONLY if operating in the CI environment where poisoning occurs.
+-- Eliminates redundant filesystem traversal during standard interactive use.
+if vim.env.CI == "true" then
+  reconstruct_package_path()
+end
 
 -- [Provider]: Force isolated Python provider to prevent venv collision.
+-- Assigning the variable is inherently lazy and avoids any immediate lookup penalty.
 vim.g.python3_host_prog = "{{ .paths.xdg_data }}/nvim/venv/bin/python"
 
 -- Load LazyVim core.
