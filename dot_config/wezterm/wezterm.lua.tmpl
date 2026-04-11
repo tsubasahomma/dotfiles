@@ -4,7 +4,17 @@ local config = wezterm.config_builder()
 local scheme = wezterm.get_builtin_color_schemes()["Kanagawa Dragon (Gogh)"]
 config.colors = scheme
 
-config.font = wezterm.font("JetBrainsMono Nerd Font")
+-- [Architecture]: Font Fallback Chain
+-- [Rationale]: Ensure deterministic Japanese rendering across OS boundaries without relying on host OS default fallbacks.
+-- [Reference]: https://wezfurlong.org/wezterm/config/lua/wezterm/font_with_fallback.html
+config.font = wezterm.font_with_fallback({
+  "JetBrainsMono Nerd Font",
+  "BIZ UD Gothic",
+  "IBM Plex Sans JP",
+  "Hiragino Sans",
+  "Meiryo",
+})
+
 config.font_size = 14.0
 config.line_height = 1.15
 config.front_end = "WebGpu"
