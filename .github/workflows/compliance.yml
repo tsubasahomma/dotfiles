@@ -3,6 +3,7 @@
 # 1. Unified trigger logic to prevent redundant execution on PR branches.
 # 2. Dual-mapping env resolution to handle tool-specific binary naming conventions.
 # 3. Cryptographic Verification of all bootstrap binaries via SSOT.
+# 4. Hermetic Injection to bypass API Rate Limits (HTTP 403) for Neovim.
 name: compliance
 
 on:
@@ -18,6 +19,8 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+# [Security]: Principle of Least Privilege (GitHub Hardening Standard)
+# [Reference]: https://docs.github.com/en/actions/security-guides/security-hardening-for-github-actions
 permissions:
   contents: read
 
@@ -31,10 +34,11 @@ jobs:
     runs-on: ${{ matrix.os }}
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-      # [Rationale]: Explicitly inject GITHUB_TOKEN to prevent 403 Rate Limit errors
-      # during tool version resolution (especially for vfox-based plugins).
+      # [Rationale]: Provide authentication to all possible tool-internal env vars.
       GITHUB_TOKEN: ${{ github.token }}
+      GH_TOKEN: ${{ github.token }}
       MISE_GITHUB_TOKEN: ${{ github.token }}
+      VFOX_GITHUB_TOKEN: ${{ github.token }}
 
     steps:
       - name: Checkout Repository
@@ -45,20 +49,24 @@ jobs:
 
       - name: Resolve Environment & Mapping
         # [Architecture]: Explicitly map tool-specific naming conventions.
+        # [Reference]: https://github.com/neovim/neovim/releases/tag/v0.12.1
         run: |
-          # 1. Common Path/Cert Setup
           if [ "$RUNNER_OS" = "macOS" ]; then
             CERT_PATH="$(brew --prefix)/etc/ca-certificates/cert.pem"
             CHEZMOI_OS="darwin"; MISE_OS="macos"
+            if [ "$RUNNER_ARCH" = "ARM64" ]; then
+              CHEZMOI_ARCH="arm64"; MISE_ARCH="arm64"
+              NEOVIM_KEY="macos-arm64"; NEOVIM_ASSET="macos-arm64"
+            else
+              CHEZMOI_ARCH="amd64"; MISE_ARCH="x64"
+              NEOVIM_KEY="macos-x86_64"; NEOVIM_ASSET="macos-x86_64"
+            fi
           else
             CERT_PATH="/etc/ssl/certs/ca-certificates.crt"
             CHEZMOI_OS="linux"; MISE_OS="linux"
-          fi
-
-          if [ "$RUNNER_ARCH" = "ARM64" ]; then
-            CHEZMOI_ARCH="arm64"; MISE_ARCH="arm64"
-          else
             CHEZMOI_ARCH="amd64"; MISE_ARCH="x64"
+            # [Fact]: Ubuntu runner architecture is x86_64.
+            NEOVIM_KEY="linux-x86_64"; NEOVIM_ASSET="linux-x86_64"
           fi
 
           mkdir -p "$HOME/.local/bin"
@@ -67,36 +75,55 @@ jobs:
             echo "SSL_CERT_FILE=$CERT_PATH"
             echo "MISE_SSL_CERT_FILE=$CERT_PATH"
             echo "CI=true"
-            echo "MISE_GITHUB_TOKEN=${{ github.token }}"
             echo "CHEZMOI_OS=$CHEZMOI_OS"
             echo "CHEZMOI_ARCH=$CHEZMOI_ARCH"
             echo "MISE_OS=$MISE_OS"
             echo "MISE_ARCH=$MISE_ARCH"
+            echo "NEOVIM_KEY=$NEOVIM_KEY"
+            echo "NEOVIM_ASSET=$NEOVIM_ASSET"
           } >> "$GITHUB_ENV"
 
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
-      - name: Bootstrap Sovereign Tools (Hermetic Verification)
-        # [Rationale]: Pull hashes using specific mapping IDs to avoid 404/Hash mismatches.
+      - name: Bootstrap Sovereign Tools (Hermetic Verification & Injection)
+        # [Rationale]: Extract hashes from SSOT and inject binaries to bypass discovery.
         run: |
-          # Parse .chezmoidata.yaml
+          # 1. Parse .chezmoidata.yaml
           CHEZMOI_VER=$(awk '/^  chezmoi:/{f=1} f && /version:/{print $2; f=0}' .chezmoidata.yaml | tr -d '"')
           CHEZMOI_HASH=$(awk "/^  chezmoi:/{f=1} f && /${CHEZMOI_OS}-${CHEZMOI_ARCH}:/{print \$2; f=0}" .chezmoidata.yaml | tr -d '"')
 
           MISE_VER=$(awk '/^  mise:/{f=1} f && /version:/{print $2; f=0}' .chezmoidata.yaml | tr -d '"')
           MISE_HASH=$(awk "/^  mise:/{f=1} f && /${MISE_OS}-${MISE_ARCH}:/{print \$2; f=0}" .chezmoidata.yaml | tr -d '"')
 
-          # Fetch & Verify chezmoi
+          NEOVIM_VER=$(awk '/^  neovim:/{f=1} f && /version:/{print $2; f=0}' .chezmoidata.yaml | tr -d '"')
+          NEOVIM_HASH=$(awk "/^  neovim:/{f=1} f && /${NEOVIM_KEY}:/{print \$2; f=0}" .chezmoidata.yaml | tr -d '"')
+
+          echo "🔍 [Audit] Expected chezmoi (v${CHEZMOI_VER}): ${CHEZMOI_HASH}"
+          echo "🔍 [Audit] Expected mise (v${MISE_VER}): ${MISE_HASH}"
+          echo "🔍 [Audit] Expected neovim (v${NEOVIM_VER}): ${NEOVIM_HASH}"
+
+          # 2. Fetch & Verify chezmoi
           CHEZMOI_URL="https://github.com/twpayne/chezmoi/releases/download/v${CHEZMOI_VER}/chezmoi_${CHEZMOI_VER}_${CHEZMOI_OS}_${CHEZMOI_ARCH}.tar.gz"
           curl -fsSL "$CHEZMOI_URL" -o /tmp/chezmoi.tar.gz
           echo "${CHEZMOI_HASH}  /tmp/chezmoi.tar.gz" | shasum -a 256 --check -
           tar -xzf /tmp/chezmoi.tar.gz -C "$HOME/.local/bin" chezmoi
 
-          # Fetch & Verify mise
+          # 3. Fetch & Verify mise
           MISE_URL="https://github.com/jdx/mise/releases/download/v${MISE_VER}/mise-v${MISE_VER}-${MISE_OS}-${MISE_ARCH}"
           curl -fsSL "$MISE_URL" -o "$HOME/.local/bin/mise"
           echo "${MISE_HASH}  $HOME/.local/bin/mise" | shasum -a 256 --check -
           chmod +x "$HOME/.local/bin/mise"
+
+          # 4. Fetch, Verify & Inject Neovim (The 403 API Bypass)
+          NEOVIM_URL="https://github.com/neovim/neovim/releases/download/v${NEOVIM_VER}/nvim-${NEOVIM_ASSET}.tar.gz"
+          curl -fsSL "$NEOVIM_URL" -o /tmp/nvim.tar.gz
+          echo "${NEOVIM_HASH}  /tmp/nvim.tar.gz" | shasum -a 256 --check -
+
+          # Inject directly into mise's expected path structure
+          MISE_NVIM_DIR="$HOME/.local/share/mise/installs/neovim/${NEOVIM_VER}"
+          mkdir -p "$MISE_NVIM_DIR"
+          tar -xzf /tmp/nvim.tar.gz -C "$MISE_NVIM_DIR" --strip-components=1
+          echo "✅ [Injection] Neovim hermetically placed at $MISE_NVIM_DIR"
 
       - name: Provisioning (Atomic Apply)
         run: |

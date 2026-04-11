@@ -1,6 +1,7 @@
 #!/bin/zsh
 # [chezmoi-script]: Source: '.chezmoiscripts/run_...' vs Dry-run: '.chezmoiscripts/...'
 # [Rationale]: Invokes runtimes directly via the mise absolute binary to guarantee execution scope.
+# [Reference]: https://www.chezmoi.io/reference/special-directories/chezmoiscripts/
 # dot_config/mise/config.toml.tmpl hash: {{ include "dot_config/mise/config.toml.tmpl" | sha256sum }}
 
 set -euo pipefail
@@ -16,6 +17,7 @@ if [[ ! -x "$MISE_BIN" ]]; then
 fi
 
 echo "📦 [Runtime Phase 1] Installing/Updating CLI tools via static mise binary..."
+# [Rationale]: This step will utilize pre-injected binaries in CI to bypass discovery.
 "$MISE_BIN" install
 
 NVIM_VENV="{{ .paths.xdg_data }}/nvim/venv"
@@ -28,8 +30,7 @@ fi
 
 if [ ! -d "$NVIM_VENV" ]; then
   # [Rationale]: Use the target interpreter to resolve its own absolute path.
-  # This is the single most deterministic method to avoid shim-mismatches or
-  # metadata lookup failures in GHA's clean environment.
+  # This is the single most deterministic method to avoid shim-mismatches.
   MISE_PYTHON_BIN=$("$MISE_BIN" exec python -- python -c "import sys; print(sys.executable)")
   "$MISE_BIN" exec uv -- uv venv "$NVIM_VENV" --python "$MISE_PYTHON_BIN"
 fi

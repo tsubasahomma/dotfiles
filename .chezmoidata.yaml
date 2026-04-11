@@ -65,3 +65,9 @@ tool_integrity:
       darwin-arm64: "814fd391b755046d9dbe17c1a7e93d7dd725b2842bf9663c08645771f4a92cf1"
       darwin-amd64: "36b9b41dd88485afd30c7940398edef3b4757c19e36689f9324012391ea7dbff"
       linux-amd64: "3bd054238e2a95548eee62a6c5b4d9d1352f2c6c69c6d32f3d1964878398f91a"
+  neovim:
+    version: "0.12.1"
+    hashes:
+      macos-arm64: "b77e01c5421ac1bac593eed5c2ea1b950439306dd4c32371ac2473792da9a9d5"
+      macos-x86_64: "e59a5eafcdf824e2bf6a738e75f8f62ba4ff1b7f1c7daaec2d134aa46737907c"
+      linux-x86_64: "ab757a1fd9ad307d53d2df4045698906a7ca3993d92260dd8fe49108712d57d0"

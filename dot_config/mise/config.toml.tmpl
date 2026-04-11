@@ -1,10 +1,10 @@
 # [Architecture]: Single Source of Truth (SSOT) for Toolchains.
-# [Note]: Neovim is pinned to 'stable' (v0.12.x).
-# Upstream binary relocation defects are mitigated in init.lua.
+# [Note]: Neovim is deterministically pinned to '0.12.1' to physically bypass
+# non-deterministic API discovery and mitigate GitHub API Rate Limits (HTTP 403).
 [tools]
 node = "lts"
 rust = "latest"
-neovim = "stable"
+neovim = "0.12.1"
 python = "3.13"
 go = "latest"
 uv = "latest"
