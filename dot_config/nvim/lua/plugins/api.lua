@@ -1,5 +1,5 @@
 -- API Client and Data Operations.
--- Transforms Neovim into a high-performance HTTP client for GTM Ops workflows.
+-- Transforms Neovim into a high-performance HTTP client for professional workflows.
 return {
   {
     "mistweaverco/kulala.nvim",

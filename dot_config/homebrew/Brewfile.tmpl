@@ -1,31 +1,23 @@
-# [Rationale]: Declarative infrastructure for macOS GTM Ops workstation (2026).
+# [Rationale]: Declarative infrastructure for macOS workstation (2026).
 # Homebrew is strictly limited to OS-level system dependencies and GUI Casks.
-# Pure CLI tools have been migrated to the hermetic 'mise' toolchain.
+# [Reference]: https://www.chezmoi.io/user-guide/advanced/install-packages-declaratively/
 
-# System Cryptography & Certificates
-# [Rationale]: Pre-condition the environment to ensure modern crypto standards for tools like mise.
-# [LLM Context]: This is critical for resolving ECDSA public key parsing errors in headless CI runners.
-brew "ca-certificates"
-brew "openssl@3"
-
-# Core System & Network
-brew "git"
-brew "socat"
-brew "jq"
+# --- Common & System Cryptography ---
+{{ range .packages.common -}}
+brew {{ . | quote }}
+{{ end -}}
+{{ range .packages.darwin.brews -}}
+brew {{ . | quote }}
+{{ end }}
 
 {{- if not (env "CI") }}
-# Media & Document Processing
-# [Rationale]: These heavy binaries often fail post-install (shared-mime-info) in headless CI.
-# They are excluded from the idempotency proof to ensure pipeline stability.
-brew "imagemagick"
-brew "ghostscript"
-brew "tectonic"
+# --- Media & Document Processing (Non-CI) ---
+{{ range .packages.darwin.media -}}
+brew {{ . | quote }}
+{{ end -}}
 {{- end }}
 
-# Casks (GUI Apps & Fonts)
-cask "1password-cli"
-cask "font-jetbrains-mono-nerd-font"
-
-# [Rationale]: WezTerm Stable is too dated for modern Kitty graphics extensions.
-# wezterm@nightly provides the necessary protocol implementation for snacks.nvim.
-cask "wezterm@nightly"
+# --- Casks (GUI Apps & Fonts) ---
+{{ range .packages.darwin.casks -}}
+cask {{ . | quote }}
+{{ end -}}

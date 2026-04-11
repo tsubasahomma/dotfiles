@@ -1,4 +1,5 @@
-{{- /* [Rationale]: Strict defensive check for nested osRelease key to prevent 'missingkey=error' on Darwin. */ -}}
+{{- /* [Architecture]: Declarative Linux Package List */ -}}
+{{- /* [Reference]: https://www.chezmoi.io/user-guide/advanced/install-packages-declaratively/ */ -}}
 {{- $os_id := "" -}}
 {{- if (hasKey .chezmoi "osRelease") -}}
   {{- if (hasKey .chezmoi.osRelease "id") -}}
@@ -6,27 +7,17 @@
   {{- end -}}
 {{- end -}}
 
-# [Architecture]: Declarative package list for Linux workstation (2026).
-# [Rationale]: This list is distribution-agnostic. Package names are resolved
-# where possible, but may require template logic for significant deviations.
+# [Architecture]: Declarative package list for Linux workstation.
+# [Rationale]: Centrally managed via .chezmoidata.yaml
 
-# Core Infrastructure
-ca-certificates
-git
-zsh
-jq
+# --- Common Infrastructure ---
+{{ range .packages.common -}}
+{{ . }}
+{{ end }}
 
-# Build & Runtime Essentials (Required for Mise toolchain builds)
-{{- if or (eq $os_id "ubuntu") (eq $os_id "debian") }}
-build-essential
-libssl-dev
-{{- else if or (eq $os_id "fedora") (eq $os_id "rhel") }}
-gcc-c++
-openssl-devel
-{{- else if eq $os_id "arch" }}
-base-devel
-openssl
+# --- Build & Runtime Essentials (OS Specific) ---
+{{- if hasKey .packages.linux $os_id }}
+{{- range (index .packages.linux $os_id) }}
+{{ . }}
 {{- end }}
-
-# Identity & Security Bridge
-socat
+{{- end }}

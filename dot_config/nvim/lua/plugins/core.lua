@@ -1,5 +1,5 @@
 -- Core plugin specifications for UI consistency and theme integration.
--- [Rationale]: Finalized for 2026 workflow.
+-- [Rationale]: Finalized for 2026 professional environment.
 -- Ensures deterministic state for inline image rendering and treesitter parsers.
 return {
   {
@@ -33,7 +33,7 @@ return {
   {
     "nvim-treesitter/nvim-treesitter",
     opts = function(_, opts)
-      -- [Rationale]: Ensure all GTM Ops-relevant formats are supported.
+      -- [Rationale]: Ensure all professional data and engineering formats are supported.
       if type(opts.ensure_installed) == "table" then
         vim.list_extend(opts.ensure_installed, {
           "css",

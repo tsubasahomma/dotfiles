@@ -1,7 +1,7 @@
 # =============================================================================
-# [Architecture]: Sovereign Data | Phase 18 Purged Edition
-# [Rationale]: Maintain integrity anchors for L0.5 Bootstrap.
-# [Reference]: https://www.chezmoi.io/reference/special-directories/chezmoidata/
+# [Architecture]: Sovereign Data | Phase 18 Normalization Edition
+# [Rationale]: Declarative package management and identity anchors.
+# [Reference]: https://www.chezmoi.io/reference/special-files/chezmoidata-format/
 # =============================================================================
 ssh_keys:
   discovery_tag: "dotfiles-ssh-key"
@@ -10,6 +10,42 @@ versions:
   python: "3.13"
   node: "lts"
   op: "2.33.1"
+
+# [Architecture]: Declarative Package Schema (Normalization Milestone A)
+packages:
+  common:
+    - ca-certificates
+    - git
+    - zsh
+    - jq
+    - socat
+  linux:
+    ubuntu:
+      - build-essential
+      - libssl-dev
+    debian:
+      - build-essential
+      - libssl-dev
+    fedora:
+      - gcc-c++
+      - openssl-devel
+    rhel:
+      - gcc-c++
+      - openssl-devel
+    arch:
+      - base-devel
+      - openssl
+  darwin:
+    brews:
+      - openssl@3
+    casks:
+      - 1password-cli
+      - font-jetbrains-mono-nerd-font
+      - wezterm@nightly
+    media:
+      - imagemagick
+      - ghostscript
+      - tectonic
 
 tool_integrity:
   op:
