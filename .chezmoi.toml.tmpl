@@ -88,6 +88,7 @@
 {{- $link_id := "" -}}
 {{- $key_type := "ed25519" -}}
 {{- $vault_id := "" -}}
+{{- $ssh_keys_hash := "none" -}}
 
 {{- if $is_ci -}}
     {{- $gh_user = "dotfiles-ci-bot" -}}
@@ -128,6 +129,10 @@
     {{- if eq $gh_user "" -}}
         {{- fail "\n❌ [Fatal] Sovereign Identity Profile ('dotfiles-github-profile') is incomplete.\n" -}}
     {{- end -}}
+
+    {{- /* [Architecture]: Key Rotation Detection. Hash the current state of SSH keys to trigger exports dynamically. */ -}}
+    {{- $ssh_keys_json := output "sh" "-c" (printf "%s item list --tags dotfiles-ssh-key --format json 2>/dev/null || echo '[]'" $op_bin) -}}
+    {{- $ssh_keys_hash = sha256sum $ssh_keys_json -}}
 {{- end -}}
 
 # --- Foundation Schema ---
@@ -144,6 +149,7 @@
     email = {{ $email | quote }}
     link_id = {{ $link_id | quote }}
 
+    ssh_keys_hash = {{ $ssh_keys_hash | quote }}
     ssh_key_name = {{ printf "id_%s_%s_%s.pub" $key_type $vault_id $link_id | quote }}
     gh_root = "src/github.com/{{ $gh_user }}"
 

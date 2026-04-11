@@ -4,6 +4,7 @@
 # [Rationale]: Resolves secrets across ALL signed-in 1Password accounts.
 #              Complexity: O(2A) where A is the number of accounts, independent of item count N.
 # [Reference]: https://developer.1password.com/docs/cli/reference/commands/inject
+# [Trigger]: 1Password Key Rotation Hash: {{ .ssh_keys_hash }}
 # =============================================================================
 
 set -euo pipefail

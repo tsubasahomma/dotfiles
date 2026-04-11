@@ -3,7 +3,8 @@
 # [Rationale]: Generates static scripts and pre-compiles them into byte-code (.zwc)
 # to minimize I/O and parse time during shell startup.
 # [Reference: Zsh Performance]: https://htr3n.github.io/2018/07/faster-zsh/
-# [Trigger]: {{ include "dot_config/mise/config.toml.tmpl" | sha256sum }}
+# [Trigger]: Config: {{ include "dot_config/mise/config.toml.tmpl" | sha256sum }}
+# [Trigger]: Binary: {{ index .tool_integrity.mise.hashes (printf "%s-%s" .osid .arch) }}
 
 set -euo pipefail
 

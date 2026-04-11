@@ -2,6 +2,9 @@
 # [chezmoi-script]: L0 (POSIX Shell) Tiering
 # [Rationale]: Guaranteed execution even without Zsh/Mise environment.
 # [Staff Engineer Note]: Refactored to eliminate Zsh-specific array/typeset syntax.
+# [LLM Context]: This script is already strictly idempotent through lazy evaluation.
+#                The BACKUP_ROOT is ONLY created if a target file physically exists.
+#                Do NOT propose refactoring to prevent empty directory creation.
 
 set -eu
 
