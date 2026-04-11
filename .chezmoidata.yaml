@@ -54,8 +54,14 @@ tool_integrity:
       darwin-arm64: "8106127624bf55f0bf5ae6f8e2c56398e01db75d64c3088eface33885c854351"
       linux-amd64: "0fc50cb22d791b5ee5e1421d97e96595fd61ca56ae92271bd1b28bb884971726"
   mise:
-    version: "2026.4.6"
+    version: "2026.4.8"
     hashes:
-      darwin-arm64: "07db6cdaeb51b8aee65ff1f20b673f6859564b1824446e72f8f9b561d042c502"
-      darwin-amd64: "9f5e9b5992cb88b99232f037c469edd3b8402ca9010e99b92f4c2252aa24b235"
-      linux-amd64: "80aa723d888ad929c50d2757b5cdaf532ae9b414744481d78aea58c3225ee5dd"
+      macos-arm64: "6985bff72a992ac53cbc57df9bb464ed96961d553af8b25e10cb69bda53321d3"
+      macos-x64: "3fa93cead7d3b667b1fcafbef1d6768a12f8b601919568a5ef7f614068c5e08f"
+      linux-x64: "f056721c85fc3c5f6ed82d3b2142407a1bde84598a3b917e011b2c554a8c7b3b"
+  chezmoi:
+    version: "2.70.1"
+    hashes:
+      darwin-arm64: "814fd391b755046d9dbe17c1a7e93d7dd725b2842bf9663c08645771f4a92cf1"
+      darwin-amd64: "36b9b41dd88485afd30c7940398edef3b4757c19e36689f9324012391ea7dbff"
+      linux-amd64: "3bd054238e2a95548eee62a6c5b4d9d1352f2c6c69c6d32f3d1964878398f91a"

@@ -1,0 +1,115 @@
+# [Architecture]: Sovereign Infrastructure Validation Pipeline (2026 SOTA)
+# [Rationale]:
+# 1. Unified trigger logic to prevent redundant execution on PR branches.
+# 2. Dual-mapping env resolution to handle tool-specific binary naming conventions.
+# 3. Cryptographic Verification of all bootstrap binaries via SSOT.
+name: compliance
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+  schedule:
+    - cron: "0 0 * * 0"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  convergence:
+    name: Convergence & Idempotency Proof
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, macos-14]
+    runs-on: ${{ matrix.os }}
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+    steps:
+      - name: Checkout Repository
+        # [Security]: Immutable Action using Full Commit SHA for v6.0.2
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          fetch-depth: 0
+
+      - name: Resolve Environment & Mapping
+        # [Architecture]: Explicitly map tool-specific naming conventions.
+        run: |
+          # 1. Common Path/Cert Setup
+          if [ "$RUNNER_OS" = "macOS" ]; then
+            CERT_PATH="$(brew --prefix)/etc/ca-certificates/cert.pem"
+            CHEZMOI_OS="darwin"; MISE_OS="macos"
+          else
+            CERT_PATH="/etc/ssl/certs/ca-certificates.crt"
+            CHEZMOI_OS="linux"; MISE_OS="linux"
+          fi
+
+          if [ "$RUNNER_ARCH" = "ARM64" ]; then
+            CHEZMOI_ARCH="arm64"; MISE_ARCH="arm64"
+          else
+            CHEZMOI_ARCH="amd64"; MISE_ARCH="x64"
+          fi
+
+          mkdir -p "$HOME/.local/bin"
+
+          {
+            echo "SSL_CERT_FILE=$CERT_PATH"
+            echo "MISE_SSL_CERT_FILE=$CERT_PATH"
+            echo "CI=true"
+            echo "MISE_GITHUB_TOKEN=${{ github.token }}"
+            echo "CHEZMOI_OS=$CHEZMOI_OS"
+            echo "CHEZMOI_ARCH=$CHEZMOI_ARCH"
+            echo "MISE_OS=$MISE_OS"
+            echo "MISE_ARCH=$MISE_ARCH"
+          } >> "$GITHUB_ENV"
+
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Bootstrap Sovereign Tools (Hermetic Verification)
+        # [Rationale]: Pull hashes using specific mapping IDs to avoid 404/Hash mismatches.
+        run: |
+          # Parse .chezmoidata.yaml
+          CHEZMOI_VER=$(awk '/^  chezmoi:/{f=1} f && /version:/{print $2; f=0}' .chezmoidata.yaml | tr -d '"')
+          CHEZMOI_HASH=$(awk "/^  chezmoi:/{f=1} f && /${CHEZMOI_OS}-${CHEZMOI_ARCH}:/{print \$2; f=0}" .chezmoidata.yaml | tr -d '"')
+
+          MISE_VER=$(awk '/^  mise:/{f=1} f && /version:/{print $2; f=0}' .chezmoidata.yaml | tr -d '"')
+          MISE_HASH=$(awk "/^  mise:/{f=1} f && /${MISE_OS}-${MISE_ARCH}:/{print \$2; f=0}" .chezmoidata.yaml | tr -d '"')
+
+          # Fetch & Verify chezmoi
+          CHEZMOI_URL="https://github.com/twpayne/chezmoi/releases/download/v${CHEZMOI_VER}/chezmoi_${CHEZMOI_VER}_${CHEZMOI_OS}_${CHEZMOI_ARCH}.tar.gz"
+          curl -fsSL "$CHEZMOI_URL" -o /tmp/chezmoi.tar.gz
+          echo "${CHEZMOI_HASH}  /tmp/chezmoi.tar.gz" | shasum -a 256 --check -
+          tar -xzf /tmp/chezmoi.tar.gz -C "$HOME/.local/bin" chezmoi
+
+          # Fetch & Verify mise
+          MISE_URL="https://github.com/jdx/mise/releases/download/v${MISE_VER}/mise-v${MISE_VER}-${MISE_OS}-${MISE_ARCH}"
+          curl -fsSL "$MISE_URL" -o "$HOME/.local/bin/mise"
+          echo "${MISE_HASH}  $HOME/.local/bin/mise" | shasum -a 256 --check -
+          chmod +x "$HOME/.local/bin/mise"
+
+      - name: Provisioning (Atomic Apply)
+        run: |
+          chezmoi init --source="$GITHUB_WORKSPACE" --apply
+
+      - name: Auditor Mode - Unmanaged Files
+        run: |
+          chezmoi unmanaged || true
+
+      - name: Idempotency Proof (Convergence Validation)
+        run: |
+          if ! chezmoi verify --source="$GITHUB_WORKSPACE"; then
+            echo "❌ [Idempotency Failure] Detected drift."
+            chezmoi diff --source="$GITHUB_WORKSPACE"
+            exit 1
+          fi
+
+      - name: Final Health Check (Doctor)
+        run: |
+          doctor
