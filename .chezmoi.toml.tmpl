@@ -63,7 +63,7 @@
     {{- $arch_op := "amd64" -}}{{ if eq .chezmoi.arch "arm64" }}{{ $arch_op = "arm64" }}{{ end -}}
     {{- $op_url := printf "https://cache.agilebits.com/dist/1P/op2/pkg/v%s/op_%s_%s_v%s.zip" $op_version $os_op $arch_op $op_version -}}
 
-    {{- $bootstrap_cmd := printf "mkdir -p '%s' && curl -fsSL '%s' -o /tmp/op.zip && ACTUAL=$(sha256sum /tmp/op.zip 2>/dev/null | cut -d' ' -f1 || shasum -a 256 /tmp/op.zip | cut -d' ' -f1) && [ \"$ACTUAL\" = '%s' ] && { command -v unzip >/dev/null 2>&1 && unzip -q -o /tmp/op.zip -d /tmp/op_ext || python3 -m zipfile -e /tmp/op.zip /tmp/op_ext; } && mv /tmp/op_ext/op '%s/op' && chmod +x '%s/op' && rm -rf /tmp/op.zip /tmp/op_ext" $local_bin $op_url $op_hash $local_bin $local_bin -}}
+    {{- $bootstrap_cmd := printf "mkdir -p '%s' && curl -fsSL '%s' -o /tmp/op.zip && ACTUAL=$(sha256sum /tmp/op.zip 2>/dev/null | cut -d' ' -f1 || shasum -a 256 /tmp/op.zip | cut -d' ' -f1) && [ \"$ACTUAL\" = '%s' ] && { command -v unzip >/dev/null 2>&1 && unzip -q -o /tmp/op_ext || python3 -m zipfile -e /tmp/op.zip /tmp/op_ext; } && mv /tmp/op_ext/op '%s/op' && chmod +x '%s/op' && rm -rf /tmp/op.zip /tmp/op_ext" $local_bin $op_url $op_hash $local_bin $local_bin -}}
     {{- $bootstrap_res := output "sh" "-c" $bootstrap_cmd -}}
 
     {{- $op_bin = joinPath $local_bin "op" -}}
@@ -139,8 +139,17 @@
         {{- fail "\n❌ [Fatal] Sovereign Identity Profile ('dotfiles-github-profile') is incomplete.\n" -}}
     {{- end -}}
 
-    {{- $ssh_keys_json := output "sh" "-c" (printf "'%s' item list --tags dotfiles-ssh-key --format json 2>/dev/null || echo '[]'" $op_bin) -}}
-    {{- $ssh_keys_hash = sha256sum $ssh_keys_json -}}
+    {{- /* [Architecture]: Multi-Account Identity Hash Collection (O(A) Time) */ -}}
+    {{- /* [Rationale]: Force execution of run_onchange scripts if keys drift across ANY linked 1Password account. */ -}}
+    {{- $accounts_json := output "sh" "-c" (printf "'%s' account list --format json 2>/dev/null || echo '[]'" $op_bin) -}}
+    {{- $accounts := fromJson $accounts_json -}}
+    {{- $keys_collector := list -}}
+    {{- range $accounts -}}
+        {{- $cmd := printf "'%s' item list --tags dotfiles-ssh-key --account '%s' --format json 2>/dev/null || echo '[]'" $op_bin .url -}}
+        {{- $account_keys := output "sh" "-c" $cmd | fromJson -}}
+        {{- $keys_collector = concat $keys_collector $account_keys -}}
+    {{- end -}}
+    {{- $ssh_keys_hash = sha256sum (toJson $keys_collector) -}}
 {{- end -}}
 
 # --- Foundation Schema ---
