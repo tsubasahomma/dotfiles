@@ -1,38 +1,33 @@
 #!/bin/sh
 # [chezmoi-script]: L0 (POSIX Shell) Tiering
 # [Architecture]: Validation Phase synchronized with VADKD v5.1 Protocol.
-# [Rationale]: Bootstrap logic has been elevated to the L0.5 Template Rendering engine.
-# This script is now purely responsible for external network trust anchors.
+# [Rationale]: Asserts critical networking paths before any transport occurs.
+# [Reference]: https://www.chezmoi.io/user-guide/password-managers/1password/
 
 set -eu
 
-echo "🔍 [Network] Pre-caching GitHub known_hosts (Phase 00 Trust Anchor)..."
+echo "🔍 [Network] Pre-caching GitHub known_hosts..."
 ssh_state_dir="{{ .paths.xdg_state }}/ssh"
-mkdir -p "$ssh_state_dir"
+
+# [Rationale]: SSH ControlPath cannot auto-create directories. Mandatory 700 for security.
+mkdir -p "$ssh_state_dir/sockets"
+chmod 700 "$ssh_state_dir" "$ssh_state_dir/sockets"
 
 if ! ssh-keygen -F github.com -f "$ssh_state_dir/known_hosts" > /dev/null 2>&1; then
   ssh-keyscan -H github.com >> "$ssh_state_dir/known_hosts" 2> /dev/null
-  echo "✅ [Network] GitHub host key cached to XDG_STATE_HOME."
-else
-  echo "✅ [Network] GitHub host key is already present."
 fi
 
-# [Architecture]: Deterministic Bypass for CI and WSL Escape Hatch
-if [ "${SKIP_OP_VALIDATION:-}" = "true" ] || [ "${CI:-}" = "true" ]; then
-  echo "⚠️  [Validation] Skipping 1Password session check (CI/SKIP mode)."
+# [Architecture]: Deterministic Bypass for CI
+if [ "${CI:-}" = "true" ]; then
   exit 0
 fi
 
 {{ if eq .gh_user "wsl-bootstrap" -}}
-echo "⚠️  [Validation] WSL Bootstrap Mode: Bypassing 1Password session check."
 exit 0
 {{- end }}
 
-# Canonical Session Check
 echo "🔍 [Validation] Verifying 1Password CLI session..."
 if ! "{{ .paths.op }}" account get > /dev/null 2>&1; then
-  echo "❌ [Error] 1Password session is locked or inactive."
+  echo "❌ [Error] 1Password session is locked."
   exit 1
 fi
-
-echo "✅ [Validation] 1Password session verified."

@@ -1,0 +1,30 @@
+#!/bin/zsh
+# [Architecture]: Sovereign Assertion Engine (Idempotent V4)
+# [Rationale]: Uses 'stat' triggers to achieve Zero-Diff during stable states,
+# while forcing re-convergence only when physical artifacts disappear.
+# [Reference]: https://www.chezmoi.io/reference/templates/functions/stat/
+
+# --- Sovereign Drift Triggers ---
+# [Rationale]: These comments change the script's hash if the file exists/is deleted.
+# macOS Trigger: {{ if stat "/Applications/WezTerm.app" }}present{{ else }}absent{{ end }}
+
+set -euo pipefail
+
+{{ if eq .osid "darwin" -}}
+echo "🔍 [Infrastructure] Auditing macOS GUI artifacts..."
+if [[ ! -d "/Applications/WezTerm.app" ]]; then
+  echo "⚠️  [Drift] WezTerm.app is missing. Forcing recovery..."
+  brew install --cask --force wezterm@nightly
+fi
+
+{{ else if .is_wsl -}}
+echo "🔍 [Infrastructure] Auditing Windows-side binaries..."
+# [Rationale]: Physical check on the Windows Host.
+WEZTERM_WIN_PATH=$(powershell.exe -NoProfile -NonInteractive -Command "[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; \"\$env:ProgramFiles\WezTerm\wezterm.exe\"" | tr -d '\r')
+if [[ ! -f "$(wslpath -u "$WEZTERM_WIN_PATH")" ]]; then
+  echo "⚠️  [Drift] WezTerm missing on Windows. Forcing recovery..."
+  winget.exe install --id "wez.wezterm.nightly" --silent --ignore-security-hash
+fi
+{{- end }}
+
+echo "✅ [Infrastructure] Application assertion complete."

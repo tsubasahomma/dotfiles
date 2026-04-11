@@ -1,12 +1,10 @@
+{{- /* [Reference]: https://www.chezmoi.io/reference/special-files/chezmoiexternal-format/ */ -}}
 # =============================================================================
 # [Architecture]: Legacy Purge | Phase 18 Deterministic Edition
 # [Rationale]: Elimination of redundant binary management.
-# [Reference]: https://www.chezmoi.io/reference/special-files/chezmoiexternal-format/
 # =============================================================================
 
 {{- /* 1. Platform Normalization */ -}}
-{{- $hash_key := printf "%s-%s" .chezmoi.os .chezmoi.arch -}}
-
 {{- /* Tool-specific OS identifiers */ -}}
 {{- $os_std := "linux" -}}
 {{- if eq .chezmoi.os "darwin" }}{{ $os_std = "macos" }}{{ end -}}
@@ -19,11 +17,10 @@
 {{- $mise_arch := "x64" -}}
 {{- if eq .chezmoi.arch "arm64" }}{{ $mise_arch = "arm64" }}{{ end -}}
 
-{{- /* 2. Resource Definitions */ -}}
+{{- /* [Rationale]: Alignment with .chezmoidata.yaml schema (macos vs darwin) */ -}}
+{{- $hash_key := printf "%s-%s" $os_std $mise_arch -}}
 
-{{- /* [Rationale]: op and jq have been purged from this layer.
-       op is now handled by L0.5 Bootstrap in .chezmoi.toml.tmpl.
-       jq is replaced by built-in template functions. */ -}}
+{{- /* 2. Resource Definitions */ -}}
 
 {{- /* mise bootstrap binary */ -}}
 {{- $mise_hash := index .tool_integrity.mise.hashes $hash_key -}}
