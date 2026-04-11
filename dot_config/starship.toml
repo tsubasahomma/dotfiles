@@ -1,7 +1,10 @@
 # Starship configuration optimized for large monorepos and M1 Max performance.
 
-# De facto standard timeout for professional monorepo environments (1000ms).
-command_timeout = 1000
+# [Architecture]: Cross-OS I/O Optimization
+# [Rationale]: Increased timeouts to mitigate scanning latency across WSL2 boundaries
+# and support massive monorepo structures without throwing non-actionable warnings.
+command_timeout = 3000
+scan_timeout = 100
 
 format = """
 $directory\

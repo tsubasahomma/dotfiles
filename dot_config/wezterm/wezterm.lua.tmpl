@@ -1,12 +1,21 @@
+{{- /* [Reference]: https://wezfurlong.org/wezterm/config/lua/wezterm/font_with_fallback.html */ -}}
+{{- /* [Reference]: https://wezfurlong.org/wezterm/multiplexing.html */ -}}
+{{- /* [Reference]: https://wezfurlong.org/wezterm/config/lua/config/audible_bell.html */ -}}
+
 local wezterm = require("wezterm")
+local act = wezterm.action
 local config = wezterm.config_builder()
+
+-- [Architecture]: Infrastructure Sovereignty
+-- [Rationale]: Disable non-deterministic external calls and enforce strict XDG/Package Manager boundaries.
+config.check_for_updates = false
+config.audible_bell = "Disabled"
+config.scrollback_lines = 100000
 
 local scheme = wezterm.get_builtin_color_schemes()["Kanagawa Dragon (Gogh)"]
 config.colors = scheme
 
 -- [Architecture]: Font Fallback Chain
--- [Rationale]: Ensure deterministic Japanese rendering across OS boundaries without relying on host OS default fallbacks.
--- [Reference]: https://wezfurlong.org/wezterm/config/lua/wezterm/font_with_fallback.html
 config.font = wezterm.font_with_fallback({
   "JetBrainsMono Nerd Font",
   "BIZ UD Gothic",
@@ -19,22 +28,78 @@ config.font_size = 14.0
 config.line_height = 1.15
 config.front_end = "WebGpu"
 config.window_background_opacity = 1.0
-config.window_padding = {
-  left = 12,
-  right = 12,
-  top = 10,
-  bottom = 8,
-}
+config.window_padding = { left = 12, right = 12, top = 10, bottom = 8 }
 config.hide_tab_bar_if_only_one_tab = true
 config.bold_brightens_ansi_colors = true
 
--- [Architecture]: WSL Integration for Windows Hosts
--- [Rationale]: WezTerm on Windows defaults to the native host shell (cmd.exe).
--- We explicitly set the default domain to WSL to ensure the 'Eternal Platform'
--- (Zsh environment) is the entry point.
--- The distribution name 'Ubuntu' is confirmed via host APT logs (jammy).
+-- [Architecture]: High-Fidelity UI & Safety
+-- [Rationale]: Mitigate accidental destructive operations and visualize focus.
+config.window_close_confirmation = "AlwaysPrompt"
+config.inactive_pane_hsb = {
+  saturation = 0.9,
+  brightness = 0.5,
+}
+
+-- [Architecture]: Operational Determinism
+-- [Rationale]: Prevent geometric layout collapse during dynamic font resizing in multiplexer environments.
+config.adjust_window_size_when_changing_font_size = false
+
+-- [Architecture]: SRE Text Selection Engine
+-- [Rationale]: Define boundaries for double-click selection to natively capture full URLs, UUIDs, and paths.
+-- Excludes commas and brackets to prevent capturing trailing punctuation.
+config.selection_word_boundary = " \t\n{}[]()\"'`,"
+
+-- [Architecture]: Cross-OS Multiplexer Engine
+-- [Rationale]: Force connection to persistent daemon rather than spawning local ephemeral trees.
 if wezterm.target_triple:find("windows") then
+  -- [Target: Windows] Use highly optimized native WSL multiplexer domain.
   config.default_domain = "WSL:Ubuntu"
+else
+  -- [Target: macOS/Linux] Establish isolated Unix domain for persistence.
+  config.unix_domains = {
+    {
+      name = "unix",
+    },
+  }
+  config.default_gui_startup_args = { "connect", "unix" }
 end
+
+-- ============================================================================
+-- [Architecture]: Keyboard Driven Multiplexer (tmux compatibility layer)
+-- ============================================================================
+config.leader = { key = "b", mods = "CTRL", timeout_milliseconds = 1000 }
+config.keys = {
+  -- [Action]: Session Detach (Survive GUI death)
+  {
+    key = "d",
+    mods = "LEADER",
+    action = act.DetachDomain("CurrentPaneDomain"),
+  },
+  -- [Action]: Pane Management (Neovim Standard)
+  {
+    key = "s",
+    mods = "LEADER",
+    action = act.SplitVertical({ domain = "CurrentPaneDomain" }),
+  },
+  {
+    key = "v",
+    mods = "LEADER",
+    action = act.SplitHorizontal({ domain = "CurrentPaneDomain" }),
+  },
+  {
+    key = "x",
+    mods = "LEADER",
+    action = act.CloseCurrentPane({ confirm = true }),
+  },
+  -- [Action]: Pane Navigation (Vim Standard)
+  { key = "h", mods = "LEADER", action = act.ActivatePaneDirection("Left") },
+  { key = "j", mods = "LEADER", action = act.ActivatePaneDirection("Down") },
+  { key = "k", mods = "LEADER", action = act.ActivatePaneDirection("Up") },
+  { key = "l", mods = "LEADER", action = act.ActivatePaneDirection("Right") },
+  -- [Action]: Tab Management
+  { key = "c", mods = "LEADER", action = act.SpawnTab("CurrentPaneDomain") },
+  { key = "n", mods = "LEADER", action = act.ActivateTabRelative(1) },
+  { key = "p", mods = "LEADER", action = act.ActivateTabRelative(-1) },
+}
 
 return config

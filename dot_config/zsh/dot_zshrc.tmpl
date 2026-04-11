@@ -71,7 +71,24 @@ _enforce_sovereignty() {
   # Force it to the absolute front
   path=("$HOME/.local/bin" $path)
 }
+
+# [Architecture]: OSC 7 Shell Integration
+# [Rationale]: Broadcast CWD to terminal emulator for seamless pane/tab inheritance.
+# Necessary for multiplexing domains where the shell's state isn't implicitly shared.
+_osc7_cwd() {
+  printf "\033]7;file://%s%s\a" "${HOST}" "${PWD}"
+}
+
 add-zsh-hook precmd _enforce_sovereignty
+add-zsh-hook precmd _osc7_cwd
+
+{{ if .is_wsl -}}
+# [Architecture]: Cross-OS Clipboard Bridge (WSL2 to Windows)
+# [Rationale]: Achieve parity with macOS pbcopy/pbpaste using native Windows Interop.
+# Static injection via chezmoi templates to ensure zero-runtime overhead.
+alias pbcopy='clip.exe'
+alias pbpaste='powershell.exe -NoProfile -Command "Get-Clipboard" | tr -d "\r"'
+{{ end -}}
 
 # --- Performance-tuned Compinit ---
 ZSH_COMPDUMP_DIR="$XDG_CACHE_HOME/zsh"
