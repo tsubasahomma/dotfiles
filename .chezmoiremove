@@ -12,3 +12,7 @@
 .bashrc
 .bash_profile
 .profile
+.zshrc2
+
+# [Architecture]: Legacy & Unidentified Artifact Purge
+--request

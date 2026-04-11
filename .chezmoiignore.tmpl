@@ -1,0 +1,145 @@
+{{- /* [Reference]: https://www.chezmoi.io/reference/special-files/chezmoiignore/ */ -}}
+{{- /* [Architecture]: Noise-Specific Blacklisting Strategy (V3) */ -}}
+{{- /* [Rationale]: Avoid ignoring root containers (.config, .local) to ensure
+       seamless 'add' operations while maintaining Zero-Noise IDS for known junk. */ -}}
+
+# =============================================================================
+# 1. Repository Meta & Infrastructure
+# =============================================================================
+README.md
+LICENSE
+ARCHITECTURE.md
+DEVELOPER_OS.md
+repomix*
+.gitignore
+.chezmoidata.yaml
+.chezmoiscripts
+.github
+
+# =============================================================================
+# 2. Identity & Secret Safety Net (Zero-Leak)
+# =============================================================================
+# [Rationale]: Target specific secret artifacts instead of the entire .ssh directory.
+**/.ssh/id_*
+**/.ssh/*.pub
+**/.ssh/known_hosts*
+**/.ssh/*.backup
+**/.ssh*hash*
+.1password
+.gnupg
+
+# =============================================================================
+# 3. Standard Volatile State (XDG Compliance)
+# =============================================================================
+.cache/**
+.local/state/**
+.local/share/**
+!.local/share/pnpm/
+!.local/share/pnpm/.keep
+
+# =============================================================================
+# 4. Known Noisy Tool Configurations (The "Trees" to ignore)
+# =============================================================================
+# [Rationale]: Blacklist only specific unmanaged directories inside .config.
+# This keeps managed paths like .config/nvim visible and "add-able".
+.config/apt
+.config/cagent
+.config/configstore
+.config/fish
+.config/gcloud
+.config/gh
+.config/github-copilot
+.config/iterm2
+.config/nxcloud
+.config/op
+.config/pnpm
+.config/uv
+
+# Root-level tool noise
+.cargo
+.rustup
+.npm
+.nvm
+.pyenv
+.node-gyp
+.terraform.d
+.vscode*
+.dotnet
+.docker
+.gsutil
+.cagent
+.gk
+.hscli
+.ngrok2
+.nuxtrc
+.redhat
+.tenv
+
+# =============================================================================
+# 5. History, Logs & Temporary Files
+# =============================================================================
+**/*_history
+**/*.history
+**/*.viminfo
+**/.lesshst
+**/.zcompdump*
+**/.zsh_sessions
+**/*.log
+**/*.txt
+**/coverage*
+.zcompcache
+.zprofile
+.tcshrc
+--request
+
+# =============================================================================
+# 6. User Workspace & Content Isolation
+# =============================================================================
+Desktop/**
+Documents/**
+Downloads/**
+Movies/**
+Music/**
+Pictures/**
+Public/**
+Library/**
+Applications/**
+Applications\ (Parallels)/**
+src/**
+go/**
+bin/**
+Works/**
+Code/**
+Repositories/**
+Dev/**
+Parallels/**
+*Google Drive*
+Creative\ Cloud\ Files*
+Postman
+
+# [Rationale]: Ignore specific unmanaged binaries in .local/bin
+.local/bin/env
+.local/bin/env.fish
+.local/bin/jq
+.local/bin/op
+.local/bin/pre-commit
+.local/bin/python*
+.local/bin/uv*
+
+# =============================================================================
+# 7. OS Specific Metadata
+# =============================================================================
+{{ if eq .chezmoi.os "darwin" -}}
+**/.DS_Store
+**/.Trash
+.CFUserTextEncoding
+jpki
+{{- end }}
+
+{{ if eq .chezmoi.os "linux" -}}
+.bash_logout
+.sudo_as_admin_successful
+.motd_shown
+.wget-hsts
+.vuerc
+{{- end }}
