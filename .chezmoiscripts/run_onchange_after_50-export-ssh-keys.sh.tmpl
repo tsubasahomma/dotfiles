@@ -24,8 +24,13 @@ exit 0
 OP_BIN="{{ .paths.op }}"
 JQ_BIN=$(command -v jq || true)
 
-if [[ ! -x "$OP_BIN" ]] || [[ -z "$JQ_BIN" ]] || [[ ! -x "$JQ_BIN" ]]; then
-  echo "❌ [Fatal] Required binaries not found. (op: $OP_BIN, jq: $JQ_BIN)"
+if [[ ! -x "$OP_BIN" ]] && ! command -v "$OP_BIN" &>/dev/null; then
+  echo "❌ [Fatal] Required binaries not found or not executable. (op: $OP_BIN, jq: $JQ_BIN)"
+  exit 1
+fi
+
+if [[ -z "$JQ_BIN" ]] || [[ ! -x "$JQ_BIN" ]]; then
+  echo "❌ [Fatal] jq binary not found or not executable."
   exit 1
 fi
 
@@ -36,7 +41,6 @@ chmod 700 "$TARGET_DIR"
 echo "🔐 [Identity] Provisioning identity resources via Multi-Account Batch Pipeline..."
 
 # --- 3. Multi-Account Discovery ---
-# [Rationale]: Use '.url' as the identifier since Audit 3 confirmed 'shorthand' might be null.
 ACCOUNTS=$("$OP_BIN" account list --format json | "$JQ_BIN" -r '.[].url')
 
 if [[ -z "$ACCOUNTS" ]]; then
@@ -48,7 +52,6 @@ fi
 while read -r account_url; do
   echo "🔍 [Account] Scanning: $account_url"
 
-  # Account-specific Identity Discovery (Network Request 1/2 per account)
   items_json=$("$OP_BIN" item list --tags dotfiles-ssh-key --account "$account_url" --format json 2>/dev/null || echo "[]")
 
   item_count=$(echo "$items_json" | "$JQ_BIN" 'length')
@@ -59,8 +62,6 @@ while read -r account_url; do
 
   echo "  📦 Found $item_count items. Resolving via Batch Inject..."
 
-  # Account-specific Batch Injection (Network Request 2/2 per account)
-  # [Architecture]: Using Go Template escapes {{ "{{" }} to protect the op:// syntax from chezmoi's rendering.
   TEMPLATE=$("$JQ_BIN" -r '.[] | "\(.id)\t\(.vault.id)\t{{ "{{" }}op://\(.vault.id)/\(.id)/dotfiles_link_id{{ "}}" }}\t{{ "{{" }}op://\(.vault.id)/\(.id)/key type{{ "}}" }}\t{{ "{{" }}op://\(.vault.id)/\(.id)/public key{{ "}}" }}"' <<< "$items_json")
 
   if ! RESOLVED_TSV=$(echo "$TEMPLATE" | "$OP_BIN" inject --account "$account_url" 2>/dev/null); then
@@ -70,7 +71,6 @@ while read -r account_url; do
 
   # Atomic File Export
   echo "$RESOLVED_TSV" | while IFS=$'\t' read -r item_id vault_id link_id k_type pubkey; do
-    # Strip potential carriage returns
     link_id="${link_id%$'\r'}"
     k_type="${k_type%$'\r'}"
     pubkey="${pubkey%$'\r'}"
