@@ -3,11 +3,21 @@
 {{- else if .is_wsl -}}
 {{- /* [Architecture]: Deterministic Target Resolution (Zero-Trust Interop) */ -}}
 {{- /* [Rationale]: Prevent silent AST evaluation failures by using raw string literals and explicit fail-fast logic. */ -}}
+{{- /* [Reference]: https://www.chezmoi.io/reference/templates/functions/output/ */ -}}
 {{- $ps_cmd := `[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; "$env:ProgramFiles\WezTerm\wezterm.exe"` -}}
-{{- $win_path := output "powershell.exe" "-NoProfile" "-NonInteractive" "-Command" $ps_cmd | trim -}}
-{{- if $win_path -}}
-{{-   output "wslpath" "-u" $win_path | trim -}}
+{{- $win_path := "" -}}
+{{- /* L1: Attempt dynamic resolution via PowerShell (handle potential errors gracefully) */ -}}
+{{- $interop_res := output "powershell.exe" "-NoProfile" "-NonInteractive" "-Command" $ps_cmd | trim -}}
+{{- if and $interop_res (not (contains "Exception" $interop_res)) -}}
+{{- $win_path = $interop_res -}}
 {{- else -}}
-{{-   fail "[FATAL] Failed to resolve WezTerm path via PowerShell Interop. Interop might be disabled or hanging." -}}
+{{- /* L2: Heuristic Fallback */ -}}
+{{- $win_path = "C:\\Program Files\\WezTerm\\wezterm.exe" -}}
+{{- end -}}
+{{- $wsl_path := output "wslpath" "-u" $win_path | trim -}}
+{{- if stat $wsl_path -}}
+{{- $wsl_path -}}
+{{- else -}}
+{{- fail "[FATAL] Failed to resolve WezTerm path. Interop failed and heuristic fallback does not exist." -}}
 {{- end -}}
 {{- end -}}

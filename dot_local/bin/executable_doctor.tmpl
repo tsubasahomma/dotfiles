@@ -86,4 +86,19 @@ else
   log_err "Hermetic Python Provider not found at $NVIM_PYTHON"
 fi
 
+echo "--- 5. Toolchain Drift Analysis (Self-Healing Engine) ---"
+MISE_BIN="{{ .paths.home }}/.local/bin/mise"
+if [ -x "$MISE_BIN" ]; then
+  log_ok "Hermetic mise binary verified at $MISE_BIN"
+else
+  log_err "mise binary is missing or not executable. System integrity compromised."
+fi
+
+# PATH priority check for Hermetic isolation
+if echo "$PATH" | grep -q "^{{ .paths.home }}/.local/bin"; then
+  log_ok "PATH precedence correctly prioritizes .local/bin"
+else
+  log_warn "PATH precedence violation. .local/bin is not at the front of PATH."
+fi
+
 printf "\n${GREEN}✨ System Health: Optimal${NC}\n"

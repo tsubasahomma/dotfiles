@@ -1,7 +1,8 @@
 #!/bin/zsh
 # [chezmoi-script]: Source: '.chezmoiscripts/run_...' vs Dry-run: '.chezmoiscripts/...'
 # [Rationale]: Generates the authorized signers list from exported SSH public keys.
-# [Security]: This script relies on public keys exported in Phase 50.
+# [Security]: This script relies on public keys exported in Phase 50. Ensures no duplicates or empty blobs.
+# [Reference]: https://man.openbsd.org/ssh-keygen#ALLOWED_SIGNERS
 
 set -euo pipefail
 
@@ -14,17 +15,31 @@ EMAIL={{ if hasKey . "email" }}{{ .email | quote }}{{ else }}"ci-bot@example.com
 echo "🔐 [Identity] Generating Git allowed_signers for $EMAIL..."
 
 mkdir -p "$(dirname "$ALLOWED_SIGNERS")"
-: > "$ALLOWED_SIGNERS"
+TEMP_SIGNERS=$(mktemp)
 
 # Iterate through all discovered identities to build the trust chain.
 # [Rationale]: Use '(N)' (null_glob) to prevent 'no matches found' errors when the directory is empty (CI).
 for pubkey in "$PUBKEY_DIR"/id_ed25519_*.pub(N); do
   if [[ -f "$pubkey" ]]; then
-    # Git allowed_signers format: <email> namespaces="git" <key_type> <key_blob>
-    key_content=$(cat "$pubkey" | awk '{print $1, $2}')
-    echo "$EMAIL namespaces=\"git\" $key_content" >> "$ALLOWED_SIGNERS"
+    # Validate format: key_type and blob must exist.
+    key_type=$(awk '{print $1}' "$pubkey")
+    key_blob=$(awk '{print $2}' "$pubkey")
+
+    if [[ -n "$key_type" ]] && [[ -n "$key_blob" ]]; then
+      echo "$EMAIL namespaces=\"git\" $key_type $key_blob" >> "$TEMP_SIGNERS"
+    else
+      echo "⚠️  [Identity] Invalid public key format in $pubkey. Skipping." >&2
+    fi
   fi
 done
 
+# [Architecture]: Idempotent enforcement using sort -u to guarantee uniqueness.
+if [[ -s "$TEMP_SIGNERS" ]]; then
+  sort -u "$TEMP_SIGNERS" > "$ALLOWED_SIGNERS"
+else
+  : > "$ALLOWED_SIGNERS"
+fi
+
+rm -f "$TEMP_SIGNERS"
 chmod 644 "$ALLOWED_SIGNERS"
 echo "✅ [Identity] allowed_signers updated successfully."
