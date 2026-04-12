@@ -1,0 +1,29 @@
+{{- /* [Reference]: https://vale.sh/docs/topics/config/ */ -}}
+#!/bin/zsh
+# [Architecture]: Deterministic Prose Style Convergence.
+# [Rationale]: Synchronize external style packages (Google) using 'vale sync'.
+# [Trigger]: Vale Config: {{ include "dot_config/vale/vale.ini.tmpl" | sha256sum }}
+
+set -euo pipefail
+
+readonly MISE_BIN="{{ .paths.mise }}"
+readonly VALE_CONFIG="{{ .paths.xdg_config }}/vale/vale.ini"
+
+main() {
+  if [[ ! -x "${MISE_BIN}" ]]; then
+    echo "err: mise binary not found at ${MISE_BIN}" >&2
+    exit 1
+  fi
+
+  if [[ ! -f "${VALE_CONFIG}" ]]; then
+    echo "⚠️  [Vale] Configuration not found at ${VALE_CONFIG}. Skipping sync."
+    exit 0
+  fi
+
+  echo "📦 [Vale] Synchronizing style packages..."
+  "${MISE_BIN}" exec vale -- vale --config="${VALE_CONFIG}" sync
+
+  echo "✅ [Vale] Styles converged."
+}
+
+main "$@"

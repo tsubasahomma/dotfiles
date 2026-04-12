@@ -17,3 +17,8 @@ export PNPM_HOME="{{ .paths.xdg_data }}/pnpm"
 
 # [Architecture]: Ripgrep Configuration Linkage
 export RIPGREP_CONFIG_PATH="$XDG_CONFIG_HOME/ripgrep/config"
+
+{{- /* [Reference]: https://vale.sh/docs/vale-ini#search-process */ -}}
+# [Architecture]: Vale Configuration Routing
+# [Rationale]: Force Vale to use XDG-compliant config to prevent shadowing by $HOME/.vale.ini
+export VALE_CONFIG_PATH="$XDG_CONFIG_HOME/vale/vale.ini"
