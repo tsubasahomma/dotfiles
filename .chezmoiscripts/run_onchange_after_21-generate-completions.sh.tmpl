@@ -3,8 +3,10 @@
 # [Rationale]: Generates static scripts and pre-compiles them into byte-code (.zwc)
 # to minimize I/O and parse time during shell startup. Includes Orphan-Purge logic.
 # [Reference: Zsh Performance]: https://htr3n.github.io/2018/07/faster-zsh/
+# [Reference: Chezmoi Completion]: https://www.chezmoi.io/reference/commands/completion/
 # [Trigger]: Config: {{ include "dot_config/mise/config.toml.tmpl" | sha256sum }}
-# [Trigger]: Binary: {{ index .tool_integrity.mise.hashes (printf "%s-%s" .osid .arch) }}
+# [Trigger]: Mise Binary: {{ index .tool_integrity.mise.hashes (printf "%s-%s" .osid .arch) }}
+# [Trigger]: Chezmoi Version: {{ .tool_integrity.chezmoi.version }}
 
 set -euo pipefail
 
@@ -19,16 +21,18 @@ echo "⚙️  [Infrastructure] Provisioning static Zsh assets..."
 mkdir -p "$COMP_DIR" "$INIT_DIR"
 
 # [Architecture]: Orphaned Byte-code Purge
-# [Rationale]: Eliminates compatibility mismatch crashes when Zsh versions upgrade
-# or configurations change, ensuring a clean compilation state.
 echo "🧹 [Infrastructure] Purging outdated byte-codes..."
 find "$CACHE_DIR" -name "*.zwc" -type f -delete 2>/dev/null || true
 
 # --- Phase 1: Completion Generation ---
+# [Rationale]: Generate completions for both external tools and the engine itself.
 "$MISE_BIN" exec gh -- gh completion -s zsh > "$COMP_DIR/_gh"
 "$MISE_BIN" exec ripgrep -- rg --generate complete-zsh > "$COMP_DIR/_rg"
 "$MISE_BIN" exec fd -- fd --gen-completions zsh > "$COMP_DIR/_fd"
 "$MISE_BIN" exec uv -- uv generate-shell-completion zsh > "$COMP_DIR/_uv"
+
+# [Self-Completion]: Inject current chezmoi binary completions.
+"{{ .chezmoi.executable }}" completion zsh > "$COMP_DIR/_chezmoi"
 
 # --- Phase 2: Static Init Generation & Compilation ---
 "$MISE_BIN" activate zsh > "$INIT_DIR/mise.zsh"
@@ -36,7 +40,6 @@ find "$CACHE_DIR" -name "*.zwc" -type f -delete 2>/dev/null || true
 "$MISE_BIN" exec starship -- starship init zsh --print-full-init > "$INIT_DIR/starship.zsh"
 
 # [Architecture]: Byte-code Compilation
-# Compiling into .zwc allows Zsh to memory-map the init scripts for sub-millisecond execution.
 for f in "$INIT_DIR"/*.zsh; do
   zcompile -U "$f"
 done
@@ -45,7 +48,6 @@ done
 if [[ -f "$ZCOMPDUMP" ]]; then
   echo "🧹 [Infrastructure] Invalidating Zsh compdump cache..."
   rm -f "$ZCOMPDUMP"
-  # Orphan purge handled at the top, but ensure compdump's zwc is caught if created elsewhere.
   rm -f "${ZCOMPDUMP}.zwc" 2>/dev/null || true
 fi
 
