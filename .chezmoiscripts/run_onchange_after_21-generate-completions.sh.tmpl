@@ -4,8 +4,16 @@
 # to minimize I/O and parse time during shell startup. Includes Orphan-Purge logic.
 # [Reference: Zsh Performance]: https://htr3n.github.io/2018/07/faster-zsh/
 # [Reference: Chezmoi Completion]: https://www.chezmoi.io/reference/commands/completion/
+
+{{- /* [Normalization Logic]: Resolve data key mismatch (darwin vs macos) */ -}}
+{{- $os_key := .osid -}}
+{{- if eq .osid "darwin" }}{{ $os_key = "macos" }}{{ end -}}
+{{- $arch_key := .arch -}}
+{{- if eq .arch "amd64" }}{{ $arch_key = "x64" }}{{ end -}}
+{{- $mise_hash := index .tool_integrity.mise.hashes (printf "%s-%s" $os_key $arch_key) -}}
+
 # [Trigger]: Config: {{ include "dot_config/mise/config.toml.tmpl" | sha256sum }}
-# [Trigger]: Mise Binary: {{ index .tool_integrity.mise.hashes (printf "%s-%s" .osid .arch) }}
+# [Trigger]: Mise Binary: {{ $mise_hash }}
 # [Trigger]: Chezmoi Version: {{ .tool_integrity.chezmoi.version }}
 
 set -euo pipefail
@@ -30,6 +38,20 @@ find "$CACHE_DIR" -name "*.zwc" -type f -delete 2>/dev/null || true
 "$MISE_BIN" exec ripgrep -- rg --generate complete-zsh > "$COMP_DIR/_rg"
 "$MISE_BIN" exec fd -- fd --gen-completions zsh > "$COMP_DIR/_fd"
 "$MISE_BIN" exec uv -- uv generate-shell-completion zsh > "$COMP_DIR/_uv"
+
+# --- Phase 1.1: SRE Toolchain Completions (Physical Bit Verified) ---
+# [Rationale]: Only tools with verified static stdout support are included.
+# [Interop]: Use 'docker-cli' tool name to invoke the 'docker' binary provided by Aqua.
+"$MISE_BIN" exec docker-cli -- docker completion zsh > "$COMP_DIR/_docker"
+"$MISE_BIN" exec kubectl -- kubectl completion zsh > "$COMP_DIR/_kubectl"
+"$MISE_BIN" exec helm -- helm completion zsh > "$COMP_DIR/_helm"
+"$MISE_BIN" exec k9s -- k9s completion zsh > "$COMP_DIR/_k9s"
+
+# [Rationale]: Modern utilities with built-in generation verified via physical audit.
+"$MISE_BIN" exec xh -- xh --generate complete-zsh > "$COMP_DIR/_xh"
+# [Fix]: Use --gen-completion-out to ensure the script is written to stdout for redirection.
+"$MISE_BIN" exec cargo:procs -- procs --gen-completion-out zsh > "$COMP_DIR/_procs"
+"$MISE_BIN" exec doggo -- doggo completions zsh > "$COMP_DIR/_doggo"
 
 # [Self-Completion]: Inject current chezmoi binary completions.
 "{{ .chezmoi.executable }}" completion zsh > "$COMP_DIR/_chezmoi"

@@ -38,6 +38,7 @@ packages:
   darwin:
     brews:
       - openssl@3
+      - colima
     casks:
       - 1password-cli
       - font-jetbrains-mono-nerd-font
