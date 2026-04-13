@@ -16,10 +16,11 @@ config.scrollback_lines = 100000
 local scheme = wezterm.get_builtin_color_schemes()["Kanagawa Dragon (Gogh)"]
 config.colors = scheme
 
--- [Architecture]: Font Fallback Chain & Deterministic Emoji Rendering
--- [Rationale]: Missing fonts are automatically bypassed. Apple Color Emoji (macOS)
--- and Segoe UI Emoji (Windows) are placed immediately after the primary programming font
--- to prevent Nerd Font monochrome symbols from hijacking color emoji rendering.
+-- [Architecture]: Sovereign Typography Engine
+-- [Rationale]: Prioritize High-legibility Japanese fonts (BIZ UD / IBM Plex)
+-- over legacy system fonts (Hiragino/Meiryo) to ensure consistent UI across OS.
+-- Missing fonts on specific platforms (e.g. Windows without BIZ UD) are
+-- automatically bypassed to native system defaults (Meiryo/Hiragino).
 config.font = wezterm.font_with_fallback({
   "JetBrainsMono Nerd Font",
   "Apple Color Emoji",

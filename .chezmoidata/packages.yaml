@@ -1,6 +1,8 @@
 # =============================================================================
 # [Architecture]: Declarative Package Schema
-# [Rationale]: OS-agnostic definition of required GUI and CLI dependencies.
+# [Rationale]: Managed via Homebrew (macOS) and WinGet (Windows).
+# Japanese fonts are exclusively managed on macOS via Brew Cask to ensure
+# high-fidelity rendering without the complexity of manual Windows font-bridging.
 # =============================================================================
 packages:
   common:
@@ -38,6 +40,8 @@ packages:
       - 1password
       - 1password-cli
       - font-jetbrains-mono-nerd-font
+      - font-biz-udgothic
+      - font-ibm-plex-sans-jp
       - wezterm@nightly
       - slack
       - google-chrome
