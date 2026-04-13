@@ -2,13 +2,11 @@
 #!/bin/zsh
 # [chezmoi-script]: Tier 1 (Zsh)
 # [Architecture]: macOS Provisioning Engine.
-# [Rationale]: Managed via Brew Bundle.
 # dot_config/homebrew/Brewfile.tmpl hash: {{ include "dot_config/homebrew/Brewfile.tmpl" | sha256sum }}
 
 set -euo pipefail
 
-# [Architecture]: Localized Binary Resolution (Commodity)
-# [Rationale]: 100% reliant on 'lookPath' without hardcoded fallbacks to eliminate Path Precedence Hallucinations.
+# [Architecture]: Localized Binary Resolution
 CURL_BIN="{{ lookPath "curl" }}"
 BASH_BIN="{{ lookPath "bash" }}"
 
@@ -17,7 +15,6 @@ if [ -z "$CURL_BIN" ] || [ -z "$BASH_BIN" ]; then
   exit 1
 fi
 
-# [Architecture]: Package Manager Abstraction for Darwin.
 install_packages() {
   if [ -f "$1" ]; then
     echo "📦 [Infrastructure] Installing Brewfile bundle: $1"
@@ -31,7 +28,6 @@ install_packages() {
 
 if ! command -v brew &> /dev/null; then
   echo "📦 [Infrastructure] Installing Homebrew..."
-  # [Rationale]: Execute brew installer with dynamic bash/curl.
   "$BASH_BIN" -c "$("$CURL_BIN" -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 fi
 
@@ -54,13 +50,22 @@ rm "$TEMP_BREWFILE"
 #!/bin/sh
 # [chezmoi-script]: L0 (POSIX Shell) Tiering
 # [Architecture]: OS-Agnostic Linux Provisioning Engine.
-# [Rationale]: Dynamic PM discovery and package abstraction.
 # [Trigger]: Linux package list hash: {{ includeTemplate "linux-packages.list.tmpl" . | sha256sum }}
 
 set -eu
 
-# --- 1. Infrastructure Discovery ---
+echo "🛡️  [Tier 1] Executing Infrastructure Assertion Gate..."
 
+# [Security]: Non-Interactive Sudo Assertion
+# [Rationale]: Prevents silent hang-ups during automated provisioning.
+if ! sudo -n true 2>/dev/null; then
+  echo "❌ [Fatal] Non-interactive sudo is not configured."
+  echo "👉 Action Required: Run 'sudo visudo' and configure passwordless sudo for this user."
+  echo "   Example: $USER ALL=(ALL) NOPASSWD:ALL"
+  exit 1
+fi
+
+# --- 1. Infrastructure Discovery ---
 OS_RELEASE_PATH=""
 if [ -r "/etc/os-release" ]; then
   OS_RELEASE_PATH="/etc/os-release"
@@ -75,7 +80,6 @@ fi
 
 . "$OS_RELEASE_PATH"
 
-# [Architecture]: Positive Package Manager Detection.
 case "$ID" in
   ubuntu|debian) PM="apt" ;;
   fedora|rhel)   PM="dnf" ;;
@@ -87,7 +91,6 @@ case "$ID" in
 esac
 
 # --- 2. Package Manager Abstraction ---
-
 install_packages() {
   packages="$*"
   echo "📦 [Infrastructure] Installing packages via $PM: $packages"
@@ -107,7 +110,6 @@ install_packages() {
 }
 
 # --- 3. Execution ---
-
 TEMP_PKG_LIST=$(mktemp)
 cat << 'EOF' > "$TEMP_PKG_LIST"
 {{ includeTemplate "linux-packages.list.tmpl" . }}

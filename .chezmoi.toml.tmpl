@@ -118,6 +118,10 @@
 [edit]
     command = "nvim"
 
+# [Architecture]: Pre-flight Execution Hook
+[hooks.read-source-state.pre]
+    command = "{{ .chezmoi.sourceDir }}/.bootstrap-identity.sh"
+
 {{if not (env "CI")}}
 {{  if ne $op_status "ready"}}
 # [Next Action]: 1Password authentication is required.

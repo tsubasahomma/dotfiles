@@ -1,60 +1,46 @@
-# Deterministic Infrastructure | Eternal Platform
+# Deterministic Infrastructure Engine
 
 [![Infrastructure Compliance](https://github.com/tsubasahomma/dotfiles/actions/workflows/compliance.yml/badge.svg)](https://github.com/tsubasahomma/dotfiles/actions/workflows/compliance.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Built with chezmoi](https://img.shields.io/badge/built%20with-chezmoi-50b0f0.svg)](https://chezmoi.io/)
 [![Managed by mise](https://img.shields.io/badge/managed%20by-mise-ff4e41.svg)](https://mise.jdx.dev/)
 
-> **"Infrastructure as a Pure Function."**
+> **"Infrastructure as a Deterministic State."**
 >
-> This is not just a collection of dotfiles. It is a **deterministic provisioning engine** designed for the next decade of professional software engineering.
+> This repository is a strict provisioning engine designed to enforce a zero-drift developer environment across macOS and Linux platforms.
 
 ---
 
 ## 🏛 Architecture Philosophy
 
-Most dotfiles degrade over time. The **Eternal Platform** remains invariant by adhering to four fundamental laws:
+The infrastructure remains invariant by adhering to core determinism laws:
 
-1. **Zero-Speculation Identity**: Identities are never hardcoded. They are dynamically resolved via **1Password CLI** using schema-driven Identity Pointers.
-2. **Absolute Idempotency**: The state is guaranteed to converge. A second execution of `chezmoi apply` always produces a zero-diff output, verified by rigorous **multi-OS CI matrix**.
-3. **Hermetic Toolchain**: System-level pollution is avoided by pinning all runtimes (Go, Python, Node.js, Rust) within isolated `mise` environments.
-4. **XDG Purism**: 100% compliance with the XDG Base Directory Specification. Your `$HOME` remains a pristine workspace, not a dumping ground for config files.
+1. **Zero-Speculation Identity**: Identities are never hardcoded. They are dynamically resolved via **1Password CLI**.
+2. **Absolute Idempotency**: The state is guaranteed to converge. A second execution of `chezmoi apply` always produces a zero-diff output.
+3. **Hermetic Toolchain**: System-level pollution is avoided by pinning all runtimes within isolated `mise` environments.
+4. **XDG Purism**: 100% compliance with the XDG Base Directory Specification.
 
-## 📦 What's Inside?
+## 🛠 Prerequisites (Minimal Prepared OS)
 
-### 🛠 Core Stack
+This platform **DOES NOT** bootstrap from a completely raw OS. To guarantee deterministic execution without interactive hanging or network resolution failures, the host OS must meet the following strict prerequisites (Tier -1):
 
-- **Manager**: `chezmoi` (State-driven configuration)
-- **Runtime**: `mise` (Hermetic toolchain management)
-- **Identity**: `1Password CLI` (Zero-knowledge secrets management)
-
-### 💻 Developer Environment
-
-- **Shell**: `Zsh` with optimized XDG-based autoloading
-- **Editor**: `Neovim` (LazyVim distribution) with isolated Python/Node providers
-- **Terminal**: `WezTerm` (Nightly) for SOTA graphics protocol support
-- **Git**: Supercharged with `delta` (side-by-side diffs) and `git-absorb`
-- **Prompt**: `Starship` (Cross-shell performance optimized)
+1. **Network Utilities**: `curl` must be installed.
+2. **Extraction Utilities**: `unzip` (or `python3`) must be installed.
+3. **Privilege Escalation (Linux only)**: Non-interactive `sudo` must be configured.
+   - Example configuration via `visudo`: `<username> ALL=(ALL) NOPASSWD:ALL`
+4. **Identity Pointer**: A 1Password item tagged `dotfiles-ssh-key` must exist in your vault.
 
 ## 🚀 One-Liner Bootstrap
 
-Securely provision your entire machine from a raw OS state in seconds:
+Once the prerequisites are met, provision the machine:
 
 ```zsh
 sh -c "$(curl -fsLS get.chezmoi.io)" -- init --apply <your-github-username>
 ```
 
-## 🛠 Prerequisites
-
-Before running the bootstrap, ensure your **1Password** vault is prepared:
-
-1. **Identity Pointer**: Create an item with the tag `dotfiles-ssh-key`.
-2. **Environment Link**: Add a custom field named `dotfiles-id` (e.g., `personal`, `work`).
-3. **Signing**: Register your SSH key as a **"Signing Key"** in GitHub for the **Verified** status.
-
 ## 🩺 Continuous Health Monitoring
 
-The platform includes a built-in diagnostic engine to ensure your local environment never drifts from the defined schema:
+The platform includes a built-in diagnostic engine (`doctor`) to ensure your local environment never drifts from the defined schema. Run it periodically:
 
 ```zsh
 doctor
