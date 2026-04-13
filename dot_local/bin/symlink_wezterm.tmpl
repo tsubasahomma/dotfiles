@@ -1,23 +1,17 @@
-{{- if eq .osid "darwin" -}}
-/Applications/WezTerm.app/Contents/MacOS/wezterm
-{{- else if .is_wsl -}}
 {{- /* [Architecture]: Deterministic Target Resolution (Zero-Trust Interop) */ -}}
-{{- /* [Rationale]: Prevent silent AST evaluation failures by using raw string literals and explicit fail-fast logic. */ -}}
 {{- /* [Reference]: https://www.chezmoi.io/reference/templates/functions/output/ */ -}}
-{{- $ps_cmd := `[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; "$env:ProgramFiles\WezTerm\wezterm.exe"` -}}
-{{- $win_path := "" -}}
-{{- /* L1: Attempt dynamic resolution via PowerShell (handle potential errors gracefully) */ -}}
-{{- $interop_res := output "powershell.exe" "-NoProfile" "-NonInteractive" "-Command" $ps_cmd | trim -}}
-{{- if and $interop_res (not (contains "Exception" $interop_res)) -}}
-{{- $win_path = $interop_res -}}
-{{- else -}}
-{{- /* L2: Heuristic Fallback */ -}}
-{{- $win_path = "C:\\Program Files\\WezTerm\\wezterm.exe" -}}
-{{- end -}}
+{{- $osid := "linux" -}}
+{{- if hasKey . "osid" }}{{ $osid = .osid }}{{ end -}}
+{{- $is_wsl := false -}}
+{{- if hasKey . "is_wsl" }}{{ $is_wsl = .is_wsl }}{{ end -}}
+{{- if eq $osid "darwin" -}}
+/Applications/WezTerm.app/Contents/MacOS/wezterm
+{{- else if $is_wsl -}}
+{{- $win_path := "C:\\Program Files\\WezTerm\\wezterm.exe" -}}
 {{- $wsl_path := output "wslpath" "-u" $win_path | trim -}}
 {{- if stat $wsl_path -}}
 {{- $wsl_path -}}
 {{- else -}}
-{{- fail "[FATAL] Failed to resolve WezTerm path. Interop failed and heuristic fallback does not exist." -}}
+{{- fail "[FATAL] WezTerm.exe not found on Windows host." -}}
 {{- end -}}
 {{- end -}}

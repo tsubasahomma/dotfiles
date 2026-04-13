@@ -1,10 +1,17 @@
+{{- /* [Architecture]: Defensive Schema Extraction */ -}}
+{{- $email := "pending@example.com" -}}
+{{- if hasKey . "email" }}{{ $email = .email }}{{ end -}}
+{{- $ssh_key_name := "id_ed25519_pending.pub" -}}
+{{- if hasKey . "ssh_key_name" }}{{ $ssh_key_name = .ssh_key_name }}{{ end -}}
+{{- $gh_user := "pending" -}}
+{{- if hasKey . "gh_user" }}{{ $gh_user = .gh_user }}{{ end -}}
 # [Architecture]: Injected Payload for the Personal Sovereign Identity.
-# Dynamically loaded via includeIf when operating within ~/src/github.com/{{ .gh_user }}
+# Dynamically loaded via includeIf when operating within ~/src/github.com/{{ $gh_user }}
 
 [user]
-    email = {{ .email | quote }}
-    signingkey = {{ .paths.home }}/.ssh/{{ .ssh_key_name }}
+    email = {{ $email | quote }}
+    signingkey = {{ .paths.home }}/.ssh/{{ $ssh_key_name }}
 
 [core]
     # [Rationale]: Guarantee the use of the primary SSH key for network transport
-    sshCommand = "ssh -i {{ .paths.home }}/.ssh/{{ .ssh_key_name }} -o IdentitiesOnly=yes"
+    sshCommand = "ssh -i {{ .paths.home }}/.ssh/{{ $ssh_key_name }} -o IdentitiesOnly=yes"

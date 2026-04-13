@@ -1,3 +1,6 @@
+{{- /* [Architecture]: Defensive Schema Extraction */ -}}
+{{- $ssh_auth_sock := "" -}}
+{{- if hasKey . "paths" }}{{ if hasKey .paths "ssh_auth_sock" }}{{ $ssh_auth_sock = .paths.ssh_auth_sock }}{{ end }}{{ end -}}
 # [Rationale]: Modular & XDG-compliant SSH configuration (2026).
 # [Security]: Hardened defaults with ControlPersist for high-performance infrastructure.
 
@@ -17,8 +20,8 @@ Host *
 
     # --- Security & Identity ---
     IdentitiesOnly yes
-    IdentityAgent {{ .ssh_auth_sock | quote }}
-    ForwardAgent yes
+{{ if ne $ssh_auth_sock "" }}    IdentityAgent {{ $ssh_auth_sock | quote }}
+{{ end }}    ForwardAgent yes
 
     # --- Reliability & Automation ---
     # [2026 Best Practice]: Avoid hang on new hosts while maintaining security.

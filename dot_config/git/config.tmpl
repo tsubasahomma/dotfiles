@@ -1,7 +1,16 @@
+{{- /* [Architecture]: Defensive Schema Extraction */ -}}
+{{- $name := "Pending Identity" -}}
+{{- if hasKey . "name" }}{{ $name = .name }}{{ end -}}
+{{- $gh_root := "src/github.com/unallocated" -}}
+{{- if hasKey . "gh_root" }}{{ $gh_root = .gh_root }}{{ end -}}
+{{- $true_cmd := "/usr/bin/true" -}}
+{{- if hasKey . "paths" }}{{ if hasKey .paths "true_cmd" }}{{ $true_cmd = .paths.true_cmd }}{{ end }}{{ end -}}
+{{- $op_sign := "" -}}
+{{- if hasKey . "paths" }}{{ if hasKey .paths "op_sign" }}{{ $op_sign = .paths.op_sign }}{{ end }}{{ end -}}
 [user]
     # [LLM Context]: user.email is intentionally omitted here to enforce Identity-driven Routing.
     # It is injected dynamically based on directory context via includeIf below.
-    name = {{ .name | quote }}
+    name = {{ $name | quote }}
 
 [commit]
     gpgsign = true
@@ -12,10 +21,10 @@
 [gpg]
     format = ssh
     # [Rationale]: Null-GPG Protocol. Silences execution errors for unmanageable PGP signatures (e.g., GitHub Web Merges)
-    program = {{ .paths.true_cmd | quote }}
+    program = {{ $true_cmd | quote }}
 
 [gpg "ssh"]
-    program = {{ .paths.op_sign | quote }}
+    program = {{ $op_sign | quote }}
     allowedSignersFile = {{ (joinPath .paths.xdg_config "git/allowed_signers") | quote }}
 
 [core]
@@ -82,7 +91,7 @@
 
 # [Rationale]: "The Safe Zone".
 # Forces the Personal Sovereign Identity (and its SSH Key) for repositories inside the gh_root.
-[includeIf "gitdir:{{ .paths.home }}/{{ .gh_root }}/**"]
+[includeIf "gitdir:{{ .paths.home }}/{{ $gh_root }}/**"]
     path = {{ (joinPath .paths.xdg_config "git/config_personal") | quote }}
 
 [includeIf "gitdir:{{ .chezmoi.sourceDir }}/**"]

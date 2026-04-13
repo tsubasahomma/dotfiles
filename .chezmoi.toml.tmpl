@@ -1,163 +1,129 @@
-{{- /* [Architecture]: Foundation Schema | Phase 20.3 Pure Function Edition */ -}}
-{{- /* [Rationale]: Configuration resolution is strictly side-effect-free. Mutations are delegated to the pre-hook. */ -}}
+{{/* [Architecture]: Foundation Schema | Phase 20.9 Resilience First Edition */}}
+{{/* [Reference]: https://www.chezmoi.io/user-guide/templating/ */}}
 
-{{- /* --- 1. Platform Normalization --- */ -}}
-{{- $osid := .chezmoi.os -}}
-{{- $arch := .chezmoi.arch -}}
-{{- $home := .chezmoi.homeDir -}}
+{{/* --- 1. Platform & Interop Initialization --- */}}
+{{$osid := .chezmoi.os}}
+{{$arch := .chezmoi.arch}}
+{{$home := .chezmoi.homeDir}}
+{{$is_wsl := false}}
+{{if and (eq $osid "linux") (hasKey .chezmoi.kernel "osrelease")}}
+{{  if contains "microsoft" (.chezmoi.kernel.osrelease | lower)}}{{$is_wsl = true}}{{end}}
+{{end}}
 
-{{- $is_wsl := false -}}
-{{- if eq $osid "linux" -}}
-{{-   if hasKey .chezmoi.kernel "osrelease" -}}
-{{-     if contains "microsoft" (.chezmoi.kernel.osrelease | lower) -}}
-{{-       $is_wsl = true -}}
-{{-     end -}}
-{{-   end -}}
-{{- end -}}
+{{$windows_user := "unknown"}}
+{{if $is_wsl}}
+{{  $windows_user = env "WINDOWS_USER" | default (output "sh" "-c" "cmd.exe /c 'echo %USERNAME%' 2>/dev/null || echo 'unknown'" | trim)}}
+{{end}}
 
-{{- /* [Architecture]: Read-Only Side-Effect Exception */ -}}
-{{- /* [Rationale]: Using 'output' to query the OS state is pure (does not mutate system state). */ -}}
-{{- $windows_user := "" -}}
-{{- if $is_wsl -}}
-{{-   $windows_user = env "WINDOWS_USER" -}}
-{{-   if not $windows_user -}}
-{{-     $windows_user = (output "powershell.exe" "-NoProfile" "-Command" "[System.Environment]::UserName" | trim) -}}
-{{-   end -}}
-{{- end -}}
+{{$brew_prefix := "/usr/local"}}
+{{if eq $osid "darwin"}}
+{{  if eq $arch "arm64" }}{{$brew_prefix = "/opt/homebrew"}}{{end}}
+{{else if eq $osid "linux"}}
+{{  $brew_prefix = "/home/linuxbrew/.linuxbrew"}}
+{{end}}
 
-{{- $brew_prefix := "/usr/local" -}}
-{{- if eq $osid "darwin" -}}
-{{-   if eq $arch "arm64" }}{{ $brew_prefix = "/opt/homebrew" }}{{ end -}}
-{{- else if eq $osid "linux" -}}
-{{-   $brew_prefix = "/home/linuxbrew/.linuxbrew" -}}
-{{- end -}}
+{{/* --- 2. Identity State Machine & Binary Resolution --- */}}
+{{$local_bin := joinPath $home ".local/bin"}}
+{{$op_bin := lookPath "op" | default (joinPath $local_bin "op")}}
+{{$is_op_present := stat $op_bin}}
 
-{{- /* --- 2. Capability Audit & Binary Resolution (Phase 0) --- */ -}}
-{{- $local_bin := joinPath $home ".local/bin" -}}
-{{- $is_ci := env "CI" | default "false" | eq "true" -}}
+{{$op_status := "missing"}}
+{{if $is_op_present}}
+{{  $op_status = output "sh" "-c" (printf "'%s' account get >/dev/null 2>&1 && echo 'ready' || echo 'locked'" $op_bin) | trim}}
+{{end}}
 
-{{- /* [Architecture]: Trust the Pre-Hook */ -}}
-{{- /* [Rationale]: The .chezmoi.hooks.read-source-state.pre script guarantees the existence of 'op'. */ -}}
-{{- $op_bin := "" -}}
-{{- $is_op_available := false -}}
+{{$true_cmd := lookPath "true" | default "/usr/bin/true"}}
 
-{{- if $is_wsl -}}
-{{-   $resolved_op := lookPath "op.exe" | default (joinPath $local_bin "op") -}}
-{{-   if stat $resolved_op }}{{ $op_bin = $resolved_op }}{{ $is_op_available = true }}{{ end -}}
-{{- else -}}
-{{-   $resolved_op := lookPath "op" | default (joinPath $local_bin "op") -}}
-{{-   if stat $resolved_op }}{{ $op_bin = $resolved_op }}{{ $is_op_available = true }}{{ end -}}
-{{- end -}}
+{{$op_sign := ""}}
+{{$ssh_auth_sock := ""}}
+{{if eq $osid "darwin"}}
+{{  $op_sign = "/Applications/1Password.app/Contents/MacOS/op-ssh-sign"}}
+{{  $ssh_auth_sock = joinPath $home "Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"}}
+{{else if $is_wsl}}
+{{  $op_sign = joinPath "/mnt/c/Users" $windows_user "AppData/Local/Microsoft/WindowsApps/op-ssh-sign-wsl.exe"}}
+{{  $ssh_auth_sock = joinPath $home ".1password/agent.sock"}}
+{{end}}
 
-{{- /* Fallback placeholder for structural integrity during bootstrap */ -}}
-{{- if not $is_op_available -}}
-{{-   if $is_wsl }}{{ $op_bin = "op.exe" }}{{ else }}{{ $op_bin = "op" }}{{ end -}}
-{{- end -}}
+{{/* Default values for Bootstrap Mode */}}
+{{$gh_user := "pending"}}
+{{$name := "Pending Identity"}}
+{{$email := "pending@example.com"}}
+{{$link_id := "pending"}}
+{{$vault_id := "unknown"}}
+{{$ssh_keys_hash := "none"}}
+{{$is_sovereign := false}}
 
-{{- $true_cmd := lookPath "true" | default "/usr/bin/true" -}}
+{{if eq $op_status "ready"}}
+{{  $profile_list := output "sh" "-c" (printf "'%s' item list --tags dotfiles-github-profile --format json 2>/dev/null || echo '[]'" $op_bin) | fromJson}}
+{{  if gt (len $profile_list) 0}}
+{{    $profile := output "sh" "-c" (printf "'%s' item get %s --format json" $op_bin (index $profile_list 0).id) | fromJson}}
+{{    range $profile.fields}}
+{{      if hasKey . "label"}}
+{{        if eq .label "dotfiles_gh_user"  }}{{$gh_user = .value}}{{$is_sovereign = true}}{{end}}
+{{        if eq .label "dotfiles_gh_name"  }}{{$name = .value}}{{end}}
+{{        if eq .label "dotfiles_gh_email" }}{{$email = .value}}{{end}}
+{{        if eq .label "dotfiles_link_id"  }}{{$link_id = .value}}{{end}}
+{{      end}}
+{{    end}}
+{{    $vault_id = $profile.vault.id}}
 
-{{- /* Identity Bridge Configuration */ -}}
-{{- $op_sign := "" -}}
-{{- $ssh_auth_sock := "" -}}
-{{- if eq $osid "darwin" -}}
-{{-   $op_sign = "/Applications/1Password.app/Contents/MacOS/op-ssh-sign" -}}
-{{-   $ssh_auth_sock = (joinPath $home "Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock") -}}
-{{- else if $is_wsl -}}
-{{-   $op_sign = (joinPath "/mnt/c/Users" $windows_user "AppData/Local/Microsoft/WindowsApps/op-ssh-sign-wsl.exe") -}}
-{{-   $ssh_auth_sock = (joinPath $home ".1password/agent.sock") -}}
-{{- end -}}
-
-{{- /* --- 3. Sovereign Profile Resolution (VADKD v5.1) --- */ -}}
-{{- $gh_user := "" -}}
-{{- $name := "" -}}
-{{- $email := "" -}}
-{{- $link_id := "" -}}
-{{- $key_type := "ed25519" -}}
-{{- $vault_id := "" -}}
-{{- $ssh_keys_hash := "none" -}}
-
-{{- if $is_ci -}}
-    {{- $gh_user = "dotfiles-ci-bot" -}}
-    {{- $name = "CI Compliance Bot" -}}
-    {{- $email = "bot@example.com" -}}
-    {{- $link_id = "ci-test" -}}
-    {{- $vault_id = "unknown" -}}
-{{- else if not $is_op_available -}}
-    {{- /* State = Bootstrap (Phase 1) */ -}}
-    {{- $gh_user = "wsl-bootstrap" -}}
-    {{- $name = "WSL Pending Identity" -}}
-    {{- $email = "wsl-bootstrap@example.com" -}}
-    {{- $link_id = "wsl-pending" -}}
-    {{- $vault_id = "unknown" -}}
-{{- else -}}
-    {{- /* State = Sovereign (Phase 2) */ -}}
-    {{- $op_status := output "sh" "-c" (printf "'%s' account get >/dev/null 2>&1 && echo 'ready' || echo 'locked'" $op_bin) | trim -}}
-    {{- if eq $op_status "locked" -}}
-        {{- fail "\n❌ [Fatal] 1Password session is locked.\n👉 Action: Run 'op signin' or unlock the desktop app, then run 'chezmoi init' again.\n" -}}
-    {{- end -}}
-
-    {{- $profile_list_raw := output "sh" "-c" (printf "'%s' item list --tags dotfiles-github-profile --format json" $op_bin) | fromJson -}}
-    {{- if eq (len $profile_list_raw) 0 -}}
-        {{- fail "\n❌ [Fatal] Sovereign Identity Profile ('dotfiles-github-profile') not found in 1Password.\n" -}}
-    {{- end -}}
-
-    {{- $profile_id := (index $profile_list_raw 0).id -}}
-    {{- $profile := output "sh" "-c" (printf "'%s' item get %s --format json" $op_bin $profile_id) | fromJson -}}
-
-    {{- range $profile.fields -}}
-        {{- if hasKey . "label" -}}
-            {{- if eq .label "dotfiles_gh_user"  }}{{ $gh_user = .value }}{{ end -}}
-            {{- if eq .label "dotfiles_gh_name"  }}{{ $name = .value    }}{{ end -}}
-            {{- if eq .label "dotfiles_gh_email" }}{{ $email = .value   }}{{ end -}}
-            {{- if eq .label "dotfiles_link_id"  }}{{ $link_id = .value }}{{ end -}}
-        {{- end -}}
-    {{- end -}}
-    {{- $vault_id = $profile.vault.id -}}
-
-    {{- if eq $gh_user "" -}}
-        {{- fail "\n❌ [Fatal] Sovereign Identity Profile ('dotfiles-github-profile') is incomplete.\n" -}}
-    {{- end -}}
-
-    {{- /* [Architecture]: Multi-Account Identity Hash Collection (O(A) Time) */ -}}
-    {{- $accounts_json := output "sh" "-c" (printf "'%s' account list --format json 2>/dev/null || echo '[]'" $op_bin) -}}
-    {{- $accounts := fromJson $accounts_json -}}
-    {{- $keys_collector := list -}}
-    {{- range $accounts -}}
-        {{- $cmd := printf "'%s' item list --tags dotfiles-ssh-key --account '%s' --format json 2>/dev/null || echo '[]'" $op_bin .url -}}
-        {{- $account_keys := output "sh" "-c" $cmd | fromJson -}}
-        {{- $keys_collector = concat $keys_collector $account_keys -}}
-    {{- end -}}
-    {{- $ssh_keys_hash = sha256sum (toJson $keys_collector) -}}
-{{- end -}}
+{{    $accounts_json := output "sh" "-c" (printf "'%s' account list --format json 2>/dev/null || echo '[]'" $op_bin)}}
+{{    $accounts := fromJson $accounts_json}}
+{{    $keys_collector := list}}
+{{    range $accounts}}
+{{      $cmd := printf "'%s' item list --tags dotfiles-ssh-key --account '%s' --format json 2>/dev/null || echo '[]'" $op_bin .url}}
+{{      $account_keys := output "sh" "-c" $cmd | fromJson}}
+{{      $keys_collector = concat $keys_collector $account_keys}}
+{{    end}}
+{{    $ssh_keys_hash = sha256sum (toJson $keys_collector)}}
+{{  end}}
+{{end}}
 
 # --- Foundation Schema ---
 [data]
-    osid = {{ $osid | quote }}
-    arch = {{ $arch | quote }}
-    is_wsl = {{ $is_wsl }}
-    brew_prefix = {{ $brew_prefix | quote }}
-    windows_user = {{ $windows_user | quote }}
-    ssh_auth_sock = {{ $ssh_auth_sock | quote }}
+    osid = {{$osid | quote}}
+    arch = {{$arch | quote}}
+    is_wsl = {{$is_wsl}}
+    brew_prefix = {{$brew_prefix | quote}}
+    windows_user = {{$windows_user | quote}}
+    ssh_auth_sock = {{$ssh_auth_sock | quote}}
+    op_status = {{$op_status | quote}}
 
-    gh_user = {{ $gh_user | quote }}
-    name = {{ $name | quote }}
-    email = {{ $email | quote }}
-    link_id = {{ $link_id | quote }}
+    gh_user = {{$gh_user | quote}}
+    name = {{$name | quote}}
+    email = {{$email | quote}}
+    link_id = {{$link_id | quote}}
 
-    ssh_keys_hash = {{ $ssh_keys_hash | quote }}
-    ssh_key_name = {{ printf "id_%s_%s_%s.pub" $key_type $vault_id $link_id | quote }}
-    gh_root = "src/github.com/{{ $gh_user }}"
+    ssh_keys_hash = {{$ssh_keys_hash | quote}}
+    ssh_key_name = {{printf "id_ed25519_%s_%s.pub" $vault_id $link_id | quote}}
+
+    {{if $is_sovereign}}
+    gh_root = "src/github.com/{{$gh_user}}"
+    {{else}}
+    gh_root = "src/github.com/unallocated"
+    {{end}}
 
     [data.paths]
-        home = {{ $home | quote }}
-        op = {{ $op_bin | quote }}
-        op_sign = {{ $op_sign | quote }}
-        xdg_config = {{ (joinPath $home ".config") | quote }}
-        xdg_data = {{ (joinPath $home ".local/share") | quote }}
-        xdg_state = {{ (joinPath $home ".local/state") | quote }}
-        xdg_cache = {{ (joinPath $home ".cache") | quote }}
-        mise = {{ (joinPath $home ".local/bin/mise") | quote }}
-        true_cmd = {{ $true_cmd | quote }}
+        home = {{$home | quote}}
+        op = {{$op_bin | quote}}
+        xdg_config = {{(joinPath $home ".config") | quote}}
+        xdg_data = {{(joinPath $home ".local/share") | quote}}
+        xdg_state = {{(joinPath $home ".local/state") | quote}}
+        xdg_cache = {{(joinPath $home ".cache") | quote}}
+        mise = {{(joinPath $home ".local/bin/mise") | quote}}
+        true_cmd = {{$true_cmd | quote}}
+        op_sign = {{$op_sign | quote }}
+        ssh_auth_sock = {{$ssh_auth_sock | quote}}
 
 [edit]
     command = "nvim"
+
+{{if not (env "CI")}}
+{{  if ne $op_status "ready"}}
+# [Next Action]: 1Password authentication is required.
+# 1. Open the 1Password Desktop App and enable "Integrate with 1Password CLI" in Settings > Developer.
+# 2. Run 'op signin' to authenticate, then run 'chezmoi apply' again.
+{{  else}}
+# [System]: Sovereign Identity ({{$gh_user}}) successfully loaded.
+{{  end}}
+{{end}}
