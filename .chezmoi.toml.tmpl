@@ -1,18 +1,21 @@
 {{/* [Architecture]: Foundation Schema | Phase 20.9 Resilience First Edition */}}
 {{/* [Reference]: https://www.chezmoi.io/user-guide/templating/ */}}
 
-{{/* --- 1. Platform & Interop Initialization --- */}}
 {{$osid := .chezmoi.os}}
 {{$arch := .chezmoi.arch}}
 {{$home := .chezmoi.homeDir}}
+
 {{$is_wsl := false}}
 {{if and (eq $osid "linux") (hasKey .chezmoi.kernel "osrelease")}}
 {{  if contains "microsoft" (.chezmoi.kernel.osrelease | lower)}}{{$is_wsl = true}}{{end}}
 {{end}}
 
+{{/* [Architecture]: Persistent Interop Cache (Zero-Latency Windows Hook) */}}
 {{$windows_user := "unknown"}}
-{{if $is_wsl}}
-{{  $windows_user = env "WINDOWS_USER" | default (output "sh" "-c" "cmd.exe /c 'echo %USERNAME%' 2>/dev/null || echo 'unknown'" | trim)}}
+{{if hasKey . "windows_user"}}
+{{  $windows_user = .windows_user}}
+{{else if $is_wsl}}
+{{  $windows_user = output "powershell.exe" "-NoProfile" "-Command" "echo $env:USERNAME" | trim}}
 {{end}}
 
 {{$brew_prefix := "/usr/local"}}
@@ -22,7 +25,6 @@
 {{  $brew_prefix = "/home/linuxbrew/.linuxbrew"}}
 {{end}}
 
-{{/* --- 2. Identity State Machine & Binary Resolution --- */}}
 {{$local_bin := joinPath $home ".local/bin"}}
 {{$op_bin := lookPath "op" | default (joinPath $local_bin "op")}}
 {{$is_op_present := stat $op_bin}}
@@ -53,29 +55,25 @@
 {{$ssh_keys_hash := "none"}}
 {{$is_sovereign := false}}
 
+{{/* [Architecture]: Single-Pass Identity Resolution (Sovereign Account Anchor) */}}
 {{if eq $op_status "ready"}}
 {{  $profile_list := output "sh" "-c" (printf "'%s' item list --tags dotfiles-github-profile --format json 2>/dev/null || echo '[]'" $op_bin) | fromJson}}
 {{  if gt (len $profile_list) 0}}
-{{    $profile := output "sh" "-c" (printf "'%s' item get %s --format json" $op_bin (index $profile_list 0).id) | fromJson}}
+{{    $profile_id := (index $profile_list 0).id}}
+{{    $profile := output "sh" "-c" (printf "'%s' item get %s --format json" $op_bin $profile_id) | fromJson}}
+{{    $vault_id = $profile.vault.id}}
 {{    range $profile.fields}}
 {{      if hasKey . "label"}}
-{{        if eq .label "dotfiles_gh_user"  }}{{$gh_user = .value}}{{$is_sovereign = true}}{{end}}
-{{        if eq .label "dotfiles_gh_name"  }}{{$name = .value}}{{end}}
-{{        if eq .label "dotfiles_gh_email" }}{{$email = .value}}{{end}}
-{{        if eq .label "dotfiles_link_id"  }}{{$link_id = .value}}{{end}}
+{{        if eq .label "dotfiles_gh_user" }}{{$gh_user = .value}}{{$is_sovereign = true}}{{end}}
+{{        if eq .label "dotfiles_gh_name" }}{{$name = .value}}{{end}}
+{{        if eq .label "dotfiles_gh_email"}}{{$email = .value}}{{end}}
+{{        if eq .label "dotfiles_link_id" }}{{$link_id = .value}}{{end}}
 {{      end}}
 {{    end}}
-{{    $vault_id = $profile.vault.id}}
 
-{{    $accounts_json := output "sh" "-c" (printf "'%s' account list --format json 2>/dev/null || echo '[]'" $op_bin)}}
-{{    $accounts := fromJson $accounts_json}}
-{{    $keys_collector := list}}
-{{    range $accounts}}
-{{      $cmd := printf "'%s' item list --tags dotfiles-ssh-key --account '%s' --format json 2>/dev/null || echo '[]'" $op_bin .url}}
-{{      $account_keys := output "sh" "-c" $cmd | fromJson}}
-{{      $keys_collector = concat $keys_collector $account_keys}}
-{{    end}}
-{{    $ssh_keys_hash = sha256sum (toJson $keys_collector)}}
+{{/* O(1) Hash Generation for SSH keys from the active Sovereign Account */}}
+{{    $ssh_keys := output "sh" "-c" (printf "'%s' item list --tags dotfiles-ssh-key --format json 2>/dev/null || echo '[]'" $op_bin) | fromJson}}
+{{    $ssh_keys_hash = sha256sum (toJson $ssh_keys)}}
 {{  end}}
 {{end}}
 
