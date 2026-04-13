@@ -13,18 +13,23 @@ packages:
     ubuntu:
       - build-essential
       - libssl-dev
+      - libasound2t64
     debian:
       - build-essential
       - libssl-dev
+      - libasound2
     fedora:
       - gcc-c++
       - openssl-devel
+      - alsa-lib
     rhel:
       - gcc-c++
       - openssl-devel
+      - alsa-lib
     arch:
       - base-devel
       - openssl
+      - alsa-lib
   darwin:
     brews:
       - openssl@3
