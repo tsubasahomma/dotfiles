@@ -134,10 +134,14 @@ jobs:
           chezmoi unmanaged || true
 
       - name: Idempotency Proof (Convergence Validation)
+        # [Architecture]: Boundary Enforcer (Managed Config vs Volatile State)
+        # [Rationale]: lazy-lock.json is subject to runtime mutation via plugin managers.
+        # Exclude it to prevent false-positive drift failures in CI.
+        # [Reference]: https://www.chezmoi.io/reference/commands/managed/
         run: |
-          if ! chezmoi verify --source="$GITHUB_WORKSPACE"; then
-            echo "❌ [Idempotency Failure] Detected drift."
-            chezmoi diff --source="$GITHUB_WORKSPACE"
+          if ! chezmoi managed | grep -v ".config/nvim/lazy-lock.json" | xargs chezmoi verify --source="$GITHUB_WORKSPACE"; then
+            echo "❌ [Idempotency Failure] Detected drift in managed files."
+            chezmoi managed | grep -v ".config/nvim/lazy-lock.json" | xargs chezmoi diff --source="$GITHUB_WORKSPACE"
             exit 1
           fi
 

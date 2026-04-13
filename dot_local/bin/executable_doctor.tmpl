@@ -52,7 +52,7 @@ log_ok "Sovereign Identity resolved: {{ .gh_user }}"
 echo "--- 4. Neovim Deterministic State ---"
 LOCK_FILE="{{ .paths.xdg_config }}/nvim/lazy-lock.json"
 if [ -f "$LOCK_FILE" ]; then
-  chezmoi verify "$LOCK_FILE" > /dev/null 2>&1 && log_ok "lazy-lock.json is synchronized." || log_warn "lazy-lock.json drift detected."
+  chezmoi verify "$LOCK_FILE" > /dev/null 2>&1 && log_ok "lazy-lock.json is synchronized." || log_warn "lazy-lock.json drift detected (Expected during active plugin development)."
 else
   log_err "lazy-lock.json is missing."
 fi
