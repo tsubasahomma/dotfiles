@@ -1,4 +1,5 @@
 {{- /* [Reference]: https://wezfurlong.org/wezterm/config/lua/wezterm/font_with_fallback.html */ -}}
+{{- /* [Reference]: https://wezfurlong.org/wezterm/config/lua/config/allow_square_glyphs_to_overflow_width.html */ -}}
 {{- /* [Reference]: https://wezfurlong.org/wezterm/multiplexing.html */ -}}
 {{- /* [Reference]: https://wezfurlong.org/wezterm/config/lua/config/audible_bell.html */ -}}
 
@@ -15,14 +16,23 @@ config.scrollback_lines = 100000
 local scheme = wezterm.get_builtin_color_schemes()["Kanagawa Dragon (Gogh)"]
 config.colors = scheme
 
--- [Architecture]: Font Fallback Chain
+-- [Architecture]: Font Fallback Chain & Deterministic Emoji Rendering
+-- [Rationale]: Missing fonts are automatically bypassed. Apple Color Emoji (macOS)
+-- and Segoe UI Emoji (Windows) are placed immediately after the primary programming font
+-- to prevent Nerd Font monochrome symbols from hijacking color emoji rendering.
 config.font = wezterm.font_with_fallback({
   "JetBrainsMono Nerd Font",
+  "Apple Color Emoji",
+  "Segoe UI Emoji",
   "BIZ UD Gothic",
   "IBM Plex Sans JP",
   "Hiragino Sans",
   "Meiryo",
 })
+
+-- [Architecture]: High-Fidelity Multi-Cell Glyph Rendering
+-- [Rationale]: Ensure complex emoji (e.g., flags, ligatures) do not clip when exceeding standard cell widths.
+config.allow_square_glyphs_to_overflow_width = "Always"
 
 config.font_size = 14.0
 config.line_height = 1.15
