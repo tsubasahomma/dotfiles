@@ -1,0 +1,6 @@
+# =============================================================================
+# [Architecture]: Sovereign Identity Anchors
+# [Rationale]: Configuration for the Vault-Aware Dynamic Key Discovery Protocol.
+# =============================================================================
+ssh_keys:
+  discovery_tag: "dotfiles-ssh-key"

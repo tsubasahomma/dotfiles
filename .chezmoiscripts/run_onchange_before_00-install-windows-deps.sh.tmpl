@@ -1,8 +1,9 @@
 {{ if .is_wsl -}}
 #!/bin/sh
 # [chezmoi-script]: L0 (POSIX Shell) Tiering
-# [Architecture]: Idempotent installation of Windows-side dependencies from WSL.
-# [Rationale]: Synchronized with macOS Brewfile to ensure visual and functional parity.
+# [Architecture]: Declarative Infrastructure via Schema Injection
+# [Rationale]: Abstracts package installation using '.chezmoidata/packages.yaml'.
+# [Trigger]: Schema Hash: {{ include ".chezmoidata/packages.yaml" | sha256sum }}
 
 set -eu
 
@@ -49,17 +50,16 @@ install_winget_volatile() {
   fi
 }
 
-# 1. Core Security Layer (VADKD v5.1 Prerequisites)
-install_winget_app "AgileBits.1Password"
-install_winget_app "AgileBits.1Password.CLI"
+echo "📦 [Infrastructure] Provisioning Windows dependencies..."
 
-# 2. Bridge Tools
-install_winget_app "albertony.npiperelay"
+{{ range .packages.windows.winget -}}
+{{- /* [Architecture]: Volatile Package Routing */ -}}
+{{- if eq . "wez.wezterm.nightly" }}
+install_winget_volatile {{ . | quote }}
+{{- else }}
+install_winget_app {{ . | quote }}
+{{- end }}
+{{ end -}}
 
-# 3. Terminal & UX Parity (OS Agnostic Foundation)
-# [Rationale]: Bypass hash validation for Nightly builds. Handled securely via volatile wrapper.
-install_winget_volatile "wez.wezterm.nightly"
-install_winget_app "DEVCOM.JetBrainsMonoNerdFont"
-
-echo "✅ [Infrastructure] Windows dependency check complete."
+echo "✅ [Infrastructure] Windows dependency provisioning complete."
 {{ end -}}

@@ -88,15 +88,16 @@ jobs:
       - name: Bootstrap Sovereign Tools (Hermetic Verification & Injection)
         # [Rationale]: Extract hashes from SSOT and inject binaries to bypass discovery.
         run: |
-          # 1. Parse .chezmoidata.yaml
-          CHEZMOI_VER=$(awk '/^  chezmoi:/{f=1} f && /version:/{print $2; f=0}' .chezmoidata.yaml | tr -d '"')
-          CHEZMOI_HASH=$(awk "/^  chezmoi:/{f=1} f && /${CHEZMOI_OS}-${CHEZMOI_ARCH}:/{print \$2; f=0}" .chezmoidata.yaml | tr -d '"')
+          # 1. Parse .chezmoidata/tools.yaml
+          DATA_FILE=".chezmoidata/tools.yaml"
+          CHEZMOI_VER=$(awk '/^  chezmoi:/{f=1} f && /version:/{print $2; f=0}' "$DATA_FILE" | tr -d '"')
+          CHEZMOI_HASH=$(awk "/^  chezmoi:/{f=1} f && /${CHEZMOI_OS}-${CHEZMOI_ARCH}:/{print \$2; f=0}" "$DATA_FILE" | tr -d '"')
 
-          MISE_VER=$(awk '/^  mise:/{f=1} f && /version:/{print $2; f=0}' .chezmoidata.yaml | tr -d '"')
-          MISE_HASH=$(awk "/^  mise:/{f=1} f && /${MISE_OS}-${MISE_ARCH}:/{print \$2; f=0}" .chezmoidata.yaml | tr -d '"')
+          MISE_VER=$(awk '/^  mise:/{f=1} f && /version:/{print $2; f=0}' "$DATA_FILE" | tr -d '"')
+          MISE_HASH=$(awk "/^  mise:/{f=1} f && /${MISE_OS}-${MISE_ARCH}:/{print \$2; f=0}" "$DATA_FILE" | tr -d '"')
 
-          NEOVIM_VER=$(awk '/^  neovim:/{f=1} f && /version:/{print $2; f=0}' .chezmoidata.yaml | tr -d '"')
-          NEOVIM_HASH=$(awk "/^  neovim:/{f=1} f && /${NEOVIM_KEY}:/{print \$2; f=0}" .chezmoidata.yaml | tr -d '"')
+          NEOVIM_VER=$(awk '/^  neovim:/{f=1} f && /version:/{print $2; f=0}' "$DATA_FILE" | tr -d '"')
+          NEOVIM_HASH=$(awk "/^  neovim:/{f=1} f && /${NEOVIM_KEY}:/{print \$2; f=0}" "$DATA_FILE" | tr -d '"')
 
           echo "🔍 [Audit] Expected chezmoi (v${CHEZMOI_VER}): ${CHEZMOI_HASH}"
           echo "🔍 [Audit] Expected mise (v${MISE_VER}): ${MISE_HASH}"

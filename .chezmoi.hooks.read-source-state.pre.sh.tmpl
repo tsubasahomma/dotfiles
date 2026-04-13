@@ -1,0 +1,71 @@
+{{- /* [Reference]: https://www.chezmoi.io/user-guide/advanced/install-your-password-manager-on-init/ */ -}}
+#!/bin/sh
+# [Architecture]: Pre-flight Mutation Isolation (Tier-0 Bootstrap)
+# [Rationale]: Extracts mutation logic (binary installation) from the configuration resolution phase.
+# This ensures that '.chezmoi.toml.tmpl' operates strictly as a side-effect-free pure function.
+
+set -eu
+
+# [Architecture]: CI Bypass
+# [Rationale]: Prevent execution in CI environments where 1Password is not provisioned.
+if [ "${CI:-false}" = "true" ]; then
+  exit 0
+fi
+
+LOCAL_BIN="$HOME/.local/bin"
+OP_BIN="$LOCAL_BIN/op"
+
+# Execute only if the binary is missing
+if [ ! -x "$OP_BIN" ]; then
+  echo "🔐 [Pre-flight] Provisioning 1Password CLI (Tier-0 Prerequisite)..."
+  mkdir -p "$LOCAL_BIN"
+
+  # [Architecture]: Template-Driven Identity Resolution
+  # [Rationale]: Dynamically inject the exact version and hash from the SSOT (.chezmoidata.yaml).
+  OP_VERSION="{{ .tool_integrity.op.version }}"
+
+  # Resolve OS and Architecture mapping for 1Password
+  OS_ID="{{ .chezmoi.os }}"
+  ARCH_ID="amd64"
+  if [ "{{ .chezmoi.arch }}" = "arm64" ]; then
+    ARCH_ID="arm64"
+  fi
+
+  HASH_KEY="${OS_ID}-${ARCH_ID}"
+
+  {{- /* Workaround to extract hash from template safely */}}
+  OP_HASH=""
+  {{- if hasKey .tool_integrity.op.hashes (printf "%s-%s" .chezmoi.os "amd64") }}
+  OP_HASH="{{ index .tool_integrity.op.hashes (printf "%s-%s" .chezmoi.os "amd64") }}"
+  {{- end }}
+  {{- if hasKey .tool_integrity.op.hashes (printf "%s-%s" .chezmoi.os "arm64") }}
+  OP_HASH="{{ index .tool_integrity.op.hashes (printf "%s-%s" .chezmoi.os "arm64") }}"
+  {{- end }}
+
+  OP_URL="https://cache.agilebits.com/dist/1P/op2/pkg/v${OP_VERSION}/op_${OS_ID}_${ARCH_ID}_v${OP_VERSION}.zip"
+
+  curl -fsSL "$OP_URL" -o /tmp/op.zip
+
+  # [Security]: Physical Bit Verification
+  ACTUAL_HASH=$(sha256sum /tmp/op.zip 2>/dev/null | cut -d' ' -f1 || shasum -a 256 /tmp/op.zip | cut -d' ' -f1)
+  if [ "$ACTUAL_HASH" != "$OP_HASH" ]; then
+    echo "❌ [Fatal] 1Password CLI hash mismatch."
+    echo "Expected: $OP_HASH"
+    echo "Actual:   $ACTUAL_HASH"
+    rm -f /tmp/op.zip
+    exit 1
+  fi
+
+  # [Interop]: Cross-platform Unzip (handles environments missing 'unzip')
+  if command -v unzip >/dev/null 2>&1; then
+    unzip -q -o /tmp/op.zip -d /tmp/op_ext
+  else
+    python3 -m zipfile -e /tmp/op.zip /tmp/op_ext
+  fi
+
+  mv /tmp/op_ext/op "$OP_BIN"
+  chmod +x "$OP_BIN"
+  rm -rf /tmp/op.zip /tmp/op_ext
+
+  echo "✅ [Pre-flight] 1Password CLI provisioned successfully."
+fi

@@ -1,6 +1,5 @@
-{{- /* [Architecture]: Foundation Schema | Phase 20.1 Deterministic Dual-Pass Bootstrap */ -}}
-{{- /* [Rationale]: Use lookPath to resolve absolute path for Windows Interop and manage state transitions. */ -}}
-{{- /* [Reference]: https://www.chezmoi.io/reference/templates/functions/lookPath/ */ -}}
+{{- /* [Architecture]: Foundation Schema | Phase 20.3 Pure Function Edition */ -}}
+{{- /* [Rationale]: Configuration resolution is strictly side-effect-free. Mutations are delegated to the pre-hook. */ -}}
 
 {{- /* --- 1. Platform Normalization --- */ -}}
 {{- $osid := .chezmoi.os -}}
@@ -16,6 +15,8 @@
 {{-   end -}}
 {{- end -}}
 
+{{- /* [Architecture]: Read-Only Side-Effect Exception */ -}}
+{{- /* [Rationale]: Using 'output' to query the OS state is pure (does not mutate system state). */ -}}
 {{- $windows_user := "" -}}
 {{- if $is_wsl -}}
 {{-   $windows_user = env "WINDOWS_USER" -}}
@@ -32,42 +33,20 @@
 {{- end -}}
 
 {{- /* --- 2. Capability Audit & Binary Resolution (Phase 0) --- */ -}}
-{{- $data := (include ".chezmoidata.yaml" | fromYaml) -}}
 {{- $local_bin := joinPath $home ".local/bin" -}}
 {{- $is_ci := env "CI" | default "false" | eq "true" -}}
 
+{{- /* [Architecture]: Trust the Pre-Hook */ -}}
+{{- /* [Rationale]: The .chezmoi.hooks.read-source-state.pre script guarantees the existence of 'op'. */ -}}
 {{- $op_bin := "" -}}
 {{- $is_op_available := false -}}
 
-{{- /* Resolve absolute paths to ensure deterministic shell execution */ -}}
 {{- if $is_wsl -}}
-{{-   $resolved_op := lookPath "op.exe" -}}
-{{-   if $resolved_op -}}
-{{-     $op_bin = $resolved_op -}}
-{{-     $is_op_available = true -}}
-{{-   end -}}
+{{-   $resolved_op := lookPath "op.exe" | default (joinPath $local_bin "op") -}}
+{{-   if stat $resolved_op }}{{ $op_bin = $resolved_op }}{{ $is_op_available = true }}{{ end -}}
 {{- else -}}
-{{-   $resolved_op := lookPath "op" -}}
-{{-   if $resolved_op -}}
-{{-     $op_bin = $resolved_op -}}
-{{-     $is_op_available = true -}}
-{{-   end -}}
-{{- end -}}
-
-{{- /* Phase 1: Native Dependency Convergence (macOS / Linux) */ -}}
-{{- if and (not $is_ci) (not $is_wsl) (not $is_op_available) -}}
-    {{- $op_version := $data.tool_integrity.op.version -}}
-    {{- $hash_key := printf "%s-%s" .chezmoi.os .chezmoi.arch -}}
-    {{- $op_hash := index $data.tool_integrity.op.hashes $hash_key -}}
-    {{- $os_op := .chezmoi.os -}}
-    {{- $arch_op := "amd64" -}}{{ if eq .chezmoi.arch "arm64" }}{{ $arch_op = "arm64" }}{{ end -}}
-    {{- $op_url := printf "https://cache.agilebits.com/dist/1P/op2/pkg/v%s/op_%s_%s_v%s.zip" $op_version $os_op $arch_op $op_version -}}
-
-    {{- $bootstrap_cmd := printf "mkdir -p '%s' && curl -fsSL '%s' -o /tmp/op.zip && ACTUAL=$(sha256sum /tmp/op.zip 2>/dev/null | cut -d' ' -f1 || shasum -a 256 /tmp/op.zip | cut -d' ' -f1) && [ \"$ACTUAL\" = '%s' ] && { command -v unzip >/dev/null 2>&1 && unzip -q -o /tmp/op_ext || python3 -m zipfile -e /tmp/op.zip /tmp/op_ext; } && mv /tmp/op_ext/op '%s/op' && chmod +x '%s/op' && rm -rf /tmp/op.zip /tmp/op_ext" $local_bin $op_url $op_hash $local_bin $local_bin -}}
-    {{- $bootstrap_res := output "sh" "-c" $bootstrap_cmd -}}
-
-    {{- $op_bin = joinPath $local_bin "op" -}}
-    {{- $is_op_available = true -}}
+{{-   $resolved_op := lookPath "op" | default (joinPath $local_bin "op") -}}
+{{-   if stat $resolved_op }}{{ $op_bin = $resolved_op }}{{ $is_op_available = true }}{{ end -}}
 {{- end -}}
 
 {{- /* Fallback placeholder for structural integrity during bootstrap */ -}}
@@ -140,7 +119,6 @@
     {{- end -}}
 
     {{- /* [Architecture]: Multi-Account Identity Hash Collection (O(A) Time) */ -}}
-    {{- /* [Rationale]: Force execution of run_onchange scripts if keys drift across ANY linked 1Password account. */ -}}
     {{- $accounts_json := output "sh" "-c" (printf "'%s' account list --format json 2>/dev/null || echo '[]'" $op_bin) -}}
     {{- $accounts := fromJson $accounts_json -}}
     {{- $keys_collector := list -}}

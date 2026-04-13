@@ -6,7 +6,7 @@ This document defines the architectural constraints and technical logic of the D
 
 The system is designed as a **Pure Function**: Given a raw OS and a 1Password session, the output must be a mathematically convergent environment.
 
-- **Deterministic State**: System state is driven by declarative schemas (`.chezmoidata.yaml`) rather than imperative commands.
+- **Deterministic State**: System state is driven by declarative schemas (defined within '.chezmoidata/') rather than imperative commands.
 - **Zero-Speculation Identity**: Personal data is never stored in the repository. Identities are resolved dynamically at runtime.
 - **Hermetic Isolation**: Global system pollution is minimized by encapsulating runtimes within isolated environments managed by `mise`.
 
@@ -43,7 +43,7 @@ The platform implements the **Vault-Aware Dynamic Key Discovery (VADKD)** protoc
 
 1. **Identity Resolution (Profile)**: `chezmoi` scans 1Password for a single item tagged `dotfiles-github-profile`. This acts as the SSOT for `dotfiles_gh_user`, `dotfiles_gh_name`, `dotfiles_gh_email`, and the `dotfiles_link_id` (a pointer to the primary SSH key).
 2. **Resource Resolution (SSH Keys)**: `chezmoi` discovers _all_ items tagged `dotfiles-ssh-key`. It extracts the `key_type`, `vault.id`, and `dotfiles_link_id` to construct mathematically collision-free filenames: `id_<key_type>_<vault_id>_<link_id>.pub`.
-3. **Deterministic Linkage**: The platform maps the `dotfiles_link_id` from the Profile to the corresponding SSH Key to finalize the Git signing payload.
+3. **Deterministic Linkage**: The platform map the `dotfiles_link_id` from the Profile to the corresponding SSH Key to finalize the Git signing payload.
 
 ### External Protocol Boundary (The "Null-GPG" Pattern)
 

@@ -1,0 +1,57 @@
+# =============================================================================
+# [Architecture]: Declarative Package Schema
+# [Rationale]: OS-agnostic definition of required GUI and CLI dependencies.
+# =============================================================================
+packages:
+  common:
+    - ca-certificates
+    - git
+    - zsh
+    - jq
+    - socat
+  linux:
+    ubuntu:
+      - build-essential
+      - libssl-dev
+    debian:
+      - build-essential
+      - libssl-dev
+    fedora:
+      - gcc-c++
+      - openssl-devel
+    rhel:
+      - gcc-c++
+      - openssl-devel
+    arch:
+      - base-devel
+      - openssl
+  darwin:
+    brews:
+      - openssl@3
+      - colima
+    casks:
+      - 1password
+      - 1password-cli
+      - font-jetbrains-mono-nerd-font
+      - wezterm@nightly
+      - slack
+      - google-chrome
+      - notion
+      - raycast
+      - visual-studio-code
+    media:
+      - imagemagick
+      - ghostscript
+      - tectonic
+  windows:
+    winget:
+      - AgileBits.1Password
+      - AgileBits.1Password.CLI
+      - wez.wezterm.nightly
+      - DEVCOM.JetBrainsMonoNerdFont
+      - SlackTechnologies.Slack
+      - Google.Chrome
+      - Notion.Notion
+      - Flow-Launcher.Flow-Launcher
+      - Microsoft.PowerToys
+      - Microsoft.VisualStudioCode
