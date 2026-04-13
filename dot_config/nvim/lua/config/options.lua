@@ -33,3 +33,22 @@ opt.smartcase = true
 opt.spell = false
 opt.spelllang = { "en" }
 opt.spelloptions = "camel"
+
+-- [Architecture]: WSL2 Deterministic Clipboard Provider
+-- [Rationale]: Explicitly bind to win32yank.exe to bypass dynamic resolution
+-- and ensure reliable Win32 interoperability.
+-- [Reference]: :help provider-clipboard
+if vim.fn.has("wsl") == 1 then
+  vim.g.clipboard = {
+    name = "win32yank-wsl",
+    copy = {
+      ["+"] = "win32yank.exe -i --crlf",
+      ["*"] = "win32yank.exe -i --crlf",
+    },
+    paste = {
+      ["+"] = "win32yank.exe -o --lf",
+      ["*"] = "win32yank.exe -o --lf",
+    },
+    cache_enabled = 1,
+  }
+end
