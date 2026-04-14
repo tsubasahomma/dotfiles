@@ -1,12 +1,29 @@
--- [Architecture]: High-Fidelity Search and Replace Engine
--- [Rationale]: Replaces brittle manual refactoring with a
--- deterministic preview-based UI.
+-- [Architecture]: High-Fidelity Search, Replace, and Edit Engine
+-- [Reference]: https://github.com/echasnovski/mini.surround
+
 return {
+  {
+    "folke/persistence.nvim",
+    enabled = false,
+  },
+  {
+    "nvim-mini/mini.surround",
+    opts = {
+      mappings = {
+        add = "gsa",
+        delete = "gsd",
+        find = "gsf",
+        find_left = "gsF",
+        highlight = "gsh",
+        replace = "gsr",
+        update_n_lines = "gsn",
+      },
+    },
+  },
   {
     "MagicDuck/grug-far.nvim",
     opts = {
       headerMaxWidth = 80,
-      -- 2026 optimized: ensures results are always synchronized with disk.
     },
     keys = {
       { "<leader>sr", "<cmd>GrugFar<cr>", desc = "Search and Replace (Grug)" },
