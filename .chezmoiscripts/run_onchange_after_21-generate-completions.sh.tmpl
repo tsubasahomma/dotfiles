@@ -39,9 +39,16 @@ find "$CACHE_DIR" -name "*.zwc" -type f -delete 2>/dev/null || true
 "$MISE_BIN" exec fd -- fd --gen-completions zsh > "$COMP_DIR/_fd"
 "$MISE_BIN" exec uv -- uv generate-shell-completion zsh > "$COMP_DIR/_uv"
 
-# --- Phase 1.1: SRE Toolchain Completions (Physical Bit Verified) ---
-# [Rationale]: Only tools with verified static stdout support are included.
-# [Interop]: Use 'docker-cli' tool name to invoke the 'docker' binary provided by Aqua.
+# --- Phase 1.1: Web Development Ecosystem ---
+# [Rationale]: Statically generated completions for Node.js toolchains.
+"$MISE_BIN" exec pnpm -- pnpm completion zsh > "$COMP_DIR/_pnpm"
+
+# [Rationale]: Replace absolute/relative paths to the binary with a generic 'hs'
+# to ensure resolution via mise shims in the user's PATH.
+echo "#compdef hs" > "$COMP_DIR/_hs"
+"$MISE_BIN" exec "npm:@hubspot/cli" -- hs completion | sed "s|[^[:space:]]*/bin/hs|hs|g" >> "$COMP_DIR/_hs"
+
+# --- Phase 1.2: SRE Toolchain Completions (Physical Bit Verified) ---
 "$MISE_BIN" exec docker-cli -- docker completion zsh > "$COMP_DIR/_docker"
 "$MISE_BIN" exec kubectl -- kubectl completion zsh > "$COMP_DIR/_kubectl"
 "$MISE_BIN" exec helm -- helm completion zsh > "$COMP_DIR/_helm"
@@ -49,7 +56,6 @@ find "$CACHE_DIR" -name "*.zwc" -type f -delete 2>/dev/null || true
 
 # [Rationale]: Modern utilities with built-in generation verified via physical audit.
 "$MISE_BIN" exec xh -- xh --generate complete-zsh > "$COMP_DIR/_xh"
-# [Fix]: Use --gen-completion-out to ensure the script is written to stdout for redirection.
 "$MISE_BIN" exec cargo:procs -- procs --gen-completion-out zsh > "$COMP_DIR/_procs"
 "$MISE_BIN" exec doggo -- doggo completions zsh > "$COMP_DIR/_doggo"
 
