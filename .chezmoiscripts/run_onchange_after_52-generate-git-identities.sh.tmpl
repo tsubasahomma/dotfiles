@@ -1,0 +1,38 @@
+#!/bin/zsh
+# =============================================================================
+# [Architecture]: Dynamic Git Config Generator (Phase 52)
+# [Rationale]: Chezmoi cannot cleanly generate N arbitrary target files from a single
+# template file. This script bridges the gap by injecting the structured identities array
+# directly into physical Git config files.
+# [Trigger]: {{ $identities_json := .identities | toJson }}{{ sha256sum $identities_json }}
+# =============================================================================
+
+set -euo pipefail
+
+IDENTITIES_DIR="{{ .paths.xdg_config }}/git/identities"
+
+echo "⚙️  [Git] Provisioning strictly scoped Git configurations..."
+
+# [Architecture]: Enforce clean state. Remove orphaned identities if 1Password items were deleted.
+rm -rf "$IDENTITIES_DIR"
+mkdir -p "$IDENTITIES_DIR"
+
+{{ $home := .paths.home -}}
+{{ range .identities -}}
+CONFIG_FILE="$IDENTITIES_DIR/config_{{ .vault_id }}_{{ .item_id }}"
+
+cat << 'EOF' > "$CONFIG_FILE"
+# [Architecture]: Auto-generated Identity Config for {{ .name }}
+[user]
+    name = {{ .name | quote }}
+    email = {{ .email | quote }}
+    signingkey = {{ $home }}/.ssh/id_{{ .key_type }}_{{ .vault_id }}_{{ .item_id }}.pub
+
+[core]
+    sshCommand = "ssh -i {{ $home }}/.ssh/id_{{ .key_type }}_{{ .vault_id }}_{{ .item_id }}.pub -o IdentitiesOnly=yes"
+EOF
+
+echo "  ✅ Created identity binding: {{ .email }}"
+{{ end -}}
+
+echo "✅ [Git] All scoped configurations successfully provisioned."

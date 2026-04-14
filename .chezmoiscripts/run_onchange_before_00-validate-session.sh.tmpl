@@ -2,7 +2,6 @@
 # [chezmoi-script]: L0 (POSIX Shell) Tiering
 # [Architecture]: Validation Phase synchronized with VADKD v5.1 Protocol.
 # [Rationale]: Asserts critical networking paths before any transport occurs.
-# [Reference]: https://www.chezmoi.io/user-guide/password-managers/1password/
 
 set -eu
 
@@ -17,12 +16,13 @@ if ! ssh-keygen -F github.com -f "$ssh_state_dir/known_hosts" > /dev/null 2>&1; 
   ssh-keyscan -H github.com >> "$ssh_state_dir/known_hosts" 2> /dev/null
 fi
 
-# [Architecture]: Deterministic Bypass for CI
+# [Architecture]: Deterministic Bypass for CI or Initial Bootstrapping
 if [ "${CI:-}" = "true" ]; then
   exit 0
 fi
 
-{{ if eq .gh_user "wsl-bootstrap" -}}
+{{ if eq .op_status "missing" -}}
+# [Architecture]: Graceful bypass if 1Password is not yet provisioned.
 exit 0
 {{- end }}
 

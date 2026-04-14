@@ -1,13 +1,29 @@
 #!/bin/zsh
 # [chezmoi-script]: Source: '.chezmoiscripts/run_...' vs Dry-run: '.chezmoiscripts/...'
-# [Rationale]: https://www.chezmoi.io/reference/special-directories/chezmoiscripts/
-# [Rationale]: Guarantee the existence of the managed personal workspace.
+# [Rationale]: Guarantee the existence of all dynamically routed workspaces.
 
 set -euo pipefail
 
-GH_ROOT="{{ .paths.home }}/{{ .gh_root }}"
+echo "📁 [Workspace] Provisioning dynamically routed workspace directories..."
 
-if [[ ! -d "$GH_ROOT" ]]; then
-  echo "📁 [Workspace] Provisioning managed personal directory: $GH_ROOT"
-  mkdir -p "$GH_ROOT"
+{{ $home := .paths.home -}}
+{{ range .identities -}}
+{{   $name := .name -}}
+{{   $dirs := splitList "," .dirs -}}
+{{   range $dirs -}}
+{{     $normalized_dir := trim . -}}
+{{     if hasPrefix "~/" $normalized_dir -}}
+{{       $normalized_dir = joinPath $home (trimPrefix "~/" $normalized_dir) -}}
+{{     end -}}
+# [Policy]: Target mapping for {{ $name }}
+RAW_DIR="{{ $normalized_dir }}"
+
+# [Architecture]: Strip wildcard suffixes (e.g., /Jitera*) to safely resolve the base directory
+BASE_DIR="${RAW_DIR%%\**}"
+
+if [[ ! -d "$BASE_DIR" ]]; then
+  echo "  📦 mkdir: $BASE_DIR"
+  mkdir -p "$BASE_DIR"
 fi
+{{   end -}}
+{{ end -}}

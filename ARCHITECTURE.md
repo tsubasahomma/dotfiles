@@ -20,33 +20,20 @@ Execution follows a strict sequential phase-gate model to resolve binary depende
 4. **Tier 2 (Runtime Convergence)**: Phase 20 scripts provision language runtimes and Neovim providers via absolute paths using `mise`.
 5. **Tier 3 (Trust Aggregation)**: Phase 50/51 scripts dynamically extract public keys from 1Password and generate the Git allowed_signers list.
 
-## 3. Security & Identity Architecture
+## 3. Parallel Identity Architecture (v3)
 
-### Zero-Knowledge Secrets
+The platform eliminates the concept of a "Primary" identity in favor of a zero-trust, parallel model. All identities (Personal, Work, OSS) are treated as equal siblings.
 
-Secrets and private keys are never written to disk. The system leverages the **1Password SSH Agent** for all cryptographic operations.
-
-### Dynamic Identity Resolution
-
-The platform automates a single personal identity while leaving work or transient identities to deterministic manual overrides.
-
-1. **Identity Resolution**: `chezmoi` scans 1Password for a single item tagged `dotfiles-github-profile` to resolve Git author variables and the `dotfiles_link_id` (a pointer to the primary SSH key).
-2. **Resource Resolution**: `chezmoi` discovers all items tagged `dotfiles-ssh-key` and constructs collision-free public key files.
-3. **Deterministic Linkage**: The platform maps the `dotfiles_link_id` to the corresponding SSH Key to finalize the Git signing payload.
-
-### SSH Signing with GPG-Binary Stubbing
-
-To maintain strict binary hermeticity (zero GPG dependency) while co-existing with the broader GitHub ecosystem, the platform defines a clear protocol boundary:
-
-- **Self-Signing (Internal Trust)**: Exclusively enforced via the SSH protocol for all local commits.
-- **Foreign Verification (External Trust)**: GitHub's PGP signatures are gracefully ignored by pointing `gpg.program` to the OS-native `/usr/bin/true` binary. This prevents execution crashes without polluting the system with GPG tooling.
+1. **Discovery**: `chezmoi` scans all 1Password accounts for items tagged `dotfiles-ssh-key`.
+2. **Schema Binding**: Each item must contain a `dotfiles` section with `dotfiles_git_name`, `dotfiles_git_email`, and `dotfiles_git_dirs`.
+3. **Atomic Export**: SSH public keys are exported using deterministic naming: `id_{key_type}_{vault_id}_{item_id}.pub`.
 
 ## 4. Directory-Driven Routing (Policy Layer)
 
 The platform enforces context awareness using Git's `includeIf`.
 
-- **Managed Context (Safe Zone)**: Repositories under `~/src/github.com/<gh_user>` automatically assume the Personal Sovereign Identity.
-- **Unmanaged Context (The Escape Hatch)**: Work or external projects require a manual `.gitconfig.local` to bind company emails and secondary SSH keys, guaranteeing zero cross-contamination.
+- **Zero-Trust Enforcement**: No global `user.email` is defined. Git operations outside of explicitly mapped directories will fail to prevent identity leakage.
+- **Dynamic Scoping**: Each identity provides a comma-separated list of directory globs. The engine generates scoped `.gitconfig` files that bind the specific email and SSH signing key to those paths.
 
 ## 5. Filesystem Standards (XDG Compliance)
 

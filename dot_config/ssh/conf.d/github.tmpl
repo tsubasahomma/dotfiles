@@ -1,8 +1,6 @@
-{{- /* [Architecture]: Defensive Schema Extraction */ -}}
-{{- $ssh_key_name := "id_ed25519_pending.pub" -}}
-{{- if hasKey . "ssh_key_name" }}{{ $ssh_key_name = .ssh_key_name }}{{ end -}}
+{{- /* [Architecture]: Zero-Trust SSH Routing */ -}}
+{{- /* [Security]: IdentityFile is deliberately omitted. Routing is strictly handled by Git's core.sshCommand */ -}}
 Host github.com
     HostName github.com
     User git
-    IdentityFile {{ .paths.home }}/.ssh/{{ $ssh_key_name }}
     IdentitiesOnly yes

@@ -1,5 +1,5 @@
 #!/bin/sh
-{{/* [Reference]: https://www.chezmoi.io/user-guide/templating/ */ -}}
+# [chezmoi-script]: L0 (POSIX Shell) Tiering
 # [Rationale]: Self-healing diagnostic engine with actionable guidance.
 # [Architecture]: POSIX-compliant (sh) OS-agnostic checks with schema-safe evaluation.
 
@@ -31,8 +31,14 @@ done
 echo "--- 2. Identity & Auth Bridge Analysis (Interop) ---"
 # [Dynamic Check]: Evaluates the target binary (Linux or Windows via Interop).
 if "$OP_BIN" account get > /dev/null 2>&1; then
-  GH_USER="{{ .gh_user }}"
-  log_ok "Sovereign Identity authenticated: $GH_USER"
+  log_ok "1Password CLI authenticated."
+  {{- if .identities }}
+  {{- range .identities }}
+  log_ok "Parallel Identity mapped: {{ .name }} ({{ .email }})"
+  {{- end }}
+  {{- else }}
+  log_warn "No mapped identities found in 1Password."
+  {{- end }}
 else
   log_warn "Sovereign Identity is locked."
   log_guide "Action: Unlock 1Password Desktop App or run '$OP_BIN signin'."

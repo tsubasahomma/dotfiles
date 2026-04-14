@@ -1,7 +1,7 @@
-{{/* [Architecture]: Foundation Schema | Phase 20.9 (Discovery-First Identity) */}}
-{{/* [Reference]: https://www.chezmoi.io/user-guide/templating/ */}}
+# [Architecture]: Foundation Schema | Phase 20.9 (Parallel Identity Model)
+# [Reference]: https://www.chezmoi.io/user-guide/templating/
 
-{{/* --- 1. Platform & Interop Initialization --- */}}
+# --- 1. Platform & Interop Initialization ---
 {{$osid := .chezmoi.os}}
 {{$arch := .chezmoi.arch}}
 {{$home := .chezmoi.homeDir}}
@@ -22,7 +22,7 @@
 {{  $brew_prefix = "/home/linuxbrew/.linuxbrew"}}
 {{end}}
 
-{{/* --- 2. Identity State Machine & Dynamic Binary Resolution --- */}}
+# --- 2. Identity State Machine & Dynamic Binary Resolution ---
 {{$local_bin := joinPath $home ".local/bin"}}
 {{$op_bin := lookPath "op" | default (joinPath $local_bin "op")}}
 {{$op_sign := ""}}
@@ -33,8 +33,6 @@
 {{  $ssh_auth_sock = joinPath $home "Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"}}
 {{else if $is_wsl}}
 {{  $ssh_auth_sock = joinPath $home ".1password/agent.sock"}}
-{{/* [Architecture]: Option B (The Interop Path) */}}
-{{/* Dynamically resolve Windows binaries to bypass Linux isolation and leverage Windows Hello. */}}
 {{  $win_op := output "powershell.exe" "-NoProfile" "-NonInteractive" "-Command" "(Get-Command op.exe -ErrorAction SilentlyContinue).Source" | trim}}
 {{  if ne $win_op ""}}
 {{    $op_bin = output "wslpath" "-u" $win_op | trim}}
@@ -51,44 +49,41 @@
 {{$is_op_present := stat $op_bin}}
 {{$op_status := "missing"}}
 {{if $is_op_present}}
-{{/* [Defensive Interop]: Force LF and discard stderr to prevent template parsing crashes */}}
 {{  $op_status = output "sh" "-c" (printf "'%s' account get >/dev/null 2>&1 && echo 'ready' || echo 'locked'" $op_bin) | trim}}
 {{end}}
 
 {{$true_cmd := lookPath "true" | default "/usr/bin/true"}}
 
-{{/* Default values for Bootstrap Mode */}}
-{{$gh_user := "pending"}}
-{{$name := "Pending Identity"}}
-{{$email := "pending@example.com"}}
-{{$link_id := "pending"}}
-{{$vault_id := "unknown"}}
+# --- 3. Parallel Identity Aggregation ---
+{{$identities := list}}
 {{$ssh_keys_hash := "none"}}
-{{$is_sovereign := false}}
 
 {{if eq $op_status "ready"}}
-{{  $profile_list := output "sh" "-c" (printf "'%s' item list --tags dotfiles-github-profile --format json 2>/dev/null || echo '[]'" $op_bin) | fromJson}}
-{{  if gt (len $profile_list) 0}}
-{{    $profile := output "sh" "-c" (printf "'%s' item get %s --format json" $op_bin (index $profile_list 0).id) | fromJson}}
-{{    range $profile.fields}}
-{{      if hasKey . "label"}}
-{{        if eq .label "dotfiles_gh_user"  }}{{$gh_user = .value}}{{$is_sovereign = true}}{{end}}
-{{        if eq .label "dotfiles_gh_name"  }}{{$name = .value}}{{end}}
-{{        if eq .label "dotfiles_gh_email" }}{{$email = .value}}{{end}}
-{{        if eq .label "dotfiles_link_id"  }}{{$link_id = .value}}{{end}}
+{{  $items_json := output "sh" "-c" (printf "'%s' item list --tags dotfiles-ssh-key --format json 2>/dev/null || echo '[]'" $op_bin)}}
+{{  $items := fromJson $items_json}}
+{{  $ssh_keys_hash = sha256sum $items_json}}
+{{  range $items}}
+{{    $details_json := output "sh" "-c" (printf "'%s' item get %s --format json 2>/dev/null || echo '{}'" $op_bin .id)}}
+{{    $details := fromJson $details_json}}
+{{    $git_name := ""}}
+{{    $git_email := ""}}
+{{    $git_dirs := ""}}
+{{    $key_type := "ed25519"}}
+{{    if hasKey $details "fields"}}
+{{      range $details.fields}}
+{{        if and (hasKey . "section") (hasKey .section "label")}}
+{{          if eq .section.label "dotfiles"}}
+{{            if eq .label "dotfiles_git_name" }}{{$git_name = .value}}{{end}}
+{{            if eq .label "dotfiles_git_email" }}{{$git_email = .value}}{{end}}
+{{            if eq .label "dotfiles_git_dirs" }}{{$git_dirs = .value}}{{end}}
+{{          end}}
+{{        end}}
+{{        if eq .label "key type" }}{{$key_type = .value}}{{end}}
 {{      end}}
 {{    end}}
-{{    $vault_id = $profile.vault.id}}
-
-{{    $accounts_json := output "sh" "-c" (printf "'%s' account list --format json 2>/dev/null || echo '[]'" $op_bin)}}
-{{    $accounts := fromJson $accounts_json}}
-{{    $keys_collector := list}}
-{{    range $accounts}}
-{{      $cmd := printf "'%s' item list --tags dotfiles-ssh-key --account '%s' --format json 2>/dev/null || echo '[]'" $op_bin .url}}
-{{      $account_keys := output "sh" "-c" $cmd | fromJson}}
-{{      $keys_collector = concat $keys_collector $account_keys}}
+{{    if and (ne $git_name "") (ne $git_email "") (ne $git_dirs "")}}
+{{      $identities = append $identities (dict "item_id" .id "vault_id" .vault.id "key_type" (lower $key_type) "name" $git_name "email" $git_email "dirs" $git_dirs)}}
 {{    end}}
-{{    $ssh_keys_hash = sha256sum (toJson $keys_collector)}}
 {{  end}}
 {{end}}
 
@@ -101,20 +96,15 @@
     windows_user = {{$windows_user | quote}}
     ssh_auth_sock = {{$ssh_auth_sock | quote}}
     op_status = {{$op_status | quote}}
-
-    gh_user = {{$gh_user | quote}}
-    name = {{$name | quote}}
-    email = {{$email | quote}}
-    link_id = {{$link_id | quote}}
-
     ssh_keys_hash = {{$ssh_keys_hash | quote}}
-    ssh_key_name = {{printf "id_ed25519_%s_%s.pub" $vault_id $link_id | quote}}
 
-    {{if $is_sovereign}}
-    gh_root = "src/github.com/{{$gh_user}}"
-    {{else}}
-    gh_root = "src/github.com/unallocated"
-    {{end}}
+    # [Architecture]: Injected Array for Parallel Identity Routing
+    identities = [
+    {{- range $i, $id := $identities }}
+      {{ if $i }},{{ end }}
+      { item_id = {{$id.item_id | quote}}, vault_id = {{$id.vault_id | quote}}, key_type = {{$id.key_type | quote}}, name = {{$id.name | quote}}, email = {{$id.email | quote}}, dirs = {{$id.dirs | quote}} }
+    {{- end }}
+    ]
 
     [data.paths]
         home = {{$home | quote}}
@@ -141,6 +131,6 @@
 # 1. Open the 1Password Desktop App and sign in.
 # 2. Run 'chezmoi apply' again.
 {{  else}}
-# [System]: Sovereign Identity ({{$gh_user}}) successfully loaded.
+# [System]: Zero-Trust Parallel Identity Protocol Active. {{ len $identities }} identities loaded.
 {{  end}}
 {{end}}

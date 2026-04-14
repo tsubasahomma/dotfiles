@@ -1,8 +1,8 @@
 #!/bin/zsh
 # =============================================================================
-# [Architecture]: Atomic Identity Pipeline | Phase 20.1 (Multi-Account O(1) Batch)
+# [Architecture]: Atomic Identity Pipeline | Phase 50 (Multi-Account O(1) Batch)
 # [Rationale]: Resolves secrets across ALL signed-in 1Password accounts.
-#              Complexity: O(2A) where A is the number of accounts, independent of item count N.
+#              Complexity: O(2A) where A is the number of accounts.
 # [Reference]: https://developer.1password.com/docs/cli/reference/commands/inject
 # [Trigger]: 1Password Key Rotation Hash: {{ .ssh_keys_hash }}
 # =============================================================================
@@ -15,10 +15,10 @@ if [[ "${CI:-false}" == "true" ]]; then
   exit 0
 fi
 
-{{ if eq .gh_user "wsl-bootstrap" -}}
-echo "⚠️  [Identity] WSL Bootstrap Mode: Skipping SSH key export until op.exe is provisioned."
-exit 0
-{{- end }}
+if [[ "{{ .op_status }}" == "missing" ]]; then
+  echo "⚠️  [Identity] Bootstrapping Mode: Skipping SSH key export until op.exe is provisioned."
+  exit 0
+fi
 
 # --- 2. Toolchain Resolution ---
 OP_BIN="{{ .paths.op }}"
@@ -62,7 +62,8 @@ while read -r account_url; do
 
   echo "  📦 Found $item_count items. Resolving via Batch Inject..."
 
-  TEMPLATE=$("$JQ_BIN" -r '.[] | "\(.id)\t\(.vault.id)\t{{ "{{" }}op://\(.vault.id)/\(.id)/dotfiles_link_id{{ "}}" }}\t{{ "{{" }}op://\(.vault.id)/\(.id)/key type{{ "}}" }}\t{{ "{{" }}op://\(.vault.id)/\(.id)/public key{{ "}}" }}"' <<< "$items_json")
+  # [Architecture]: Removed dotfiles_link_id. The item itself is the target key.
+  TEMPLATE=$("$JQ_BIN" -r '.[] | "\(.id)\t\(.vault.id)\t{{ "{{" }}op://\(.vault.id)/\(.id)/key type{{ "}}" }}\t{{ "{{" }}op://\(.vault.id)/\(.id)/public key{{ "}}" }}"' <<< "$items_json")
 
   if ! RESOLVED_TSV=$(echo "$TEMPLATE" | "$OP_BIN" inject --account "$account_url" 2>/dev/null); then
     echo "  ❌ [Error] Failed to batch-resolve secrets for $account_url."
@@ -70,17 +71,18 @@ while read -r account_url; do
   fi
 
   # Atomic File Export
-  echo "$RESOLVED_TSV" | while IFS=$'\t' read -r item_id vault_id link_id k_type pubkey; do
-    link_id="${link_id%$'\r'}"
+  echo "$RESOLVED_TSV" | while IFS=$'\t' read -r item_id vault_id k_type pubkey; do
+    item_id="${item_id%$'\r'}"
+    vault_id="${vault_id%$'\r'}"
     k_type="${k_type%$'\r'}"
     pubkey="${pubkey%$'\r'}"
 
-    if [[ -z "$link_id" ]] || [[ -z "$pubkey" ]]; then
+    if [[ -z "$item_id" ]] || [[ -z "$pubkey" ]]; then
       continue
     fi
 
-    PUBKEY_FILE="$TARGET_DIR/id_${k_type}_${vault_id}_${link_id}.pub"
-    echo "  ✅ [Export] Syncing: $link_id ($k_type)"
+    PUBKEY_FILE="$TARGET_DIR/id_${k_type}_${vault_id}_${item_id}.pub"
+    echo "  ✅ [Export] Syncing: $item_id ($k_type)"
     echo "$pubkey" > "$PUBKEY_FILE"
     chmod 600 "$PUBKEY_FILE"
   done
