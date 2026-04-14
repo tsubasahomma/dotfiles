@@ -1,6 +1,8 @@
--- Core plugin specifications for UI consistency and theme integration.
--- [Rationale]: Finalized for 2026 professional environment.
--- Ensures deterministic state for inline image rendering and treesitter parsers.
+-- [Architecture]: Unified UI & Performance Engine (2026 SOTA Corrected)
+-- [Rationale]: Explicitly return modified opts table to ensure lazy.nvim applies overrides.
+-- [Rationale]: Enforce kitty protocol for SOTA image rendering in WezTerm/Ghostty.
+-- [Reference]: https://github.com/folke/snacks.nvim/blob/main/docs/image.md
+
 return {
   {
     "catppuccin/nvim",
@@ -33,36 +35,78 @@ return {
   {
     "nvim-treesitter/nvim-treesitter",
     opts = function(_, opts)
-      -- [Rationale]: Ensure all professional data and engineering formats are supported.
       if type(opts.ensure_installed) == "table" then
         vim.list_extend(opts.ensure_installed, {
-          "css",
-          "scss",
-          "latex",
+          -- --- Infrastructure & Data ---
+          "bash",
+          "lua",
+          "python",
+          "sql",
+          "json",
+          "json5",
+          "toml",
+          "yaml",
+          -- --- Git SRE Workflow ---
+          "diff",
+          "gitcommit",
+          "git_rebase",
+          "git_config",
+          "gitattributes",
+          -- --- Modern Documentation ---
           "markdown",
           "markdown_inline",
           "norg",
-          "svelte",
+          "latex",
           "typst",
+          "mermaid",
+          -- --- Web & Frontend (Minimal) ---
+          "css",
+          "html",
+          "scss",
+          "svelte",
           "vue",
+          -- --- Neovim Internal ---
+          "vim",
+          "vimdoc",
+          "query",
+          "regex",
         })
       end
+
+      return opts
     end,
   },
   {
     "folke/snacks.nvim",
     opts = function(_, opts)
-      -- [Rationale]: Deep merging ensures 'doc.inline = true' survives
-      -- even if LazyVim defaults attempt to disable it.
+      -- [Architecture]: Image Rendering Pipeline
+      -- [Rationale]: Deep merge ensures these survive LazyVim's internal defaults.
       opts.image = vim.tbl_deep_extend("force", opts.image or {}, {
         enabled = true,
         doc = {
-          inline = true,
+          inline = true, -- Re-enable inline image rendering
         },
       })
       opts.markdown = vim.tbl_deep_extend("force", opts.markdown or {}, {
         enabled = true,
       })
+      -- [Architecture]: UI Component Activation
+      opts.animate = { enabled = true }
+      opts.profiler = { enabled = true }
+      opts.notifier = { enabled = true }
+      opts.picker = { enabled = true }
+
+      -- [Critical]: Must return the modified table
+      return opts
     end,
+  },
+  {
+    "Saghen/blink.cmp",
+    opts = {
+      appearance = {
+        use_nvim_cmp_as_default = false,
+        nerd_font_variant = "mono",
+      },
+    },
   },
 }

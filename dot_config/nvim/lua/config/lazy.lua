@@ -32,12 +32,12 @@ require("lazy").setup({
     { import = "lazyvim.plugins.extras.lang.rust" },
     { import = "lazyvim.plugins.extras.lang.markdown" },
 
-    -- AI Category
-    -- [Rationale]: Disabled to eliminate noise as no active Copilot account is linked.
-    -- { import = "lazyvim.plugins.extras.ai.copilot" },
-
-    -- UI/Mini Category
-    { import = "lazyvim.plugins.extras.ui.mini-animate" },
+    -- [Architecture]: 2026 SOTA Engines
+    -- [Rationale]: Replaces legacy mini-animate, fzf-lua, and nvim-cmp with
+    -- unified, Rust-backed, or native-speed alternatives.
+    -- [Reference]: https://www.lazyvim.org/extras/editor/snacks_picker
+    { import = "lazyvim.plugins.extras.editor.snacks_picker" },
+    { import = "lazyvim.plugins.extras.coding.blink" },
 
     -- Custom plugin overrides.
     { import = "plugins" },
