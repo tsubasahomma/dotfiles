@@ -1,4 +1,4 @@
-{{/* [Architecture]: Foundation Schema | Phase 20.9 Resilience First Edition */}}
+{{/* [Architecture]: Foundation Schema | Phase 20.9 (Discovery-First Identity) */}}
 {{/* [Reference]: https://www.chezmoi.io/user-guide/templating/ */}}
 
 {{/* --- 1. Platform & Interop Initialization --- */}}
@@ -22,27 +22,40 @@
 {{  $brew_prefix = "/home/linuxbrew/.linuxbrew"}}
 {{end}}
 
-{{/* --- 2. Identity State Machine & Binary Resolution --- */}}
+{{/* --- 2. Identity State Machine & Dynamic Binary Resolution --- */}}
 {{$local_bin := joinPath $home ".local/bin"}}
 {{$op_bin := lookPath "op" | default (joinPath $local_bin "op")}}
-{{$is_op_present := stat $op_bin}}
-
-{{$op_status := "missing"}}
-{{if $is_op_present}}
-{{  $op_status = output "sh" "-c" (printf "'%s' account get >/dev/null 2>&1 && echo 'ready' || echo 'locked'" $op_bin) | trim}}
-{{end}}
-
-{{$true_cmd := lookPath "true" | default "/usr/bin/true"}}
-
 {{$op_sign := ""}}
 {{$ssh_auth_sock := ""}}
+
 {{if eq $osid "darwin"}}
 {{  $op_sign = "/Applications/1Password.app/Contents/MacOS/op-ssh-sign"}}
 {{  $ssh_auth_sock = joinPath $home "Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"}}
 {{else if $is_wsl}}
-{{  $op_sign = joinPath "/mnt/c/Users" $windows_user "AppData/Local/Microsoft/WindowsApps/op-ssh-sign-wsl.exe"}}
 {{  $ssh_auth_sock = joinPath $home ".1password/agent.sock"}}
+{{/* [Architecture]: Option B (The Interop Path) */}}
+{{/* Dynamically resolve Windows binaries to bypass Linux isolation and leverage Windows Hello. */}}
+{{  $win_op := output "powershell.exe" "-NoProfile" "-NonInteractive" "-Command" "(Get-Command op.exe -ErrorAction SilentlyContinue).Source" | trim}}
+{{  if ne $win_op ""}}
+{{    $op_bin = output "wslpath" "-u" $win_op | trim}}
+{{  end}}
+{{  $win_sign := output "powershell.exe" "-NoProfile" "-NonInteractive" "-Command" "(Get-Command op-ssh-sign-wsl.exe -ErrorAction SilentlyContinue).Source" | trim}}
+{{  if eq $win_sign ""}}
+{{    $win_sign = output "powershell.exe" "-NoProfile" "-NonInteractive" "-Command" "(Get-Command op-ssh-sign.exe -ErrorAction SilentlyContinue).Source" | trim}}
+{{  end}}
+{{  if ne $win_sign ""}}
+{{    $op_sign = output "wslpath" "-u" $win_sign | trim}}
+{{  end}}
 {{end}}
+
+{{$is_op_present := stat $op_bin}}
+{{$op_status := "missing"}}
+{{if $is_op_present}}
+{{/* [Defensive Interop]: Force LF and discard stderr to prevent template parsing crashes */}}
+{{  $op_status = output "sh" "-c" (printf "'%s' account get >/dev/null 2>&1 && echo 'ready' || echo 'locked'" $op_bin) | trim}}
+{{end}}
+
+{{$true_cmd := lookPath "true" | default "/usr/bin/true"}}
 
 {{/* Default values for Bootstrap Mode */}}
 {{$gh_user := "pending"}}
@@ -125,8 +138,8 @@
 {{if not (env "CI")}}
 {{  if ne $op_status "ready"}}
 # [Next Action]: 1Password authentication is required.
-# 1. Open the 1Password Desktop App and enable "Integrate with 1Password CLI" in Settings > Developer.
-# 2. Run 'op signin' to authenticate, then run 'chezmoi apply' again.
+# 1. Open the 1Password Desktop App and sign in.
+# 2. Run 'chezmoi apply' again.
 {{  else}}
 # [System]: Sovereign Identity ({{$gh_user}}) successfully loaded.
 {{  end}}

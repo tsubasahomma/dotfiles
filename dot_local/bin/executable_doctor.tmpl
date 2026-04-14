@@ -1,5 +1,5 @@
 #!/bin/sh
-{{/* [Reference]: https://pubs.opengroup.org/onlinepubs/9699919799/utilities/sh.html */ -}}
+{{/* [Reference]: https://www.chezmoi.io/user-guide/templating/ */ -}}
 # [Rationale]: Self-healing diagnostic engine with actionable guidance.
 # [Architecture]: POSIX-compliant (sh) OS-agnostic checks with schema-safe evaluation.
 
@@ -17,59 +17,36 @@ log_err() { printf "  ${RED}❌ %s${NC}\n" "$1"; return 1; }
 log_guide() { printf "  ${BLUE}👉 %s${NC}\n" "$1"; }
 
 IS_CI="${CI:-false}"
-
-{{/* --- Schema Migration Safeties --- */ -}}
-{{ $op_status := "missing" -}}
-{{ if hasKey . "op_status" }}{{ $op_status = .op_status }}{{ end -}}
-{{ $gh_user := "bootstrap-pending" -}}
-{{ if hasKey . "gh_user" }}{{ $gh_user = .gh_user }}{{ end -}}
-{{ $is_wsl := false -}}
-{{ if hasKey . "is_wsl" }}{{ $is_wsl = .is_wsl }}{{ end -}}
-{{ $home := .chezmoi.homeDir -}}
-{{ $xdg_state := joinPath $home ".local/state" -}}
-{{ if hasKey . "paths" }}{{ if hasKey .paths "xdg_state" }}{{ $xdg_state = .paths.xdg_state }}{{ end }}{{ end -}}
-{{ $xdg_config := joinPath $home ".config" -}}
-{{ if hasKey . "paths" }}{{ if hasKey .paths "xdg_config" }}{{ $xdg_config = .paths.xdg_config }}{{ end }}{{ end -}}
-{{ $xdg_data := joinPath $home ".local/share" -}}
-{{ if hasKey . "paths" }}{{ if hasKey .paths "xdg_data" }}{{ $xdg_data = .paths.xdg_data }}{{ end }}{{ end -}}
+HOME_DIR="{{ .chezmoi.homeDir }}"
+OP_BIN="{{ .paths.op }}"
 
 echo "--- 1. Infrastructure Security & Permissions ---"
-for dir in "{{ $home }}/.ssh" "{{ $xdg_state }}/ssh"; do
+for dir in "$HOME_DIR/.ssh" "{{ .paths.xdg_state }}/ssh"; do
   if [ -d "$dir" ]; then
     chmod 700 "$dir"
     log_ok "Hardened permissions for $dir (700)"
   fi
 done
 
-echo "--- 2. Identity & Auth Bridge Analysis ---"
-{{ if eq $op_status "missing" -}}
-log_err "1Password CLI (op) is missing in PATH."
-log_guide "Run 'chezmoi apply' again to ensure .local/bin/op is provisioned."
-{{ else if eq $op_status "locked" -}}
-log_warn "Sovereign Identity is locked (or desktop integration is disabled)."
-echo ""
-echo "  ${BLUE}[1Password Desktop Integration Guide]${NC}"
-echo "  1. Open the 1Password Desktop App and sign in."
-echo "  2. Navigate to [Settings] > [Developer]."
-echo "  3. Check [Integrate with 1Password CLI]."
-echo "  4. Check [Use the SSH agent]."
-{{ if $is_wsl -}}
-echo "  5. (WSL2) After configuring Windows, verify by running 'op account get' in WSL2."
-{{ end -}}
-echo ""
-{{ else if eq $gh_user "bootstrap-pending" -}}
-log_warn "1Password is ready, but 'dotfiles-github-profile' item is missing."
-{{ else -}}
-log_ok "Sovereign Identity authenticated: {{ $gh_user }}"
-{{ end -}}
+echo "--- 2. Identity & Auth Bridge Analysis (Interop) ---"
+# [Dynamic Check]: Evaluates the target binary (Linux or Windows via Interop).
+if "$OP_BIN" account get > /dev/null 2>&1; then
+  GH_USER="{{ .gh_user }}"
+  log_ok "Sovereign Identity authenticated: $GH_USER"
+else
+  log_warn "Sovereign Identity is locked."
+  log_guide "Action: Unlock 1Password Desktop App or run '$OP_BIN signin'."
+fi
 
 echo "--- 3. SSH Agent & Cryptographic Trust ---"
-if ! ssh-add -l > /dev/null 2>&1; then
+if ssh-add -l > /dev/null 2>&1; then
+  log_ok "SSH Agent is healthy."
+else
   if [ "$IS_CI" = "true" ]; then
     log_warn "SSH Agent unresponsive (CI mode). Skipping."
   else
     log_warn "SSH Agent unresponsive. Attempting bridge recovery..."
-    {{ if $is_wsl -}}
+    {{ if .is_wsl -}}
     if command -v systemctl >/dev/null 2>&1; then
       systemctl --user restart 1password-bridge.service || true
     fi
@@ -80,36 +57,36 @@ if ! ssh-add -l > /dev/null 2>&1; then
       log_guide "Verify 1Password [SSH Agent] setting is enabled and the app is unlocked."
     }
   fi
-else
-  log_ok "SSH Agent is healthy."
 fi
 
 echo "--- 4. Neovim Deterministic State ---"
-LOCK_FILE="{{ $xdg_config }}/nvim/lazy-lock.json"
+LOCK_FILE="{{ .paths.xdg_config }}/nvim/lazy-lock.json"
 if [ -f "$LOCK_FILE" ]; then
-  chezmoi verify "$LOCK_FILE" > /dev/null 2>&1 && log_ok "lazy-lock.json is synchronized." || log_warn "lazy-lock.json drift detected (Expected during active plugin development)."
+  chezmoi verify "$LOCK_FILE" > /dev/null 2>&1 && log_ok "lazy-lock.json is synchronized." || log_warn "lazy-lock.json drift detected."
 else
   log_err "lazy-lock.json is missing."
 fi
 
-NVIM_PYTHON="{{ $xdg_data }}/nvim/venv/bin/python"
+NVIM_PYTHON="{{ .paths.xdg_data }}/nvim/venv/bin/python"
 [ -x "$NVIM_PYTHON" ] && log_ok "Hermetic Python Provider ready ($NVIM_PYTHON)" || log_err "Python Provider missing"
 
 echo "--- 5. Vale & Prose Linting Integrity ---"
-if command -v vale > /dev/null 2>&1; then
-  [ -d "{{ $xdg_data }}/vale/styles/Google" ] && log_ok "Vale & Google Style provisioned." || log_err "Styles missing."
+STYLE_DIR="{{ .paths.xdg_data }}/vale/styles/Google"
+if [ -d "$STYLE_DIR" ]; then
+  log_ok "Vale & Google Style provisioned."
 else
-  log_warn "Vale binary not found."
+  log_err "Styles missing at $STYLE_DIR"
+  log_guide "Action: Run 'chezmoi apply' to trigger self-healing sync."
 fi
 
 echo "--- 6. Toolchain Drift Analysis ---"
-MISE_BIN="{{ $home }}/.local/bin/mise"
+MISE_BIN="{{ .paths.mise }}"
 [ -x "$MISE_BIN" ] && log_ok "Hermetic mise binary verified." || log_err "mise missing."
 
-if echo "$PATH" | grep -q "^{{ $home }}/.local/bin"; then
+if echo "$PATH" | grep -q "^$HOME_DIR/.local/bin"; then
   log_ok "PATH precedence correctly prioritizes .local/bin"
 else
   log_warn "PATH precedence violation detected."
 fi
 
-printf "\n${GREEN}✨ System Health: Optimal${NC}\n"
+printf "\n${GREEN}✨ System Health Evaluation Complete${NC}\n"

@@ -2,12 +2,17 @@
 export ZDOTDIR="{{ .paths.xdg_config }}/zsh"
 
 # [Architecture]: Deep XDG Integration (Phase 15)
-# [Rationale]: Ensure all non-interactive toolchains (mise, uv, pnpm, ripgrep)
-# recognize XDG paths without a full TTY.
 export XDG_CONFIG_HOME="{{ .paths.xdg_config }}"
 export XDG_DATA_HOME="{{ .paths.xdg_data }}"
 export XDG_STATE_HOME="{{ .paths.xdg_state }}"
 export XDG_CACHE_HOME="{{ .paths.xdg_cache }}"
+
+# [Architecture]: WSL2 to Windows Interop (Identity Relay)
+# [Rationale]: Propagate authentication context to the Windows host seamlessly.
+{{ if .is_wsl -}}
+export OP_BIOMETRIC_UNLOCK_ENABLED="true"
+export WSLENV="OP_BIOMETRIC_UNLOCK_ENABLED/u:$WSLENV"
+{{ end -}}
 
 # [Rationale]: Identity Bridge Persistence for SSH operations.
 export SSH_AUTH_SOCK="{{ .ssh_auth_sock }}"
@@ -20,5 +25,4 @@ export RIPGREP_CONFIG_PATH="$XDG_CONFIG_HOME/ripgrep/config"
 
 {{/* [Reference]: https://vale.sh/docs/vale-ini#search-process */}}
 # [Architecture]: Vale Configuration Routing
-# [Rationale]: Force Vale to use XDG-compliant config to prevent shadowing by $HOME/.vale.ini
 export VALE_CONFIG_PATH="$XDG_CONFIG_HOME/vale/.vale.ini"
