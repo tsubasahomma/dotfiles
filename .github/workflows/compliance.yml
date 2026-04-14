@@ -137,14 +137,23 @@ jobs:
       - name: Idempotency Proof (Convergence Validation)
         # [Architecture]: Boundary Enforcer (Managed Config vs Volatile State)
         # [Rationale]: lazy-lock.json is subject to runtime mutation via plugin managers.
-        # Exclude it to prevent false-positive drift failures in CI.
-        # [Reference]: https://www.chezmoi.io/reference/commands/managed/
+        # Evaluates drift natively via 'chezmoi status' to bypass POSIX ARG_MAX limits
+        # and non-deterministic xargs path tokenization across BSD/GNU environments.
+        # [Reference]: https://www.chezmoi.io/reference/commands/status/
         run: |
-          if ! chezmoi managed | grep -v ".config/nvim/lazy-lock.json" | xargs chezmoi verify --source="$GITHUB_WORKSPACE"; then
+          DRIFT_STATUS=$(chezmoi status | grep -v "lazy-lock.json" || true)
+
+          if [ -n "$DRIFT_STATUS" ]; then
             echo "❌ [Idempotency Failure] Detected drift in managed files."
-            chezmoi managed | grep -v ".config/nvim/lazy-lock.json" | xargs chezmoi diff --source="$GITHUB_WORKSPACE"
+            echo "$DRIFT_STATUS"
+
+            # Extract raw paths using sed to drop the 3-character status prefix (e.g., ' M '),
+            # securely pipe null-terminated strings to xargs for OS-agnostic diff execution.
+            echo "$DRIFT_STATUS" | sed 's/^...//' | tr '\n' '\0' | xargs -0 chezmoi diff --source="$GITHUB_WORKSPACE"
             exit 1
           fi
+
+          echo "✅ [Convergence] Zero-drift confirmed across all managed files."
 
       - name: Final Health Check (Doctor)
         run: |
