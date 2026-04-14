@@ -1,0 +1,118 @@
+{{- /* [Reference]: https://starship.rs/config/ */ -}}
+{{- /* [Reference]: https://starship.rs/advanced-config/ */ -}}
+# [Architecture]: Deterministic Infrastructure Prompt (Sovereign Edition)
+# [Rationale]: Optimized for 2026 SOTA workflows, M1 Max I/O throughput,
+# and zero-speculation context switching between macOS and WSL2.
+
+command_timeout = 3000
+scan_timeout = 100
+
+# [Architecture]: Visual Hierarchy
+# [Rationale]: Priority-ordered segments for maximum cognitive efficiency.
+format = """
+$os\
+$directory\
+$git_branch\
+$git_status\
+$python\
+$nodejs\
+$rust\
+$golang\
+$terraform\
+$docker_context\
+$cmd_duration\
+$line_break\
+$character"""
+
+[os]
+disabled = false
+style = "bold white"
+
+[os.symbols]
+Macos = " "
+Ubuntu = " "
+
+[directory]
+style = "bold blue"
+truncation_length = 4
+fish_style_pwd_dir_length = 1
+read_only = " 󰌾"
+# [Rationale]: Show the full path for the first 3 levels of monorepos.
+truncate_to_repo = true
+
+[character]
+success_symbol = "[λ](bold magenta)"
+error_symbol = "[λ](bold red)"
+
+[git_branch]
+symbol = " "
+style = "bold cyan"
+format = "on [$symbol$branch]($style) "
+
+[git_status]
+# [Architecture]: Monorepo Optimization
+# [Rationale]: Prevent interactive hanging in massive repositories.
+style = "bold red"
+format = "([\\[$all_status$ahead_behind\\]]($style) )"
+ahead = "⇡"
+behind = "⇣"
+diverged = "⇕"
+up_to_date = ""
+conflicted = "="
+deleted = "✘"
+ignore_submodules = true
+
+# =============================================================================
+# Language Modules: Sovereign Detection Protocol
+# [Rationale]: Explicitly whitelist metadata files. Extension-based
+# detection is strictly prohibited to eliminate noise in $HOME.
+# =============================================================================
+
+[python]
+symbol = " "
+# [Interop]: Use 'raw' to prevent v-prefix doubling with mise.
+format = 'via [${symbol}${version}( \($virtualenv\))]($style) '
+version_format = "${raw}"
+detect_extensions = []
+detect_files = ["pyproject.toml", "requirements.txt", "Pipfile", "setup.py", ".python-version"]
+detect_folders = [".venv"]
+
+[nodejs]
+symbol = " "
+format = 'via [$symbol($version )]($style)'
+version_format = "${raw}"
+detect_extensions = []
+detect_files = ["package.json", ".node-version", "pnpm-workspace.yaml"]
+detect_folders = ["node_modules"]
+
+[rust]
+symbol = " "
+format = 'via [$symbol($version )]($style)'
+version_format = "${raw}"
+detect_extensions = []
+detect_files = ["Cargo.toml", "rust-toolchain.toml"]
+
+[golang]
+symbol = " "
+format = 'via [$symbol($version )]($style)'
+version_format = "${raw}"
+detect_extensions = []
+detect_files = ["go.mod", "go.sum", ".go-version"]
+
+[terraform]
+symbol = "󱁢 "
+format = 'via [$symbol($version )]($style)'
+detect_extensions = []
+detect_files = [".terraform", "main.tf", "terragrunt.hcl"]
+
+[docker_context]
+symbol = " "
+format = 'on [$symbol$context]($style) '
+# [Rationale]: Only show if a Dockerfile exists or a local socket is active.
+only_with_files = true
+detect_files = ["Dockerfile", "docker-compose.yml", "docker-compose.yaml"]
+
+[cmd_duration]
+min_time = 2000
+style = "bold yellow"
+format = "took [$duration]($style) "
