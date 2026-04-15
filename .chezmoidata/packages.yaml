@@ -1,8 +1,6 @@
 # =============================================================================
 # [Architecture]: Declarative Package Schema
 # [Rationale]: Managed via Homebrew (macOS) and WinGet (Windows).
-# Japanese fonts are exclusively managed on macOS via Brew Cask to ensure
-# high-fidelity rendering without the complexity of manual Windows font-bridging.
 # =============================================================================
 packages:
   common:
@@ -15,27 +13,30 @@ packages:
     ubuntu:
       - build-essential
       - libssl-dev
-      - libasound2t64
     debian:
       - build-essential
       - libssl-dev
-      - libasound2
     fedora:
       - gcc-c++
       - openssl-devel
-      - alsa-lib
     rhel:
       - gcc-c++
       - openssl-devel
-      - alsa-lib
     arch:
       - base-devel
       - openssl
-      - alsa-lib
   darwin:
     brews:
       - openssl@3
       - colima
+      - clipboard
+      - eza # [Architecture]: Migrated for native ARM binary
+      - xh # [Architecture]: Migrated for native ARM binary
+    # [Fix]: Added missing 'media' key to satisfy Brewfile.tmpl logic
+    media:
+      - ffmpeg
+      - imagemagick
+      - graphviz
     casks:
       - 1password
       - 1password-cli
@@ -48,10 +49,6 @@ packages:
       - notion
       - raycast
       - visual-studio-code
-    media:
-      - imagemagick
-      - ghostscript
-      - tectonic
   windows:
     winget:
       - AgileBits.1Password
@@ -64,3 +61,5 @@ packages:
       - Flow-Launcher.Flow-Launcher
       - Microsoft.PowerToys
       - Microsoft.VisualStudioCode
+      - eza-community.eza # [Architecture]: Windows native
+      - ducaale.xh # [Architecture]: Windows native

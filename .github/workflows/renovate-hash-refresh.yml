@@ -1,0 +1,111 @@
+# [Architecture]: Tier 0 Hash-Refresh Pipeline (Zero-Toil)
+# [Rationale]: Automatically updates SHA-256 hashes in tools.yaml when Renovate bumps versions.
+# [Reference]: https://docs.renovatebot.com/key-concepts/automerge/
+
+name: renovate-hash-refresh
+
+on:
+  pull_request:
+    branches: [main, master]
+    paths:
+      - ".chezmoidata/tools.yaml"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  refresh-hashes:
+    if: github.event.pull_request.user.login == 'renovate[bot]'
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ github.token }}
+    steps:
+      - name: Checkout PR Branch
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.ref }}
+
+      - name: Install Tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y yq curl
+
+      - name: Identify Changed Tier 0 Tools
+        id: delta
+        run: |
+          # [Rationale]: Compare tools.yaml against main branch to detect version bumps in tool_integrity.
+          git fetch origin main:main
+          CHANGES=$(git diff main..HEAD -- .chezmoidata/tools.yaml)
+
+          # Detect Tier 0 changes
+          if echo "$CHANGES" | grep -q '"op":'; then echo "op=true" >> "$GITHUB_OUTPUT"; fi
+          if echo "$CHANGES" | grep -q '"mise":'; then echo "mise=true" >> "$GITHUB_OUTPUT"; fi
+          if echo "$CHANGES" | grep -q '"chezmoi":'; then echo "chezmoi=true" >> "$GITHUB_OUTPUT"; fi
+          if echo "$CHANGES" | grep -q '"neovim":'; then echo "neovim=true" >> "$GITHUB_OUTPUT"; fi
+
+      - name: Refresh 'op' Hashes
+        if: steps.delta.outputs.op == 'true'
+        run: |
+          VER=$(yq '.tool_integrity.op' .chezmoidata/tools.yaml)
+          update_hash() {
+            OS=$1; ARCH=$2; KEY=$3
+            URL="https://cache.agilebits.com/dist/1P/op2/pkg/v${VER}/op_${OS}_${ARCH}_v${VER}.zip"
+            HASH=$(curl -fsSL "$URL" | sha256sum | cut -d' ' -f1)
+            yq -i ".tool_integrity.op_hashes.\"$KEY\" = \"$HASH\"" .chezmoidata/tools.yaml
+          }
+          update_hash "darwin" "arm64" "darwin-arm64"
+          update_hash "linux" "amd64" "linux-amd64"
+
+      - name: Refresh 'mise' Hashes
+        if: steps.delta.outputs.mise == 'true'
+        run: |
+          VER=$(yq '.tool_integrity.mise' .chezmoidata/tools.yaml)
+          update_hash() {
+            OS=$1; ARCH=$2; KEY=$3
+            URL="https://github.com/jdx/mise/releases/download/v${VER}/mise-v${VER}-${OS}-${ARCH}"
+            HASH=$(curl -fsSL "$URL" | sha256sum | cut -d' ' -f1)
+            yq -i ".tool_integrity.mise_hashes.\"$KEY\" = \"$HASH\"" .chezmoidata/tools.yaml
+          }
+          update_hash "macos" "arm64" "macos-arm64"
+          update_hash "macos" "x64" "macos-x64"
+          update_hash "linux" "x64" "linux-x64"
+
+      - name: Refresh 'chezmoi' Hashes
+        if: steps.delta.outputs.chezmoi == 'true'
+        run: |
+          VER=$(yq '.tool_integrity.chezmoi' .chezmoidata/tools.yaml)
+          update_hash() {
+            OS=$1; ARCH=$2; KEY=$3
+            URL="https://github.com/twpayne/chezmoi/releases/download/v${VER}/chezmoi_${VER}_${OS}_${ARCH}.tar.gz"
+            HASH=$(curl -fsSL "$URL" | sha256sum | cut -d' ' -f1)
+            yq -i ".tool_integrity.chezmoi_hashes.\"$KEY\" = \"$HASH\"" .chezmoidata/tools.yaml
+          }
+          update_hash "darwin" "arm64" "darwin-arm64"
+          update_hash "darwin" "amd64" "darwin-amd64"
+          update_hash "linux" "amd64" "linux-amd64"
+
+      - name: Refresh 'neovim' Hashes
+        if: steps.delta.outputs.neovim == 'true'
+        run: |
+          VER=$(yq '.tool_integrity.neovim' .chezmoidata/tools.yaml)
+          update_hash() {
+            ASSET=$1; KEY=$2
+            URL="https://github.com/neovim/neovim/releases/download/v${VER}/nvim-${ASSET}.tar.gz"
+            HASH=$(curl -fsSL "$URL" | sha256sum | cut -d' ' -f1)
+            yq -i ".tool_integrity.neovim_hashes.\"$KEY\" = \"$HASH\"" .chezmoidata/tools.yaml
+          }
+          update_hash "macos-arm64" "macos-arm64"
+          update_hash "macos-x86_64" "macos-x86_64"
+          update_hash "linux-x86_64" "linux-x86_64"
+
+      - name: Commit and Push Changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if [[ -n "$(git status --porcelain)" ]]; then
+            git add .chezmoidata/tools.yaml
+            git commit -m "chore(infra): update tier 0 integrity hashes for new versions"
+            git push
+          fi

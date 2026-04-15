@@ -1,0 +1,31 @@
+// [Architecture]: Deterministic Dependency Governance
+// [Reference]: https://docs.renovatebot.com/modules/manager/regex/
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    ":dependencyDashboard"
+  ],
+  "labels": ["dependencies", "renovate"],
+  "commitMessageAction": "Update",
+  "commitMessageTopic": "{{depName}}",
+  "commitMessageExtra": "to v{{newVersion}}",
+  "packageRules": [
+    {
+      "matchManagers": ["custom.regex"],
+      "groupName": "Infrastructure Core & Runtime Ecosystem"
+    }
+  ],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "Parse .chezmoidata/tools.yaml for versions with renovate comments",
+      "fileMatch": ["^\\.chezmoidata/tools\\.yaml$"],
+      // [Rationale]: Matches keys and versions ONLY when followed by a renovate comment.
+      // This prevents the regex from accidentally capturing SHA256 hashes or other metadata.
+      "matchStrings": [
+        "\"?(?<depName>[a-zA-Z0-9\\-_:/@\\.]+)\"?:\\s*\"(?<currentValue>[a-zA-Z0-9\\-\\.]+)\"\\s*#\\s*renovate:\\s*datasource=(?<datasource>[a-zA-Z0-9-]+)(?:\\s+packageName=(?<packageName>[^\\s]+))?"
+      ]
+    }
+  ]
+}

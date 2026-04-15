@@ -1,22 +1,21 @@
 #!/bin/zsh
-# [Architecture]: Compile-time Completion & Init Engine (Performance Hardened)
-# [Rationale]: Generates static scripts and pre-compiles them into byte-code (.zwc)
-# to minimize I/O and parse time during shell startup. Includes Orphan-Purge logic.
-# [Reference: Zsh Performance]: https://htr3n.github.io/2018/07/faster-zsh/
-# [Reference: Chezmoi Completion]: https://www.chezmoi.io/reference/commands/completion/
+# [Architecture]: Compile-time Completion & Init Engine (Deterministic Phase)
+# [Rationale]: Generates static scripts and pre-compiles them into byte-code.
+# [Reference]: https://www.chezmoi.io/user-guide/advanced/scripts/
 
-{{- /* [Normalization Logic]: Resolve data key mismatch (darwin vs macos) */ -}}
+{{- /* [Normalization Logic] */ -}}
 {{- $os_key := .osid -}}
 {{- if eq .osid "darwin" }}{{ $os_key = "macos" }}{{ end -}}
 {{- $arch_key := .arch -}}
 {{- if eq .arch "amd64" }}{{ $arch_key = "x64" }}{{ end -}}
-{{- $mise_hash := index .tool_integrity.mise.hashes (printf "%s-%s" $os_key $arch_key) -}}
+{{- $mise_hash := index .tool_integrity.mise_hashes (printf "%s-%s" $os_key $arch_key) -}}
 
 # [Trigger]: Config: {{ include "dot_config/mise/config.toml.tmpl" | sha256sum }}
 # [Trigger]: Mise Binary: {{ $mise_hash }}
-# [Trigger]: Chezmoi Version: {{ .tool_integrity.chezmoi.version }}
+# [Trigger]: Chezmoi Version: {{ .tool_integrity.chezmoi }}
 
 set -euo pipefail
+setopt extended_glob
 
 MISE_BIN="{{ .paths.mise }}"
 CACHE_DIR="{{ .paths.xdg_cache }}/zsh"
@@ -25,58 +24,67 @@ INIT_DIR="$CACHE_DIR/init"
 ZCOMPDUMP="$CACHE_DIR/zcompdump"
 
 echo "⚙️  [Infrastructure] Provisioning static Zsh assets..."
-
 mkdir -p "$COMP_DIR" "$INIT_DIR"
 
-# [Architecture]: Orphaned Byte-code Purge
-echo "🧹 [Infrastructure] Purging outdated byte-codes..."
+echo "🧹 [Infrastructure] Purging outdated completions and byte-codes..."
+find "$COMP_DIR" -name "_*" -type f -delete 2>/dev/null || true
 find "$CACHE_DIR" -name "*.zwc" -type f -delete 2>/dev/null || true
 
-# --- Phase 1: Completion Generation ---
-# [Rationale]: Generate completions for both external tools and the engine itself.
-"$MISE_BIN" exec gh -- gh completion -s zsh > "$COMP_DIR/_gh"
-"$MISE_BIN" exec ripgrep -- rg --generate complete-zsh > "$COMP_DIR/_rg"
-"$MISE_BIN" exec fd -- fd --gen-completions zsh > "$COMP_DIR/_fd"
-"$MISE_BIN" exec uv -- uv generate-shell-completion zsh > "$COMP_DIR/_uv"
+generate_comp() {
+  local tool_name="$1"
+  shift
+  # [Fix]: Redirect log message to stderr (>&2) to prevent file pollution.
+  # This ensures the first line of the output is the required '#compdef' tag.
+  echo "  📦 [Completions] Generating for: $tool_name" >&2
+  "$MISE_BIN" exec "$tool_name" -- "$@" || echo "  ⚠️  [Warn] Failed to generate completions for $tool_name. Skipping." >&2
+}
 
-# --- Phase 1.1: Web Development Ecosystem ---
-# [Rationale]: Statically generated completions for Node.js toolchains.
-"$MISE_BIN" exec pnpm -- pnpm completion zsh > "$COMP_DIR/_pnpm"
+# --- Phase 1: Completion Generation (Verified Specs) ---
+generate_comp "gh" gh completion -s zsh > "$COMP_DIR/_gh"
+generate_comp "ripgrep" rg --generate complete-zsh > "$COMP_DIR/_rg"
+generate_comp "fd" fd --gen-completions zsh > "$COMP_DIR/_fd"
+generate_comp "uv" uv generate-shell-completion zsh > "$COMP_DIR/_uv"
+generate_comp "starship" starship completions zsh > "$COMP_DIR/_starship"
 
-# [Rationale]: Replace absolute/relative paths to the binary with a generic 'hs'
-# to ensure resolution via mise shims in the user's PATH.
+# [Fix]: Redirect stderr for delta to avoid theme-related noise in the asset.
+"$MISE_BIN" exec github:dandavison/delta -- delta --generate-completion zsh 2>/dev/null > "$COMP_DIR/_delta" || true
+
+# --- Phase 1.1: Physical Asset Mirroring ---
+echo "  📦 [Completions] Syncing physical asset for: bat" >&2
+find "$("$MISE_BIN" where bat)" -name "bat.zsh" -exec cp {} "$COMP_DIR/_bat" \; || true
+
+echo "  📦 [Completions] Syncing physical asset for: zoxide" >&2
+find "$("$MISE_BIN" where zoxide)" -name "_zoxide" -exec cp {} "$COMP_DIR/_zoxide" \; || true
+
+# --- Phase 1.2: Ecosystem & SRE tools ---
+generate_comp "docker-cli" docker completion zsh > "$COMP_DIR/_docker"
+generate_comp "kubectl" kubectl completion zsh > "$COMP_DIR/_kubectl"
+generate_comp "helm" helm completion zsh > "$COMP_DIR/_helm"
+generate_comp "k9s" k9s completion zsh > "$COMP_DIR/_k9s"
+
+echo "  📦 [Completions] Generating for: pnpm" >&2
+"$MISE_BIN" exec pnpm -- pnpm completion zsh > "$COMP_DIR/_pnpm" || true
+
+# [GTM Support]: HubSpot CLI completion mapping
+echo "  📦 [Completions] Generating for: hs" >&2
 echo "#compdef hs" > "$COMP_DIR/_hs"
-"$MISE_BIN" exec "npm:@hubspot/cli" -- hs completion | sed "s|[^[:space:]]*/bin/hs|hs|g" >> "$COMP_DIR/_hs"
+"$MISE_BIN" exec "npm:@hubspot/cli" -- hs completion 2>/dev/null | sed "s|[^[:space:]]*/bin/hs|hs|g" >> "$COMP_DIR/_hs" || true
 
-# --- Phase 1.2: SRE Toolchain Completions (Physical Bit Verified) ---
-"$MISE_BIN" exec docker-cli -- docker completion zsh > "$COMP_DIR/_docker"
-"$MISE_BIN" exec kubectl -- kubectl completion zsh > "$COMP_DIR/_kubectl"
-"$MISE_BIN" exec helm -- helm completion zsh > "$COMP_DIR/_helm"
-"$MISE_BIN" exec k9s -- k9s completion zsh > "$COMP_DIR/_k9s"
-
-# [Rationale]: Modern utilities with built-in generation verified via physical audit.
-"$MISE_BIN" exec xh -- xh --generate complete-zsh > "$COMP_DIR/_xh"
-"$MISE_BIN" exec cargo:procs -- procs --gen-completion-out zsh > "$COMP_DIR/_procs"
-"$MISE_BIN" exec doggo -- doggo completions zsh > "$COMP_DIR/_doggo"
-
-# [Self-Completion]: Inject current chezmoi binary completions.
 "{{ .chezmoi.executable }}" completion zsh > "$COMP_DIR/_chezmoi"
 
 # --- Phase 2: Static Init Generation & Compilation ---
+echo "📦 [Init] Generating static boot scripts..."
 "$MISE_BIN" activate zsh > "$INIT_DIR/mise.zsh"
 "$MISE_BIN" exec zoxide -- zoxide init zsh > "$INIT_DIR/zoxide.zsh"
 "$MISE_BIN" exec starship -- starship init zsh --print-full-init > "$INIT_DIR/starship.zsh"
 
-# [Architecture]: Byte-code Compilation
-for f in "$INIT_DIR"/*.zsh; do
+echo "⚡ [Init] Compiling boot scripts..."
+for f in "$INIT_DIR"/*.zsh(N); do
   zcompile -U "$f"
 done
 
-# [Self-Healing Logic]: Cache Invalidation
 if [[ -f "$ZCOMPDUMP" ]]; then
-  echo "🧹 [Infrastructure] Invalidating Zsh compdump cache..."
   rm -f "$ZCOMPDUMP"
-  rm -f "${ZCOMPDUMP}.zwc" 2>/dev/null || true
 fi
 
-echo "✅ [Infrastructure] All static assets and byte-codes provisioned."
+echo "✅ [Infrastructure] All static assets converged."

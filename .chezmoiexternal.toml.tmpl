@@ -5,36 +5,30 @@
 # =============================================================================
 
 {{- /* 1. Platform Normalization */ -}}
-{{- /* Tool-specific OS identifiers */ -}}
 {{- $os_std := "linux" -}}
 {{- if eq .chezmoi.os "darwin" }}{{ $os_std = "macos" }}{{ end -}}
 
-{{- /* Architecture naming conventions */ -}}
 {{- $arch := "amd64" -}}
 {{- if eq .chezmoi.arch "arm64" }}{{ $arch = "arm64" }}{{ end -}}
 
-{{- /* mise-specific architecture naming */ -}}
 {{- $mise_arch := "x64" -}}
 {{- if eq .chezmoi.arch "arm64" }}{{ $mise_arch = "arm64" }}{{ end -}}
 
-{{- /* [Rationale]: Alignment with .chezmoidata.yaml schema (macos vs darwin) */ -}}
 {{- $hash_key := printf "%s-%s" $os_std $mise_arch -}}
 
 {{- /* 2. Resource Definitions */ -}}
 
-{{- /* mise bootstrap binary */ -}}
-{{- $mise_hash := index .tool_integrity.mise.hashes $hash_key -}}
+{{- /* [Architecture]: Flat schema access (.tool_integrity.mise_hashes) */ -}}
+{{- $mise_hash := index .tool_integrity.mise_hashes $hash_key -}}
 {{- if $mise_hash }}
 [".local/bin/mise"]
     type = "file"
-    url = {{ printf "https://github.com/jdx/mise/releases/download/v%s/mise-v%s-%s-%s" .tool_integrity.mise.version .tool_integrity.mise.version $os_std $mise_arch | quote }}
+    url = {{ printf "https://github.com/jdx/mise/releases/download/v%s/mise-v%s-%s-%s" .tool_integrity.mise .tool_integrity.mise $os_std $mise_arch | quote }}
     executable = true
     [".local/bin/mise".checksum]
         sha256 = {{ $mise_hash | quote }}
 {{- end }}
 
-{{- /* win32yank clipboard provider (WSL2 Interop) */ -}}
-{{- /* [Rationale]: Extract explicit binary from archive to ensure zero-dependency Win32 interop. */ -}}
 {{- if .is_wsl }}
 [".local/bin/win32yank.exe"]
     type = "archive-file"
@@ -42,3 +36,10 @@
     executable = true
     path = "win32yank.exe"
 {{- end }}
+
+# [Architecture]: Deterministic bat Themes
+# [Rationale]: Ensure Catppuccin Mocha is available for delta/bat without manual intervention.
+[".config/bat/themes/Catppuccin Mocha.tmTheme"]
+    type = "file"
+    url = "https://github.com/catppuccin/bat/raw/main/themes/Catppuccin%20Mocha.tmTheme"
+    refreshPeriod = "168h"

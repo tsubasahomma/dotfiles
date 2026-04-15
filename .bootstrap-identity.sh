@@ -48,8 +48,9 @@ if [ ! -x "$OP_BIN" ]; then
     exit 1
   fi
 
-  OP_VERSION=$(awk '/^ *op:/{f=1} f && /^ *version:/{print $2; exit}' "$TOOLS_YAML" | tr -d '"')
-  OP_HASH=$(awk "/^ *op:/{f=1} f && /^ *${OS_ID}-${ARCH_ID}:/{print \$2; exit}" "$TOOLS_YAML" | tr -d '"')
+  # [Architecture]: Flat parsing robust against trailing Renovate comments.
+  OP_VERSION=$(awk '/^ *"op":/ {gsub(/"/, "", $2); print $2}' "$TOOLS_YAML")
+  OP_HASH=$(awk "/^ *op_hashes:/{f=1} f && /^ *${OS_ID}-${ARCH_ID}:/{gsub(/\"/, \"\", \$2); print \$2; exit}" "$TOOLS_YAML")
 
   if [ -z "$OP_VERSION" ]; then
     echo "❌ [Fatal] Could not parse op version from tools.yaml"

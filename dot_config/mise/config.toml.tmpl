@@ -1,78 +1,17 @@
-{{- /* [Reference]: https://mise.jdx.dev/dev-tools/ */ -}}
+# [Reference]: https://mise.jdx.dev/dev-tools/
 # [Architecture]: Single Source of Truth (SSOT) for Toolchains.
-# [Note]: Neovim is deterministically pinned to '0.12.1' to physically bypass
-# non-deterministic API discovery and mitigate GitHub API Rate Limits (HTTP 403).
+# [Rationale]: All versions are deterministically locked via Renovate (.chezmoidata/tools.yaml).
 [tools]
-node = "lts"
-pnpm = "latest"
-rust = "latest"
-neovim = "0.12.1"
-python = "3.13"
-go = "latest"
-uv = "latest"
+# [Architecture]: Explicitly inherit Neovim version from Tier 0 to guarantee hermetic consistency.
+"neovim" = "{{ .tool_integrity.neovim }}"
 
-# Development Infrastructure
-tree-sitter = "latest"
-lazygit = "latest"
-gh = "latest"
-"go:github.com/jesseduffield/lazydocker" = "latest"
-pre-commit = "latest"
-vale = "latest"
-"github:Slackadays/Clipboard" = "latest"
-
-# Modern CLI Utilities
-zoxide = "latest"
-eza = "latest"
-bat = "latest"
-ripgrep = "latest"
-fd = "latest"
-starship = "latest"
-fzf = "latest"
-"cargo:git-delta" = "latest"
-"cargo:git-absorb" = "latest"
-
-# Formatting & Linting Engines
-shfmt = "latest"
-stylua = "latest"
-"npm:prettier" = "latest"
-
-# Neovim Ecosystem Providers
-"npm:neovim" = "latest"
-"npm:@mermaid-js/mermaid-cli" = "latest"
-"npm:repomix" = "latest"
-
-# Web Development & Node.js Ecosystem
-"npm:@hubspot/cli" = "latest"
-
-# Data Processing
-"go:github.com/noahgorstein/jqp" = "latest"
-"go:github.com/mikefarah/yq/v4" = "latest"
-"go:github.com/rs/curlie" = "latest"
-
-# =============================================================================
-# [Architecture]: SRE & Infrastructure Ecosystem (Expansion)
-# =============================================================================
-# Container Engine & Kubernetes Ecosystem
-docker-cli = "latest"
-kubectl = "latest"
-helm = "latest"
-k9s = "latest"
-
-# Infrastructure as Code (IaC)
-opentofu = "latest"
-tflint = "latest"
-terragrunt = "latest"
-
-# SRE Modern Utilities (Rust-based)
-"cargo:bottom" = "latest"
-"cargo:procs" = "latest"
-"cargo:du-dust" = "latest"
-xh = "latest"
-doggo = "latest"
-viddy = "latest"
+{{- range $tool, $version := .mise_tools }}
+"{{ $tool }}" = "{{ $version }}"
+{{- end }}
 
 [settings]
-auto_install = true
+not_found_auto_install = true
+yes = true
 experimental = true
 asdf_compat = false
 
