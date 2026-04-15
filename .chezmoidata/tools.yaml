@@ -27,7 +27,7 @@ tool_integrity:
     linux-x86_64: "ab757a1fd9ad307d53d2df4045698906a7ca3993d92260dd8fe49108712d57d0"
 
 mise_tools:
-  "node": "22.22.2" # renovate: datasource=node-version
+  "node": "24.14.1" # renovate: datasource=node-version
   "python": "3.14.4" # renovate: datasource=python-version
   "pnpm": "10.33.0" # renovate: datasource=npm
   "rust": "1.94.1" # renovate: datasource=github-releases packageName=rust-lang/rust
@@ -39,13 +39,13 @@ mise_tools:
   "lazygit": "0.61.1" # renovate: datasource=github-releases packageName=jesseduffield/lazygit
   "gh": "2.89.0" # renovate: datasource=github-releases packageName=cli/cli
   "go:github.com/jesseduffield/lazydocker": "0.25.0" # renovate: datasource=github-releases packageName=jesseduffield/lazydocker
-  "pre-commit": "3.8.0" # renovate: datasource=github-releases packageName=pre-commit/pre-commit
+  "pre-commit": "4.5.1" # renovate: datasource=github-releases packageName=pre-commit/pre-commit
   "vale": "3.14.1" # renovate: datasource=github-releases packageName=errata-ai/vale
 
   # Modern CLI Utilities
   "zoxide": "0.9.9" # renovate: datasource=github-releases packageName=ajeetdsouza/zoxide
   "bat": "0.26.1" # renovate: datasource=github-releases packageName=sharkdp/bat
-  "ripgrep": "14.1.1" # renovate: datasource=github-releases packageName=BurntSushi/ripgrep
+  "ripgrep": "15.1.0" # renovate: datasource=github-releases packageName=BurntSushi/ripgrep
   "fd": "10.4.2" # renovate: datasource=github-releases packageName=sharkdp/fd
   "starship": "1.24.2" # renovate: datasource=github-releases packageName=starship/starship
   "fzf": "v0.71.0" # renovate: datasource=github-releases packageName=junegunn/fzf
@@ -54,16 +54,16 @@ mise_tools:
 
   # Formatting & Linting Engines
   "shfmt": "3.13.1" # renovate: datasource=github-releases packageName=mvdan/sh
-  "stylua": "0.20.0" # renovate: datasource=github-releases packageName=JohnnyMorganz/StyLua
+  "stylua": "2.4.1" # renovate: datasource=github-releases packageName=JohnnyMorganz/StyLua
   "npm:prettier": "3.8.3" # renovate: datasource=npm packageName=prettier
 
   # Neovim Ecosystem Providers
   "npm:neovim": "5.4.0" # renovate: datasource=npm packageName=neovim
-  "npm:@mermaid-js/mermaid-cli": "10.9.1" # renovate: datasource=npm packageName=@mermaid-js/mermaid-cli
+  "npm:@mermaid-js/mermaid-cli": "11.12.0" # renovate: datasource=npm packageName=@mermaid-js/mermaid-cli
   "npm:repomix": "1.13.1" # renovate: datasource=npm packageName=repomix
 
   # Web Development & Node.js Ecosystem
-  "npm:@hubspot/cli": "5.4.0" # renovate: datasource=npm packageName=@hubspot/cli
+  "npm:@hubspot/cli": "8.4.0" # renovate: datasource=npm packageName=@hubspot/cli
 
   # Data Processing
   "github:noahgorstein/jqp": "0.8.0" # renovate: datasource=github-releases packageName=noahgorstein/jqp
@@ -73,16 +73,16 @@ mise_tools:
   # Container Engine & Kubernetes Ecosystem
   "docker-cli": "26.0.0" # renovate: datasource=github-releases packageName=docker/cli
   "kubectl": "1.29.3" # renovate: datasource=github-releases packageName=kubernetes/kubectl
-  "helm": "3.20.2" # renovate: datasource=github-releases packageName=helm/helm
+  "helm": "4.1.4" # renovate: datasource=github-releases packageName=helm/helm
   "k9s": "0.50.18" # renovate: datasource=github-releases packageName=derailed/k9s
 
   # Infrastructure as Code (IaC)
   "opentofu": "1.11.6" # renovate: datasource=github-releases packageName=opentofu/opentofu
   "tflint": "0.61.0" # renovate: datasource=github-releases packageName=terraform-linters/tflint
-  "terragrunt": "0.99.5" # renovate: datasource=github-releases packageName=gruntwork-io/terragrunt
+  "terragrunt": "1.0.1" # renovate: datasource=github-releases packageName=gruntwork-io/terragrunt
 
   # SRE Modern Utilities
   "github:ClementTsang/bottom": "0.12.3" # renovate: datasource=github-releases packageName=ClementTsang/bottom
-  "cargo:du-dust": "0.9.0" # renovate: datasource=crate packageName=du-dust
-  "doggo": "0.5.7" # renovate: datasource=github-releases packageName=mr-karan/doggo
-  "viddy": "0.4.0" # renovate: datasource=github-releases packageName=sachaos/viddy
+  "cargo:du-dust": "1.0.0" # renovate: datasource=crate packageName=du-dust
+  "doggo": "1.1.5" # renovate: datasource=github-releases packageName=mr-karan/doggo
+  "viddy": "1.3.0" # renovate: datasource=github-releases packageName=sachaos/viddy
