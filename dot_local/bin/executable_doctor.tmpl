@@ -1,8 +1,8 @@
 #!/bin/sh
-# [chezmoi-script]: L0 (POSIX Shell) Tiering
-# [Rationale]: Self-healing diagnostic engine with actionable guidance.
-# [Architecture]: POSIX-compliant (sh) OS-agnostic checks with schema-safe evaluation.
-
+{{/* [Reference]: https://www.chezmoi.io/user-guide/password-managers/1password/ */}}{{ "" -}}
+{{/* [chezmoi-script]: L0 (POSIX Shell) Tiering */}}{{ "" -}}
+{{/* [Rationale]: Self-healing diagnostic engine with environment-aware validation. */}}{{ "" -}}
+{{/* [Architecture]: POSIX-compliant (sh) OS-agnostic checks. */}}{{ "" -}}
 set -u
 
 GREEN='\033[0;32m'
@@ -13,86 +13,152 @@ NC='\033[0m'
 
 log_ok() { printf "  ${GREEN}✅ %s${NC}\n" "$1"; }
 log_warn() { printf "  ${YELLOW}⚠️  %s${NC}\n" "$1"; }
-log_err() { printf "  ${RED}❌ %s${NC}\n" "$1"; return 1; }
+log_err() { printf "  ${RED}❌ %s${NC}\n" "$1"; }
 log_guide() { printf "  ${BLUE}👉 %s${NC}\n" "$1"; }
 
 IS_CI="${CI:-false}"
-HOME_DIR="{{ .chezmoi.homeDir }}"
+HOME_DIR="{{ .paths.home }}"
 OP_BIN="{{ .paths.op }}"
+MISE_BIN="{{ .paths.mise }}"
+HAS_ERROR=0
 
 echo "--- 1. Infrastructure Security & Permissions ---"
 for dir in "$HOME_DIR/.ssh" "{{ .paths.xdg_state }}/ssh"; do
   if [ -d "$dir" ]; then
     chmod 700 "$dir"
-    log_ok "Hardened permissions for $dir (700)"
+    log_ok "Permissions secured for $dir (0700)."
   fi
 done
 
-echo "--- 2. Identity & Auth Bridge Analysis (Interop) ---"
-# [Dynamic Check]: Evaluates the target binary (Linux or Windows via Interop).
+echo "--- 2. Identity & Auth Bridge Analysis ---"
 if "$OP_BIN" account get > /dev/null 2>&1; then
-  log_ok "1Password CLI authenticated."
+  log_ok "1Password session authenticated."
+
   {{- if .identities }}
   {{- range .identities }}
-  log_ok "Parallel Identity mapped: {{ .name }} ({{ .email }})"
+  ID_CONF="{{ $.paths.xdg_config }}/git/identities/config_{{ .vault_id }}_{{ .item_id }}"
+  if [ -f "$ID_CONF" ]; then
+    AUTH_EMAIL=$(git config -f "$ID_CONF" user.email 2>/dev/null || echo "")
+    if [ "$AUTH_EMAIL" = "{{ .email }}" ]; then
+      log_ok "Identity binding verified: {{ .name }} ($AUTH_EMAIL)"
+    else
+      log_err "Identity binding mismatch for {{ .name }} (Expected: {{ .email }}, Found: $AUTH_EMAIL)."
+      HAS_ERROR=1
+    fi
+  else
+    log_err "Scoped Git configuration missing at $ID_CONF."
+    log_guide "chezmoi apply"
+    HAS_ERROR=1
+  fi
   {{- end }}
   {{- else }}
-  log_warn "No mapped identities found in 1Password."
+  log_warn "No identities mapped from 1Password schema."
   {{- end }}
 else
-  log_warn "Sovereign Identity is locked."
-  log_guide "Action: Unlock 1Password Desktop App or run '$OP_BIN signin'."
+  if [ "$IS_CI" = "true" ]; then
+    log_ok "Automation Mode: Sovereign Identity verification bypassed."
+  else
+    log_err "Sovereign Identity is locked or unreachable."
+    log_guide "$OP_BIN signin"
+    HAS_ERROR=1
+  fi
 fi
 
 echo "--- 3. SSH Agent & Cryptographic Trust ---"
 if ssh-add -l > /dev/null 2>&1; then
-  log_ok "SSH Agent is healthy."
+  log_ok "SSH Agent is responsive and active."
 else
   if [ "$IS_CI" = "true" ]; then
-    log_warn "SSH Agent unresponsive (CI mode). Skipping."
+    log_warn "SSH Agent unresponsive (expected in CI environment)."
   else
     log_warn "SSH Agent unresponsive. Attempting bridge recovery..."
-    {{ if .is_wsl -}}
+    {{ if .is_wsl }}
     if command -v systemctl >/dev/null 2>&1; then
       systemctl --user restart 1password-bridge.service || true
     fi
-    {{ end -}}
+    {{ end }}
     sleep 1
-    ssh-add -l > /dev/null 2>&1 || {
-      log_err "Auth bridge failed."
-      log_guide "Verify 1Password [SSH Agent] setting is enabled and the app is unlocked."
-    }
+    if ssh-add -l > /dev/null 2>&1; then
+      log_ok "Authentication bridge recovered successfully."
+    else
+      log_err "Authentication bridge failed to initialize."
+      log_guide "Verify the 'SSH Agent' setting in 1Password Desktop App."
+      HAS_ERROR=1
+    fi
   fi
 fi
 
 echo "--- 4. Neovim Deterministic State ---"
 LOCK_FILE="{{ .paths.xdg_config }}/nvim/lazy-lock.json"
 if [ -f "$LOCK_FILE" ]; then
-  chezmoi verify "$LOCK_FILE" > /dev/null 2>&1 && log_ok "lazy-lock.json is synchronized." || log_warn "lazy-lock.json drift detected."
+  # [Architecture]: Deterministic verification.
+  # [Rationale]: Removed silence (>/dev/null) to ensure drift reasons are visible in CI logs.
+  if chezmoi verify "$LOCK_FILE"; then
+    log_ok "Neovim lockfile (lazy-lock.json) is synchronized."
+  else
+    log_err "Neovim lockfile drift detected. State is non-deterministic."
+    log_guide "chezmoi add $LOCK_FILE"
+    HAS_ERROR=1
+  fi
 else
-  log_err "lazy-lock.json is missing."
+  log_err "Neovim lockfile is missing."
+  log_guide "nvim --headless '+Lazy! restore' +qa && chezmoi add $LOCK_FILE"
+  HAS_ERROR=1
 fi
 
 NVIM_PYTHON="{{ .paths.xdg_data }}/nvim/venv/bin/python"
-[ -x "$NVIM_PYTHON" ] && log_ok "Hermetic Python Provider ready ($NVIM_PYTHON)" || log_err "Python Provider missing"
-
-echo "--- 5. Vale & Prose Linting Integrity ---"
-STYLE_DIR="{{ .paths.xdg_data }}/vale/styles/Google"
-if [ -d "$STYLE_DIR" ]; then
-  log_ok "Vale & Google Style provisioned."
+if [ -x "$NVIM_PYTHON" ]; then
+  log_ok "Hermetic Python Provider provisioned ($NVIM_PYTHON)."
 else
-  log_err "Styles missing at $STYLE_DIR"
-  log_guide "Action: Run 'chezmoi apply' to trigger self-healing sync."
+  log_err "Hermetic Python Provider missing."
+  log_guide "Run Neovim to trigger automatic provisioning via Mason/venv setup."
+  HAS_ERROR=1
+fi
+
+echo "--- 5. Prose Linting Engine (Vale) ---"
+VALE_CONFIG="{{ .paths.xdg_config }}/vale/vale.ini"
+if [ -f "$VALE_CONFIG" ]; then
+  if "$MISE_BIN" exec vale -- vale --config="$VALE_CONFIG" ls-config > /dev/null 2>&1; then
+    log_ok "Vale configuration loaded successfully."
+
+    STYLE_DIR="{{ .paths.xdg_data }}/vale/styles/Google"
+    if [ -d "$STYLE_DIR" ]; then
+      log_ok "External style packages (Google) provisioned."
+    else
+      log_err "External style packages missing at $STYLE_DIR."
+      log_guide "chezmoi apply (or manual: vale --config=\"$VALE_CONFIG\" sync)"
+      HAS_ERROR=1
+    fi
+  else
+    log_err "Vale failed to parse configuration at $VALE_CONFIG."
+    HAS_ERROR=1
+  fi
+else
+  log_err "Vale configuration missing at $VALE_CONFIG."
+  log_guide "chezmoi apply"
+  HAS_ERROR=1
 fi
 
 echo "--- 6. Toolchain Drift Analysis ---"
-MISE_BIN="{{ .paths.mise }}"
-[ -x "$MISE_BIN" ] && log_ok "Hermetic mise binary verified." || log_err "mise missing."
-
-if echo "$PATH" | grep -q "^$HOME_DIR/.local/bin"; then
-  log_ok "PATH precedence correctly prioritizes .local/bin"
+if [ -x "$MISE_BIN" ]; then
+  log_ok "Hermetic mise binary verified."
 else
-  log_warn "PATH precedence violation detected."
+  log_err "mise executable missing."
+  log_guide "curl https://mise.run | sh"
+  HAS_ERROR=1
 fi
 
-printf "\n${GREEN}✨ System Health Evaluation Complete${NC}\n"
+if echo "$PATH" | grep -q "^$HOME_DIR/.local/bin"; then
+  log_ok "PATH precedence correctly prioritized (.local/bin)."
+else
+  log_warn "PATH precedence violation detected. Verify shell initialization."
+fi
+
+printf "\n"
+if [ "$HAS_ERROR" -eq 0 ]; then
+  printf "${GREEN}✨ System Health Evaluation Complete (Zero Drift)${NC}\n"
+  exit 0
+else
+  printf "${RED}❌ System Health Evaluation Failed. Address the errors above.${NC}\n"
+  exit 1
+fi

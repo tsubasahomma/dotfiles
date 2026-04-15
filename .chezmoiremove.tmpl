@@ -1,5 +1,8 @@
+{{- /* [Reference]: https://www.chezmoi.io/reference/special-files/chezmoiignore/ */ -}}
+# =============================================================================
 # [Architecture]: Chezmoi Removal Manifest (Target-Path Convention)
 # [Rationale]: Patterns below MUST match the TARGET path (relative to $HOME).
+# =============================================================================
 
 .gitconfig
 .vale.ini
@@ -21,3 +24,7 @@
 
 # [Architecture]: Legacy & Unidentified Artifact Purge
 --request
+
+# [Architecture]: Vale XDG Migration Purge (Phase 22)
+# [Rationale]: Eliminate the non-standard dot-prefixed configuration file to enforce XDG purism.
+.config/vale/.vale.ini

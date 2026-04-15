@@ -49,6 +49,13 @@ You MUST NOT skip any phase. Each phase acts as a mandatory gate.
   - **`.chezmoiignore` & `.chezmoiremove`**: MUST use **Target Paths** (relative to `$HOME`).
   - **`includeTemplate`**: MUST use **Source Paths** (relative to sourceDir).
 
+## 3.5. Go Template Integrity Protocol (GTIP)
+
+- **Shebang Protection**: Never use `{{-` (Left Trim) immediately after a Shebang line. This physically merges the interpreter path with the next command.
+- **Mandatory Anchor**: Use `{{ "" -}}` (Empty string + Right Trim) to eliminate template-induced newlines while preserving the leading newline of the Shebang.
+- **Strict Comment Syntax**: Use only `{{/* ... */}}`. Do NOT include whitespace control markers (`-`) inside the comment delimiters (e.g., `{{/* ... -}}` is a Syntax Error).
+- **Execution Validation**: If a template contains Shebangs or complex Whitespace Control, you MUST run `chezmoi execute-template` in a mental or physical sandbox before outputting.
+
 ## 4. Git & Peer Review Protocol (Google Style)
 
 ### A. Commit Message Schema

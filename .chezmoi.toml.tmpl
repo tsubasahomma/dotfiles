@@ -1,6 +1,10 @@
 # [Architecture]: Foundation Schema | Phase 20.9 (Parallel Identity Model)
 # [Reference]: https://www.chezmoi.io/user-guide/templating/
 
+# [Architecture]: Deterministic Source Routing
+# [Rationale]: Prevents 'no such file or directory' errors in CI by permanently binding the source path.
+sourceDir = {{ .chezmoi.sourceDir | quote }}
+
 # --- 1. Platform & Interop Initialization ---
 {{$osid := .chezmoi.os}}
 {{$arch := .chezmoi.arch}}

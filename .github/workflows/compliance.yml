@@ -81,7 +81,6 @@ jobs:
       - name: Bootstrap Sovereign Tools (Hermetic Verification & Injection)
         run: |
           DATA_FILE=".chezmoidata/tools.yaml"
-          # [Architecture]: Flat parsing robust against trailing Renovate comments.
           CHEZMOI_VER=$(awk '/^ *"chezmoi":/ {gsub(/"/, "", $2); print $2}' "$DATA_FILE")
           CHEZMOI_HASH=$(awk "/^ *chezmoi_hashes:/{f=1} f && /${CHEZMOI_OS}-${CHEZMOI_ARCH}:/{gsub(/\"/, \"\", \$2); print \$2; exit}" "$DATA_FILE")
 
@@ -90,10 +89,6 @@ jobs:
 
           NEOVIM_VER=$(awk '/^ *"neovim":/ {gsub(/"/, "", $2); print $2}' "$DATA_FILE")
           NEOVIM_HASH=$(awk "/^ *neovim_hashes:/{f=1} f && /${NEOVIM_KEY}:/{gsub(/\"/, \"\", \$2); print \$2; exit}" "$DATA_FILE")
-
-          echo "🔍 [Audit] Expected chezmoi (v${CHEZMOI_VER}): ${CHEZMOI_HASH}"
-          echo "🔍 [Audit] Expected mise (v${MISE_VER}): ${MISE_HASH}"
-          echo "🔍 [Audit] Expected neovim (v${NEOVIM_VER}): ${NEOVIM_HASH}"
 
           CHEZMOI_URL="https://github.com/twpayne/chezmoi/releases/download/v${CHEZMOI_VER}/chezmoi_${CHEZMOI_VER}_${CHEZMOI_OS}_${CHEZMOI_ARCH}.tar.gz"
           curl -fsSL "$CHEZMOI_URL" -o /tmp/chezmoi.tar.gz
@@ -112,7 +107,6 @@ jobs:
           MISE_NVIM_DIR="$HOME/.local/share/mise/installs/neovim/${NEOVIM_VER}"
           mkdir -p "$MISE_NVIM_DIR"
           tar -xzf /tmp/nvim.tar.gz -C "$MISE_NVIM_DIR" --strip-components=1
-          echo "✅ [Injection] Neovim hermetically placed at $MISE_NVIM_DIR"
 
       - name: Provisioning (Atomic Apply)
         run: |
@@ -124,17 +118,19 @@ jobs:
 
       - name: Idempotency Proof (Convergence Validation)
         run: |
-          DRIFT_STATUS=$(chezmoi status | grep -v "lazy-lock.json" || true)
+          # [Rationale]: Zero-tolerance for drift. All managed files including lockfiles must converge.
+          DRIFT_STATUS=$(chezmoi status)
 
           if [ -n "$DRIFT_STATUS" ]; then
             echo "❌ [Idempotency Failure] Detected drift in managed files."
             echo "$DRIFT_STATUS"
-            echo "$DRIFT_STATUS" | sed 's/^...//' | tr '\n' '\0' | xargs -0 chezmoi diff --source="$GITHUB_WORKSPACE"
             exit 1
           fi
 
           echo "✅ [Convergence] Zero-drift confirmed across all managed files."
 
       - name: Final Health Check (Doctor)
+        if: always()
         run: |
+          # [Rationale]: Always execute doctor to diagnose the full state, even if idempotency fails.
           doctor
