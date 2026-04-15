@@ -37,7 +37,7 @@ mise_tools:
   # Development Infrastructure
   "tree-sitter": "0.22.5" # renovate: datasource=github-releases packageName=tree-sitter/tree-sitter
   "lazygit": "0.41.0" # renovate: datasource=github-releases packageName=jesseduffield/lazygit
-  "gh": "2.47.0" # renovate: datasource=github-releases packageName=cli/cli
+  "gh": "2.89.0" # renovate: datasource=github-releases packageName=cli/cli
   "go:github.com/jesseduffield/lazydocker": "0.23.1" # renovate: datasource=github-releases packageName=jesseduffield/lazydocker
   "pre-commit": "3.7.0" # renovate: datasource=github-releases packageName=pre-commit/pre-commit
   "vale": "3.4.0" # renovate: datasource=github-releases packageName=errata-ai/vale
