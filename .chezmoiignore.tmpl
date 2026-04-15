@@ -28,7 +28,10 @@ Thumbs.db
 **/*_history
 **/.zcompdump*
 .cache/**
-# [Note]: We allow .local/state/ to be scanned, only blacklisting specific noisy apps if needed.
+
+# [Rationale]: Exclude ephemeral lockfiles from being managed or applied to $HOME.
+package-lock.json
+pnpm-lock.yaml
 
 # =============================================================================
 # 4. Repository Meta

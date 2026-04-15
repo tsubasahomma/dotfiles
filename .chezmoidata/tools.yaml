@@ -6,7 +6,7 @@
 # =============================================================================
 
 tool_integrity:
-  "op": "2.33.1" # renovate: datasource=github-releases packageName=1Password/connect
+  "op": "2.33.1" # [Architecture]: Untrackable via standard datasource (Binary distributed via AgileBits).
   op_hashes:
     darwin-arm64: "8106127624bf55f0bf5ae6f8e2c56398e01db75d64c3088eface33885c854351"
     linux-amd64: "0fc50cb22d791b5ee5e1421d97e96595fd61ca56ae92271bd1b28bb884971726"
@@ -27,7 +27,7 @@ tool_integrity:
     linux-x86_64: "ab757a1fd9ad307d53d2df4045698906a7ca3993d92260dd8fe49108712d57d0"
 
 mise_tools:
-  "node": "20.12.2" # renovate: datasource=node-version
+  "node": "22.14.0" # renovate: datasource=node-version
   "python": "3.13.0" # renovate: datasource=python-version
   "pnpm": "10.33.0" # renovate: datasource=npm
   "rust": "1.77.2" # renovate: datasource=github-releases packageName=rust-lang/rust

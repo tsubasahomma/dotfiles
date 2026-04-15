@@ -9,6 +9,8 @@ __pycache__/
 *.pyc
 .venv/
 .python-version
+package-lock.json
+pnpm-lock.yaml
 
 # --- AI & Editor Contexts ---
 repomix-*.xml
