@@ -1,65 +1,75 @@
 # =============================================================================
-# [Architecture]: Declarative Package Schema
-# [Rationale]: Managed via Homebrew (macOS) and WinGet (Windows).
+# [Architecture]: Declarative Package Schema (Zero-Toil Edition)
+# [Rationale]: Categorized strictly to decouple 'Headless CI Verification' from
+# 'GUI Desktop Provisioning'.
 # =============================================================================
 packages:
-  common:
-    - ca-certificates
-    - git
-    - zsh
-    - jq
-    - socat
-  linux:
-    ubuntu:
-      - build-essential
-      - libssl-dev
-    debian:
-      - build-essential
-      - libssl-dev
-    fedora:
-      - gcc-c++
-      - openssl-devel
-    rhel:
-      - gcc-c++
-      - openssl-devel
-    arch:
-      - base-devel
-      - openssl
-  darwin:
-    brews:
-      - openssl@3
-      - colima
-      - clipboard
-      - eza # [Architecture]: Migrated for native ARM binary
-      - xh # [Architecture]: Migrated for native ARM binary
-    # [Fix]: Added missing 'media' key to satisfy Brewfile.tmpl logic
-    media:
-      - ffmpeg
-      - imagemagick
-      - graphviz
-    casks:
+  headless:
+    common:
+      - ca-certificates
+      - git
+      - zsh
+      - jq
+      - socat
+    linux:
+      ubuntu:
+        - build-essential
+        - libssl-dev
+      debian:
+        - build-essential
+        - libssl-dev
+      fedora:
+        - gcc-c++
+        - openssl-devel
+      rhel:
+        - gcc-c++
+        - openssl-devel
+      arch:
+        - base-devel
+        - openssl
+    darwin:
+      brews:
+        - openssl@3
+        - colima
+        - clipboard
+        - eza
+        - xh
+      casks:
+        - 1password-cli
+    windows:
+      - AgileBits.1Password.CLI
+      - eza-community.eza
+      - ducaale.xh
+
+  gui:
+    darwin:
       - 1password
-      - 1password-cli
-      - font-jetbrains-mono-nerd-font
-      - font-biz-udgothic
-      - font-ibm-plex-sans-jp
       - wezterm@nightly
       - slack
       - google-chrome
       - notion
       - raycast
       - visual-studio-code
-  windows:
-    winget:
+    windows:
       - AgileBits.1Password
-      - AgileBits.1Password.CLI
       - wez.wezterm.nightly
-      - DEVCOM.JetBrainsMonoNerdFont
       - SlackTechnologies.Slack
       - Google.Chrome
       - Notion.Notion
       - Flow-Launcher.Flow-Launcher
       - Microsoft.PowerToys
       - Microsoft.VisualStudioCode
-      - eza-community.eza # [Architecture]: Windows native
-      - ducaale.xh # [Architecture]: Windows native
+
+  fonts:
+    darwin:
+      - font-jetbrains-mono-nerd-font
+      - font-biz-udgothic
+      - font-ibm-plex-sans-jp
+    windows:
+      - DEVCOM.JetBrainsMonoNerdFont
+
+  media:
+    darwin:
+      - ffmpeg
+      - imagemagick
+      - graphviz

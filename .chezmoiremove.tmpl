@@ -1,4 +1,3 @@
-{{- /* [Reference]: https://www.chezmoi.io/reference/special-files/chezmoiignore/ */ -}}
 # =============================================================================
 # [Architecture]: Chezmoi Removal Manifest (Target-Path Convention)
 # [Rationale]: Patterns below MUST match the TARGET path (relative to $HOME).
@@ -18,7 +17,6 @@
 .config/nvim/lua/plugins/fzf.lua
 
 # [Architecture]: Zero-Trust Identity Purge (Phase 50 Refactor)
-# [Rationale]: Eliminate unmanaged local overrides and monolithic personal configs.
 .gitconfig.local
 .config/git/config_personal
 
@@ -26,5 +24,4 @@
 --request
 
 # [Architecture]: Vale XDG Migration Purge (Phase 22)
-# [Rationale]: Eliminate the non-standard dot-prefixed configuration file to enforce XDG purism.
 .config/vale/.vale.ini

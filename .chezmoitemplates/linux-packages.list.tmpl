@@ -8,16 +8,16 @@
 {{- end -}}
 
 # [Architecture]: Declarative package list for Linux workstation.
-# [Rationale]: Centrally managed via .chezmoidata.yaml
+# [Rationale]: Centrally managed via .chezmoidata/packages.yaml
 
-# --- Common Infrastructure ---
-{{ range .packages.common -}}
+# --- Common Headless Infrastructure ---
+{{ range .packages.headless.common -}}
 {{ . }}
 {{ end }}
 
 # --- Build & Runtime Essentials (OS Specific) ---
-{{- if hasKey .packages.linux $os_id }}
-{{- range (index .packages.linux $os_id) }}
+{{- if hasKey .packages.headless.linux $os_id }}
+{{- range (index .packages.headless.linux $os_id) }}
 {{ . }}
 {{- end }}
 {{- end }}

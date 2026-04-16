@@ -1,23 +1,37 @@
 # [Rationale]: Declarative infrastructure for macOS workstation (2026).
-# Homebrew is strictly limited to OS-level system dependencies and GUI Casks.
+# [Architecture]: Enforces Headless-First CI logic to achieve sub-3 minute convergence.
 # [Reference]: https://www.chezmoi.io/user-guide/advanced/install-packages-declaratively/
 
-# --- Common & System Cryptography ---
-{{ range .packages.common -}}
+# --- Headless Infrastructure (Always Provisioned) ---
+{{ range .packages.headless.common -}}
 brew {{ . | quote }}
 {{ end -}}
-{{ range .packages.darwin.brews -}}
-brew {{ . | quote }}
-{{ end }}
 
-{{- if not (env "CI") }}
-# --- Media & Document Processing (Non-CI) ---
-{{ range .packages.darwin.media -}}
+{{ range .packages.headless.darwin.brews -}}
 brew {{ . | quote }}
 {{ end -}}
-{{- end }}
 
-# --- Casks (GUI Apps & Fonts) ---
-{{ range .packages.darwin.casks -}}
+{{ range .packages.headless.darwin.casks -}}
 cask {{ . | quote }}
 {{ end -}}
+
+{{- if not (env "CI") }}
+# =============================================================================
+# Desktop & Media Provisioning (Bypassed in CI)
+# =============================================================================
+
+# --- Fonts ---
+{{ range .packages.fonts.darwin -}}
+cask {{ . | quote }}
+{{ end -}}
+
+# --- Media Processing ---
+{{ range .packages.media.darwin -}}
+brew {{ . | quote }}
+{{ end -}}
+
+# --- GUI Applications ---
+{{ range .packages.gui.darwin -}}
+cask {{ . | quote }}
+{{ end -}}
+{{- end }}

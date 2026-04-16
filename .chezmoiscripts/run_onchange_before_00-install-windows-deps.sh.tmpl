@@ -8,10 +8,8 @@
 set -eu
 
 echo "🔄 [Infrastructure] Updating WinGet package sources..."
-# [Rationale]: Ensures the local manifest cache is as fresh as possible to minimize hash drift.
 winget.exe source update > /dev/null 2>&1 || true
 
-# --- Standard Package Installer ---
 install_winget_app() {
   app_id=$1
   if ! winget.exe list --id "$app_id" > /dev/null 2>&1; then
@@ -22,14 +20,10 @@ install_winget_app() {
   fi
 }
 
-# --- Volatile Package Installer (Nightly/Unstable) ---
-# [Architecture]: Error-trapping wrapper for packages requiring hash validation bypass.
 install_winget_volatile() {
   app_id=$1
   if ! winget.exe list --id "$app_id" > /dev/null 2>&1; then
     echo "📦 [Infrastructure] Installing Volatile Package: $app_id..."
-
-    # [Rationale]: Temporarily suspend 'set -e' to gracefully trap WinGet security restriction errors.
     set +e
     winget.exe install --id "$app_id" --silent --accept-package-agreements --accept-source-agreements --ignore-security-hash
     WINGET_STATUS=$?
@@ -37,11 +31,9 @@ install_winget_volatile() {
 
     if [ "$WINGET_STATUS" -ne 0 ]; then
       echo "❌ [Security Conflict] WinGet failed to install volatile package '$app_id' (Exit: $WINGET_STATUS)."
-      # Exit 2 indicates the InstallerHashOverride policy is disabled on the Host OS.
       if [ "$WINGET_STATUS" -eq 2 ]; then
         echo "👉 Action Required (Run as Administrator in Windows PowerShell):"
         echo "   winget settings --enable InstallerHashOverride"
-        echo "   (After enabling, return to WSL and re-run 'chezmoi apply -v')"
       fi
       exit "$WINGET_STATUS"
     fi
@@ -52,14 +44,28 @@ install_winget_volatile() {
 
 echo "📦 [Infrastructure] Provisioning Windows dependencies..."
 
-{{ range .packages.windows.winget -}}
-{{- /* [Architecture]: Volatile Package Routing */ -}}
+# --- Headless Infrastructure (Always Provisioned) ---
+{{ range .packages.headless.windows -}}
+install_winget_app {{ . | quote }}
+{{ end -}}
+
+{{- if not (env "CI") }}
+# =============================================================================
+# Desktop & Media Provisioning (Bypassed in CI)
+# =============================================================================
+
+{{ range .packages.gui.windows -}}
 {{- if eq . "wez.wezterm.nightly" }}
 install_winget_volatile {{ . | quote }}
 {{- else }}
 install_winget_app {{ . | quote }}
 {{- end }}
 {{ end -}}
+
+{{ range .packages.fonts.windows -}}
+install_winget_app {{ . | quote }}
+{{ end -}}
+{{- end }}
 
 echo "✅ [Infrastructure] Windows dependency provisioning complete."
 {{ end -}}

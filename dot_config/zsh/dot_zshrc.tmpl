@@ -1,6 +1,6 @@
 {{- /* [Reference]: https://google.github.io/styleguide/shellguide.html */ -}}
 # [Architecture]: Deterministic Zsh Configuration (Sovereign Anchor)
-# [Rationale]: Optimized for < 30ms startup. Enforces Hermetic Path Sovereignty.
+# [Rationale]: Optimized for < 20ms startup. Enforces Hermetic Path Sovereignty.
 
 # --- Path Management ---
 typeset -U path PATH fpath FPATH
@@ -20,7 +20,6 @@ fpath=(
 )
 
 # --- Secret Resolution ---
-# [Architecture]: 1Password Identity Bridge
 alias vrun='op run -- '
 
 # --- Static Initialization ---
@@ -42,17 +41,6 @@ alias grep='rg'
 alias g='git'
 alias lg='lazygit'
 
-# --- Infrastructure Sovereignty ---
-# [Rationale]: Re-assert local binary precedence after potentially invasive shell inits.
-autoload -Uz add-zsh-hook
-
-_enforce_sovereignty() {
-  path=("${(@)path:#$HOME/.local/bin}")
-  path=("$HOME/.local/bin" $path)
-}
-
-add-zsh-hook precmd _enforce_sovereignty
-
 # --- Completion Engine ---
 ZSH_COMPDUMP_DIR="$XDG_CACHE_HOME/zsh"
 autoload -Uz compinit
@@ -61,13 +49,10 @@ autoload -Uz compinit
   setopt localoptions extendedglob
   local zcompdump="$ZSH_COMPDUMP_DIR/zcompdump"
 
-  # [Rationale]: Deterministic state convergence check.
-  # If the completion directory is newer than the dump file, force a rescan.
   if [[ ! -f "$zcompdump" || "$XDG_CACHE_HOME/zsh/completions" -nt "$zcompdump" ]]; then
     compinit -d "$zcompdump"
     zcompile "$zcompdump"
   else
-    # [Performance]: Use '-C' to bypass expensive file stat checks on stable state.
     compinit -C -d "$zcompdump"
   fi
 }

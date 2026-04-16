@@ -1,0 +1,24 @@
+#!/bin/bash
+# [MISE] description="Bridge WezTerm Configuration to Windows Host"
+# [MISE] alias="sync:wezterm"
+{{/* [Reference]: https://mise.jdx.dev/tasks/file-tasks.html */}}{{ "" -}}
+{{/* [Architecture]: Task Engine Delegation */}}{{ "" -}}
+{{/* [Rationale]: Separates declarative rendering (chezmoi) from imperative synchronization (mise). */}}{{ "" -}}
+
+set -euo pipefail
+
+{{ if .is_wsl -}}
+SRC_CONFIG="{{ .paths.xdg_config }}/wezterm/wezterm.lua"
+DST_CONFIG_WIN="/mnt/c/Users/{{ .windows_user }}/.wezterm.lua"
+
+if [[ -f "$SRC_CONFIG" ]]; then
+  echo "🌉 [Infrastructure] Syncing WezTerm configuration to Windows host..."
+  cp -f "$SRC_CONFIG" "$DST_CONFIG_WIN"
+  echo "✅ [Infrastructure] Configuration successfully injected to $DST_CONFIG_WIN."
+else
+  echo "⚠️  [Infrastructure] Rendered config not found at $SRC_CONFIG. Bridge skipped."
+  exit 1
+fi
+{{- else -}}
+echo "⏭️  [Infrastructure] Not a WSL environment. Bridge skipped."
+{{- end }}
