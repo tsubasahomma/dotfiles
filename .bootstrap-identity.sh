@@ -17,12 +17,13 @@ export PATH="$LOCAL_BIN:$PATH"
 TOOLS_YAML="$(dirname "$0")/.chezmoidata/tools.yaml"
 
 # --- Utility Functions ---
+# [Architecture]: Robust Parsing Pattern (Quote-Agnostic) to prevent breakage from in-place edits.
 get_tool_version() {
-  awk "/^ *\"$1\":/ {gsub(/\"/, \"\", \$2); print \$2}" "$TOOLS_YAML"
+  awk "/^ *\"?$1\"?:/ {gsub(/\"/, \"\", \$2); print \$2}" "$TOOLS_YAML"
 }
 
 get_tool_hash() {
-  awk "/^ *${1}_hashes:/{f=1} f && /^ *\"?$2\"?:/{gsub(/\"/, \"\", \$2); print \$2; exit}" "$TOOLS_YAML"
+  awk "/^ *\"?${1}_hashes\"?:/{f=1} f && /^ *\"?$2\"?:/{gsub(/\"/, \"\", \$2); print \$2; exit}" "$TOOLS_YAML"
 }
 
 verify_hash() {

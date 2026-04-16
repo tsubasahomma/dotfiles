@@ -13,11 +13,13 @@ MISE_PYTHON_GITHUB_ATTESTATIONS = "false"
 PNPM_HOME = "{{ .paths.xdg_data }}/pnpm"
 
 [tools]
-# [Architecture]: Explicitly inherit Neovim version from Tier 0 to guarantee hermetic consistency.
-"neovim" = "{{ .tool_integrity.neovim }}"
+# [Architecture]: Explicitly inherit Neovim version from mise_tools (Tier 2).
+"neovim" = "{{ .mise_tools.neovim }}"
 
 {{- range $tool, $version := .mise_tools }}
+{{- if ne $tool "neovim" }}
 "{{ $tool }}" = "{{ $version }}"
+{{- end }}
 {{- end }}
 
 [settings]
@@ -36,7 +38,6 @@ depends = ["setup:nvim-provider", "setup:pnpm"]
 
 [tasks."setup:nvim-provider"]
 description = "Provision Hermetic Neovim Python Provider (pynvim)"
-# [Rationale]: Executed inherently within the mise environment. `uv` defaults to the managed python.
 run = '''
 #!/usr/bin/env bash
 set -euo pipefail

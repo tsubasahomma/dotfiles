@@ -1,9 +1,7 @@
 # [Architecture]: Sovereign Infrastructure Validation Pipeline (2026 SOTA)
 # [Rationale]:
-# 1. Unified trigger logic to prevent redundant execution on PR branches.
-# 2. Dual-mapping env resolution to handle tool-specific binary naming conventions.
-# 3. Cryptographic Verification of all bootstrap binaries via SSOT.
-# 4. Hermetic Injection to bypass API Rate Limits (HTTP 403) for Neovim.
+# 1. Simplified bootstrap logic by removing application-layer (Neovim) management.
+# 2. Leverages 'chezmoi init' to trigger Tier 2 runtime convergence via Phase 20.
 name: compliance
 
 on:
@@ -33,9 +31,6 @@ jobs:
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
       GITHUB_TOKEN: ${{ github.token }}
-      GH_TOKEN: ${{ github.token }}
-      MISE_GITHUB_TOKEN: ${{ github.token }}
-      VFOX_GITHUB_TOKEN: ${{ github.token }}
 
     steps:
       - name: Checkout Repository
@@ -46,88 +41,65 @@ jobs:
       - name: Resolve Environment & Mapping
         run: |
           if [ "$RUNNER_OS" = "macOS" ]; then
-            CERT_PATH="$(brew --prefix)/etc/ca-certificates/cert.pem"
             CHEZMOI_OS="darwin"; MISE_OS="macos"
             if [ "$RUNNER_ARCH" = "ARM64" ]; then
               CHEZMOI_ARCH="arm64"; MISE_ARCH="arm64"
-              NEOVIM_KEY="macos-arm64"; NEOVIM_ASSET="macos-arm64"
             else
               CHEZMOI_ARCH="amd64"; MISE_ARCH="x64"
-              NEOVIM_KEY="macos-x86_64"; NEOVIM_ASSET="macos-x86_64"
             fi
           else
-            CERT_PATH="/etc/ssl/certs/ca-certificates.crt"
             CHEZMOI_OS="linux"; MISE_OS="linux"
             CHEZMOI_ARCH="amd64"; MISE_ARCH="x64"
-            NEOVIM_KEY="linux-x86_64"; NEOVIM_ASSET="linux-x86_64"
           fi
 
           mkdir -p "$HOME/.local/bin"
 
           {
-            echo "SSL_CERT_FILE=$CERT_PATH"
-            echo "MISE_SSL_CERT_FILE=$CERT_PATH"
             echo "CI=true"
             echo "CHEZMOI_OS=$CHEZMOI_OS"
             echo "CHEZMOI_ARCH=$CHEZMOI_ARCH"
             echo "MISE_OS=$MISE_OS"
             echo "MISE_ARCH=$MISE_ARCH"
-            echo "NEOVIM_KEY=$NEOVIM_KEY"
-            echo "NEOVIM_ASSET=$NEOVIM_ASSET"
           } >> "$GITHUB_ENV"
 
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
-      - name: Bootstrap Sovereign Tools (Hermetic Verification & Injection)
+      - name: Bootstrap Tier 0 Tools (op, mise, chezmoi)
         run: |
           DATA_FILE=".chezmoidata/tools.yaml"
-          CHEZMOI_VER=$(awk '/^ *"chezmoi":/ {gsub(/"/, "", $2); print $2}' "$DATA_FILE")
-          CHEZMOI_HASH=$(awk "/^ *chezmoi_hashes:/{f=1} f && /${CHEZMOI_OS}-${CHEZMOI_ARCH}:/{gsub(/\"/, \"\", \$2); print \$2; exit}" "$DATA_FILE")
 
-          MISE_VER=$(awk '/^ *"mise":/ {gsub(/"/, "", $2); print $2}' "$DATA_FILE")
-          MISE_HASH=$(awk "/^ *mise_hashes:/{f=1} f && /${MISE_OS}-${MISE_ARCH}:/{gsub(/\"/, \"\", \$2); print \$2; exit}" "$DATA_FILE")
+          # [Architecture]: Robust Parsing Pattern (Quote-Agnostic)
+          CHEZMOI_VER=$(awk '/^ *"?chezmoi"?:/ {gsub(/"/, "", $2); print $2}' "$DATA_FILE")
+          CHEZMOI_HASH=$(awk "/^ *\"?chezmoi_hashes\"?:/{f=1} f && /^ *\"?${CHEZMOI_OS}-${CHEZMOI_ARCH}\"?:/{gsub(/\"/, \"\", \$2); print \$2; exit}" "$DATA_FILE")
 
-          NEOVIM_VER=$(awk '/^ *"neovim":/ {gsub(/"/, "", $2); print $2}' "$DATA_FILE")
-          NEOVIM_HASH=$(awk "/^ *neovim_hashes:/{f=1} f && /${NEOVIM_KEY}:/{gsub(/\"/, \"\", \$2); print \$2; exit}" "$DATA_FILE")
+          MISE_VER=$(awk '/^ *"?mise"?:/ {gsub(/"/, "", $2); print $2}' "$DATA_FILE")
+          MISE_HASH=$(awk "/^ *\"?mise_hashes\"?:/{f=1} f && /^ *\"?${MISE_OS}-${MISE_ARCH}\"?:/{gsub(/\"/, \"\", \$2); print \$2; exit}" "$DATA_FILE")
 
-          CHEZMOI_URL="https://github.com/twpayne/chezmoi/releases/download/v${CHEZMOI_VER}/chezmoi_${CHEZMOI_VER}_${CHEZMOI_OS}_${CHEZMOI_ARCH}.tar.gz"
-          curl -fsSL "$CHEZMOI_URL" -o /tmp/chezmoi.tar.gz
+          # Provision chezmoi
+          curl -fsSL "https://github.com/twpayne/chezmoi/releases/download/v${CHEZMOI_VER}/chezmoi_${CHEZMOI_VER}_${CHEZMOI_OS}_${CHEZMOI_ARCH}.tar.gz" -o /tmp/chezmoi.tar.gz
           echo "${CHEZMOI_HASH}  /tmp/chezmoi.tar.gz" | shasum -a 256 --check -
           tar -xzf /tmp/chezmoi.tar.gz -C "$HOME/.local/bin" chezmoi
 
-          MISE_URL="https://github.com/jdx/mise/releases/download/v${MISE_VER}/mise-v${MISE_VER}-${MISE_OS}-${MISE_ARCH}"
-          curl -fsSL "$MISE_URL" -o "$HOME/.local/bin/mise"
+          # Provision mise
+          curl -fsSL "https://github.com/jdx/mise/releases/download/v${MISE_VER}/mise-v${MISE_VER}-${MISE_OS}-${MISE_ARCH}" -o "$HOME/.local/bin/mise"
           echo "${MISE_HASH}  $HOME/.local/bin/mise" | shasum -a 256 --check -
           chmod +x "$HOME/.local/bin/mise"
 
-          NEOVIM_URL="https://github.com/neovim/neovim/releases/download/v${NEOVIM_VER}/nvim-${NEOVIM_ASSET}.tar.gz"
-          curl -fsSL "$NEOVIM_URL" -o /tmp/nvim.tar.gz
-          echo "${NEOVIM_HASH}  /tmp/nvim.tar.gz" | shasum -a 256 --check -
-
-          MISE_NVIM_DIR="$HOME/.local/share/mise/installs/neovim/${NEOVIM_VER}"
-          mkdir -p "$MISE_NVIM_DIR"
-          tar -xzf /tmp/nvim.tar.gz -C "$MISE_NVIM_DIR" --strip-components=1
-
       - name: Provisioning (Atomic Apply)
         run: |
+          # [Rationale]: 'chezmoi init' executes Tier 0 bootstrap scripts,
+          # and '--apply' ensures 'mise install' (Phase 20) is triggered.
           chezmoi init --source="$GITHUB_WORKSPACE" --apply
-
-      - name: Auditor Mode - Unmanaged Files
-        run: |
-          chezmoi unmanaged || true
 
       - name: Idempotency Proof (Convergence Validation)
         run: |
-          # [Rationale]: Zero-tolerance for drift. All managed files including lockfiles must converge.
           DRIFT_STATUS=$(chezmoi status)
-
           if [ -n "$DRIFT_STATUS" ]; then
             echo "❌ [Idempotency Failure] Detected drift in managed files."
             echo "$DRIFT_STATUS"
             exit 1
           fi
-
-          echo "✅ [Convergence] Zero-drift confirmed across all managed files."
+          echo "✅ [Convergence] Zero-drift confirmed."
 
       - name: Final Health Check (Doctor)
         if: always()

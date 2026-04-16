@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+# [MISE] description="Refresh Tier 0 integrity hashes in .chezmoidata/tools.yaml"
+# [MISE] alias="refresh:integrity"
+{{/* [Reference]: https://mise.jdx.dev/tasks/file-tasks.html */}}{{ "" -}}
+
+set -euo pipefail
+
+TOOLS_FILE="{{ .chezmoi.sourceDir }}/.chezmoidata/tools.yaml"
+
+# [Architecture]: Cross-Platform Hash Engine
+# [Rationale]: macOS defaults to 'shasum -a 256', while Linux defaults to 'sha256sum'.
+# Encapsulating this logic ensures zero-drift across Darwin/Linux runners.
+calculate_hash() {
+  if command -v sha256sum >/dev/null 2>&1; then
+    sha256sum | cut -d' ' -f1
+  else
+    shasum -a 256 | cut -d' ' -f1
+  fi
+}
+
+update_hash() {
+  local tool="$1"
+  local key="$2"
+  local url="$3"
+
+  echo "  🔍 Fetching: $url" >&2
+  local hash
+  hash=$(curl -fsSL "$url" | calculate_hash)
+
+  # [Rationale]: Use 'yq' (managed by mise) to update the static data file in-place.
+  yq -i ".tool_integrity.${tool}_hashes.\"$key\" = \"$hash\"" "$TOOLS_FILE"
+  echo "  ✅ Updated $tool [$key]" >&2
+}
+
+echo "📦 [Integrity] Refreshing Tier 0 Core Hashes..."
+
+# --- 1. op (1Password CLI) ---
+OP_VER=$(yq '.tool_integrity.op' "$TOOLS_FILE")
+update_hash "op" "darwin-arm64" "https://cache.agilebits.com/dist/1P/op2/pkg/v${OP_VER}/op_darwin_arm64_v${OP_VER}.zip"
+update_hash "op" "linux-amd64" "https://cache.agilebits.com/dist/1P/op2/pkg/v${OP_VER}/op_linux_amd64_v${OP_VER}.zip"
+
+# --- 2. mise ---
+MISE_VER=$(yq '.tool_integrity.mise' "$TOOLS_FILE")
+update_hash "mise" "macos-arm64" "https://github.com/jdx/mise/releases/download/v${MISE_VER}/mise-v${MISE_VER}-macos-arm64"
+update_hash "mise" "macos-x64" "https://github.com/jdx/mise/releases/download/v${MISE_VER}/mise-v${MISE_VER}-macos-x64"
+update_hash "mise" "linux-x64" "https://github.com/jdx/mise/releases/download/v${MISE_VER}/mise-v${MISE_VER}-linux-x64"
+
+# --- 3. chezmoi ---
+CHEZMOI_VER=$(yq '.tool_integrity.chezmoi' "$TOOLS_FILE")
+update_hash "chezmoi" "darwin-arm64" "https://github.com/twpayne/chezmoi/releases/download/v${CHEZMOI_VER}/chezmoi_${CHEZMOI_VER}_darwin_arm64.tar.gz"
+update_hash "chezmoi" "darwin-amd64" "https://github.com/twpayne/chezmoi/releases/download/v${CHEZMOI_VER}/chezmoi_${CHEZMOI_VER}_darwin_amd64.tar.gz"
+update_hash "chezmoi" "linux-amd64" "https://github.com/twpayne/chezmoi/releases/download/v${CHEZMOI_VER}/chezmoi_${CHEZMOI_VER}_linux_amd64.tar.gz"
+
+echo "✨ [Integrity] Convergence complete for Tier 0 Core."

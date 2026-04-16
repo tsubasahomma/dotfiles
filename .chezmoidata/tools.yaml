@@ -1,39 +1,34 @@
 # =============================================================================
-# [Architecture]: Hermetic Toolchain Integrity (Full Reconstruction)
+# [Architecture]: Hermetic Toolchain Integrity (Sovereign Tier 0)
 # [Rationale]: Managed via mise. Only tools with verified native ARM artifacts
 # are pulled via github: backend to ensure zero-leak architecture.
-# [Governance]: Versions are tracked by Renovate via regexManager.
+# Neovim has been moved to Tier 2 (mise_tools) to reduce bootstrap toil.
+# [Governance]: Hashes are updated via 'mise run refresh:integrity'.
 # =============================================================================
 
 tool_integrity:
-  "op": "2.33.1" # [Architecture]: Untrackable via standard datasource (Binary distributed via AgileBits).
+  "op": "2.33.1" # [Architecture]: Untrackable via standard datasource.
   op_hashes:
     darwin-arm64: "8106127624bf55f0bf5ae6f8e2c56398e01db75d64c3088eface33885c854351"
     linux-amd64: "0fc50cb22d791b5ee5e1421d97e96595fd61ca56ae92271bd1b28bb884971726"
   "mise": "2026.4.11" # renovate: datasource=github-releases packageName=jdx/mise
   mise_hashes:
     macos-arm64: "265ffb4990785d2d3c6178ebfa97c2c7d845c091fb3b5940525c06b1d70e281c"
-    macos-x64: "3fa93cead7d3b667b1fcafbef1d6768a12f8b601919568a5ef7f614068c5e08f"
+    macos-x64: "dc356331acc6aa14d0b6885a20e32f8f9a577791de5cfdecb39a330a6a4e82e6"
     linux-x64: "00ec58da20aac5c9cfab08aa3210fbacec9353d4217f964a8c318612a38f5d33"
   "chezmoi": "2.70.1" # renovate: datasource=github-releases packageName=twpayne/chezmoi
   chezmoi_hashes:
     darwin-arm64: "814fd391b755046d9dbe17c1a7e93d7dd725b2842bf9663c08645771f4a92cf1"
     darwin-amd64: "36b9b41dd88485afd30c7940398edef3b4757c19e36689f9324012391ea7dbff"
     linux-amd64: "3bd054238e2a95548eee62a6c5b4d9d1352f2c6c69c6d32f3d1964878398f91a"
-  "neovim": "0.12.1" # renovate: datasource=github-releases packageName=neovim/neovim
-  neovim_hashes:
-    macos-arm64: "b77e01c5421ac1bac593eed5c2ea1b950439306dd4c32371ac2473792da9a9d5"
-    macos-x86_64: "e59a5eafcdf824e2bf6a738e75f8f62ba4ff1b7f1c7daaec2d134aa46737907c"
-    linux-x86_64: "ab757a1fd9ad307d53d2df4045698906a7ca3993d92260dd8fe49108712d57d0"
-
 mise_tools:
+  "neovim": "0.12.1" # renovate: datasource=github-releases packageName=neovim/neovim
   "node": "24.14.1" # renovate: datasource=node-version
   "python": "3.14.4" # renovate: datasource=python-version
   "pnpm": "10.33.0" # renovate: datasource=npm
   "rust": "1.94.1" # renovate: datasource=github-releases packageName=rust-lang/rust
   "go": "1.26.2" # renovate: datasource=golang-version
   "uv": "0.11.6" # renovate: datasource=github-releases packageName=astral-sh/uv
-
   # Development Infrastructure
   "tree-sitter": "0.26.8" # renovate: datasource=github-releases packageName=tree-sitter/tree-sitter
   "lazygit": "0.61.1" # renovate: datasource=github-releases packageName=jesseduffield/lazygit
@@ -41,7 +36,6 @@ mise_tools:
   "go:github.com/jesseduffield/lazydocker": "0.25.0" # renovate: datasource=github-releases packageName=jesseduffield/lazydocker
   "pre-commit": "4.5.1" # renovate: datasource=github-releases packageName=pre-commit/pre-commit
   "vale": "3.14.1" # renovate: datasource=github-releases packageName=errata-ai/vale
-
   # Modern CLI Utilities
   "zoxide": "0.9.9" # renovate: datasource=github-releases packageName=ajeetdsouza/zoxide
   "bat": "0.26.1" # renovate: datasource=github-releases packageName=sharkdp/bat
@@ -51,36 +45,29 @@ mise_tools:
   "fzf": "v0.71.0" # renovate: datasource=github-releases packageName=junegunn/fzf
   "github:dandavison/delta": "0.19.2" # renovate: datasource=github-releases packageName=dandavison/delta
   "cargo:git-absorb": "0.9.0" # renovate: datasource=crate packageName=git-absorb
-
   # Formatting & Linting Engines
   "shfmt": "3.13.1" # renovate: datasource=github-releases packageName=mvdan/sh
   "stylua": "2.4.1" # renovate: datasource=github-releases packageName=JohnnyMorganz/StyLua
   "npm:prettier": "3.8.3" # renovate: datasource=npm packageName=prettier
-
   # Neovim Ecosystem Providers
   "npm:neovim": "5.4.0" # renovate: datasource=npm packageName=neovim
   "npm:@mermaid-js/mermaid-cli": "11.12.0" # renovate: datasource=npm packageName=@mermaid-js/mermaid-cli
   "npm:repomix": "1.13.1" # renovate: datasource=npm packageName=repomix
-
   # Web Development & Node.js Ecosystem
   "npm:@hubspot/cli": "8.4.0" # renovate: datasource=npm packageName=@hubspot/cli
-
   # Data Processing
   "github:noahgorstein/jqp": "0.8.0" # renovate: datasource=github-releases packageName=noahgorstein/jqp
   "go:github.com/mikefarah/yq/v4": "4.52.5" # renovate: datasource=github-releases packageName=mikefarah/yq
   "go:github.com/rs/curlie": "1.8.2" # renovate: datasource=github-releases packageName=rs/curlie
-
   # Container Engine & Kubernetes Ecosystem
   "docker-cli": "26.0.0" # renovate: datasource=github-releases packageName=docker/cli
   "kubectl": "1.29.3" # renovate: datasource=github-releases packageName=kubernetes/kubectl
   "helm": "4.1.4" # renovate: datasource=github-releases packageName=helm/helm
   "k9s": "0.50.18" # renovate: datasource=github-releases packageName=derailed/k9s
-
   # Infrastructure as Code (IaC)
   "opentofu": "1.11.6" # renovate: datasource=github-releases packageName=opentofu/opentofu
   "tflint": "0.61.0" # renovate: datasource=github-releases packageName=terraform-linters/tflint
   "terragrunt": "1.0.1" # renovate: datasource=github-releases packageName=gruntwork-io/terragrunt
-
   # SRE Modern Utilities
   "github:ClementTsang/bottom": "0.12.3" # renovate: datasource=github-releases packageName=ClementTsang/bottom
   "cargo:du-dust": "1.0.0" # renovate: datasource=crate packageName=du-dust
