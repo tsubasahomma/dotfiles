@@ -1,140 +1,121 @@
-# [Architecture]: Foundation Schema | Phase 20.9 (Parallel Identity Model)
-# [Reference]: https://www.chezmoi.io/user-guide/templating/
+{{- /* [Architecture]: Foundation Schema | Phase 23 (Safe Identity & Context Routing) */ -}}
+{{- /* [Reference]: https://www.chezmoi.io/user-guide/templating/ */ -}}
 
-# [Architecture]: Deterministic Source Routing
-# [Rationale]: Prevents 'no such file or directory' errors in CI by permanently binding the source path.
+# [Rationale]: Permanent source directory binding.
 sourceDir = {{ .chezmoi.sourceDir | quote }}
 
-# --- 1. Platform & Interop Initialization ---
-{{$osid := .chezmoi.os}}
-{{$arch := .chezmoi.arch}}
-{{$home := .chezmoi.homeDir}}
-{{$is_wsl := false}}
-{{if and (eq $osid "linux") (hasKey .chezmoi.kernel "osrelease")}}
-{{  if contains "microsoft" (.chezmoi.kernel.osrelease | lower)}}{{$is_wsl = true}}{{end}}
-{{end}}
+{{- /* --- 1. Platform & Interop Initialization --- */ -}}
+{{- $osid := .chezmoi.os -}}
+{{- $arch := .chezmoi.arch -}}
+{{- $home := .chezmoi.homeDir -}}
+{{- $is_wsl := false -}}
+{{- if and (eq $osid "linux") (hasKey .chezmoi.kernel "osrelease") -}}
+{{-   if contains "microsoft" (.chezmoi.kernel.osrelease | lower)}}{{$is_wsl = true}}{{end -}}
+{{- end -}}
 
-{{$windows_user := "unknown"}}
-{{if $is_wsl}}
-{{  $windows_user = env "WINDOWS_USER" | default (output "sh" "-c" "cmd.exe /c 'echo %USERNAME%' 2>/dev/null || echo 'unknown'" | trim)}}
-{{end}}
+{{- $windows_user := "unknown" -}}
+{{- if $is_wsl -}}
+{{-   $windows_user = env "WINDOWS_USER" | default (output "sh" "-c" "cmd.exe /c 'echo %USERNAME%' 2>/dev/null || echo 'unknown'" | trim) -}}
+{{- end -}}
 
-{{$brew_prefix := "/usr/local"}}
-{{if eq $osid "darwin"}}
-{{  if eq $arch "arm64" }}{{$brew_prefix = "/opt/homebrew"}}{{end}}
-{{else if eq $osid "linux"}}
-{{  $brew_prefix = "/home/linuxbrew/.linuxbrew"}}
-{{end}}
+{{- $brew_prefix := "/usr/local" -}}
+{{- if eq $osid "darwin" -}}
+{{-   if eq $arch "arm64" }}{{$brew_prefix = "/opt/homebrew"}}{{end -}}
+{{- else if eq $osid "linux" -}}
+{{-   $brew_prefix = "/home/linuxbrew/.linuxbrew" -}}
+{{- end -}}
 
 # --- 2. Identity State Machine & Dynamic Binary Resolution ---
-{{$local_bin := joinPath $home ".local/bin"}}
-{{$op_bin := lookPath "op" | default (joinPath $local_bin "op")}}
-{{$op_sign := ""}}
-{{$ssh_auth_sock := ""}}
+{{- $local_bin := joinPath $home ".local/bin" -}}
+{{- $op_bin := joinPath $local_bin "op" -}}
+{{- if $is_wsl -}}
+{{-   $win_op := output "powershell.exe" "-NoProfile" "-NonInteractive" "-Command" "(Get-Command op.exe -ErrorAction SilentlyContinue).Source" | trim -}}
+{{-   if ne $win_op ""}}{{$op_bin = output "wslpath" "-u" $win_op | trim}}{{end -}}
+{{- end -}}
 
-{{if eq $osid "darwin"}}
-{{  $op_sign = "/Applications/1Password.app/Contents/MacOS/op-ssh-sign"}}
-{{  $ssh_auth_sock = joinPath $home "Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"}}
-{{else if $is_wsl}}
-{{  $ssh_auth_sock = joinPath $home ".1password/agent.sock"}}
-{{  $win_op := output "powershell.exe" "-NoProfile" "-NonInteractive" "-Command" "(Get-Command op.exe -ErrorAction SilentlyContinue).Source" | trim}}
-{{  if ne $win_op ""}}
-{{    $op_bin = output "wslpath" "-u" $win_op | trim}}
-{{  end}}
-{{  $win_sign := output "powershell.exe" "-NoProfile" "-NonInteractive" "-Command" "(Get-Command op-ssh-sign-wsl.exe -ErrorAction SilentlyContinue).Source" | trim}}
-{{  if eq $win_sign ""}}
-{{    $win_sign = output "powershell.exe" "-NoProfile" "-NonInteractive" "-Command" "(Get-Command op-ssh-sign.exe -ErrorAction SilentlyContinue).Source" | trim}}
-{{  end}}
-{{  if ne $win_sign ""}}
-{{    $op_sign = output "wslpath" "-u" $win_sign | trim}}
-{{  end}}
-{{end}}
+{{- $op_status := "missing" -}}
+{{- if stat $op_bin -}}
+{{-   $op_status = output "sh" "-c" (printf "'%s' account get >/dev/null 2>&1 && echo 'ready' || echo 'locked'" $op_bin) | trim -}}
+{{- end -}}
 
-{{$is_op_present := stat $op_bin}}
-{{$op_status := "missing"}}
-{{if $is_op_present}}
-{{  $op_status = output "sh" "-c" (printf "'%s' account get >/dev/null 2>&1 && echo 'ready' || echo 'locked'" $op_bin) | trim}}
-{{end}}
+{{- /* --- 3. Parallel Identity Aggregation (Lazy Evaluation) --- */ -}}
+{{- $identities := list -}}
+{{- $ssh_keys_hash := "none" -}}
+{{- if eq $op_status "ready" -}}
+{{-   $items_json := output $op_bin "item" "list" "--tags" "dotfiles-ssh-key" "--format" "json" -}}
+{{-   $items := fromJson $items_json -}}
+{{-   $ssh_keys_hash = sha256sum $items_json -}}
+{{-   range $items -}}
+{{-     $details := fromJson (output $op_bin "item" "get" .id "--format" "json") -}}
+{{-     $git_name := "" -}}
+{{-     $git_email := "" -}}
+{{-     $git_dirs := "" -}}
+{{-     $key_type := "ed25519" -}}
+{{-     range $details.fields -}}
+{{-       if and (hasKey . "section") (eq .section.label "dotfiles") -}}
+{{-         if eq .label "dotfiles_git_name" }}{{ $git_name = .value }}{{ end -}}
+{{-         if eq .label "dotfiles_git_email" }}{{ $git_email = .value }}{{ end -}}
+{{-         if eq .label "dotfiles_git_dirs" }}{{ $git_dirs = .value }}{{ end -}}
+{{-       end -}}
+{{-       if eq .label "key type" }}{{ $key_type = .value }}{{ end -}}
+{{-     end -}}
+{{-     if and (ne $git_name "") (ne $git_email "") (ne $git_dirs "") -}}
+{{-       $identities = append $identities (dict "item_id" .id "vault_id" .vault.id "key_type" (lower $key_type) "name" $git_name "email" $git_email "dirs" $git_dirs) -}}
+{{-     end -}}
+{{-   end -}}
+{{- end -}}
 
-{{$true_cmd := lookPath "true" | default "/usr/bin/true"}}
+{{- /* --- 4. Tool & SSH Context Resolver --- */ -}}
+{{- $ssh_auth_sock := "" -}}
+{{- if eq $osid "darwin" -}}
+{{-   $ssh_auth_sock = joinPath $home "Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock" -}}
+{{- else if $is_wsl -}}
+{{-   $ssh_auth_sock = joinPath $home ".1password/agent.sock" -}}
+{{- end -}}
 
-# --- 3. Parallel Identity Aggregation ---
-{{$identities := list}}
-{{$ssh_keys_hash := "none"}}
+{{- $op_sign := "" -}}
+{{- if eq $osid "darwin" -}}
+{{-   $op_sign = "/Applications/1Password.app/Contents/MacOS/op-ssh-sign" -}}
+{{- else -}}
+{{-   $op_sign = lookPath "op-ssh-sign" | default "" -}}
+{{- end -}}
 
-{{if eq $op_status "ready"}}
-{{  $items_json := output "sh" "-c" (printf "'%s' item list --tags dotfiles-ssh-key --format json 2>/dev/null || echo '[]'" $op_bin)}}
-{{  $items := fromJson $items_json}}
-{{  $ssh_keys_hash = sha256sum $items_json}}
-{{  range $items}}
-{{    $details_json := output "sh" "-c" (printf "'%s' item get %s --format json 2>/dev/null || echo '{}'" $op_bin .id)}}
-{{    $details := fromJson $details_json}}
-{{    $git_name := ""}}
-{{    $git_email := ""}}
-{{    $git_dirs := ""}}
-{{    $key_type := "ed25519"}}
-{{    if hasKey $details "fields"}}
-{{      range $details.fields}}
-{{        if and (hasKey . "section") (hasKey .section "label")}}
-{{          if eq .section.label "dotfiles"}}
-{{            if eq .label "dotfiles_git_name" }}{{$git_name = .value}}{{end}}
-{{            if eq .label "dotfiles_git_email" }}{{$git_email = .value}}{{end}}
-{{            if eq .label "dotfiles_git_dirs" }}{{$git_dirs = .value}}{{end}}
-{{          end}}
-{{        end}}
-{{        if eq .label "key type" }}{{$key_type = .value}}{{end}}
-{{      end}}
-{{    end}}
-{{    if and (ne $git_name "") (ne $git_email "") (ne $git_dirs "")}}
-{{      $identities = append $identities (dict "item_id" .id "vault_id" .vault.id "key_type" (lower $key_type) "name" $git_name "email" $git_email "dirs" $git_dirs)}}
-{{    end}}
-{{  end}}
-{{end}}
+{{- $true_cmd := lookPath "true" | default "/usr/bin/true" -}}
 
-# --- Foundation Schema ---
+# ================================================================
+# Foundation Schema (Dynamic Context Only)
+# ================================================================
 [data]
-    osid = {{$osid | quote}}
-    arch = {{$arch | quote}}
-    is_wsl = {{$is_wsl}}
-    brew_prefix = {{$brew_prefix | quote}}
-    windows_user = {{$windows_user | quote}}
-    ssh_auth_sock = {{$ssh_auth_sock | quote}}
-    op_status = {{$op_status | quote}}
-    ssh_keys_hash = {{$ssh_keys_hash | quote}}
+    osid = {{ $osid | quote }}
+    arch = {{ $arch | quote }}
+    is_wsl = {{ $is_wsl }}
+    brew_prefix = {{ $brew_prefix | quote }}
+    windows_user = {{ $windows_user | quote }}
+    ssh_auth_sock = {{ $ssh_auth_sock | quote }}
+    op_status = {{ $op_status | quote }}
+    ssh_keys_hash = {{ $ssh_keys_hash | quote }}
 
-    # [Architecture]: Injected Array for Parallel Identity Routing
+    # [Identity]: Dynamic Mapping
     identities = [
-    {{- range $i, $id := $identities }}
+    {{- range $i, $id := $identities -}}
       {{ if $i }},{{ end }}
-      { item_id = {{$id.item_id | quote}}, vault_id = {{$id.vault_id | quote}}, key_type = {{$id.key_type | quote}}, name = {{$id.name | quote}}, email = {{$id.email | quote}}, dirs = {{$id.dirs | quote}} }
-    {{- end }}
+      { item_id = {{ $id.item_id | quote }}, vault_id = {{ $id.vault_id | quote }}, key_type = {{ $id.key_type | quote }}, name = {{ $id.name | quote }}, email = {{ $id.email | quote }}, dirs = {{ $id.dirs | quote }} }
+    {{- end -}}
     ]
 
     [data.paths]
-        home = {{$home | quote}}
-        op = {{$op_bin | quote}}
-        xdg_config = {{(joinPath $home ".config") | quote}}
-        xdg_data = {{(joinPath $home ".local/share") | quote}}
-        xdg_state = {{(joinPath $home ".local/state") | quote}}
-        xdg_cache = {{(joinPath $home ".cache") | quote}}
-        mise = {{(joinPath $home ".local/bin/mise") | quote}}
-        true_cmd = {{$true_cmd | quote}}
-        op_sign = {{$op_sign | quote }}
-        ssh_auth_sock = {{$ssh_auth_sock | quote}}
+        home = {{ $home | quote }}
+        op = {{ $op_bin | quote }}
+        mise = {{ joinPath $home ".local/bin/mise" | quote }}
+        xdg_config = {{ joinPath $home ".config" | quote }}
+        xdg_data = {{ joinPath $home ".local/share" | quote }}
+        xdg_state = {{ joinPath $home ".local/state" | quote }}
+        xdg_cache = {{ joinPath $home ".cache" | quote }}
+        true_cmd = {{ $true_cmd | quote }}
+        op_sign = {{ $op_sign | quote }}
 
 [edit]
     command = "nvim"
 
-# [Architecture]: Pre-flight Execution Hook
 [hooks.read-source-state.pre]
     command = "{{ .chezmoi.sourceDir }}/.bootstrap-identity.sh"
-
-{{if not (env "CI")}}
-{{  if ne $op_status "ready"}}
-# [Next Action]: 1Password authentication is required.
-# 1. Open the 1Password Desktop App and sign in.
-# 2. Run 'chezmoi apply' again.
-{{  else}}
-# [System]: Zero-Trust Parallel Identity Protocol Active. {{ len $identities }} identities loaded.
-{{  end}}
-{{end}}

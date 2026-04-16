@@ -1,7 +1,7 @@
 #!/bin/sh
-# [Architecture]: Tier -1 & 0 Bootstrapping (Assertion Gate & Identity Provisioning)
-# [Rationale]: Pure POSIX script executed via hooks.read-source-state.pre.
-# [Fix]: Silent-by-default to prevent stdout pollution during 'chezmoi status'.
+# [Architecture]: Tier -1 & 0 Bootstrapping (Sovereign Provisioning)
+# [Rationale]: Pure POSIX script to ensure 'op' and 'mise' exist. Enforces strict silent idempotency.
+# [Reference]: https://www.chezmoi.io/reference/configuration-file/hooks/
 
 set -eu
 
@@ -9,75 +9,92 @@ if [ "${CI:-false}" = "true" ]; then
   exit 0
 fi
 
-# --- Tier -1: Silent Assertion Gate ---
-if ! command -v curl > /dev/null 2>&1; then
-  echo "❌ [Fatal] 'curl' is missing." >&2
-  echo "👉 Action Required: Install curl via your OS package manager and retry." >&2
-  exit 1
-fi
-
-if ! command -v unzip > /dev/null 2>&1 && ! command -v python3 > /dev/null 2>&1; then
-  echo "❌ [Fatal] Neither 'unzip' nor 'python3' is available for archive extraction." >&2
-  echo "👉 Action Required: Install unzip via your OS package manager and retry." >&2
-  exit 1
-fi
-
+# --- Environment Setup ---
 LOCAL_BIN="$HOME/.local/bin"
-OP_BIN="$LOCAL_BIN/op"
+mkdir -p "$LOCAL_BIN"
+export PATH="$LOCAL_BIN:$PATH"
 
-# --- Tier 0: Identity Provisioning ---
-if [ ! -x "$OP_BIN" ]; then
-  # [Rationale]: Output ONLY occurs during active provisioning, redirected to stderr.
-  echo "🔐 [Tier 0] Provisioning 1Password CLI (Identity Anchor)..." >&2
-  mkdir -p "$LOCAL_BIN"
+TOOLS_YAML="$(dirname "$0")/.chezmoidata/tools.yaml"
 
+# --- Utility Functions ---
+get_tool_version() {
+  awk "/^ *\"$1\":/ {gsub(/\"/, \"\", \$2); print \$2}" "$TOOLS_YAML"
+}
+
+get_tool_hash() {
+  awk "/^ *${1}_hashes:/{f=1} f && /^ *\"?$2\"?:/{gsub(/\"/, \"\", \$2); print \$2; exit}" "$TOOLS_YAML"
+}
+
+verify_hash() {
+  file_path=$1
+  expected_hash=$2
+  if [ -z "$expected_hash" ]; then
+    echo "⚠️  [Warning] No hash found for $file_path. Skipping verification." >&2
+    return 0
+  fi
+  actual_hash=$(sha256sum "$file_path" 2> /dev/null | cut -d' ' -f1 || shasum -a 256 "$file_path" | cut -d' ' -f1)
+  if [ "$actual_hash" != "$expected_hash" ]; then
+    echo "❌ [Fatal] Hash mismatch for $file_path." >&2
+    exit 1
+  fi
+}
+
+install_op() {
+  OP_VERSION=$(get_tool_version "op")
   OS_ID=$(uname -s | tr '[:upper:]' '[:lower:]')
   ARCH_ID=$(uname -m)
-  if [ "$ARCH_ID" = "x86_64" ]; then
-    ARCH_ID="amd64"
-  elif [ "$ARCH_ID" = "aarch64" ] || [ "$ARCH_ID" = "arm64" ]; then
-    ARCH_ID="arm64"
-  fi
+  [ "$ARCH_ID" = "x86_64" ] && ARCH_ID="amd64"
+  [ "$ARCH_ID" = "aarch64" ] || [ "$ARCH_ID" = "arm64" ] && ARCH_ID="arm64"
 
-  TOOLS_YAML="$(dirname "$0")/.chezmoidata/tools.yaml"
-  if [ ! -f "$TOOLS_YAML" ]; then
-    echo "❌ [Fatal] tools.yaml not found at $TOOLS_YAML" >&2
-    exit 1
-  fi
+  PLATFORM_KEY="${OS_ID}-${ARCH_ID}"
+  OP_HASH=$(get_tool_hash "op" "$PLATFORM_KEY")
 
-  OP_VERSION=$(awk '/^ *"op":/ {gsub(/"/, "", $2); print $2}' "$TOOLS_YAML")
-  OP_HASH=$(awk "/^ *op_hashes:/{f=1} f && /^ *${OS_ID}-${ARCH_ID}:/{gsub(/\"/, \"\", \$2); print \$2; exit}" "$TOOLS_YAML")
-
-  if [ -z "$OP_VERSION" ]; then
-    echo "❌ [Fatal] Could not parse op version from tools.yaml" >&2
-    exit 1
-  fi
-
-  OP_URL="https://cache.agilebits.com/dist/1P/op2/pkg/v${OP_VERSION}/op_${OS_ID}_${ARCH_ID}_v${OP_VERSION}.zip"
-  curl -fsSL "$OP_URL" -o /tmp/op.zip
-
-  if [ -n "$OP_HASH" ]; then
-    ACTUAL_HASH=$(sha256sum /tmp/op.zip 2> /dev/null | cut -d' ' -f1 || shasum -a 256 /tmp/op.zip | cut -d' ' -f1)
-    if [ "$ACTUAL_HASH" != "$OP_HASH" ]; then
-      echo "❌ [Fatal] 1Password CLI hash mismatch." >&2
-      echo "Expected: $OP_HASH" >&2
-      echo "Actual:   $ACTUAL_HASH" >&2
-      rm -f /tmp/op.zip
-      exit 1
-    fi
-  else
-    echo "⚠️  [Warning] Hash for ${OS_ID}-${ARCH_ID} not found. Bypassing verification." >&2
-  fi
+  echo "🔐 [Tier 0] Provisioning 1Password CLI v${OP_VERSION}..." >&2
+  URL="https://cache.agilebits.com/dist/1P/op2/pkg/v${OP_VERSION}/op_${OS_ID}_${ARCH_ID}_v${OP_VERSION}.zip"
+  curl -fsSL "$URL" -o /tmp/op.zip
+  verify_hash "/tmp/op.zip" "$OP_HASH"
 
   if command -v unzip > /dev/null 2>&1; then
     unzip -q -o /tmp/op.zip -d /tmp/op_ext
   else
     python3 -m zipfile -e /tmp/op.zip /tmp/op_ext
   fi
-
-  mv /tmp/op_ext/op "$OP_BIN"
-  chmod +x "$OP_BIN"
+  mv /tmp/op_ext/op "$LOCAL_BIN/op"
+  chmod +x "$LOCAL_BIN/op"
   rm -rf /tmp/op.zip /tmp/op_ext
+}
 
-  echo "✅ [Tier 0] 1Password CLI provisioned successfully." >&2
+install_mise() {
+  MISE_VERSION=$(get_tool_version "mise")
+  OS_ID=$(uname -s | tr '[:upper:]' '[:lower:]')
+  [ "$OS_ID" = "darwin" ] && OS_ID="macos"
+  ARCH_ID=$(uname -m)
+  [ "$ARCH_ID" = "x86_64" ] && ARCH_ID="x64"
+  [ "$ARCH_ID" = "aarch64" ] || [ "$ARCH_ID" = "arm64" ] && ARCH_ID="arm64"
+
+  PLATFORM_KEY="${OS_ID}-${ARCH_ID}"
+  MISE_HASH=$(get_tool_hash "mise" "$PLATFORM_KEY")
+
+  echo "📦 [Tier 0] Provisioning mise v${MISE_VERSION}..." >&2
+  URL="https://github.com/jdx/mise/releases/download/v${MISE_VERSION}/mise-v${MISE_VERSION}-${OS_ID}-${ARCH_ID}"
+  curl -fsSL "$URL" -o "$LOCAL_BIN/mise"
+  verify_hash "$LOCAL_BIN/mise" "$MISE_HASH"
+  chmod +x "$LOCAL_BIN/mise"
+}
+
+# --- Execution ---
+MUTATED=false
+
+if [ ! -x "$LOCAL_BIN/op" ]; then
+  install_op
+  MUTATED=true
+fi
+
+if [ ! -x "$LOCAL_BIN/mise" ]; then
+  install_mise
+  MUTATED=true
+fi
+
+if [ "$MUTATED" = "true" ]; then
+  echo "✅ [Tier 0] Bootstrap binaries converged." >&2
 fi
