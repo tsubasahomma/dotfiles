@@ -1,6 +1,17 @@
-# [Reference]: https://mise.jdx.dev/dev-tools/
+{{- /* [Reference]: https://mise.jdx.dev/configuration.html */ -}}
+{{- /* [Reference]: https://mise.jdx.dev/tasks/ */ -}}
 # [Architecture]: Single Source of Truth (SSOT) for Toolchains.
 # [Rationale]: All versions are deterministically locked via Renovate (.chezmoidata/tools.yaml).
+
+[env]
+# [Architecture]: Globally bypass Sigstore/Metadata verification to avoid OID parse errors.
+MISE_SIGSTORE = "false"
+MISE_VERIFY_METADATA = "false"
+MISE_PYTHON_GITHUB_ATTESTATIONS = "false"
+
+# [Architecture]: Ecosystem Persistence
+PNPM_HOME = "{{ .paths.xdg_data }}/pnpm"
+
 [tools]
 # [Architecture]: Explicitly inherit Neovim version from Tier 0 to guarantee hermetic consistency.
 "neovim" = "{{ .tool_integrity.neovim }}"
@@ -15,6 +26,31 @@ yes = true
 experimental = true
 asdf_compat = false
 
-[tasks.doctor]
-description = "System Health Check & Self-Healing Engine"
-run = "doctor"
+# =============================================================================
+# [Architecture]: Declarative Task Engine
+# =============================================================================
+
+[tasks.setup]
+description = "Provision all ecosystem dependencies"
+depends = ["setup:nvim-provider", "setup:pnpm"]
+
+[tasks."setup:nvim-provider"]
+description = "Provision Hermetic Neovim Python Provider (pynvim)"
+# [Rationale]: Executed inherently within the mise environment. `uv` defaults to the managed python.
+run = '''
+#!/usr/bin/env bash
+set -euo pipefail
+NVIM_VENV="{{ .paths.xdg_data }}/nvim/venv"
+if [[ -d "$NVIM_VENV" && ! -x "$NVIM_VENV/bin/python" ]]; then
+  echo "⚠️  [Runtime] Detected broken venv at $NVIM_VENV. Recreating..."
+  rm -rf "$NVIM_VENV"
+fi
+if [[ ! -d "$NVIM_VENV" ]]; then
+  uv venv "$NVIM_VENV"
+fi
+uv pip install --python "$NVIM_VENV/bin/python" pynvim --upgrade
+'''
+
+[tasks."setup:pnpm"]
+description = "Configure pnpm global directory"
+run = "pnpm config set global-bin-dir \"$PNPM_HOME\""

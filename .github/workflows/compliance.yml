@@ -132,5 +132,4 @@ jobs:
       - name: Final Health Check (Doctor)
         if: always()
         run: |
-          # [Rationale]: Always execute doctor to diagnose the full state, even if idempotency fails.
-          doctor
+          mise run doctor

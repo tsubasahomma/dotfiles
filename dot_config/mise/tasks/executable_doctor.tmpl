@@ -1,8 +1,10 @@
 #!/bin/sh
+# [MISE] description="System Health Check & Self-Healing Engine"
+{{/* [Reference]: https://mise.jdx.dev/tasks/file-tasks.html */}}{{ "" -}}
 {{/* [Reference]: https://www.chezmoi.io/user-guide/password-managers/1password/ */}}{{ "" -}}
 {{/* [chezmoi-script]: L0 (POSIX Shell) Tiering */}}{{ "" -}}
 {{/* [Rationale]: Self-healing diagnostic engine with environment-aware validation. */}}{{ "" -}}
-{{/* [Architecture]: POSIX-compliant (sh) OS-agnostic checks. */}}{{ "" -}}
+{{/* [Architecture]: POSIX-compliant (sh) OS-agnostic checks. Executed via mise File Tasks. */}}{{ "" -}}
 set -u
 
 GREEN='\033[0;32m'
@@ -111,7 +113,8 @@ if [ -x "$NVIM_PYTHON" ]; then
   log_ok "Hermetic Python Provider provisioned ($NVIM_PYTHON)."
 else
   log_err "Hermetic Python Provider missing."
-  log_guide "Run Neovim to trigger automatic provisioning via Mason/venv setup."
+  # [Architecture]: Drift Resolution updated for new Task Engine.
+  log_guide "mise run setup:nvim-provider"
   HAS_ERROR=1
 fi
 
