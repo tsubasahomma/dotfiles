@@ -1,34 +1,12 @@
 #!/bin/zsh
-# [Architecture]: Deterministic Neovim State Convergence.
-# [Rationale]: Atomic plugin/tool acquisition. Separates CI environment (immutable)
-# from local environment (mutable) to guarantee idempotency.
-# [Reference]: https://github.com/folke/lazy.nvim
+{{ "" -}}
+# [Architecture]: Deterministic Neovim State Convergence (Mise Delegate)
 # [Triggers]:
 #   - Lockfile: {{ include "dot_config/nvim/lazy-lock.json" | sha256sum }}
 #   - Config Contents: {{ range (glob (joinPath .chezmoi.sourceDir "dot_config/nvim/lua/**/*.lua") | sortAlpha) }}{{ . | include | sha256sum }}{{ end }}
+{{/* [Reference]: https://www.chezmoi.io/user-guide/use-scripts-to-perform-actions/ */}}{{ "" -}}
 
 set -euo pipefail
 
-readonly MISE_BIN="{{ .paths.mise }}"
-readonly IS_CI="${CI:-false}"
-
-main() {
-  if [[ ! -x "${MISE_BIN}" ]]; then
-    echo "err: mise binary not found at ${MISE_BIN}" >&2
-    exit 1
-  fi
-
-  if [[ "$IS_CI" == "true" ]]; then
-    echo "📦 [Neovim] Restoring plugins from lockfile (CI Environment)..."
-    # 'Lazy! restore' strictly applies the lockfile state without querying upstream.
-    "${MISE_BIN}" exec neovim -- nvim --headless "+Lazy! restore" +qa
-  else
-    echo "📦 [Neovim] Synchronizing plugins and Mason packages..."
-    # 'Lazy! sync' installs, updates, and cleans. May mutate lazy-lock.json.
-    "${MISE_BIN}" exec neovim -- nvim --headless "+Lazy! sync" +qa
-  fi
-
-  echo "✅ [Neovim] Environment converged."
-}
-
-main "$@"
+echo "⚡ [Delegate] Invoking mise task: setup:nvim"
+exec "{{ .paths.mise }}" run setup:nvim

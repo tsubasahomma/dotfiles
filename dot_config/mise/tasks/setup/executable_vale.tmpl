@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# [MISE] description="Synchronize Vale external style packages (Google)"
+{{/* [Reference]: https://vale.sh/docs/topics/config/#stylespath */}}{{ "" -}}
+
+set -euo pipefail
+
+MISE_BIN="{{ .paths.mise }}"
+VALE_CONFIG="{{ .paths.xdg_config }}/vale/vale.ini"
+
+if [[ ! -f "$VALE_CONFIG" ]]; then
+  echo "⚠️  [Vale] Configuration not found at $VALE_CONFIG. Skipping sync."
+  exit 0
+fi
+
+echo "📦 [Vale] Synchronizing style packages..."
+"$MISE_BIN" exec vale -- vale --config="$VALE_CONFIG" sync
+
+echo "✅ [Vale] Styles converged."

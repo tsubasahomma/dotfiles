@@ -1,18 +1,10 @@
 #!/bin/zsh
-# [Architecture]: bat Syntax Cache Convergence
-# [Rationale]: Rebuilds the binary cache to recognize new themes.
-# [Trigger]: Theme Hash: {{ include (joinPath .chezmoi.homeDir ".config/bat/themes/Catppuccin Mocha.tmTheme") | sha256sum }}
+{{ "" -}}
+# [Architecture]: bat Syntax Cache Convergence (Mise Delegate)
+# [Trigger]: Theme Hash: {{ include (joinPath .paths.home ".config/bat/themes/Catppuccin Mocha.tmTheme") | sha256sum }}
+{{/* [Reference]: https://www.chezmoi.io/user-guide/use-scripts-to-perform-actions/ */}}{{ "" -}}
 
 set -euo pipefail
 
-MISE_BIN="{{ .paths.mise }}"
-
-if [[ ! -x "$MISE_BIN" ]]; then
-  echo "err: mise binary not found" >&2
-  exit 1
-fi
-
-echo "📦 [bat] Rebuilding theme cache..."
-"$MISE_BIN" exec bat -- bat cache --build
-
-echo "✅ [bat] Theme cache converged."
+echo "⚡ [Delegate] Invoking mise task: setup:bat"
+exec "{{ .paths.mise }}" run setup:bat
