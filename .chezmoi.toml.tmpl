@@ -14,8 +14,13 @@ sourceDir = {{ .chezmoi.sourceDir | quote }}
 {{- end -}}
 
 {{- $windows_user := "unknown" -}}
+{{- $npiperelay_wsl := "" -}}
 {{- if $is_wsl -}}
 {{-   $windows_user = env "WINDOWS_USER" | default (output "sh" "-c" "cmd.exe /c 'echo %USERNAME%' 2>/dev/null || echo 'unknown'" | trim) -}}
+{{-   $win_npiperelay := output "powershell.exe" "-NoProfile" "-NonInteractive" "-Command" "(Get-Command npiperelay.exe -ErrorAction SilentlyContinue).Source | Write-Host -NoNewline" -}}
+{{-   if ne $win_npiperelay "" -}}
+{{-     $npiperelay_wsl = output "wslpath" "-u" $win_npiperelay | trim -}}
+{{-   end -}}
 {{- end -}}
 
 {{- $brew_prefix := "/usr/local" -}}
@@ -29,7 +34,7 @@ sourceDir = {{ .chezmoi.sourceDir | quote }}
 {{- $local_bin := joinPath $home ".local/bin" -}}
 {{- $op_bin := joinPath $local_bin "op" -}}
 {{- if $is_wsl -}}
-{{-   $win_op := output "powershell.exe" "-NoProfile" "-NonInteractive" "-Command" "(Get-Command op.exe -ErrorAction SilentlyContinue).Source" | trim -}}
+{{-   $win_op := output "powershell.exe" "-NoProfile" "-NonInteractive" "-Command" "(Get-Command op.exe -ErrorAction SilentlyContinue).Source | Write-Host -NoNewline" -}}
 {{-   if ne $win_op ""}}{{$op_bin = output "wslpath" "-u" $win_op | trim}}{{end -}}
 {{- end -}}
 
@@ -38,29 +43,36 @@ sourceDir = {{ .chezmoi.sourceDir | quote }}
 {{-   $op_status = output "sh" "-c" (printf "'%s' account get >/dev/null 2>&1 && echo 'ready' || echo 'locked'" $op_bin) | trim -}}
 {{- end -}}
 
-{{- /* --- 3. Parallel Identity Aggregation (Lazy Evaluation) --- */ -}}
+{{- /* --- 3. Parallel Identity Aggregation (Native O(N) Pipeline) --- */ -}}
+{{- /* [Rationale]: 'op item get -' over stdin generates NDJSON streams which fail fromJson parsing.
+       Instead, we loop deterministically. Total API calls equals N (number of valid keys),
+       ensuring absolute zero-dependency parsing at Tier 0. */ -}}
 {{- $identities := list -}}
 {{- $ssh_keys_hash := "none" -}}
 {{- if eq $op_status "ready" -}}
 {{-   $items_json := output $op_bin "item" "list" "--tags" "dotfiles-ssh-key" "--format" "json" -}}
-{{-   $items := fromJson $items_json -}}
-{{-   $ssh_keys_hash = sha256sum $items_json -}}
-{{-   range $items -}}
-{{-     $details := fromJson (output $op_bin "item" "get" .id "--format" "json") -}}
-{{-     $git_name := "" -}}
-{{-     $git_email := "" -}}
-{{-     $git_dirs := "" -}}
-{{-     $key_type := "ed25519" -}}
-{{-     range $details.fields -}}
-{{-       if and (hasKey . "section") (eq .section.label "dotfiles") -}}
-{{-         if eq .label "dotfiles_git_name" }}{{ $git_name = .value }}{{ end -}}
-{{-         if eq .label "dotfiles_git_email" }}{{ $git_email = .value }}{{ end -}}
-{{-         if eq .label "dotfiles_git_dirs" }}{{ $git_dirs = .value }}{{ end -}}
+{{-   if ne $items_json "" -}}
+{{-     $items := fromJson $items_json -}}
+{{-     $ssh_keys_hash = sha256sum $items_json -}}
+{{-     range $items -}}
+{{-       $details := fromJson (output $op_bin "item" "get" .id "--format" "json") -}}
+{{-       $git_name := "" -}}
+{{-       $git_email := "" -}}
+{{-       $git_dirs := "" -}}
+{{-       $key_type := "ed25519" -}}
+{{-       $public_key := "" -}}
+{{-       range $details.fields -}}
+{{-         if and (hasKey . "section") (eq .section.label "dotfiles") -}}
+{{-           if eq .label "dotfiles_git_name" }}{{ $git_name = .value }}{{ end -}}
+{{-           if eq .label "dotfiles_git_email" }}{{ $git_email = .value }}{{ end -}}
+{{-           if eq .label "dotfiles_git_dirs" }}{{ $git_dirs = .value }}{{ end -}}
+{{-         end -}}
+{{-         if eq .label "key type" }}{{ $key_type = .value }}{{ end -}}
+{{-         if eq .label "public key" }}{{ $public_key = .value }}{{ end -}}
 {{-       end -}}
-{{-       if eq .label "key type" }}{{ $key_type = .value }}{{ end -}}
-{{-     end -}}
-{{-     if and (ne $git_name "") (ne $git_email "") (ne $git_dirs "") -}}
-{{-       $identities = append $identities (dict "item_id" .id "vault_id" .vault.id "key_type" (lower $key_type) "name" $git_name "email" $git_email "dirs" $git_dirs) -}}
+{{-       if and (ne $git_name "") (ne $git_email "") (ne $git_dirs "") (ne $public_key "") -}}
+{{-         $identities = append $identities (dict "item_id" .id "vault_id" .vault.id "key_type" (lower $key_type) "name" $git_name "email" $git_email "dirs" $git_dirs "public_key" $public_key) -}}
+{{-       end -}}
 {{-     end -}}
 {{-   end -}}
 {{- end -}}
@@ -89,6 +101,7 @@ sourceDir = {{ .chezmoi.sourceDir | quote }}
     osid = {{ $osid | quote }}
     arch = {{ $arch | quote }}
     is_wsl = {{ $is_wsl }}
+    npiperelay_wsl = {{ $npiperelay_wsl | quote }}
     brew_prefix = {{ $brew_prefix | quote }}
     windows_user = {{ $windows_user | quote }}
     ssh_auth_sock = {{ $ssh_auth_sock | quote }}
@@ -97,10 +110,10 @@ sourceDir = {{ .chezmoi.sourceDir | quote }}
 
     # [Identity]: Dynamic Mapping
     identities = [
-    {{- range $i, $id := $identities -}}
+    {{- range $i, $id := $identities }}
       {{ if $i }},{{ end }}
-      { item_id = {{ $id.item_id | quote }}, vault_id = {{ $id.vault_id | quote }}, key_type = {{ $id.key_type | quote }}, name = {{ $id.name | quote }}, email = {{ $id.email | quote }}, dirs = {{ $id.dirs | quote }} }
-    {{- end -}}
+      { item_id = {{ $id.item_id | quote }}, vault_id = {{ $id.vault_id | quote }}, key_type = {{ $id.key_type | quote }}, name = {{ $id.name | quote }}, email = {{ $id.email | quote }}, dirs = {{ $id.dirs | quote }}, public_key = {{ $id.public_key | quote }} }
+    {{- end }}
     ]
 
     [data.paths]

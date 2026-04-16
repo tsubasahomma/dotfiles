@@ -1,0 +1,18 @@
+#!/bin/zsh
+{{ "" -}}
+# =============================================================================
+# [Architecture]: Service Orchestration (Phase 90)
+# [Rationale]: Declaratively manages user-level Systemd services.
+# [Trigger]: 1Password Bridge Hash: {{ include "dot_config/systemd/user/1password-bridge.service.tmpl" | sha256sum }}
+# =============================================================================
+
+set -euo pipefail
+
+{{ if and .is_wsl (ne .npiperelay_wsl "") -}}
+echo "⚙️  [Systemd] Provisioning WSL2 authentication bridge..."
+systemctl --user daemon-reload
+systemctl --user enable --now 1password-bridge.service
+echo "✅ [Systemd] 1Password bridge active."
+{{- else -}}
+echo "⏭️  [Systemd] No environment-specific services required."
+{{- end }}

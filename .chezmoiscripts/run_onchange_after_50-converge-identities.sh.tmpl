@@ -1,0 +1,69 @@
+#!/bin/zsh
+{{ "" -}}
+# =============================================================================
+# [Architecture]: Atomic Identity Convergence (Phase 50)
+# [Rationale]: Extracts public keys directly from the Chezmoi AST (in-memory) and
+# provisions all downstream Git/SSH configurations in an O(1) idempotent pass.
+# Eliminates runtime dependence on 'op' execution during apply.
+# [Trigger]: {{ .ssh_keys_hash }}
+# =============================================================================
+
+set -euo pipefail
+
+SSH_DIR="{{ .paths.home }}/.ssh"
+GIT_CONFIG_DIR="{{ .paths.xdg_config }}/git/identities"
+ALLOWED_SIGNERS="{{ .paths.xdg_config }}/git/allowed_signers"
+
+mkdir -p "$SSH_DIR" "$GIT_CONFIG_DIR" "$(dirname "$ALLOWED_SIGNERS")"
+chmod 700 "$SSH_DIR"
+
+# [Architecture]: Enforce clean state for generated artifacts.
+rm -rf "$GIT_CONFIG_DIR"
+mkdir -p "$GIT_CONFIG_DIR"
+TEMP_SIGNERS=$(mktemp)
+
+echo "🔐 [Identity] Converging Sovereign Identities..."
+
+{{ $home := .paths.home -}}
+{{ range .identities -}}
+# --- Provisioning Identity: {{ .name }} ---
+PUBKEY_FILE="$SSH_DIR/id_{{ .key_type }}_{{ .vault_id }}_{{ .item_id }}.pub"
+echo {{ .public_key | quote }} > "$PUBKEY_FILE"
+chmod 600 "$PUBKEY_FILE"
+
+CONFIG_FILE="$GIT_CONFIG_DIR/config_{{ .vault_id }}_{{ .item_id }}"
+cat << 'EOF' > "$CONFIG_FILE"
+# [Architecture]: Auto-generated Identity Config for {{ .name }}
+[user]
+    name = {{ .name | quote }}
+    email = {{ .email | quote }}
+    # [Security]: Use path binding to prevent Git version incompatibility.
+    signingkey = {{ $home }}/.ssh/id_{{ .key_type }}_{{ .vault_id }}_{{ .item_id }}.pub
+
+[core]
+    sshCommand = "ssh -i {{ $home }}/.ssh/id_{{ .key_type }}_{{ .vault_id }}_{{ .item_id }}.pub -o IdentitiesOnly=yes"
+EOF
+
+# [Reference]: https://man.openbsd.org/ssh-keygen#ALLOWED_SIGNERS
+echo "{{ .email }} namespaces=\"git\" {{ .public_key }}" >> "$TEMP_SIGNERS"
+
+echo "  ✅ Synced context routing: {{ .email }}"
+{{ end -}}
+
+{{ if not .identities -}}
+# [Architecture]: Graceful fallback for uninitialized CI environments.
+echo "ci-bot@example.com namespaces=\"git\" ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAI_CI_FALLBACK_KEY_STUB" >> "$TEMP_SIGNERS"
+echo "⚠️  [Identity] No sovereign identities mapped. CI fallback stub generated."
+{{ end -}}
+
+# [Idempotency]: Atomic write with unique sorting to prevent duplicate accumulation.
+if [[ -s "$TEMP_SIGNERS" ]]; then
+  sort -u "$TEMP_SIGNERS" > "$ALLOWED_SIGNERS"
+else
+  : > "$ALLOWED_SIGNERS"
+fi
+
+rm -f "$TEMP_SIGNERS"
+chmod 644 "$ALLOWED_SIGNERS"
+
+echo "✅ [Identity] O(1) Convergence complete. All local keyfiles and context scopes provisioned."

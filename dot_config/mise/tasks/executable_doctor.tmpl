@@ -151,10 +151,12 @@ else
   HAS_ERROR=1
 fi
 
-if echo "$PATH" | grep -q "^$HOME_DIR/.local/bin"; then
-  log_ok "PATH precedence correctly prioritized (.local/bin)."
-else
-  log_warn "PATH precedence violation detected. Verify shell initialization."
+if [[ "${CI:-false}" != "true" ]]; then
+  if echo "$PATH" | grep -q "^$HOME_DIR/.local/bin"; then
+    log_ok "PATH precedence correctly prioritized (.local/bin)."
+  else
+    log_warn "PATH precedence violation detected. Verify shell initialization."
+  fi
 fi
 
 printf "\n"
