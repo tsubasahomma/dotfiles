@@ -1,7 +1,7 @@
 # [Architecture]: Sovereign Infrastructure Validation Pipeline (2026 SOTA)
 # [Rationale]:
-# 1. Simplified bootstrap logic by removing application-layer (Neovim) management.
-# 2. Leverages 'chezmoi init' to trigger Tier 2 runtime convergence via Phase 20.
+# 1. Decouples Infrastructure State (Chezmoi) from Application Integration (Mise/Neovim).
+# 2. Enforces absolute idempotency by verifying state *before* triggering application runtimes.
 name: compliance
 
 on:
@@ -30,6 +30,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+      # [Architecture]: Standard GitHub Token for authenticated API requests.
       GITHUB_TOKEN: ${{ github.token }}
 
     steps:
@@ -85,23 +86,30 @@ jobs:
           echo "${MISE_HASH}  $HOME/.local/bin/mise" | shasum -a 256 --check -
           chmod +x "$HOME/.local/bin/mise"
 
-      - name: Provisioning (Atomic Apply)
+      - name: Phase 1 - Provisioning (Static Apply)
         run: |
-          # [Rationale]: 'chezmoi init' executes Tier 0 bootstrap scripts,
-          # and '--apply' ensures 'mise install' (Phase 20) is triggered.
+          # [Rationale]: Lays down configuration files deterministically.
+          # Dynamic application state mutations (e.g., Neovim plugins) are strictly deferred.
           chezmoi init --source="$GITHUB_WORKSPACE" --apply
 
-      - name: Idempotency Proof (Convergence Validation)
+      - name: Phase 2 - Idempotency Proof (Static Convergence)
         run: |
-          DRIFT_STATUS=$(chezmoi status)
-          if [ -n "$DRIFT_STATUS" ]; then
-            echo "❌ [Idempotency Failure] Detected drift in managed files."
-            echo "$DRIFT_STATUS"
+          # [Architecture]: Strict bit-for-bit state verification.
+          # Proves that the configuration logic produces the exact checked-in state.
+          if ! chezmoi verify; then
+            echo "❌ [Idempotency Failure] State drift detected."
+            chezmoi status
             exit 1
           fi
           echo "✅ [Convergence] Zero-drift confirmed."
 
-      - name: Final Health Check (Doctor)
+      - name: Phase 3 - Application Integration (Dynamic Convergence)
+        run: |
+          # [Architecture]: Executes post-verify. Restores plugins and ensures the
+          # application layer functions correctly without polluting the verified state.
+          mise run integrate:nvim
+
+      - name: Phase 4 - Final Health Check (Doctor)
         if: always()
         run: |
           mise run doctor

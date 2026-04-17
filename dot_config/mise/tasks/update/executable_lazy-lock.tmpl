@@ -1,0 +1,76 @@
+#!/usr/bin/env bash
+# [MISE] description="Atomic Neovim plugin update and PR generation"
+# [MISE] alias="update:lazy-lock"
+{{/* [Reference]: https://mise.jdx.dev/tasks/file-tasks.html */}}{{ "" -}}
+
+set -euo pipefail
+
+CHEZMOI_DIR="{{ .chezmoi.sourceDir }}"
+LOCK_FILE="{{ .paths.xdg_config }}/nvim/lazy-lock.json"
+BRANCH_NAME="chore/deps-nvim-$(date +%Y%m%d%H%M)"
+
+cd "$CHEZMOI_DIR"
+
+# --- 1. Pre-flight Checks (Zero-Speculation Gate) ---
+if ! git diff --quiet; then
+  echo "❌ [Pre-flight] Working directory is not clean. Aborting to prevent mixed state." >&2
+  exit 1
+fi
+
+if ! command -v gh >/dev/null 2>&1; then
+  echo "❌ [Pre-flight] GitHub CLI (gh) is not installed." >&2
+  exit 1
+fi
+
+if ! gh auth status >/dev/null 2>&1; then
+  echo "❌ [Pre-flight] GitHub CLI is not authenticated." >&2
+  exit 1
+fi
+
+# --- 2. Isolation & Mutation ---
+git switch -c "$BRANCH_NAME"
+
+echo "📦 [Neovim] Headless plugin update initiated..."
+"{{ .paths.mise }}" exec aqua:neovim/neovim -- nvim --headless "+Lazy! update" +qa
+
+# --- 3. State Promotion ---
+chezmoi add "$LOCK_FILE"
+
+# [Architecture]: Diff against the specific managed file in the source state.
+if git diff --quiet -- "$CHEZMOI_DIR/dot_config/nvim/lazy-lock.json"; then
+  echo "✅ [State] No plugin updates found. lazy-lock.json is up to date."
+  git checkout -
+  git branch -D "$BRANCH_NAME"
+  exit 0
+fi
+
+# --- 4. Atomic Commit & PR Generation ---
+echo "🚀 [State] Updates detected. Committing and generating Pull Request..."
+git add "$CHEZMOI_DIR/dot_config/nvim/lazy-lock.json"
+
+# [Architecture]: GPG/SSH signature is inherently applied here via user's Git configuration.
+git commit -m "chore(deps): atomic neovim plugin convergence" \
+           -m "Automated lazy-lock.json update via update:lazy-lock task."
+
+git push -u origin "$BRANCH_NAME"
+
+# [Architecture]: Force local Fast-Forward merge in the PR body to protect SSH signatures.
+# [Interop]: Standard 'dependencies' label applied.
+gh pr create --title "chore(deps): atomic neovim plugin convergence" \
+             --label "dependencies" \
+             --body "### 🎯 Rationale
+Automated state promotion of \`lazy-lock.json\`.
+
+### ⚠️ Action Required (SSH Signature Preservation)
+To preserve the cryptographic integrity of the SSH signature (Fast-Forward only), **DO NOT merge via GitHub UI**.
+Execute the following locally after the CI pipeline passes:
+
+\`\`\`zsh
+git checkout main
+git merge --ff-only $BRANCH_NAME
+git push origin main
+git branch -d $BRANCH_NAME
+git push origin --delete $BRANCH_NAME
+\`\`\`"
+
+echo "✅ [Workflow] Pull Request created. Awaiting CI completion."

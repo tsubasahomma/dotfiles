@@ -12,8 +12,10 @@ MISE_PYTHON_GITHUB_ATTESTATIONS = "false"
 PNPM_HOME = "{{ .paths.xdg_data }}/pnpm"
 
 [tools]
-# [Architecture]: Explicitly inherit Neovim version from mise_tools (Tier 2).
-"neovim" = "{{ .mise_tools.neovim }}"
+# [Architecture]: Explicitly map Neovim to the 'aqua' backend registry.
+# [Rationale]: Bypasses 'vfox' Lua sandbox limitations to ensure GITHUB_TOKEN is
+# natively consumed by Aqua's Go-based resolver, eliminating HTTP 403 Rate Limits.
+"aqua:neovim/neovim" = "{{ .mise_tools.neovim }}"
 
 {{- range $tool, $version := .mise_tools }}
 {{- if ne $tool "neovim" }}
@@ -33,8 +35,8 @@ asdf_compat = false
 
 [tasks.setup]
 description = "Provision all ecosystem dependencies"
-# [Rationale]: Orchestrates all setup sub-tasks for a complete environment convergence.
-depends = ["setup:nvim-provider", "setup:pnpm", "setup:bat", "setup:vale", "setup:nvim"]
+# [Rationale]: Removed 'setup:nvim' to ensure strict static convergence during chezmoi apply.
+depends = ["setup:nvim-provider", "setup:pnpm", "setup:bat", "setup:vale"]
 
 [tasks."setup:nvim-provider"]
 description = "Provision Hermetic Neovim Python Provider (pynvim)"
@@ -55,3 +57,24 @@ uv pip install --python "$NVIM_VENV/bin/python" pynvim --upgrade
 [tasks."setup:pnpm"]
 description = "Configure pnpm global directory"
 run = "pnpm config set global-bin-dir \"$PNPM_HOME\""
+
+# =============================================================================
+# [Architecture]: Application Integration & Mutation Tasks
+# =============================================================================
+
+[tasks."integrate:nvim"]
+description = "Application Integration: Neovim Plugins"
+# [Rationale]: Explicit task for post-verification CI environments or manual local sync.
+depends = ["setup:nvim-provider"]
+run = '''
+#!/usr/bin/env bash
+set -euo pipefail
+MISE_BIN="{{ .paths.mise }}"
+echo "📦 [Neovim] Synchronizing application layer state..."
+"$MISE_BIN" exec aqua:neovim/neovim -- nvim --headless "+Lazy! restore" +qa
+echo "✅ [Neovim] Integration complete."
+'''
+
+[tasks."update:lazy-lock"]
+description = "Atomic Neovim plugin update and PR generation"
+depends = ["setup:nvim-provider"]
