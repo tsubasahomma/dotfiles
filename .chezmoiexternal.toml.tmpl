@@ -14,20 +14,7 @@
 {{- $mise_arch := "x64" -}}
 {{- if eq .chezmoi.arch "arm64" }}{{ $mise_arch = "arm64" }}{{ end -}}
 
-{{- $hash_key := printf "%s-%s" $os_std $mise_arch -}}
-
 {{- /* 2. Resource Definitions */ -}}
-
-{{- /* [Architecture]: Flat schema access (.tool_integrity.mise_hashes) */ -}}
-{{- $mise_hash := index .tool_integrity.mise_hashes $hash_key -}}
-{{- if $mise_hash }}
-[".local/bin/mise"]
-    type = "file"
-    url = {{ printf "https://github.com/jdx/mise/releases/download/v%s/mise-v%s-%s-%s" .tool_integrity.mise .tool_integrity.mise $os_std $mise_arch | quote }}
-    executable = true
-    [".local/bin/mise".checksum]
-        sha256 = {{ $mise_hash | quote }}
-{{- end }}
 
 {{- if .is_wsl }}
 [".local/bin/win32yank.exe"]

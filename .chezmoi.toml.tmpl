@@ -1,5 +1,6 @@
-{{- /* [Architecture]: Foundation Schema | Phase 23 (Safe Identity & Context Routing) */ -}}
+{{- /* [Architecture]: Foundation Schema | Phase 25 (Platform-Agnostic Binary Resolution) */ -}}
 {{- /* [Reference]: https://www.chezmoi.io/user-guide/templating/ */ -}}
+{{- /* [Reference]: https://mise.jdx.dev/directories.html */ -}}
 
 # [Rationale]: Permanent source directory binding.
 sourceDir = {{ .chezmoi.sourceDir | quote }}
@@ -32,10 +33,37 @@ sourceDir = {{ .chezmoi.sourceDir | quote }}
 
 # --- 2. Identity State Machine & Dynamic Binary Resolution ---
 {{- $local_bin := joinPath $home ".local/bin" -}}
-{{- $op_bin := joinPath $local_bin "op" -}}
+
+{{- /* [Architecture]: Deterministic Mise Binary Discovery */ -}}
+{{- /* [Rationale]: Solves CI Path Drift. Prioritizes the local hermetic path,
+       falling back to system PATH (e.g., GITHUB_PATH injected by mise-action). */ -}}
+{{- $mise_bin := joinPath $local_bin "mise" -}}
+{{- if not (stat $mise_bin) -}}
+{{-   $mise_bin = lookPath "mise" | default $mise_bin -}}
+{{- end -}}
+
+{{- /* [Architecture]: Deterministic Mise Data Directory Discovery */ -}}
+{{- $mise_data_dir := joinPath $home ".local/share/mise" -}}
+{{- if eq $osid "darwin" -}}
+{{-   $mac_default := joinPath $home "Library/Application Support/mise" -}}
+{{-   if stat $mac_default -}}
+{{-     $mise_data_dir = $mac_default -}}
+{{-   end -}}
+{{- end -}}
+{{- if env "MISE_DATA_DIR" -}}
+{{-   $mise_data_dir = env "MISE_DATA_DIR" -}}
+{{- end -}}
+
+{{- $op_bin := joinPath $mise_data_dir "shims/op" -}}
+
 {{- if $is_wsl -}}
 {{-   $win_op := output "powershell.exe" "-NoProfile" "-NonInteractive" "-Command" "(Get-Command op.exe -ErrorAction SilentlyContinue).Source | Write-Host -NoNewline" -}}
 {{-   if ne $win_op ""}}{{$op_bin = output "wslpath" "-u" $win_op | trim}}{{end -}}
+{{- end -}}
+
+{{- /* [Rationale]: Fallback to system PATH if mise shim is not yet available */ -}}
+{{- if not (stat $op_bin) -}}
+{{-   $op_bin = lookPath "op" | default $op_bin -}}
 {{- end -}}
 
 {{- $op_status := "missing" -}}
@@ -44,9 +72,6 @@ sourceDir = {{ .chezmoi.sourceDir | quote }}
 {{- end -}}
 
 {{- /* --- 3. Parallel Identity Aggregation (Native O(N) Pipeline) --- */ -}}
-{{- /* [Rationale]: 'op item get -' over stdin generates NDJSON streams which fail fromJson parsing.
-       Instead, we loop deterministically. Total API calls equals N (number of valid keys),
-       ensuring absolute zero-dependency parsing at Tier 0. */ -}}
 {{- $identities := list -}}
 {{- $ssh_keys_hash := "none" -}}
 {{- if eq $op_status "ready" -}}
@@ -119,7 +144,7 @@ sourceDir = {{ .chezmoi.sourceDir | quote }}
     [data.paths]
         home = {{ $home | quote }}
         op = {{ $op_bin | quote }}
-        mise = {{ joinPath $home ".local/bin/mise" | quote }}
+        mise = {{ $mise_bin | quote }}
         xdg_config = {{ joinPath $home ".config" | quote }}
         xdg_data = {{ joinPath $home ".local/share" | quote }}
         xdg_state = {{ joinPath $home ".local/state" | quote }}

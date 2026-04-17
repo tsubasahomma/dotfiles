@@ -3,16 +3,10 @@
 # [Rationale]: Generates static scripts and pre-compiles them into byte-code.
 # [Reference]: https://www.chezmoi.io/user-guide/advanced/scripts/
 
-{{- /* [Normalization Logic] */ -}}
-{{- $os_key := .osid -}}
-{{- if eq .osid "darwin" }}{{ $os_key = "macos" }}{{ end -}}
-{{- $arch_key := .arch -}}
-{{- if eq .arch "amd64" }}{{ $arch_key = "x64" }}{{ end -}}
-{{- $mise_hash := index .tool_integrity.mise_hashes (printf "%s-%s" $os_key $arch_key) -}}
-
-# [Trigger]: Config: {{ include "dot_config/mise/config.toml.tmpl" | sha256sum }}
-# [Trigger]: Mise Binary: {{ $mise_hash }}
-# [Trigger]: Chezmoi Version: {{ .tool_integrity.chezmoi }}
+# [Trigger]: Ecosystem Schema: {{ include ".chezmoidata/tools.yaml" | sha256sum }}
+# [Trigger]: Tier 0 Schema: {{ include ".mise.toml" | sha256sum }}
+# [Trigger]: Global Config: {{ include "dot_config/mise/config.toml.tmpl" | sha256sum }}
+# [Trigger]: Chezmoi Binary: {{ .chezmoi.version.version }}
 
 set -euo pipefail
 setopt extended_glob

@@ -1,7 +1,6 @@
 # [Architecture]: Sovereign Infrastructure Validation Pipeline (2026 SOTA)
-# [Rationale]:
-# 1. Decouples Infrastructure State (Chezmoi) from Application Integration (Mise/Neovim).
-# 2. Enforces absolute idempotency by verifying state *before* triggering application runtimes.
+# [Reference]: https://mise.jdx.dev/continuous-integration.html
+# [Rationale]: Strictly decouples infrastructure state (chezmoi) from runtime provision (mise).
 name: compliance
 
 on:
@@ -30,72 +29,29 @@ jobs:
     runs-on: ${{ matrix.os }}
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-      # [Architecture]: Standard GitHub Token for authenticated API requests.
       GITHUB_TOKEN: ${{ github.token }}
+      CI: true
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        # [Architecture]: Target Node.js 24 environment. Hash will be pinned securely by Renovate.
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
-      - name: Resolve Environment & Mapping
-        run: |
-          if [ "$RUNNER_OS" = "macOS" ]; then
-            CHEZMOI_OS="darwin"; MISE_OS="macos"
-            if [ "$RUNNER_ARCH" = "ARM64" ]; then
-              CHEZMOI_ARCH="arm64"; MISE_ARCH="arm64"
-            else
-              CHEZMOI_ARCH="amd64"; MISE_ARCH="x64"
-            fi
-          else
-            CHEZMOI_OS="linux"; MISE_OS="linux"
-            CHEZMOI_ARCH="amd64"; MISE_ARCH="x64"
-          fi
-
-          mkdir -p "$HOME/.local/bin"
-
-          {
-            echo "CI=true"
-            echo "CHEZMOI_OS=$CHEZMOI_OS"
-            echo "CHEZMOI_ARCH=$CHEZMOI_ARCH"
-            echo "MISE_OS=$MISE_OS"
-            echo "MISE_ARCH=$MISE_ARCH"
-          } >> "$GITHUB_ENV"
-
-          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
-
-      - name: Bootstrap Tier 0 Tools (op, mise, chezmoi)
-        run: |
-          DATA_FILE=".chezmoidata/tools.yaml"
-
-          # [Architecture]: Robust Parsing Pattern (Quote-Agnostic)
-          CHEZMOI_VER=$(awk '/^ *"?chezmoi"?:/ {gsub(/"/, "", $2); print $2}' "$DATA_FILE")
-          CHEZMOI_HASH=$(awk "/^ *\"?chezmoi_hashes\"?:/{f=1} f && /^ *\"?${CHEZMOI_OS}-${CHEZMOI_ARCH}\"?:/{gsub(/\"/, \"\", \$2); print \$2; exit}" "$DATA_FILE")
-
-          MISE_VER=$(awk '/^ *"?mise"?:/ {gsub(/"/, "", $2); print $2}' "$DATA_FILE")
-          MISE_HASH=$(awk "/^ *\"?mise_hashes\"?:/{f=1} f && /^ *\"?${MISE_OS}-${MISE_ARCH}\"?:/{gsub(/\"/, \"\", \$2); print \$2; exit}" "$DATA_FILE")
-
-          # Provision chezmoi
-          curl -fsSL "https://github.com/twpayne/chezmoi/releases/download/v${CHEZMOI_VER}/chezmoi_${CHEZMOI_VER}_${CHEZMOI_OS}_${CHEZMOI_ARCH}.tar.gz" -o /tmp/chezmoi.tar.gz
-          echo "${CHEZMOI_HASH}  /tmp/chezmoi.tar.gz" | shasum -a 256 --check -
-          tar -xzf /tmp/chezmoi.tar.gz -C "$HOME/.local/bin" chezmoi
-
-          # Provision mise
-          curl -fsSL "https://github.com/jdx/mise/releases/download/v${MISE_VER}/mise-v${MISE_VER}-${MISE_OS}-${MISE_ARCH}" -o "$HOME/.local/bin/mise"
-          echo "${MISE_HASH}  $HOME/.local/bin/mise" | shasum -a 256 --check -
-          chmod +x "$HOME/.local/bin/mise"
+      - name: Bootstrap Tier 0 Tools (mise)
+        uses: jdx/mise-action@v4
+        with:
+          install: true
+          cache: true
 
       - name: Phase 1 - Provisioning (Static Apply)
         run: |
-          # [Rationale]: Lays down configuration files deterministically.
-          # Dynamic application state mutations (e.g., Neovim plugins) are strictly deferred.
           chezmoi init --source="$GITHUB_WORKSPACE" --apply
 
       - name: Phase 2 - Idempotency Proof (Static Convergence)
         run: |
           # [Architecture]: Strict bit-for-bit state verification.
-          # Proves that the configuration logic produces the exact checked-in state.
           if ! chezmoi verify; then
             echo "❌ [Idempotency Failure] State drift detected."
             chezmoi status
@@ -105,8 +61,6 @@ jobs:
 
       - name: Phase 3 - Application Integration (Dynamic Convergence)
         run: |
-          # [Architecture]: Executes post-verify. Restores plugins and ensures the
-          # application layer functions correctly without polluting the verified state.
           mise run integrate:nvim
 
       - name: Phase 4 - Final Health Check (Doctor)

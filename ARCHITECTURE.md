@@ -14,11 +14,11 @@ The system is designed to enforce state convergence: Given a Minimal Prepared OS
 
 Execution follows a strict sequential phase-gate model to resolve binary dependencies without interactive hanging.
 
-1. **Tier -1 (Assertion Gate)**: `.bootstrap-identity.sh` strictly validates the existence of `curl`, `unzip`, and non-interactive `sudo`. If missing, the process exits immediately with actionable instructions.
-2. **Tier 0 (Identity)**: `.bootstrap-identity.sh` securely downloads and verifies the `op` (1Password CLI) binary using SHA-256 integrity checks.
+1. **Tier -1 (Assertion Gate)**: `.bootstrap-identity.sh` strictly validates the minimal POSIX dependencies (e.g., `curl`). If missing, the process exits immediately with actionable instructions.
+2. **Tier 0 (Hermetic Toolchain)**: Natively managed by `.mise.toml`. `chezmoi` utilizes the `read-source-state.pre` hook via `.bootstrap-identity.sh` to silently ensure `mise` is installed and the core toolchain (`chezmoi`, `op`) is converged prior to state compilation.
 3. **Tier 1 (System Provisioning)**: Phase 10 scripts inject OS-level dependencies via `Brewfile` (macOS) or abstracted `apt/dnf/pacman` (Linux).
 4. **Tier 2 (Runtime Convergence)**: Phase 20 scripts provision language runtimes and Neovim providers via absolute paths using `mise`.
-5. **Tier 3 (Trust Aggregation)**: Phase 50/51 scripts dynamically extract public keys from 1Password and generate the Git allowed_signers list.
+5. **Tier 3 (Trust Aggregation)**: Phase 50+ scripts dynamically extract public keys from 1Password (in-memory) and generate the Git `allowed_signers` list.
 
 ## 3. Parallel Identity Architecture (v3)
 

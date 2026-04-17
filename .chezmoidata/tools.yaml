@@ -1,26 +1,9 @@
 # =============================================================================
-# [Architecture]: Hermetic Toolchain Integrity (Sovereign Tier 0)
-# [Rationale]: Managed via mise. Only tools with verified native ARM artifacts
-# are pulled via github: backend to ensure zero-leak architecture.
-# Neovim has been moved to Tier 2 (mise_tools) to reduce bootstrap toil.
-# [Governance]: Hashes are updated via 'mise run refresh:integrity'.
+# [Architecture]: Hermetic Toolchain Integrity (Sovereign Tier 1+)
+# [Rationale]: Managed via mise global config. Versions locked via Renovate.
+# Tier 0 (Bootstrap) is natively managed by .mise.toml at the repository root.
 # =============================================================================
 
-tool_integrity:
-  "op": "2.33.1" # [Architecture]: Untrackable via standard datasource.
-  op_hashes:
-    darwin-arm64: "8106127624bf55f0bf5ae6f8e2c56398e01db75d64c3088eface33885c854351"
-    linux-amd64: "0fc50cb22d791b5ee5e1421d97e96595fd61ca56ae92271bd1b28bb884971726"
-  "mise": "2026.4.11" # renovate: datasource=github-releases packageName=jdx/mise
-  mise_hashes:
-    macos-arm64: "265ffb4990785d2d3c6178ebfa97c2c7d845c091fb3b5940525c06b1d70e281c"
-    macos-x64: "dc356331acc6aa14d0b6885a20e32f8f9a577791de5cfdecb39a330a6a4e82e6"
-    linux-x64: "00ec58da20aac5c9cfab08aa3210fbacec9353d4217f964a8c318612a38f5d33"
-  "chezmoi": "2.70.1" # renovate: datasource=github-releases packageName=twpayne/chezmoi
-  chezmoi_hashes:
-    darwin-arm64: "814fd391b755046d9dbe17c1a7e93d7dd725b2842bf9663c08645771f4a92cf1"
-    darwin-amd64: "36b9b41dd88485afd30c7940398edef3b4757c19e36689f9324012391ea7dbff"
-    linux-amd64: "3bd054238e2a95548eee62a6c5b4d9d1352f2c6c69c6d32f3d1964878398f91a"
 mise_tools:
   "neovim": "0.12.1" # renovate: datasource=github-releases packageName=neovim/neovim
   "node": "24.14.1" # renovate: datasource=node-version

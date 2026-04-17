@@ -1,11 +1,11 @@
 // [Architecture]: Deterministic Dependency Governance
-// [Rationale]: Fixed managerFilePatterns using regex delimiters to satisfy Renovate's
-// internal pattern detector and restore dependency extraction.
-// [Reference]: https://docs.renovatebot.com/modules/manager/regex/
+// [Rationale]: Enforces immutable action digests via Renovate to prevent supply-chain attacks.
+// [Reference]: https://docs.renovatebot.com/presets-helpers/#helperspingithubactiondigests
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
     "config:recommended",
+    "helpers:pinGitHubActionDigests",
     ":dependencyDashboard"
   ],
   "labels": ["dependencies", "renovate"],
@@ -22,7 +22,6 @@
     {
       "customType": "regex",
       "description": "Parse .chezmoidata/tools.yaml for versions with renovate comments",
-      // [Best Practice]: managerFilePatterns requires delimiters to be recognized as regex.
       "managerFilePatterns": ["/^\\.chezmoidata/tools\\.yaml$/"],
       "matchStrings": [
         "\"?(?<depName>[a-zA-Z0-9\\-_:/@\\.]+)\"?:\\s*\"(?<currentValue>[a-zA-Z0-9\\-\\.]+)\"\\s*#\\s*renovate:\\s*datasource=(?<datasource>[a-zA-Z0-9-]+)(?:\\s+packageName=(?<packageName>[^\\s#]+))?"
