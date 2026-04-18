@@ -1,7 +1,6 @@
 # =============================================================================
 # [Architecture]: Declarative Package Schema (Zero-Toil Edition)
-# [Rationale]: Categorized strictly to decouple 'Headless CI Verification' from
-# 'GUI Desktop Provisioning'.
+# [Rationale]: 1Password is excluded as it is a Tier -2 requirement.
 # =============================================================================
 packages:
   headless:
@@ -34,16 +33,13 @@ packages:
         - clipboard
         - eza
         - xh
-      casks:
-        - 1password-cli
+      casks: []
     windows:
-      - AgileBits.1Password.CLI
       - eza-community.eza
       - ducaale.xh
 
   gui:
     darwin:
-      - 1password
       - wezterm@nightly
       - slack
       - google-chrome
@@ -51,7 +47,6 @@ packages:
       - raycast
       - visual-studio-code
     windows:
-      - AgileBits.1Password
       - wez.wezterm.nightly
       - SlackTechnologies.Slack
       - Google.Chrome

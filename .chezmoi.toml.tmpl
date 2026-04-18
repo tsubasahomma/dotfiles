@@ -1,11 +1,9 @@
-{{- /* [Architecture]: Foundation Schema | Phase 25 (Platform-Agnostic Binary Resolution) */ -}}
-{{- /* [Reference]: https://www.chezmoi.io/user-guide/templating/ */ -}}
-{{- /* [Reference]: https://mise.jdx.dev/directories.html */ -}}
+{{- /* [Reference]: https://www.chezmoi.io/user-guide/password-managers/1password/ */ -}}
+{{- /* [Reference]: https://developer.1password.com/docs/cli/reference/management-commands/account */ -}}
 
-# [Rationale]: Permanent source directory binding.
 sourceDir = {{ .chezmoi.sourceDir | quote }}
 
-{{- /* --- 1. Platform & Interop Initialization --- */ -}}
+{{- /* --- 1. Platform & Interop Initialization --- */}}
 {{- $osid := .chezmoi.os -}}
 {{- $arch := .chezmoi.arch -}}
 {{- $home := .chezmoi.homeDir -}}
@@ -31,78 +29,84 @@ sourceDir = {{ .chezmoi.sourceDir | quote }}
 {{-   $brew_prefix = "/home/linuxbrew/.linuxbrew" -}}
 {{- end -}}
 
-# --- 2. Identity State Machine & Dynamic Binary Resolution ---
+{{- /* --- 2. Sovereign Identity Verification (Tier -2 Assertion) --- */}}
 {{- $local_bin := joinPath $home ".local/bin" -}}
-
-{{- /* [Architecture]: Deterministic Mise Binary Discovery */ -}}
-{{- /* [Rationale]: Solves CI Path Drift. Prioritizes the local hermetic path,
-       falling back to system PATH (e.g., GITHUB_PATH injected by mise-action). */ -}}
 {{- $mise_bin := joinPath $local_bin "mise" -}}
 {{- if not (stat $mise_bin) -}}
 {{-   $mise_bin = lookPath "mise" | default $mise_bin -}}
 {{- end -}}
 
-{{- /* [Architecture]: Deterministic Mise Data Directory Discovery */ -}}
-{{- $mise_data_dir := joinPath $home ".local/share/mise" -}}
-{{- if eq $osid "darwin" -}}
-{{-   $mac_default := joinPath $home "Library/Application Support/mise" -}}
-{{-   if stat $mac_default -}}
-{{-     $mise_data_dir = $mac_default -}}
-{{-   end -}}
-{{- end -}}
-{{- if env "MISE_DATA_DIR" -}}
-{{-   $mise_data_dir = env "MISE_DATA_DIR" -}}
-{{- end -}}
-
-{{- $op_bin := joinPath $mise_data_dir "shims/op" -}}
-
+{{- /* [Architecture]: Resolve op binary path without speculation */}}
+{{- $op_bin := "" -}}
 {{- if $is_wsl -}}
 {{-   $win_op := output "powershell.exe" "-NoProfile" "-NonInteractive" "-Command" "(Get-Command op.exe -ErrorAction SilentlyContinue).Source | Write-Host -NoNewline" -}}
 {{-   if ne $win_op ""}}{{$op_bin = output "wslpath" "-u" $win_op | trim}}{{end -}}
+{{- else -}}
+{{-   $op_bin = lookPath "op" -}}
 {{- end -}}
 
-{{- /* [Rationale]: Fallback to system PATH if mise shim is not yet available */ -}}
-{{- if not (stat $op_bin) -}}
-{{-   $op_bin = lookPath "op" | default $op_bin -}}
+{{- /* [Assertion]: 1Password CLI is a Tier -2 prerequisite. */}}
+{{- if and (not (env "CI")) (eq $op_bin "") -}}
+{{-   fail "[FATAL] 1Password CLI ('op') not found. Please install it manually before running chezmoi." -}}
 {{- end -}}
 
-{{- $op_status := "missing" -}}
-{{- if stat $op_bin -}}
+{{- $op_status := "locked" -}}
+{{- if ne $op_bin "" -}}
 {{-   $op_status = output "sh" "-c" (printf "'%s' account get >/dev/null 2>&1 && echo 'ready' || echo 'locked'" $op_bin) | trim -}}
 {{- end -}}
 
-{{- /* --- 3. Parallel Identity Aggregation (Native O(N) Pipeline) --- */ -}}
+{{- /* [Assertion]: 1Password session must be authenticated. */}}
+{{- if and (not (env "CI")) (eq $op_status "locked") -}}
+{{-   fail "[FATAL] 1Password session is locked. Run 'op signin' and try again." -}}
+{{- end -}}
+
+{{- /* --- 3. Content-Addressable Identity Aggregation --- */}}
+{{- /* [Architecture]: Account-Aware Item Discovery. */}}
 {{- $identities := list -}}
-{{- $ssh_keys_hash := "none" -}}
+{{- $ssh_keys_hash_input := "" -}}
 {{- if eq $op_status "ready" -}}
-{{-   $items_json := output $op_bin "item" "list" "--tags" "dotfiles-ssh-key" "--format" "json" -}}
-{{-   if ne $items_json "" -}}
-{{-     $items := fromJson $items_json -}}
-{{-     $ssh_keys_hash = sha256sum $items_json -}}
-{{-     range $items -}}
-{{-       $details := fromJson (output $op_bin "item" "get" .id "--format" "json") -}}
-{{-       $git_name := "" -}}
-{{-       $git_email := "" -}}
-{{-       $git_dirs := "" -}}
-{{-       $key_type := "ed25519" -}}
-{{-       $public_key := "" -}}
-{{-       range $details.fields -}}
-{{-         if and (hasKey . "section") (eq .section.label "dotfiles") -}}
-{{-           if eq .label "dotfiles_git_name" }}{{ $git_name = .value }}{{ end -}}
-{{-           if eq .label "dotfiles_git_email" }}{{ $git_email = .value }}{{ end -}}
-{{-           if eq .label "dotfiles_git_dirs" }}{{ $git_dirs = .value }}{{ end -}}
+{{-   $accounts_json := output $op_bin "account" "list" "--format" "json" -}}
+{{-   if ne $accounts_json "" -}}
+{{-     $accounts := fromJson $accounts_json -}}
+{{-     range $accounts -}}
+{{-       $account_id := .account_uuid -}}
+{{-       $items_json := output $op_bin "item" "list" "--tags" "dotfiles-ssh-key" "--account" $account_id "--format" "json" -}}
+{{-       if and (ne $items_json "") (ne $items_json "[]") -}}
+{{-         $items := fromJson $items_json -}}
+{{-         $ssh_keys_hash_input = printf "%s%s" $ssh_keys_hash_input $items_json -}}
+{{-         range $items -}}
+{{-           $item_id := .id -}}
+{{-           $details := fromJson (output $op_bin "item" "get" $item_id "--account" $account_id "--format" "json") -}}
+{{-           $git_name := "" -}}
+{{-           $git_email := "" -}}
+{{-           $git_dirs := "" -}}
+{{-           $key_type := "ed25519" -}}
+{{-           $public_key := "" -}}
+{{-           range $details.fields -}}
+{{-             if and (hasKey . "section") (eq .section.label "dotfiles") -}}
+{{-               if eq .label "dotfiles_git_name" }}{{ $git_name = .value }}{{ end -}}
+{{-               if eq .label "dotfiles_git_email" }}{{ $git_email = .value }}{{ end -}}
+{{-               if eq .label "dotfiles_git_dirs" }}{{ $git_dirs = .value }}{{ end -}}
+{{-             end -}}
+{{-             if eq .label "key type" }}{{ $key_type = .value }}{{ end -}}
+{{-             if eq .label "public key" }}{{ $public_key = .value }}{{ end -}}
+{{-           end -}}
+{{-           if and (ne $git_name "") (ne $git_email "") (ne $git_dirs "") (ne $public_key "") -}}
+{{-             $key_hash := substr 0 8 (sha256sum $public_key) -}}
+{{-             $identities = append $identities (dict "item_id" $item_id "account_id" $account_id "key_hash" $key_hash "key_type" (lower $key_type) "name" $git_name "email" $git_email "dirs" $git_dirs "public_key" $public_key) -}}
+{{-           end -}}
 {{-         end -}}
-{{-         if eq .label "key type" }}{{ $key_type = .value }}{{ end -}}
-{{-         if eq .label "public key" }}{{ $public_key = .value }}{{ end -}}
-{{-       end -}}
-{{-       if and (ne $git_name "") (ne $git_email "") (ne $git_dirs "") (ne $public_key "") -}}
-{{-         $identities = append $identities (dict "item_id" .id "vault_id" .vault.id "key_type" (lower $key_type) "name" $git_name "email" $git_email "dirs" $git_dirs "public_key" $public_key) -}}
 {{-       end -}}
 {{-     end -}}
 {{-   end -}}
 {{- end -}}
 
-{{- /* --- 4. Tool & SSH Context Resolver --- */ -}}
+{{- $ssh_keys_hash := "none" -}}
+{{- if ne $ssh_keys_hash_input "" -}}
+{{-   $ssh_keys_hash = sha256sum $ssh_keys_hash_input -}}
+{{- end -}}
+
+{{- /* --- 4. Tool & SSH Context Resolver --- */}}
 {{- $ssh_auth_sock := "" -}}
 {{- if eq $osid "darwin" -}}
 {{-   $ssh_auth_sock = joinPath $home "Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock" -}}
@@ -117,11 +121,8 @@ sourceDir = {{ .chezmoi.sourceDir | quote }}
 {{-   $op_sign = lookPath "op-ssh-sign" | default "" -}}
 {{- end -}}
 
-{{- $true_cmd := lookPath "true" | default "/usr/bin/true" -}}
+{{- $true_cmd := lookPath "true" | default "/usr/bin/true" }}
 
-# ================================================================
-# Foundation Schema (Dynamic Context Only)
-# ================================================================
 [data]
     osid = {{ $osid | quote }}
     arch = {{ $arch | quote }}
@@ -132,12 +133,10 @@ sourceDir = {{ .chezmoi.sourceDir | quote }}
     ssh_auth_sock = {{ $ssh_auth_sock | quote }}
     op_status = {{ $op_status | quote }}
     ssh_keys_hash = {{ $ssh_keys_hash | quote }}
-
-    # [Identity]: Dynamic Mapping
     identities = [
     {{- range $i, $id := $identities }}
       {{ if $i }},{{ end }}
-      { item_id = {{ $id.item_id | quote }}, vault_id = {{ $id.vault_id | quote }}, key_type = {{ $id.key_type | quote }}, name = {{ $id.name | quote }}, email = {{ $id.email | quote }}, dirs = {{ $id.dirs | quote }}, public_key = {{ $id.public_key | quote }} }
+      { item_id = {{ $id.item_id | quote }}, account_id = {{ $id.account_id | quote }}, key_hash = {{ $id.key_hash | quote }}, key_type = {{ $id.key_type | quote }}, name = {{ $id.name | quote }}, email = {{ $id.email | quote }}, dirs = {{ $id.dirs | quote }}, public_key = {{ $id.public_key | quote }} }
     {{- end }}
     ]
 

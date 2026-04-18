@@ -4,7 +4,7 @@
 # [Rationale]: Elimination of redundant binary management.
 # =============================================================================
 
-{{- /* 1. Platform Normalization */ -}}
+{{/* 1. Platform Normalization */ -}}
 {{- $os_std := "linux" -}}
 {{- if eq .chezmoi.os "darwin" }}{{ $os_std = "macos" }}{{ end -}}
 
@@ -14,8 +14,7 @@
 {{- $mise_arch := "x64" -}}
 {{- if eq .chezmoi.arch "arm64" }}{{ $mise_arch = "arm64" }}{{ end -}}
 
-{{- /* 2. Resource Definitions */ -}}
-
+{{/* 2. Resource Definitions */ -}}
 {{- if .is_wsl }}
 [".local/bin/win32yank.exe"]
     type = "archive-file"

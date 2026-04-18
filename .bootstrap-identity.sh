@@ -1,42 +1,42 @@
 #!/bin/sh
 # [Architecture]: Tier -1 & 0 Bootstrapping (Sovereign Provisioning)
-# [Reference]: https://www.chezmoi.io/reference/configuration-file/hooks/
+# [Rationale]: Pure POSIX script to ensure 'mise' exists and is correctly resolved.
 # [Reference]: https://mise.jdx.dev/getting-started.html
-# [Rationale]: Pure POSIX script to ensure 'mise' exists. Enforces strict silent idempotency.
 
 set -eu
 
 if [ "${CI:-false}" = "true" ]; then
   exit 0
-fi #
-
-# --- Phase: Tier -1 (Assertion Gate) ---
-if ! command -v curl > /dev/null 2>&1; then
-  echo "❌ [Assertion Failure] 'curl' is required to bootstrap the sovereign infrastructure." >&2
-  exit 1
 fi
 
-# --- Phase: Tier 0 (Environment Setup) ---
+# --- Phase: Tier -1 (Environment Discovery) ---
 LOCAL_BIN="$HOME/.local/bin"
+MISE_SHIMS="$HOME/.local/share/mise/shims"
 mkdir -p "$LOCAL_BIN"
-export PATH="$LOCAL_BIN:$PATH"
 
-# [Architecture]: Deterministic Binary Placement
-# [Rationale]: Explicitly sets MISE_INSTALL_PATH to avoid location drift depending on shell state.
-MISE_BIN="$LOCAL_BIN/mise"
+# [Architecture]: Inject shims and local bin into PATH for hook execution.
+export PATH="$MISE_SHIMS:$LOCAL_BIN:$PATH"
 
-if ! command -v mise > /dev/null 2>&1; then
-  echo "📦 [Tier 0] Provisioning Hermetic mise..." >&2
-  curl -fsSL https://mise.run | MISE_INSTALL_PATH="$MISE_BIN" sh
+# [Architecture]: Deterministic Binary Discovery
+# [Rationale]: Prioritize existing system/local mise before attempting installation.
+if command -v mise >/dev/null 2>&1; then
+  MISE_BIN=$(command -v mise)
+else
+  MISE_BIN="$LOCAL_BIN/mise"
+  if [ ! -f "$MISE_BIN" ]; then
+    echo "📦 [Tier 0] Provisioning Hermetic mise..." >&2
+    if ! command -v curl >/dev/null 2>&1; then
+      echo "❌ [Assertion Failure] 'curl' is required to bootstrap mise." >&2
+      exit 1
+    fi
+    curl -fsSL https://mise.run | MISE_INSTALL_PATH="$MISE_BIN" sh
+    chmod +x "$MISE_BIN"
+  fi
 fi
 
-# [Architecture]: Synchronous & Silent Tier 0 Convergence
-# [Rationale]:
-# MISE_YES=1 bypasses interactive prompts.
-# MISE_QUIET=1 suppresses output if the toolchain is already converged.
+# --- Phase: Tier 0 (Environment Convergence) ---
 export MISE_YES=1
 export MISE_QUIET=1
 
-# Ensure the binary is executable and run the Tier 0 install defined in .mise.toml
-chmod +x "$MISE_BIN"
+# [Rationale]: Execute convergence using the resolved MISE_BIN.
 "$MISE_BIN" install

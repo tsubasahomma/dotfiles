@@ -1,31 +1,109 @@
-# [Architecture]: Zero-Trust Git Configuration (Parallel Identity Model)
+{{- /* [LLM Context]
+SSOT global Git config template for chezmoi.
+
+Design goals:
+1. Cross-platform safety across macOS, Windows, and WSL2 Ubuntu.
+2. Strict identity isolation via includeIf; no global personal identity leakage.
+3. SSH signing via 1Password as the default signing substrate.
+4. Fast interactive UX for large repos without sacrificing correctness.
+5. Human-readable output for Japanese / non-ASCII filenames and UTF-8 commit logs.
+
+Editing rules:
+- Keep global defaults safe and conservative; push repo-specific policy downward.
+- Avoid settings that second-guess filesystem autodetection across OSes.
+- Prefer comments that explain "why this exists" and "what breaks if removed".
+- Be extremely careful with Go template whitespace trimming so rendered gitconfig stays valid.
+*/ -}}
 
 [user]
-    # [Security]: Global identity variables are strictly prohibited.
-    # Identity is deterministically routed via includeIf based on directory context.
+    useConfigOnly = true
 
 [commit]
     gpgsign = true
+    {{/* [UX]
+    Show the staged diff in the commit message buffer.
+    "2" shows both staged and unstaged context, which helps review before finalizing.
+    */ -}}
+    verbose = 2
 
 [tag]
     gpgsign = true
+    forceSignAnnotated = true
 
 [gpg]
+    {{/* [Policy]
+    SSH signatures are the default trust/signing mechanism.
+    Do not set gpg.program here: for SSH signing, gpg.ssh.program is the correct format-specific setting.
+    Leaving gpg.program unset avoids muddying OpenPGP fallback semantics.
+    */ -}}
     format = ssh
-    # [Rationale]: Null-GPG Protocol. Silences execution errors for unmanageable PGP signatures (e.g., GitHub Web Merges)
-    program = {{ .paths.true_cmd | quote }}
 
 [gpg "ssh"]
+    {{/* [Security]
+    1Password-backed SSH signing.
+    allowedSignersFile defines trusted signer identities for verification.
+    revocationFile lets us centrally distrust compromised/rotated signers.
+    */ -}}
     program = {{ .paths.op_sign | quote }}
     allowedSignersFile = {{ (joinPath .paths.xdg_config "git/allowed_signers") | quote }}
+    revocationFile = {{ (joinPath .paths.xdg_config "git/revoked_signers") | quote }}
 
 [core]
     editor = nvim
+    {{/* [UX]
+    Use delta everywhere Git would normally page textual output.
+    */ -}}
     pager = delta
+
+    {{/* [Performance]
+    Built-in fsmonitor + untracked cache + split index + commit-graph is the modern fast path
+    for repeated status/add/checkout operations in medium-to-large working trees.
+    */ -}}
     fsmonitor = true
     untrackedCache = true
-    ignorecase = false
+    splitIndex = true
+    commitGraph = true
+
+    {{/* [Cross-Platform Filesystem]
+    DO NOT force core.ignorecase globally.
+    Git probes it on init/clone based on the underlying filesystem, and overriding it globally
+    is explicitly risky on case-insensitive filesystems used by Windows and default macOS.
+    */ -}}
     precomposeunicode = true
+    protectNTFS = true
+    protectHFS = true
+
+    {{/* [Internationalization]
+    Show Japanese / non-ASCII paths verbatim instead of C-style quoted escapes.
+    This dramatically improves readability in status/log/show/diff outputs.
+    */ -}}
+    quotePath = false
+
+[sequence]
+    {{/* [Workflow]
+    Interactive rebase todo editing should use the same editor consistently,
+    independent of tools that may special-case sequence.editor.
+    */ -}}
+    editor = nvim
+
+[gc]
+    writeCommitGraph = true
+
+[maintenance]
+    {{/* [Performance]
+    Keep automatic maintenance enabled, and choose the geometric strategy so pack maintenance
+    remains efficient over time without requiring manual babysitting.
+    */ -}}
+    auto = true
+    strategy = geometric
+
+[commitGraph]
+    {{/* [Performance]
+    generationVersion=2 and changedPaths improve commit-graph usefulness for history traversal
+    and path-limited queries. Good global default for modern Git.
+    */ -}}
+    generationVersion = 2
+    changedPaths = true
 
 [index]
     threads = true
@@ -38,27 +116,77 @@
     side-by-side = true
     line-numbers = true
     syntax-theme = Catppuccin Mocha
+    hyperlinks = true
 
 [merge]
     conflictstyle = zdiff3
+    {{/* [Merge Ergonomics]
+    Add one-line commit summaries into merge messages.
+    directoryRenames=conflict is the conservative cross-platform choice:
+    detect directory renames, but surface ambiguity instead of silently guessing.
+    */ -}}
+    log = true
+    directoryRenames = conflict
+
+[rerere]
+    {{/* [Automation]
+    Reuse recorded conflict resolutions. Extremely high leverage for rebase-heavy workflows.
+    */ -}}
+    enabled = true
+    autoupdate = true
 
 [diff]
     colorMoved = default
-    algorithm = patience
+    {{/* [Readability]
+    histogram + indent-heuristic tends to produce more reviewable hunks than Myers in many codebases.
+    Keep rename detection on, but avoid global copy detection because it is more expensive and
+    better requested explicitly in aliases when needed.
+    */ -}}
+    algorithm = histogram
+    indent-heuristic = true
+    mnemonicPrefix = true
+    renames = true
+    submodule = log
 
 [pull]
     rebase = true
 
 [fetch]
+    {{/* [Safety + Performance]
+    Keep local remote-tracking state tidy and update commit-graph after fetch.
+    Do NOT set fetch.all=true globally; in multi-remote repos that changes semantics too broadly.
+    */ -}}
     prune = true
+    pruneTags = true
+    writeCommitGraph = true
+    negotiationAlgorithm = skipping
 
 [push]
     autoSetupRemote = true
     followTags = true
+    {{/* [Safety]
+    current: only push the currently checked-out branch.
+    useForceIfIncludes hardens the force-push path by preferring the safer includes check.
+    */ -}}
+    default = current
+    useBitmaps = true
+    useForceIfIncludes = true
 
 [rebase]
     autoStash = true
     updateRefs = true
+    autoSquash = true
+    {{/* [Safety]
+    Fail loudly if commits disappear unexpectedly during interactive rebase editing.
+    */ -}}
+    missingCommitsCheck = error
+
+[branch]
+    sort = -committerdate
+    {{/* [Workflow]
+    New tracking branches should naturally participate in the rebase-based pull workflow.
+    */ -}}
+    autoSetupRebase = always
 
 [init]
     defaultBranch = main
@@ -66,36 +194,109 @@
 [column]
     ui = auto
 
-[branch]
-    sort = -committerdate
+[submodule]
+    {{/* [Performance]
+    Parallelize recursive submodule fetches.
+    */ -}}
+    fetchJobs = 8
+    recurse = true
+
+[status]
+    {{/* [UX]
+    Surface stash count in status output; surprisingly useful when autoStash is common.
+    */ -}}
+    showStash = true
+
+[help]
+    {{/* [UX]
+    Prompt before typo autocorrection instead of executing immediately.
+    */ -}}
+    autocorrect = prompt
+
+[i18n]
+    {{/* [Internationalization]
+    Be explicit that commit messages are UTF-8 and should be rendered as UTF-8.
+    This is the least surprising choice for mixed English/Japanese teams in 2026.
+    */ -}}
+    commitEncoding = utf-8
+    logOutputEncoding = utf-8
+
+[safe]
+    {{/* [Security]
+    Refuse implicit operation on bare repositories unless explicitly intended.
+    Good hardening for a global config shared across many environments.
+    */ -}}
+    bareRepository = explicit
+
+[transfer]
+    {{/* [Security]
+    fsckObjects validates transferred objects more strictly.
+    credentialsInUrl=die rejects remotes that embed credentials directly in URLs.
+    */ -}}
+    fsckObjects = true
+    credentialsInUrl = die
 
 [alias]
+    # -- Core --
     st = status -sb
+    sw = switch
+    sc = switch -c
+    root = rev-parse --show-toplevel
+    optimize = maintenance run
+
+    # -- Contextual Diff --
+    # [Intent]: reviewer/LLM friendly staged diff with:
+    # - -W: function context
+    # - -U10: broader local context
+    # - -M -C: rename/copy awareness on demand
+    # - histogram + indent heuristic: readability bias
+    ctx = diff --histogram -M -C -W -U10 --inter-hunk-context=3 --indent-heuristic
+
+    # -- History & Inspection --
     last = log -1 HEAD --stat
-    fix = !git-absorb
-    amend = commit --amend --no-edit
     lg = log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit --date=relative
     adog = log --graph --all --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit --date=relative
+    review = diff --cached --stat --conflicted
+
+    # -- Workflow --
+    fix = !git-absorb
+    amend = commit --amend --no-edit
 
 # ================================================================
 # Context-Aware Identity Routing (Policy Layer)
 # ================================================================
+# [Invariant]
+# - Identity routing is directory-based and deterministic.
+# - Paths are expanded from SSOT data in chezmoi.
+# - "gitdir/i:" is used so matching is case-insensitive, which is safer on default macOS
+#   and Windows filesystems.
+# - Each included file may define user.name, user.email, user.signingKey, etc.
 
 {{- $home := .paths.home }}
 {{- $xdg_config := .paths.xdg_config }}
 {{- range .identities }}
-{{-   $name := .name }}
 {{-   $email := .email }}
-{{-   $id_str := printf "%s_%s" .vault_id .item_id }}
-{{-   $config_path := joinPath $xdg_config (printf "git/identities/config_%s" $id_str) }}
+{{-   $key_hash := .key_hash }}
+{{-   $config_path := joinPath $xdg_config (printf "git/identities/config_%s_%s" $email $key_hash) }}
 {{-   $dirs := splitList "," .dirs }}
 {{-   range $dirs }}
 {{-     $normalized_dir := trim . }}
 {{-     if hasPrefix "~/" $normalized_dir }}
 {{-       $normalized_dir = joinPath $home (trimPrefix "~/" $normalized_dir) }}
 {{-     end }}
-# [Policy]: {{ $name }} ({{ $email }})
-[includeIf "gitdir:{{ $normalized_dir }}/**"]
+[includeIf "gitdir/i:{{ $normalized_dir }}/**"]
     path = {{ $config_path | quote }}
 {{-   end }}
 {{- end }}
+
+{{- /* [Optional / Aggressive]
+Uncomment only after verifying all Git clients touching your repos are modern enough.
+
+[feature]
+    manyFiles = true
+
+Rationale:
+- Enables a bundle of modern large-repo performance defaults.
+- Useful, but intentionally not forced in SSOT because older Git clients can be unhappy
+  with some implied index-related settings.
+*/ -}}

@@ -1,22 +1,14 @@
-{{- /* [Reference]: https://mise.jdx.dev/tasks/ */ -}}
-# [Architecture]: Single Source of Truth (SSOT) for Toolchains.
-# [Rationale]: All versions are deterministically locked via Renovate (.chezmoidata/tools.yaml).
+{{- /* [Architecture]: Single Source of Truth (SSOT) for Toolchains. */ -}}
+{{- /* [Reference]: https://mise.jdx.dev/dev-tools/github-tokens.html#credential-command */ -}}
 
 [env]
-# [Architecture]: Globally bypass Sigstore/Metadata verification to avoid OID parse errors.
 MISE_SIGSTORE = "false"
 MISE_VERIFY_METADATA = "false"
 MISE_PYTHON_GITHUB_ATTESTATIONS = "false"
-
-# [Architecture]: Ecosystem Persistence
 PNPM_HOME = "{{ .paths.xdg_data }}/pnpm"
 
 [tools]
-# [Architecture]: Explicitly map Neovim to the 'aqua' backend registry.
-# [Rationale]: Bypasses 'vfox' Lua sandbox limitations to ensure GITHUB_TOKEN is
-# natively consumed by Aqua's Go-based resolver, eliminating HTTP 403 Rate Limits.
 "aqua:neovim/neovim" = "{{ .mise_tools.neovim }}"
-
 {{- range $tool, $version := .mise_tools }}
 {{- if ne $tool "neovim" }}
 "{{ $tool }}" = "{{ $version }}"
@@ -29,13 +21,11 @@ yes = true
 experimental = true
 asdf_compat = false
 
-# =============================================================================
-# [Architecture]: Declarative Task Engine
-# =============================================================================
+[settings.github]
+credential_command = "{{ .paths.op }} read 'op://Development/mise-cli-token/credential'"
 
 [tasks.setup]
 description = "Provision all ecosystem dependencies"
-# [Rationale]: Removed 'setup:nvim' to ensure strict static convergence during chezmoi apply.
 depends = ["setup:nvim-provider", "setup:pnpm", "setup:bat", "setup:vale"]
 
 [tasks."setup:nvim-provider"]
@@ -45,7 +35,6 @@ run = '''
 set -euo pipefail
 NVIM_VENV="{{ .paths.xdg_data }}/nvim/venv"
 if [[ -d "$NVIM_VENV" && ! -x "$NVIM_VENV/bin/python" ]]; then
-  echo "⚠️  [Runtime] Detected broken venv at $NVIM_VENV. Recreating..."
   rm -rf "$NVIM_VENV"
 fi
 if [[ ! -d "$NVIM_VENV" ]]; then
@@ -55,26 +44,12 @@ uv pip install --python "$NVIM_VENV/bin/python" pynvim --upgrade
 '''
 
 [tasks."setup:pnpm"]
-description = "Configure pnpm global directory"
 run = "pnpm config set global-bin-dir \"$PNPM_HOME\""
 
-# =============================================================================
-# [Architecture]: Application Integration & Mutation Tasks
-# =============================================================================
-
 [tasks."integrate:nvim"]
-description = "Application Integration: Neovim Plugins"
-# [Rationale]: Explicit task for post-verification CI environments or manual local sync.
 depends = ["setup:nvim-provider"]
 run = '''
 #!/usr/bin/env bash
 set -euo pipefail
-MISE_BIN="{{ .paths.mise }}"
-echo "📦 [Neovim] Synchronizing application layer state..."
-"$MISE_BIN" exec aqua:neovim/neovim -- nvim --headless "+Lazy! restore" +qa
-echo "✅ [Neovim] Integration complete."
+"{{ .paths.mise }}" exec aqua:neovim/neovim -- nvim --headless "+Lazy! restore" +qa
 '''
-
-[tasks."update:lazy-lock"]
-description = "Atomic Neovim plugin update and PR generation"
-depends = ["setup:nvim-provider"]

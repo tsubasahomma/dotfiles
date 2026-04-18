@@ -1,7 +1,4 @@
 # [Architecture]: Sovereign Tier 0 (Bootstrap Toolchain)
 # [Reference]: https://mise.jdx.dev/continuous-integration.html
-# [Rationale]: Defines the absolute minimum hermetic binaries required to boot the dotfiles engine.
-
 [tools]
 chezmoi = "2.70.1"
-"1password-cli" = "2.33.1"

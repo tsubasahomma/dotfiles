@@ -1,0 +1,13 @@
+{{- /* [Architecture]: Sovereign Identity Config Template */ -}}
+{{- /* [Security]: Decoupled template to prevent script pollution. */ -}}
+# [Architecture]: Auto-generated Identity Config for {{ .name }}
+
+[user]
+    name = {{ .name | quote }}
+    email = {{ .email | quote }}
+    # [Security]: Use Literal Public Key format to decouple from physical files for signing.
+    signingkey = key::{{ trim .public_key }}
+
+[core]
+    # [Security]: Physical file path remains required for sshCommand authentication routing.
+    sshCommand = "ssh -i {{ .home }}/.ssh/id_{{ .key_type }}_{{ .email }}_{{ .key_hash }}.pub -o IdentitiesOnly=yes"

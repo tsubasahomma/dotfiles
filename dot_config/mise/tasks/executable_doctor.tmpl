@@ -38,7 +38,7 @@ if "$OP_BIN" account get > /dev/null 2>&1; then
 
   {{- if .identities }}
   {{- range .identities }}
-  ID_CONF="{{ $.paths.xdg_config }}/git/identities/config_{{ .vault_id }}_{{ .item_id }}"
+  ID_CONF="{{ $.paths.xdg_config }}/git/identities/config_{{ .email }}_{{ .key_hash }}"
   if [[ -f "$ID_CONF" ]]; then
     AUTH_EMAIL=$(git config -f "$ID_CONF" user.email 2>/dev/null || echo "")
     if [[ "$AUTH_EMAIL" == "{{ .email }}" ]]; then

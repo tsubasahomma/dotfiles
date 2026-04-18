@@ -1,8 +1,6 @@
 {{ if .is_wsl -}}
 #!/bin/sh
 # [chezmoi-script]: L0 (POSIX Shell) Tiering
-# [Architecture]: Declarative Infrastructure via Schema Injection
-# [Rationale]: Abstracts package installation using '.chezmoidata/packages.yaml'.
 # [Trigger]: Schema Hash: {{ include ".chezmoidata/packages.yaml" | sha256sum }}
 
 set -eu
@@ -20,46 +18,17 @@ install_winget_app() {
   fi
 }
 
-install_winget_volatile() {
-  app_id=$1
-  if ! winget.exe list --id "$app_id" > /dev/null 2>&1; then
-    echo "📦 [Infrastructure] Installing Volatile Package: $app_id..."
-    set +e
-    winget.exe install --id "$app_id" --silent --accept-package-agreements --accept-source-agreements --ignore-security-hash
-    WINGET_STATUS=$?
-    set -e
-
-    if [ "$WINGET_STATUS" -ne 0 ]; then
-      echo "❌ [Security Conflict] WinGet failed to install volatile package '$app_id' (Exit: $WINGET_STATUS)."
-      if [ "$WINGET_STATUS" -eq 2 ]; then
-        echo "👉 Action Required (Run as Administrator in Windows PowerShell):"
-        echo "   winget settings --enable InstallerHashOverride"
-      fi
-      exit "$WINGET_STATUS"
-    fi
-  else
-    echo "✅ [Infrastructure] $app_id is already installed on Windows."
-  fi
-}
-
 echo "📦 [Infrastructure] Provisioning Windows dependencies..."
 
-# --- Headless Infrastructure (Always Provisioned) ---
+# --- Headless Infrastructure ---
 {{ range .packages.headless.windows -}}
 install_winget_app {{ . | quote }}
 {{ end -}}
 
 {{- if not (env "CI") }}
-# =============================================================================
-# Desktop & Media Provisioning (Bypassed in CI)
-# =============================================================================
-
+# --- Desktop & Media ---
 {{ range .packages.gui.windows -}}
-{{- if eq . "wez.wezterm.nightly" }}
-install_winget_volatile {{ . | quote }}
-{{- else }}
 install_winget_app {{ . | quote }}
-{{- end }}
 {{ end -}}
 
 {{ range .packages.fonts.windows -}}
