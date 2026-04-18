@@ -24,7 +24,7 @@ mise_tools:
   "bat": "0.26.1" # renovate: datasource=github-releases packageName=sharkdp/bat
   "ripgrep": "15.1.0" # renovate: datasource=github-releases packageName=BurntSushi/ripgrep
   "fd": "10.4.2" # renovate: datasource=github-releases packageName=sharkdp/fd
-  "starship": "1.24.2" # renovate: datasource=github-releases packageName=starship/starship
+  "starship": "1.25.0" # renovate: datasource=github-releases packageName=starship/starship
   "fzf": "v0.71.0" # renovate: datasource=github-releases packageName=junegunn/fzf
   "github:dandavison/delta": "0.19.2" # renovate: datasource=github-releases packageName=dandavison/delta
   "cargo:git-absorb": "0.9.0" # renovate: datasource=crate packageName=git-absorb
@@ -40,7 +40,7 @@ mise_tools:
   "npm:@hubspot/cli": "8.4.0" # renovate: datasource=npm packageName=@hubspot/cli
   # Data Processing
   "github:noahgorstein/jqp": "0.8.0" # renovate: datasource=github-releases packageName=noahgorstein/jqp
-  "go:github.com/mikefarah/yq/v4": "4.52.5" # renovate: datasource=github-releases packageName=mikefarah/yq
+  "go:github.com/mikefarah/yq/v4": "4.53.2" # renovate: datasource=github-releases packageName=mikefarah/yq
   "go:github.com/rs/curlie": "1.8.2" # renovate: datasource=github-releases packageName=rs/curlie
   # Container Engine & Kubernetes Ecosystem
   "docker-cli": "26.0.0" # renovate: datasource=github-releases packageName=docker/cli
