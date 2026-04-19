@@ -18,7 +18,7 @@ mise_tools:
   "tree-sitter": "0.26.8" # renovate: datasource=github-releases packageName=tree-sitter/tree-sitter
   "lazygit": "0.61.1" # renovate: datasource=github-releases packageName=jesseduffield/lazygit
   "gh": "2.90.0" # renovate: datasource=github-releases packageName=cli/cli
-  "go:github.com/jesseduffield/lazydocker": "0.25.0" # renovate: datasource=github-releases packageName=jesseduffield/lazydocker
+  "go:github.com/jesseduffield/lazydocker": "0.25.2" # renovate: datasource=github-releases packageName=jesseduffield/lazydocker
   "pre-commit": "4.5.1" # renovate: datasource=github-releases packageName=pre-commit/pre-commit
   "vale": "3.14.1" # renovate: datasource=github-releases packageName=errata-ai/vale
 
