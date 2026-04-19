@@ -27,40 +27,9 @@ credential_command = "{{ .paths.op }} read 'op://Development/mise-cli-token/cred
 
 # =============================================================================
 # [Architecture]: Declarative Task Orchestration
+# [Rationale]: Logic is decoupled into File Tasks for maintainability.
 # =============================================================================
 
 [tasks.setup]
 description = "Provision all ecosystem dependencies"
 depends = ["setup:security", "setup:nvim-provider", "setup:pnpm", "setup:bat", "setup:vale"]
-
-[tasks."setup:nvim-provider"]
-description = "Provision Hermetic Neovim Python Provider (pynvim)"
-run = '''
-#!/usr/bin/env bash
-set -euo pipefail
-
-NVIM_VENV="{{ .paths.xdg_data }}/nvim/venv"
-if [[ -d "$NVIM_VENV" && ! -x "$NVIM_VENV/bin/python" ]]; then
-  rm -rf "$NVIM_VENV"
-fi
-
-if [[ ! -d "$NVIM_VENV" ]]; then
-  uv venv "$NVIM_VENV"
-fi
-
-uv pip install --python "$NVIM_VENV/bin/python" pynvim --upgrade
-'''
-
-[tasks."setup:pnpm"]
-description = "Configure global bin directory for pnpm"
-run = "pnpm config set global-bin-dir \"$PNPM_HOME\""
-
-[tasks."integrate:nvim"]
-description = "Headless plugin restoration for Neovim"
-depends = ["setup:nvim-provider"]
-run = '''
-#!/usr/bin/env bash
-set -euo pipefail
-
-"{{ .paths.mise }}" exec aqua:neovim/neovim -- nvim --headless "+Lazy! restore" +qa
-'''

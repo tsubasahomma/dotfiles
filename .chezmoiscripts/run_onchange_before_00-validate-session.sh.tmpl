@@ -1,17 +1,14 @@
 #!/bin/sh
 {{ "" -}}
 # [Architecture]: Sovereign Session Validation
-# [Rationale]: Prevents cascading failures by asserting 1Password availability. Pure POSIX 'sh' ensures execution on clean environments before Zsh is provisioned.
+# [Rationale]: Prevents cascading failures by asserting 1Password availability.
 # [Reference]: https://developer.1password.com/docs/cli/reference/commands/account
 
 set -eu
-
-{{ if eq .op_status "missing" -}}
+{{- if eq .op_status "missing" }}
 echo "⚠️  [Identity] 1Password CLI not detected. Basic provisioning will proceed without identities." >&2
 exit 0
-{{- end }}
-
-{{ if eq .op_status "locked" -}}
+{{- else if eq .op_status "locked" }}
 if [ "${CI:-false}" = "true" ]; then
   exit 0
 fi

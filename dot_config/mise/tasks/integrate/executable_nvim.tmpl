@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# [MISE] description="Headless plugin restoration for Neovim"
+# [MISE] depends=["setup:nvim-provider"]
+
+set -euo pipefail
+
+# [Rationale]: Redirecting stdin from /dev/null prevents hanging on interactive prompts.
+echo "📦 [Neovim] Converging plugins via lazy.nvim..."
+"{{ .paths.mise }}" exec aqua:neovim/neovim -- nvim --headless "+Lazy! restore" +qa < /dev/null

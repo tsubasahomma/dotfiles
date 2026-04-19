@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# [MISE] description="Configure global bin directory for pnpm"
+{{/* [Reference]: https://mise.jdx.dev/tasks/file-tasks.html */}}{{ "" -}}
+
+set -euo pipefail
+
+# [Architecture]: Force PNPM_HOME to align with XDG Base Directory specification
+PNPM_HOME="{{ .paths.xdg_data }}/pnpm"
+
+echo "📦 [Node] Configuring pnpm global bin directory..."
+pnpm config set global-bin-dir "$PNPM_HOME"
+
+echo "✅ [Node] pnpm configuration converged."

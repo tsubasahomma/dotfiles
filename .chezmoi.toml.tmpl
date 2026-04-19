@@ -134,10 +134,10 @@ sourceDir = {{ .chezmoi.sourceDir | quote }}
     op_status = {{ $op_status | quote }}
     ssh_keys_hash = {{ $ssh_keys_hash | quote }}
     identities = [
-    {{- range $i, $id := $identities }}
-      {{ if $i }},{{ end }}
+    {{- range $i, $id := $identities -}}
+      {{- if $i }},{{ end -}}
       { item_id = {{ $id.item_id | quote }}, account_id = {{ $id.account_id | quote }}, key_hash = {{ $id.key_hash | quote }}, key_type = {{ $id.key_type | quote }}, name = {{ $id.name | quote }}, email = {{ $id.email | quote }}, dirs = {{ $id.dirs | quote }}, public_key = {{ $id.public_key | quote }} }
-    {{- end }}
+    {{- end -}}
     ]
 
     [data.paths]

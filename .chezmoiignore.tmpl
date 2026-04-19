@@ -1,53 +1,59 @@
 {{- /* [Reference]: https://www.chezmoi.io/reference/special-files/chezmoiignore/ */ -}}
 # =============================================================================
-# 1. Secret & Identity Protection (Zero-Leak)
+# [Architecture]: Deterministic Target Ignore Protocol (Zero-Drift)
+# [Rationale]: White-list first approach for managed Infrastructure directories.
+# Ensures declarative directory existence while ignoring dynamic side-effects.
 # =============================================================================
+
+# --- 1. Secret & Cryptographic Boundaries ---
 **/.ssh/id_*
 **/.ssh/*.pub
 **/.ssh/known_hosts*
 **/.ssh/*.backup
-.1password
-.gnupg
+.gnupg/**
+# [Rationale]: Ignore dynamic socket noise but preserve the base directory.
+.1password/**
+!.1password/
+!.1password/.keep
 
-# =============================================================================
-# 2. Infrastructure Whitelist
-# =============================================================================
-# [Rationale]: Ensure essential state directories are NOT ignored so chezmoi
-# can manage directory structures (like SSH sockets).
+# --- 2. Transient Cache & State Directories ---
+# [Rationale]: Declarative directory structure (via .keep) is managed by chezmoi.
+# Files generated inside (e.g., completions) are ignored.
+.cache/**
+!.cache/
+!.cache/zsh/
+!.cache/zsh/.keep
+
+.local/share/pnpm/**
+.local/state/**
 !.local/state/ssh/
 !.local/state/ssh/sockets/
 !.local/state/ssh/sockets/.keep
 
-# =============================================================================
-# 3. System & Temporary Noise (Global Patterns)
-# =============================================================================
+# --- 3. Dynamic Artifacts & Noise ---
 .DS_Store
 Thumbs.db
 **/*.log
-**/*.history
-**/*_history
+**/.*_history
 **/.zcompdump*
-.cache/**
-
-# [Rationale]: Exclude ephemeral lockfiles from being managed or applied to $HOME.
 package-lock.json
 pnpm-lock.yaml
 
-# =============================================================================
-# 4. Repository Meta & Tier 0 Isolation
-# =============================================================================
-# [Architecture]: Protect Sovereign Tier 0 boundaries.
-.mise.toml
-
+# --- 4. Repository Orchestration (Strict Isolation) ---
+# [Rationale]: Do NOT deploy repository management files to $HOME.
 README.md
 LICENSE
 ARCHITECTURE.md
-.github
+.github/**
 repomix*
+.editorconfig
+.gitattributes
+.gitignore
+.pre-commit-config.yaml
+renovate.json5
+.mise.toml
 
-# =============================================================================
-# 5. OS-Specific Isolation
-# =============================================================================
+# --- 5. OS-Specific Overrides ---
 {{ if ne .osid "darwin" -}}
-Library
+Library/**
 {{ end -}}

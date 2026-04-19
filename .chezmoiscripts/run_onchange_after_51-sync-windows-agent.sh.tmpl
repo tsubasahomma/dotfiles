@@ -1,28 +1,17 @@
 #!/bin/zsh
-# =============================================================================
+{{ "" -}}
 # [Architecture]: WSL2 to Windows 1Password Agent Sync (Phase 51)
-# [Rationale]: The 1Password SSH Agent runs on the Windows host. Linux config
-# must be mirrored to the Windows AppData directory to ensure visibility.
-# [Trigger]: {{ include "dot_config/1Password/ssh/private_agent.toml.tmpl" | sha256sum }}
-# =============================================================================
 
 set -euo pipefail
 
 {{ if .is_wsl -}}
-if [[ "{{ .windows_user }}" == "unknown" ]]; then
-  echo "⚠️  [Infrastructure] Windows user unresolved. Agent sync aborted."
-  exit 1
-fi
+WIN_HOME=$(powershell.exe -NoProfile -NonInteractive -Command '[Console]::Write($env:USERPROFILE)' | tr -d '\r')
+DST_CONFIG_WIN="$(wslpath -u "$WIN_HOME")/AppData/Local/1Password/config/ssh/agent.toml"
 
 SRC_CONFIG="{{ .paths.xdg_config }}/1Password/ssh/agent.toml"
-DST_CONFIG_WIN="/mnt/c/Users/{{ .windows_user }}/AppData/Local/1Password/config/ssh/agent.toml"
-
 if [[ -f "$SRC_CONFIG" ]]; then
-  echo "🌉 [Infrastructure] Syncing 1Password Agent configuration to Windows host..."
+  echo "🌉 [Infrastructure] Syncing 1Password Agent to Windows..."
   mkdir -p "$(dirname "$DST_CONFIG_WIN")"
   cp -f "$SRC_CONFIG" "$DST_CONFIG_WIN"
-  echo "✅ [Infrastructure] Agent visibility scoped on Windows."
 fi
-{{- else -}}
-echo "⏭️  [Infrastructure] Not a WSL environment. 1Password Agent sync skipped."
 {{- end }}
