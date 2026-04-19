@@ -1,25 +1,30 @@
-#!/bin/zsh
-# [chezmoi-script]: Source: '.chezmoiscripts/run_...' vs Dry-run: '.chezmoiscripts/...'
-# [Rationale]: Acts purely as an orchestrator. All imperative logic is abstracted into mise tasks.
-# dot_config/mise/config.toml.tmpl hash: {{ include "dot_config/mise/config.toml.tmpl" | sha256sum }}
+#!/usr/bin/env bash
+{{/* [Reference]: https://www.chezmoi.io/user-guide/use-scripts-to-perform-actions/ */}}{{ "" -}}
+# [Architecture]: Runtime Convergence Engine (Mise Delegate)
+# [Trigger]: config.toml.tmpl hash: {{ include "dot_config/mise/config.toml.tmpl" | sha256sum }}
+# [Trigger]: tools.yaml hash: {{ include ".chezmoidata/tools.yaml" | sha256sum }}
 
 set -euo pipefail
 
-# [Architecture]: Runtime Path Injection
+# [Architecture]: Subshell Context Isolation
+# [Rationale]: Path injection is required here because this subshell executes
+# before Zsh initialization is fully bootstrapped with the new configuration.
 export PNPM_HOME="{{ .paths.xdg_data }}/pnpm"
 export PATH="$PNPM_HOME:{{ .paths.home }}/.local/bin:$PATH"
 
 MISE_BIN="{{ .paths.mise }}"
 
 if [[ ! -x "$MISE_BIN" ]]; then
-  echo "❌ [Error] Hermetic mise binary not found at $MISE_BIN."
+  echo "❌ [Fatal] Hermetic mise binary not found at $MISE_BIN." >&2
   exit 1
 fi
 
-echo "📦 [Runtime Phase 1] Installing/Updating CLI tools via static mise binary..."
+echo "📦 [Phase 20] Executing Runtime Convergence via Mise..."
+
+# [Architecture]: Phase 1 - Tool Installation (Idempotent)
 "$MISE_BIN" install
 
-echo "📦 [Runtime Phase 2] Provisioning Ecosystem Dependencies..."
+# [Architecture]: Phase 2 - Task Orchestration (Idempotent Setup)
 "$MISE_BIN" run setup
 
-echo "✅ [Runtime] Runtime setup complete."
+echo "✅ [Phase 20] Runtime convergence complete."

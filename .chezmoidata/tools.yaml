@@ -5,6 +5,7 @@
 # =============================================================================
 
 mise_tools:
+  "usage": "3.2.0" # renovate: datasource=github-releases packageName=jdx/usage
   "neovim": "0.12.1" # renovate: datasource=github-releases packageName=neovim/neovim
   "node": "24.15.0" # renovate: datasource=node-version
   "python": "3.14.4" # renovate: datasource=python-version
@@ -12,6 +13,7 @@ mise_tools:
   "rust": "1.95.0" # renovate: datasource=github-releases packageName=rust-lang/rust
   "go": "1.26.2" # renovate: datasource=golang-version
   "uv": "0.11.7" # renovate: datasource=github-releases packageName=astral-sh/uv
+
   # Development Infrastructure
   "tree-sitter": "0.26.8" # renovate: datasource=github-releases packageName=tree-sitter/tree-sitter
   "lazygit": "0.61.1" # renovate: datasource=github-releases packageName=jesseduffield/lazygit
@@ -19,6 +21,7 @@ mise_tools:
   "go:github.com/jesseduffield/lazydocker": "0.25.0" # renovate: datasource=github-releases packageName=jesseduffield/lazydocker
   "pre-commit": "4.5.1" # renovate: datasource=github-releases packageName=pre-commit/pre-commit
   "vale": "3.14.1" # renovate: datasource=github-releases packageName=errata-ai/vale
+
   # Modern CLI Utilities
   "zoxide": "0.9.9" # renovate: datasource=github-releases packageName=ajeetdsouza/zoxide
   "bat": "0.26.1" # renovate: datasource=github-releases packageName=sharkdp/bat
@@ -28,29 +31,36 @@ mise_tools:
   "fzf": "v0.71.0" # renovate: datasource=github-releases packageName=junegunn/fzf
   "github:dandavison/delta": "0.19.2" # renovate: datasource=github-releases packageName=dandavison/delta
   "cargo:git-absorb": "0.9.0" # renovate: datasource=crate packageName=git-absorb
+
   # Formatting & Linting Engines
   "shfmt": "3.13.1" # renovate: datasource=github-releases packageName=mvdan/sh
   "stylua": "2.4.1" # renovate: datasource=github-releases packageName=JohnnyMorganz/StyLua
   "npm:prettier": "3.8.3" # renovate: datasource=npm packageName=prettier
+
   # Neovim Ecosystem Providers
   "npm:neovim": "5.4.0" # renovate: datasource=npm packageName=neovim
   "npm:@mermaid-js/mermaid-cli": "11.12.0" # renovate: datasource=npm packageName=@mermaid-js/mermaid-cli
   "npm:repomix": "1.13.1" # renovate: datasource=npm packageName=repomix
+
   # Web Development & Node.js Ecosystem
   "npm:@hubspot/cli": "8.4.0" # renovate: datasource=npm packageName=@hubspot/cli
+
   # Data Processing
   "github:noahgorstein/jqp": "0.8.0" # renovate: datasource=github-releases packageName=noahgorstein/jqp
   "go:github.com/mikefarah/yq/v4": "4.53.2" # renovate: datasource=github-releases packageName=mikefarah/yq
   "go:github.com/rs/curlie": "1.8.2" # renovate: datasource=github-releases packageName=rs/curlie
+
   # Container Engine & Kubernetes Ecosystem
   "docker-cli": "26.0.0" # renovate: datasource=github-releases packageName=docker/cli
   "kubectl": "1.29.3" # renovate: datasource=github-releases packageName=kubernetes/kubectl
   "helm": "4.1.4" # renovate: datasource=github-releases packageName=helm/helm
   "k9s": "0.50.18" # renovate: datasource=github-releases packageName=derailed/k9s
+
   # Infrastructure as Code (IaC)
   "opentofu": "1.11.6" # renovate: datasource=github-releases packageName=opentofu/opentofu
   "tflint": "0.61.0" # renovate: datasource=github-releases packageName=terraform-linters/tflint
   "terragrunt": "1.0.1" # renovate: datasource=github-releases packageName=gruntwork-io/terragrunt
+
   # SRE Modern Utilities
   "github:ClementTsang/bottom": "0.12.3" # renovate: datasource=github-releases packageName=ClementTsang/bottom
   "cargo:du-dust": "1.0.0" # renovate: datasource=crate packageName=du-dust

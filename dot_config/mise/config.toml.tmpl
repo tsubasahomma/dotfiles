@@ -1,5 +1,6 @@
-{{- /* [Architecture]: Single Source of Truth (SSOT) for Toolchains. */ -}}
-{{- /* [Reference]: https://mise.jdx.dev/dev-tools/github-tokens.html#credential-command */ -}}
+{{- /* [Reference]: https://mise.jdx.dev/configuration.html */ -}}
+{{- /* [Reference]: https://mise.jdx.dev/tasks/ */ -}}
+# [Architecture]: Single Source of Truth (SSOT) for Toolchains and Setup Tasks.
 
 [env]
 MISE_SIGSTORE = "false"
@@ -24,32 +25,42 @@ asdf_compat = false
 [settings.github]
 credential_command = "{{ .paths.op }} read 'op://Development/mise-cli-token/credential'"
 
+# =============================================================================
+# [Architecture]: Declarative Task Orchestration
+# =============================================================================
+
 [tasks.setup]
 description = "Provision all ecosystem dependencies"
-depends = ["setup:nvim-provider", "setup:pnpm", "setup:bat", "setup:vale"]
+depends = ["setup:security", "setup:nvim-provider", "setup:pnpm", "setup:bat", "setup:vale"]
 
 [tasks."setup:nvim-provider"]
 description = "Provision Hermetic Neovim Python Provider (pynvim)"
 run = '''
 #!/usr/bin/env bash
 set -euo pipefail
+
 NVIM_VENV="{{ .paths.xdg_data }}/nvim/venv"
 if [[ -d "$NVIM_VENV" && ! -x "$NVIM_VENV/bin/python" ]]; then
   rm -rf "$NVIM_VENV"
 fi
+
 if [[ ! -d "$NVIM_VENV" ]]; then
   uv venv "$NVIM_VENV"
 fi
+
 uv pip install --python "$NVIM_VENV/bin/python" pynvim --upgrade
 '''
 
 [tasks."setup:pnpm"]
+description = "Configure global bin directory for pnpm"
 run = "pnpm config set global-bin-dir \"$PNPM_HOME\""
 
 [tasks."integrate:nvim"]
+description = "Headless plugin restoration for Neovim"
 depends = ["setup:nvim-provider"]
 run = '''
 #!/usr/bin/env bash
 set -euo pipefail
+
 "{{ .paths.mise }}" exec aqua:neovim/neovim -- nvim --headless "+Lazy! restore" +qa
 '''

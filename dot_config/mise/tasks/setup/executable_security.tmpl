@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+# [MISE] description="Enforce strict permissions on dynamically generated assets"
+{{/* [Reference]: https://mise.jdx.dev/tasks/file-tasks.html */}}{{ "" -}}
+
+set -euo pipefail
+
+echo "🔒 [Security] Enforcing permissions on dynamic cryptographic assets..."
+
+SSH_DIR="{{ .paths.home }}/.ssh"
+
+# [Architecture]: 0700 directory permissions are now declaratively guaranteed
+# by chezmoi's 'private_' source state attributes. This script only manages
+# files dynamically extracted post-provisioning.
+
+if [[ -d "$SSH_DIR" ]]; then
+  # Assert 0600 on dynamically extracted 1Password SSH identities.
+  find "$SSH_DIR" -type f -name "id_*" ! -name "*.pub" -exec chmod 0600 {} \;
+  echo "  ✅ Secured: SSH private keys (0600)"
+fi
+
+echo "✅ [Security] Cryptographic asset permissions converged."

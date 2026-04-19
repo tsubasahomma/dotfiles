@@ -1,11 +1,26 @@
 {{- /* [Rationale]: XDG Base Directory bootstrap. Minimal footprint in $HOME. */ -}}
 export ZDOTDIR="{{ .paths.xdg_config }}/zsh"
 
-# [Architecture]: Deep XDG Integration (Phase 15)
+# [Architecture]: Deep XDG Integration
 export XDG_CONFIG_HOME="{{ .paths.xdg_config }}"
 export XDG_DATA_HOME="{{ .paths.xdg_data }}"
 export XDG_STATE_HOME="{{ .paths.xdg_state }}"
 export XDG_CACHE_HOME="{{ .paths.xdg_cache }}"
+
+# =============================================================================
+# [Architecture]: Strict XDG Purism (Zero $HOME Pollution)
+# =============================================================================
+{{/* [Reference]: https://nodejs.org/api/repl.html#environment-variable-options */ -}}
+export NODE_REPL_HISTORY="$XDG_STATE_HOME/node/repl_history"
+{{/* [Reference]: https://docs.npmjs.com/cli/v11/using-npm/config#environment-variables */ -}}
+export npm_config_userconfig="$XDG_CONFIG_HOME/npm/npmrc"
+{{/* [Reference]: https://docs.npmjs.com/cli/v11/using-npm/config#environment-variables */ -}}
+export npm_config_cache="$XDG_CACHE_HOME/npm"
+{{/* [Reference]: https://docs.python.org/3/using/cmdline.html#envvar-PYTHON_HISTORY */ -}}
+{{/* [Rationale]: Natively supported in Python 3.13+ to prevent ~/.python_history pollution. */ -}}
+export PYTHON_HISTORY="$XDG_STATE_HOME/python/history"
+
+# =============================================================================
 
 # [Architecture]: WSL2 to Windows Interop (Identity Relay)
 # [Rationale]: Propagate authentication context to the Windows host seamlessly.

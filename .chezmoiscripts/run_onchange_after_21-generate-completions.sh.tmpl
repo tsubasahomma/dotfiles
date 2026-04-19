@@ -34,6 +34,11 @@ generate_comp() {
 }
 
 # --- Phase 1: Completion Generation (Verified Specs) ---
+# [Reference]: https://mise.jdx.dev/cli/completion.html#mise-completion-shell
+# [Rationale]: Mise itself is the orchestrator, so it bypasses `mise exec` mapping.
+echo "  📦 [Completions] Generating for: mise" >&2
+"$MISE_BIN" completion zsh > "$COMP_DIR/_mise"
+
 generate_comp "gh" gh completion -s zsh > "$COMP_DIR/_gh"
 generate_comp "ripgrep" rg --generate complete-zsh > "$COMP_DIR/_rg"
 generate_comp "fd" fd --gen-completions zsh > "$COMP_DIR/_fd"
