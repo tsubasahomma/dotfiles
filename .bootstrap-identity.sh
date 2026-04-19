@@ -38,5 +38,14 @@ fi
 export MISE_YES=1
 export MISE_QUIET=1
 
-# [Rationale]: Execute convergence using the resolved MISE_BIN.
-"$MISE_BIN" install
+# [Architecture]: Strict Dependency Isolation (Sandboxing)
+# [Rationale]: Breaks the circular dependency deadlock. By temporarily re-routing
+# XDG_CONFIG_HOME to an ephemeral directory, mise is forced to evaluate ONLY the
+# deterministic Tier 0 .mise.toml in the current working directory.
+# This prevents corrupted Tier 1 global configs (~/.config/mise/config.toml) from
+# halting the Chezmoi bootstrap process, granting Chezmoi the ability to self-heal.
+_MISE_SANDBOX=$(mktemp -d)
+trap 'rm -rf "$_MISE_SANDBOX"' EXIT
+
+echo "🔐 [Tier 0] Executing Sandboxed Convergence..." >&2
+env XDG_CONFIG_HOME="$_MISE_SANDBOX" "$MISE_BIN" install

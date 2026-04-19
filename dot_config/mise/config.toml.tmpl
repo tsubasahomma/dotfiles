@@ -1,6 +1,6 @@
 {{- /* [Reference]: https://mise.jdx.dev/configuration.html */ -}}
-{{- /* [Reference]: https://mise.jdx.dev/tasks/ */ -}}
-# [Architecture]: Single Source of Truth (SSOT) for Toolchains and Setup Tasks.
+# [Architecture]: Single Source of Truth (SSOT) for Toolchains.
+# [Rationale]: All tools are dynamically expanded from FQIs in tools.yaml.
 
 [env]
 MISE_SIGSTORE = "false"
@@ -9,11 +9,8 @@ MISE_PYTHON_GITHUB_ATTESTATIONS = "false"
 PNPM_HOME = "{{ .paths.xdg_data }}/pnpm"
 
 [tools]
-"aqua:neovim/neovim" = "{{ .mise_tools.neovim }}"
 {{- range $tool, $version := .mise_tools }}
-{{- if ne $tool "neovim" }}
 "{{ $tool }}" = "{{ $version }}"
-{{- end }}
 {{- end }}
 
 [settings]
@@ -24,11 +21,6 @@ asdf_compat = false
 
 [settings.github]
 credential_command = "{{ .paths.op }} read 'op://Development/mise-cli-token/credential'"
-
-# =============================================================================
-# [Architecture]: Declarative Task Orchestration
-# [Rationale]: Logic is decoupled into File Tasks for maintainability.
-# =============================================================================
 
 [tasks.setup]
 description = "Provision all ecosystem dependencies"

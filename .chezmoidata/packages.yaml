@@ -68,3 +68,4 @@ packages:
       - ffmpeg
       - imagemagick
       - graphviz
+      - exiftool
