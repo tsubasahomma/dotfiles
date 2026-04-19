@@ -41,3 +41,17 @@ export RIPGREP_CONFIG_PATH="$XDG_CONFIG_HOME/ripgrep/config"
 {{/* [Reference]: https://vale.sh/docs/vale-ini#search-process */}}
 # [Architecture]: Vale Configuration Routing
 export VALE_CONFIG_PATH="$XDG_CONFIG_HOME/vale/vale.ini"
+
+# =============================================================================
+# [Architecture]: Infrastructure Foundation
+# [Rationale]: Enforce XDG compliance for Cloud SDK and Nx.
+# =============================================================================
+{{/* [Reference]: https://docs.cloud.google.com/sdk/docs/configurations */}}
+export CLOUDSDK_CONFIG="$XDG_CONFIG_HOME/gcloud"
+
+# [Architecture]: Hermetic Python Binding for gcloud
+# [Rationale]: Bind strictly to mise-managed python shim to ensure execution determinism.
+export CLOUDSDK_PYTHON="{{ .paths.xdg_data }}/mise/shims/python"
+
+{{/* [Reference]: https://nx.dev/docs/reference/environment-variables */}}
+export NX_CACHE_DIRECTORY="$XDG_CACHE_HOME/nx"

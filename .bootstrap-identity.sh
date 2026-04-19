@@ -2,6 +2,7 @@
 # [Architecture]: Tier -1 & 0 Bootstrapping (Sovereign Provisioning)
 # [Rationale]: Pure POSIX script to ensure 'mise' exists and is correctly resolved.
 # [Reference]: https://mise.jdx.dev/getting-started.html
+# [Reference]: https://www.chezmoi.io/user-guide/advanced/install-your-password-manager-on-init/
 
 set -eu
 
@@ -42,10 +43,14 @@ export MISE_QUIET=1
 # [Rationale]: Breaks the circular dependency deadlock. By temporarily re-routing
 # XDG_CONFIG_HOME to an ephemeral directory, mise is forced to evaluate ONLY the
 # deterministic Tier 0 .mise.toml in the current working directory.
-# This prevents corrupted Tier 1 global configs (~/.config/mise/config.toml) from
-# halting the Chezmoi bootstrap process, granting Chezmoi the ability to self-heal.
 _MISE_SANDBOX=$(mktemp -d)
 trap 'rm -rf "$_MISE_SANDBOX"' EXIT
 
-echo "🔐 [Tier 0] Executing Sandboxed Convergence..." >&2
+# [Architecture]: Tier 0 (Bootstrap Isolation)
+# [Rationale]: Force mise to ignore any existing global configuration by
+# re-routing MISE_GLOBAL_CONFIG_FILE to a non-existent path in the sandbox.
+# This ensures target-side "poisoned" configs cannot break the bootstrap.
+export MISE_GLOBAL_CONFIG_FILE="$_MISE_SANDBOX/config.toml"
+
+# [Rationale]: Silicon on success. No echo is emitted unless an error occurs.
 env XDG_CONFIG_HOME="$_MISE_SANDBOX" "$MISE_BIN" install

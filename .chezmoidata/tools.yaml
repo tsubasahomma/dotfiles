@@ -1,8 +1,6 @@
 # =============================================================================
 # [Architecture]: Hermetic Toolchain Integrity (Sovereign Tier 1+)
 # [Rationale]: Managed via mise global config. Versions locked via Renovate.
-# Core language runtimes and standard tools utilize native mise implementations
-# to strictly enforce Zero-Speculation.
 # [Reference]: https://mise.jdx.dev/dev-tools/backends/
 # =============================================================================
 
@@ -56,12 +54,16 @@ mise_tools:
   # --- 8. Cloud & Platform Orchestration ---
   "docker-cli": "26.0.0" # renovate: datasource=github-releases packageName=docker/cli
   "go:github.com/jesseduffield/lazydocker": "0.25.2" # renovate: datasource=github-releases packageName=jesseduffield/lazydocker
-  "kubectl": "1.29.3" # renovate: datasource=github-releases packageName=kubernetes/kubectl
+  "kubectl": "1.29.3" # renovate: datasource=github-releases packageName=kubernetes/kubernetes
   "helm": "4.1.4" # renovate: datasource=github-releases packageName=helm/helm
   "aqua:derailed/k9s": "0.50.18" # renovate: datasource=github-releases packageName=derailed/k9s
   "opentofu": "1.11.6" # renovate: datasource=github-releases packageName=opentofu/opentofu
   "tflint": "0.61.0" # renovate: datasource=github-releases packageName=terraform-linters/tflint
   "terragrunt": "1.0.1" # renovate: datasource=github-releases packageName=gruntwork-io/terragrunt
+
+  # [Rationale]: gcloud (Google Cloud SDK) follows a proprietary release channel.
+  # Automated tracking via GitHub is not feasible; requires manual intervention.
+  "gcloud": "565.0.0"
 
   # --- 9. SRE Observability & Diagnostics ---
   "aqua:ClementTsang/bottom": "0.12.3" # renovate: datasource=github-releases packageName=ClementTsang/bottom

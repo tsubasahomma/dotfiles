@@ -69,3 +69,29 @@ echo "#compdef hs" > "$COMP_DIR/_hs"
 for f in "$INIT_DIR"/*.zsh(N); do
   zcompile -U "$f"
 done
+
+# --- Phase 3: Dynamic Toolchain Symlinking & JIT Completion ---
+echo "  🔗 [Symlinks] Provisioning deterministic targets for Lazy Loading..." >&2
+GCLOUD_DIR=$("$MISE_BIN" where gcloud 2>/dev/null || true)
+if [[ -n "$GCLOUD_DIR" && -f "$GCLOUD_DIR/completion.zsh.inc" ]]; then
+  ln -sf "$GCLOUD_DIR/completion.zsh.inc" "$INIT_DIR/gcloud.zsh.inc"
+
+  echo "  📦 [Completions] Generating JIT stub for: gcloud" >&2
+  cat << EOF > "$COMP_DIR/_gcloud"
+#compdef gcloud
+# [Architecture]: JIT (Just-In-Time) Completion Loader
+# [Rationale]: Defers bashcompinit and python argcomplete loading until the first TAB press.
+# This completely eliminates startup latency while preserving full auto-completion features.
+
+local gcloud_inc="${INIT_DIR}/gcloud.zsh.inc"
+if [[ -f "\$gcloud_inc" ]]; then
+  # 1. Load the heavy bashcompinit and register the actual completion handler
+  source "\$gcloud_inc" 2>/dev/null
+
+  # 2. Forward the current completion request to the newly registered handler
+  if (( \$+functions[_python_argcomplete] )); then
+    _python_argcomplete "\$@"
+  fi
+fi
+EOF
+fi
