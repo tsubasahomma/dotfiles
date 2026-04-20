@@ -58,7 +58,7 @@ mise_tools:
   "helm": "4.1.4" # renovate: datasource=github-releases packageName=helm/helm
   "aqua:derailed/k9s": "0.50.18" # renovate: datasource=github-releases packageName=derailed/k9s
   "opentofu": "1.11.6" # renovate: datasource=github-releases packageName=opentofu/opentofu
-  "tflint": "0.61.0" # renovate: datasource=github-releases packageName=terraform-linters/tflint
+  "tflint": "0.62.0" # renovate: datasource=github-releases packageName=terraform-linters/tflint
   "terragrunt": "1.0.1" # renovate: datasource=github-releases packageName=gruntwork-io/terragrunt
 
   # [Rationale]: gcloud (Google Cloud SDK) follows a proprietary release channel.
