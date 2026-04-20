@@ -3,55 +3,84 @@
 [![Infrastructure Compliance](https://github.com/tsubasahomma/dotfiles/actions/workflows/compliance.yml/badge.svg)](https://github.com/tsubasahomma/dotfiles/actions/workflows/compliance.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Built with chezmoi](https://img.shields.io/badge/built%20with-chezmoi-50b0f0.svg)](https://chezmoi.io/)
-[![Managed by mise](https://img.shields.io/badge/managed%20by-mise-ff4e41.svg)](https://mise.jdx.jdx.dev/)
 
-> **"Infrastructure as a Deterministic State."**
->
-> This repository is a strict provisioning engine designed to enforce a zero-drift developer environment across macOS and Linux platforms.
+A zero-drift, deterministic provisioning engine for macOS Tahoe (26.4.1+) and WSL2 (Ubuntu 24.04+).
 
----
+## Overview
 
-## 🏛 Architecture Philosophy
+This repository enforces infrastructure as a deterministic state. It leverages `chezmoi` for state management and `mise-en-place` for hermetic toolchain isolation, using 1Password as the Single Source of Truth (SSOT) for identity and secrets.
 
-The infrastructure remains invariant by adhering to core determinism laws:
+## Prerequisites (Tier -2)
 
-1. **Zero-Speculation Identity**: Identities are resolved via **1Password CLI**.
-2. **Absolute Idempotency**: The state is guaranteed to converge.
-3. **Hermetic Toolchain**: System-level pollution is avoided by pinning all runtimes via `mise`.
-4. **XDG Purism**: 100% compliance with the XDG Base Directory Specification.
+The following manual configurations are required to establish the foundational security and communication gates before automation.
 
-## 🛠 Prerequisites (Tier -2)
+### 1. Universal (macOS & WSL2)
 
-The following MUST be manually established before initializing the engine. These are **Absolute Requirements** and are not managed by this repository to avoid circular dependencies.
+- **1Password Desktop**: [Install and sign in](https://1password.com/downloads/).
+- **1Password CLI (op)**: [Install](https://developer.1password.com/docs/cli/get-started/) and enable [App Integration](https://developer.1password.com/docs/cli/app-integration/).
+- **1Password SSH Key Schema**: The engine requires specific metadata to route Git identities. Each SSH Key item must be tagged and structured as follows:
 
-1. **1Password Desktop**: [Download and install](https://1password.com/downloads/).
-2. **1Password CLI (`op`)**: [Install the CLI binary](https://developer.1password.com/docs/cli/get-started/).
-3. **Identity Authentication**:
-   - Run `op signin`.
-   - Ensure you are authenticated and can run `op item list`.
-4. **Credential Setup**:
-   - Create a Document or Login item in 1Password at `op://Development/mise-cli-token/credential` containing a GitHub Personal Access Token (PAT) with `read:packages` scope.
-5. **SSH Key Items**: Create SSH Key items in 1Password tagged `dotfiles-ssh-key`. Each must have a `dotfiles` section with:
-   - `dotfiles_git_name`: Display Name
-   - `dotfiles_git_email`: Git Email
-   - `dotfiles_git_dirs`: Comma-separated paths (for example, `~/src/work,~/src/oss`)
+| Attribute   | Value / Field Label  | Requirement                                               |
+| :---------- | :------------------- | :-------------------------------------------------------- |
+| **Tag**     | `dotfiles-ssh-key`   | Mandatory for discovery                                   |
+| **Section** | `dotfiles`           | Field grouping                                            |
+| **Field**   | `dotfiles_git_name`  | Your Git display name                                     |
+| **Field**   | `dotfiles_git_email` | Your Git email address                                    |
+| **Field**   | `dotfiles_git_dirs`  | Comma-separated globs (e.g., `~/src/work,~/src/personal`) |
 
-## 🚀 Initialization
+#### Quick Provisioning (CLI)
 
-Once the prerequisites are met, bootstrap the environment:
+You can create a compliant item using the `op` CLI (assuming a 'Development' vault exists):
+
+```bash
+op item create --category='SSH Key' --title='Identity: Personal' \
+  --vault='Development' --tags='dotfiles-ssh-key' \
+  'dotfiles.dotfiles_git_name[text]=Your Name' \
+  'dotfiles.dotfiles_git_email[email]=user@example.com' \
+  'dotfiles.dotfiles_git_dirs[text]=~/src/github.com/yourname/,~/src/gitlab.com/yourname/*'
+```
+
+### 2. macOS Specific
+
+- **Full Disk Access (FDA)**: Grant FDA to your terminal emulator (e.g., WezTerm) in `System Settings > Privacy & Security > Full Disk Access` to prevent TCC-related deadlocks during provisioning.
+
+### 3. WSL2 Specific
+
+- **npiperelay.exe**: Ensure `npiperelay.exe` is available in the Windows PATH to bridge 1Password CLI communication between WSL2 and the Windows host.
+- **Non-interactive Sudo**: Configure `visudo` to allow the infrastructure engine to provision system packages without interactive prompts.
+  ```bash
+  # Execute 'sudo visudo' and append the following:
+  ${USER} ALL=(ALL) NOPASSWD:ALL
+  ```
+
+## Installation (Bootstrap)
+
+Initialize the engine using the following command. This command injects a `GITHUB_TOKEN` to bypass API rate limits during the initial toolchain convergence.
 
 ```zsh
+# Read the PAT from 1Password (SSOT) or provide it manually
+export GITHUB_TOKEN=$(op read "op://Development/mise-cli-token/credential")
+
+# Initialize and apply the state
 sh -c "$(curl -fsLS get.chezmoi.io)" -- init --apply tsubasahomma
 ```
 
-## 🩺 Diagnostics
+## Verification
 
-Run the doctor command to verify identity mapping and authentication status:
+Run the diagnostic suite to verify toolchain integrity and identity routing.
 
 ```zsh
 mise run doctor
 ```
 
-## ⚖️ License
+## Maintenance
 
-MIT License.
+- **Update Toolchains**: `mise install`
+- **Update Neovim Locks**: `mise run update:lazy-lock`
+- **Check Drift**: `chezmoi verify`
+
+## References
+
+- [chezmoi Documentation](https://www.chezmoi.io/user-guide/command-overview/)
+- [mise-en-place Documentation](https://mise.jdx.dev/)
+- [1Password CLI Reference](https://developer.1password.com/docs/cli/reference/)
