@@ -12,7 +12,21 @@ install_winget_app() {
   app_id=$1
   if ! winget.exe list --id "$app_id" > /dev/null 2>&1; then
     echo "📦 [Infrastructure] Installing $app_id on Windows..."
-    winget.exe install --id "$app_id" --silent --accept-package-agreements --accept-source-agreements
+
+    # [Architecture]: Volatile Package Handling
+    # [Rationale]: Nightly builds often suffer from manifest hash drift.
+    # Conditional bypass is required to ensure non-interactive convergence.
+    extra_flags=""
+    if echo "$app_id" | grep -q "nightly"; then
+      echo "  ⚠️  [Security] Volatile package detected. Bypassing hash verification: $app_id"
+      extra_flags="--ignore-security-hash"
+    fi
+
+    winget.exe install --id "$app_id" \
+      --silent \
+      --accept-package-agreements \
+      --accept-source-agreements \
+      $extra_flags
   else
     echo "✅ [Infrastructure] $app_id is already installed on Windows."
   fi
