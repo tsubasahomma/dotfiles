@@ -12,7 +12,7 @@ This repository enforces infrastructure as a deterministic state. It leverages `
 
 ## Prerequisites (Tier -2)
 
-The following manual configurations are required to establish the foundational security and communication gates before automation.
+The following manual configurations are **Hard Blocking Requirements**. They must be established to satisfy foundational security and communication gates before automation can evaluate identity templates.
 
 ### 1. Universal (macOS & WSL2)
 
@@ -33,7 +33,7 @@ The following manual configurations are required to establish the foundational s
 You can create a compliant item using the `op` CLI (assuming a 'Development' vault exists):
 
 ```bash
-op item create --category='SSH Key' --title='Identity: Personal' \
+op item create --category='SSH Key' --title='Personal' \
   --vault='Development' --tags='dotfiles-ssh-key' \
   'dotfiles.dotfiles_git_name[text]=Your Name' \
   'dotfiles.dotfiles_git_email[email]=user@example.com' \
@@ -42,11 +42,14 @@ op item create --category='SSH Key' --title='Identity: Personal' \
 
 ### 2. macOS Specific
 
-- **Full Disk Access (FDA)**: Grant FDA to your terminal emulator (e.g., WezTerm) in `System Settings > Privacy & Security > Full Disk Access` to prevent TCC-related deadlocks during provisioning.
+- **Full Disk Access (FDA)**: Grant FDA to your terminal emulator (e.g., WezTerm) in `System Settings > Privacy & Security > Full Disk Access`. This is required to prevent TCC-related deadlocks during automated provisioning of protected directories.
 
 ### 3. WSL2 Specific
 
-- **npiperelay.exe**: Ensure `npiperelay.exe` is available in the Windows PATH to bridge 1Password CLI communication between WSL2 and the Windows host.
+- **npiperelay.exe (Architecture Dependency)**:
+  - **Requirement**: Must be available in the Windows PATH.
+  - **Installation**: `winget.exe install albertony.npiperelay`
+  - **Rationale**: The `chezmoi init` phase executes Go templates that call the 1Password CLI (`op`) to fetch identity metadata. Without the relay bridging the WSL2 socket to the Windows Named Pipe, the template evaluation will fail, blocking the entire bootstrap.
 - **Non-interactive Sudo**: Configure `visudo` to allow the infrastructure engine to provision system packages without interactive prompts.
   ```bash
   # Execute 'sudo visudo' and append the following:
@@ -62,7 +65,7 @@ Initialize the engine using the following command. This command injects a `GITHU
 export GITHUB_TOKEN=$(op read "op://Development/mise-cli-token/credential")
 
 # Initialize and apply the state
-sh -c "$(curl -fsLS get.chezmoi.io)" -- init --apply tsubasahomma
+sh -c "$(curl -fsLS get.chezmoi.io)" -- init --apply <your-github-username>
 ```
 
 ## Verification
@@ -78,6 +81,7 @@ mise run doctor
 - **Update Toolchains**: `mise install`
 - **Update Neovim Locks**: `mise run update:lazy-lock`
 - **Check Drift**: `chezmoi verify`
+- **De-provisioning (Purge)**: Restore the host to its original state by following the [Purge Sequence in ARCHITECTURE.md](./ARCHITECTURE.md).
 
 ## References
 

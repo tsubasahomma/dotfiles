@@ -17,6 +17,55 @@ The provisioning process follows a strict tiered model to resolve dependencies w
 | **Tier 2**  | Runtime Convergence      | Phase 20 scripts provision language runtimes and Neovim providers via absolute paths.                        |
 | **Tier 3**  | Trust Aggregation        | Phase 50+ scripts extract SSH keys and generate Git `allowed_signers`.                                       |
 
+### De-provisioning (Purge) Sequence
+
+To reverse the infrastructure state and restore the host to a clean environment, execute the following steps in order. This process adheres to the "Inverse Function" principle of managed infrastructure.
+
+#### 1. Selective Managed State Removal
+
+Remove only the files and directories explicitly managed by the engine. This minimizes impact on unmanaged local data.
+
+```zsh
+# Remove managed targets relative to HOME
+chezmoi managed --path-style absolute -0 | xargs -0 rm -rf --
+
+# Remove chezmoi's own configuration and source state
+chezmoi purge
+```
+
+#### 2. Platform-Specific Teardown
+
+**macOS (Apple Silicon)**:
+
+- **Package Force-Sync**: Remove all brews, casks, and taps not defined in the managed Brewfile.
+  ```zsh
+  brew list --cask | xargs -I {} brew uninstall --cask --zap {}
+  NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/uninstall.sh)"
+  sudo rm -rf /opt/homebrew
+  ```
+- **TCC Revocation**: Manually revoke "Full Disk Access" for the terminal emulator in System Settings.
+
+**WSL2 (Ubuntu)**:
+
+- **Service Termination**: Stop and disable the user-level identity bridge.
+  ```zsh
+  systemctl --user disable --now 1password-bridge.service
+  rm -f "$HOME/.1password/agent.sock"
+  ```
+- **Shell Reversion**: Restore the default system shell.
+  ```zsh
+  sudo chsh -s /bin/bash $USER
+  ```
+
+#### 3. Local State Wipe (Optional / Aggressive)
+
+> [!WARNING]
+> The following command permanently deletes all application configurations, local data, and caches (including shell history). Execute only if a total environment reset is required.
+
+```zsh
+rm -rf "$HOME/.config" "$HOME/.local" "$HOME/.cache"
+```
+
 ### Identity Bridge Sequence (WSL2)
 
 The engine utilizes `npiperelay` and `socat` to bridge the WSL2 UNIX socket to the Windows 1Password Named Pipe.
@@ -53,6 +102,6 @@ The environment strictly adheres to the XDG Base Directory Specification to ensu
 | **State**  | `~/.local/state` | Persistent but variable metadata (e.g., history). |
 | **Cache**  | `~/.cache`       | Ephemeral data and generated completions.         |
 
-## Rationale for `.bootstrap-identity.sh`
+## Rationale for [`.bootstrap-identity.sh`](./.bootstrap-identity.sh)
 
 The Tier -1 script exists because `chezmoi` templates cannot be evaluated before the toolchain itself is converged. By temporarily re-routing `XDG_CONFIG_HOME`, the engine forces `mise` to process only the local Tier 0 configuration, ensuring an invariant starting state for the rest of the application.
