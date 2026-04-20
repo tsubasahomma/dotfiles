@@ -6,6 +6,10 @@
 set -euo pipefail
 setopt extended_glob
 
+# [Architecture]: Path Sovereignty for Local Binaries
+# [Rationale]: Required to resolve symlinked GUI CLI tools (e.g., wezterm).
+export PATH="{{ .paths.home }}/.local/bin:$PATH"
+
 {{/* [Architecture]: FQI Alignment */ -}}
 {{- $id_gh := "aqua:cli/cli" -}}
 {{- $id_ripgrep := "aqua:BurntSushi/ripgrep" -}}
@@ -60,6 +64,14 @@ echo "#compdef hs" > "$COMP_DIR/_hs"
 "$MISE_BIN" exec "{{ $id_delta }}" -- delta --generate-completion zsh 2>/dev/null > "$COMP_DIR/_delta" || true
 
 "{{ .chezmoi.executable }}" completion zsh > "$COMP_DIR/_chezmoi"
+
+# [Architecture]: GUI Proxy CLI Integration
+# [Rationale]: wezterm is symlinked into .local/bin. Executing a Windows binary
+# via WSL interop produces CRLF output. Must pipe through `tr` to prevent parsing failures.
+if command -v wezterm >/dev/null 2>&1; then
+  echo "  📦 [Completions] Generating for: wezterm" >&2
+  wezterm shell-completion --shell zsh 2>/dev/null | tr -d '\r' > "$COMP_DIR/_wezterm" || true
+fi
 
 # --- Phase 2: Static Init Generation & Compilation ---
 "$MISE_BIN" activate zsh > "$INIT_DIR/mise.zsh"

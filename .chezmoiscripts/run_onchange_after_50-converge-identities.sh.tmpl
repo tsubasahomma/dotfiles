@@ -12,11 +12,15 @@
 set -euo pipefail
 
 SSH_DIR="{{ .paths.home }}/.ssh"
+SSH_STATE_DIR="{{ .paths.xdg_state }}/ssh"
+SSH_SOCKET_DIR="$SSH_STATE_DIR/sockets"
 GIT_CONFIG_DIR="{{ .paths.xdg_config }}/git/identities"
 ALLOWED_SIGNERS="{{ .paths.xdg_config }}/git/allowed_signers"
 
-mkdir -p "$SSH_DIR" "$GIT_CONFIG_DIR" "$(dirname "$ALLOWED_SIGNERS")"
-chmod 700 "$SSH_DIR"
+# [Architecture]: Ensure all SSH/Git state directories exist.
+# Including XDG-compliant state and socket directories to prevent bind errors.
+mkdir -p "$SSH_DIR" "$SSH_STATE_DIR" "$SSH_SOCKET_DIR" "$GIT_CONFIG_DIR" "$(dirname "$ALLOWED_SIGNERS")"
+chmod 700 "$SSH_DIR" "$SSH_STATE_DIR"
 
 # [Architecture]: Enforce clean state for generated artifacts.
 rm -rf "$GIT_CONFIG_DIR"

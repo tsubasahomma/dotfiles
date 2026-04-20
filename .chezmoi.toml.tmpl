@@ -1,5 +1,5 @@
+{{- /* [Reference]: https://developer.1password.com/docs/ssh/integrations/wsl/ */ -}}
 {{- /* [Reference]: https://www.chezmoi.io/user-guide/password-managers/1password/ */ -}}
-{{- /* [Reference]: https://developer.1password.com/docs/cli/reference/management-commands/account */ -}}
 
 sourceDir = {{ .chezmoi.sourceDir | quote }}
 
@@ -61,7 +61,6 @@ sourceDir = {{ .chezmoi.sourceDir | quote }}
 {{- end -}}
 
 {{- /* --- 3. Content-Addressable Identity Aggregation --- */}}
-{{- /* [Architecture]: Account-Aware Item Discovery. */}}
 {{- $identities := list -}}
 {{- $ssh_keys_hash_input := "" -}}
 {{- if eq $op_status "ready" -}}
@@ -114,9 +113,13 @@ sourceDir = {{ .chezmoi.sourceDir | quote }}
 {{-   $ssh_auth_sock = joinPath $home ".1password/agent.sock" -}}
 {{- end -}}
 
+{{- /* [Architecture]: Deterministic Signature Helper Resolution (Cross-Platform) */ -}}
 {{- $op_sign := "" -}}
 {{- if eq $osid "darwin" -}}
 {{-   $op_sign = "/Applications/1Password.app/Contents/MacOS/op-ssh-sign" -}}
+{{- else if $is_wsl -}}
+{{-   $win_op_sign := output "powershell.exe" "-NoProfile" "-NonInteractive" "-Command" "foreach ($cmd in 'op-ssh-sign-wsl.exe', 'op-ssh-sign.exe') { $p = (Get-Command $cmd -ErrorAction SilentlyContinue).Source; if ($p) { Write-Host -NoNewline $p; break } }" -}}
+{{-   if ne $win_op_sign ""}}{{$op_sign = output "wslpath" "-u" $win_op_sign | trim}}{{end -}}
 {{- else -}}
 {{-   $op_sign = lookPath "op-ssh-sign" | default "" -}}
 {{- end -}}

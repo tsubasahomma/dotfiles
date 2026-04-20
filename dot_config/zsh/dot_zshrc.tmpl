@@ -1,4 +1,5 @@
 {{- /* [Reference]: https://google.github.io/styleguide/shellguide.html */ -}}
+{{- /* [Reference]: https://wezfurlong.org/wezterm/shell-integration.html */ -}}
 # [Architecture]: Deterministic Zsh Configuration (Sovereign Anchor)
 # [Rationale]: Optimized for < 20ms startup. Enforces Hermetic Path Sovereignty.
 
@@ -40,6 +41,17 @@ alias find='fd'
 alias grep='rg'
 alias g='git'
 alias lg='lazygit'
+
+# --- Terminal Integration (OSC 7) ---
+# [Architecture]: Directory Synchronization for Modern Terminals
+# [Rationale]: Emits OSC 7 escape sequence to inform terminal of CWD.
+# Required for WezTerm + WSL2 to preserve directory context in new tabs.
+_osc7_cwd() {
+  printf "\033]7;file://%s%s\a" "${HOST}" "${PWD}"
+}
+autoload -Uz add-zsh-hook
+add-zsh-hook chpwd _osc7_cwd
+_osc7_cwd
 
 # --- Completion Engine ---
 ZSH_COMPDUMP_DIR="$XDG_CACHE_HOME/zsh"

@@ -42,11 +42,11 @@ Editing rules:
     {{/* [Security]
     1Password-backed SSH signing.
     allowedSignersFile defines trusted signer identities for verification.
-    revocationFile lets us centrally distrust compromised/rotated signers.
+    [CRITICAL]: Do NOT set revocationFile. 1Password's op-ssh-sign does not yet
+    support the '-r' flag passed by Git, which causes verification failure.
     */ -}}
     program = {{ .paths.op_sign | quote }}
     allowedSignersFile = {{ (joinPath .paths.xdg_config "git/allowed_signers") | quote }}
-    revocationFile = {{ (joinPath .paths.xdg_config "git/revoked_signers") | quote }}
 
 [core]
     editor = nvim
