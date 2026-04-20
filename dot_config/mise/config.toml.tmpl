@@ -3,14 +3,24 @@
 # [Rationale]: All tools are dynamically expanded from FQIs in tools.yaml.
 
 [env]
-MISE_SIGSTORE = "false"
-MISE_VERIFY_METADATA = "false"
+# [Rationale]: Skip Python GitHub attestation verification to reduce latency/noise.
+# [Reference]: https://mise.jdx.dev/lang/python.html
 MISE_PYTHON_GITHUB_ATTESTATIONS = "false"
 PNPM_HOME = "{{ .paths.xdg_data }}/pnpm"
 
 [tools]
+# [Architecture]: Deterministic Layering
+# [Rationale]: Explicitly define core runtimes before derivative backends (npm:, cargo:).
+"node" = "{{ index .mise_tools "node" }}"
+"python" = "{{ index .mise_tools "python" }}"
+"go" = "{{ index .mise_tools "go" }}"
+"rust" = "{{ index .mise_tools "rust" }}"
+
+# --- Toolchain Expansion ---
 {{- range $tool, $version := .mise_tools }}
+{{- if not (or (eq $tool "node") (eq $tool "python") (eq $tool "go") (eq $tool "rust")) }}
 "{{ $tool }}" = "{{ $version }}"
+{{- end }}
 {{- end }}
 
 [settings]
