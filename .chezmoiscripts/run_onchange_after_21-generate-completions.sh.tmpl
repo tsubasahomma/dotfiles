@@ -1,5 +1,4 @@
 #!/bin/zsh
-{{ "" -}}
 # [Architecture]: Compile-time Completion & Init Engine (Deterministic Phase)
 # [Trigger]: Ecosystem Schema: {{ include ".chezmoidata/tools.yaml" | sha256sum }}
 
@@ -107,3 +106,13 @@ if [[ -f "\$gcloud_inc" ]]; then
 fi
 EOF
 fi
+
+# --- Phase 4: External Declarative Assets Compilation ---
+echo "  ⚡ [Optimization] Compiling external declarative completions..." >&2
+EXT_COMP_DIR="{{ .paths.home }}/.config/zsh/completions"
+
+# [Architecture]: Selective Wordcode Compilation
+# [Rationale]: Ignores bash core files (e.g., git-completion.bash) to prevent Zsh parser errors.
+for f in "$EXT_COMP_DIR"/_*(N-.); do
+  zcompile -U "$f"
+done
