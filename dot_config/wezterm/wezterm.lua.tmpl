@@ -1,6 +1,7 @@
 {{- /* [Reference]: https://wezfurlong.org/wezterm/config/lua/config/use_ime.html */ -}}
 {{- /* [Reference]: https://wezfurlong.org/wezterm/config/lua/wezterm/font_with_fallback.html */ -}}
 {{- /* [Reference]: https://wezfurlong.org/wezterm/config/lua/config/window_decorations.html */ -}}
+{{- /* [Reference]: https://wezfurlong.org/wezterm/config/lua/window-event/user-var-changed.html */ -}}
 
 local wezterm = require("wezterm")
 local act = wezterm.action
@@ -12,14 +13,12 @@ config.audible_bell = "Disabled"
 config.scrollback_lines = 100000
 
 -- [Architecture]: 2026 Modern UI Standards
--- [Rationale]: Remove non-functional title bars to maximize workspace density.
 config.window_decorations = "RESIZE"
 config.window_background_opacity = 1.0
 config.window_padding = { left = 12, right = 12, top = 10, bottom = 8 }
 config.hide_tab_bar_if_only_one_tab = true
 
 -- [Architecture]: Sovereign Typography & Rendering
--- [Rationale]: Enforce WebGpu for sub-millisecond frame times.
 config.front_end = "WebGpu"
 config.colors = wezterm.get_builtin_color_schemes()["Dracula"]
 config.font = wezterm.font_with_fallback({
@@ -36,12 +35,10 @@ config.line_height = 1.15
 config.bold_brightens_ansi_colors = true
 config.allow_square_glyphs_to_overflow_width = "Always"
 
--- [Architecture]: Linguistic Interop (2026 Standard)
--- [Rationale]: Critical for seamless Japanese input and Neovim parity.
+-- [Architecture]: Linguistic Interop
 config.use_ime = true
 
 -- [Architecture]: SRE Diagnostic Clarity
--- [Rationale]: Explicitly enable undercurl/underline support for LSP diagnostics.
 config.underline_thickness = "2pt"
 config.underline_position = "-2pt"
 
@@ -63,28 +60,54 @@ else
 end
 
 -- ============================================================================
+-- [Architecture]: Smart Splits (Zero-CLI Protocol Implementation)
+-- ============================================================================
+
+local function is_vim(pane)
+  if not pane then return false end
+  local vars = pane:get_user_vars()
+  if vars and vars.IS_NVIM == "true" then return true end
+
+  local success, process_name = pcall(function() return pane:get_foreground_process_name() end)
+  return success and process_name and process_name:find("n?vim") ~= nil
+end
+
+wezterm.on("user-var-changed", function(window, pane, name, value)
+  if name == "MOVE_SIGNAL" then
+    window:perform_action(act.ActivatePaneDirection(value), pane)
+  end
+end)
+
+local function direction_keys(key, direction)
+  return {
+    key = key,
+    mods = "CTRL",
+    action = wezterm.action_callback(function(window, pane)
+      if is_vim(pane) then
+        window:perform_action(act.SendKey({ key = key, mods = "CTRL" }), pane)
+      else
+        window:perform_action(act.ActivatePaneDirection(direction), pane)
+      end
+    end),
+  }
+end
+
+-- ============================================================================
 -- [Architecture]: Keyboard Driven Multiplexer & Command Palette
 -- ============================================================================
 config.leader = { key = "b", mods = "CTRL", timeout_milliseconds = 1000 }
 config.keys = {
-  -- [2026 Discovery]: Command Palette (Modern UX)
   { key = "P", mods = "CTRL|SHIFT", action = act.ActivateCommandPalette },
-
-  -- [Action]: Session Detach
   { key = "d", mods = "LEADER", action = act.DetachDomain("CurrentPaneDomain") },
-
-  -- [Action]: Pane Management
   { key = "s", mods = "LEADER", action = act.SplitVertical({ domain = "CurrentPaneDomain" }) },
   { key = "v", mods = "LEADER", action = act.SplitHorizontal({ domain = "CurrentPaneDomain" }) },
   { key = "x", mods = "LEADER", action = act.CloseCurrentPane({ confirm = true }) },
 
-  -- [Action]: Pane Navigation (Vim Standard)
-  { key = "h", mods = "LEADER", action = act.ActivatePaneDirection("Left") },
-  { key = "j", mods = "LEADER", action = act.ActivatePaneDirection("Down") },
-  { key = "k", mods = "LEADER", action = act.ActivatePaneDirection("Up") },
-  { key = "l", mods = "LEADER", action = act.ActivatePaneDirection("Right") },
+  direction_keys("h", "Left"),
+  direction_keys("j", "Down"),
+  direction_keys("k", "Up"),
+  direction_keys("l", "Right"),
 
-  -- [Action]: Tab Management
   { key = "c", mods = "LEADER", action = act.SpawnTab("CurrentPaneDomain") },
   { key = "n", mods = "LEADER", action = act.ActivateTabRelative(1) },
   { key = "p", mods = "LEADER", action = act.ActivateTabRelative(-1) },

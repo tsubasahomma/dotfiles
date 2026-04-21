@@ -1,8 +1,33 @@
 -- [Architecture]: I/O Minimalist Bootstrap & Caching
 -- [Rationale]: Enable native Lua loader immediately to bypass file stat operations.
+{{/* [Reference]: https://neovim.io/doc/user/lua.html#_lua-module-vim.loader */}}
 if vim.loader then
   vim.loader.enable()
 end
+
+-- [Architecture]: Terminal Identity Propagation (OSC 1337 / Physical Bypass)
+-- [Rationale]: Directly writes to /dev/tty to bypass Neovim's TUI buffer.
+-- This ensures the signal survives startup/exit and reaches the terminal server.
+{{/* [Reference]: https://wezfurlong.org/wezterm/config/lua/pane/get_user_vars.html */}}
+local function set_wezterm_var(name, value)
+  if vim.env.TERM_PROGRAM ~= "WezTerm" then return end
+  local str_value = value and "true" or "false"
+  local osc = string.format("\027]1337;SetUserVar=%s=%s\007", name, vim.base64.encode(str_value))
+
+  local f = io.open("/dev/tty", "wb")
+  if f then
+    f:write(osc)
+    f:flush()
+    f:close()
+  end
+end
+
+vim.api.nvim_create_autocmd({ "VimEnter", "VimLeave" }, {
+  group = vim.api.nvim_create_augroup("WeztermSmartSplits", { clear = true }),
+  callback = function(ev)
+    set_wezterm_var("IS_NVIM", ev.event ~= "VimLeave")
+  end,
+})
 
 -- [Architecture]: Infrastructure Layer / Environment Sanitization
 -- [Rationale]: Mitigate Upstream Binary Relocation Defects (v0.11.x - v0.12.x).
@@ -45,14 +70,11 @@ local function reconstruct_package_path()
 end
 
 -- [Optimization]: Lazy Execution
--- Reconstruct search space ONLY if operating in the CI environment where poisoning occurs.
--- Eliminates redundant filesystem traversal during standard interactive use.
 if vim.env.CI == "true" then
   reconstruct_package_path()
 end
 
 -- [Provider]: Force isolated Python provider to prevent venv collision.
--- Assigning the variable is inherently lazy and avoids any immediate lookup penalty.
 vim.g.python3_host_prog = "{{ .paths.xdg_data }}/nvim/venv/bin/python"
 
 -- Load LazyVim core.
