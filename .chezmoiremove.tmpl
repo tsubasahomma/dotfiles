@@ -13,7 +13,13 @@
 .profile
 .zshrc2
 
-# [Architecture]: Deprecated Neovim Components Purge (2026 SOTA Migration)
+# [Architecture]: Completion Cache Purge
+# [Rationale]: Prevents Zsh from falling back to default home-dir dumps,
+# which causes significant 'System' time overhead during compaudit.
+.zcompdump*
+.cache/zsh/completions/_hyperfine
+
+# [Architecture]: Neovim Components Purge (2026 SOTA Migration)
 .config/nvim/lua/plugins/fzf.lua
 
 # [Architecture]: Zero-Trust Identity Purge (Phase 50 Refactor)
@@ -26,5 +32,5 @@
 # [Architecture]: Vale XDG Migration Purge (Phase 22)
 .config/vale/.vale.ini
 
-# [Architecture]: Agent Scoping Path Correction (Purge Hallucinated Path)
+# [Architecture]: Agent Scoping Path Correction
 Library/Group Containers/2BUA8C4S2C.com.1password/Library/Application Support/1Password/ssh/agent.toml

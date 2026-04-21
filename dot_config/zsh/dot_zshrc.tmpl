@@ -1,7 +1,5 @@
-{{- /* [Reference]: https://google.github.io/styleguide/shellguide.html */ -}}
-{{- /* [Reference]: https://wezfurlong.org/wezterm/shell-integration.html */ -}}
-# [Architecture]: Deterministic Zsh Configuration (Sovereign Anchor - Stabilized)
-# [Rationale]: Restored advanced completion engine hook while preventing ZLE stack corruption.
+# [Architecture]: Deterministic Zsh Configuration (Sovereign Anchor - Performance Optimized)
+# [Rationale]: Eliminates subshell forks and optimizes I/O paths for sub-20ms startup.
 
 # --- Path Management ---
 typeset -U path PATH fpath FPATH
@@ -12,10 +10,11 @@ path=(
   $path
 )
 
+# [Architecture]: Selective fpath (Startup Isolation)
+# [Rationale]: Exclude heavy site-functions from startup to eliminate 'stat' overhead.
 fpath=(
   "$XDG_CACHE_HOME/zsh/completions"
   "$XDG_CONFIG_HOME/zsh/completions"
-  "{{ .brew_prefix }}/share/zsh/site-functions"
   $fpath
 )
 
@@ -86,9 +85,8 @@ pbpaste() { win32yank.exe -o --lf; }
 {{ end -}}
 
 # --- Terminal Integration (OSC 7) ---
-# [Safety]: Added fallback for HOST to prevent printf malformation.
 _osc7_cwd() {
-  local remote_host="${HOST:-$(hostname)}"
+  local remote_host="{{ .chezmoi.hostname }}"
   printf "\033]7;file://%s%s\a" "${remote_host}" "${PWD}"
 }
 autoload -Uz add-zsh-hook
@@ -97,18 +95,15 @@ _osc7_cwd
 
 # =============================================================================
 # [Architecture]: JIT (Just-In-Time) Completion Engine (Stabilized)
-# [Reference]: https://zsh.sourceforge.io/Doc/Release/Zsh-Line-Editor.html
 # =============================================================================
 ZSH_COMPDUMP_DIR="$XDG_CACHE_HOME/zsh"
 zstyle ':completion:*:*:git:*' script "$XDG_CONFIG_HOME/zsh/completions/git-completion.bash"
 
 _jit_compinit() {
-  # [Safety]: Rebind TAB to the standard completion widget.
-  # Rationale: Do NOT use '.expand-or-complete' as it bypasses compinit's advanced logic.
-  # Do NOT use 'zle -D' as destroying the active widget causes segmentation faults.
-  bindkey '^I' expand-or-complete
+  # [JIT Path Resolution]: Add heavy site-functions only when needed.
+  fpath+=("{{ .brew_prefix }}/share/zsh/site-functions")
 
-  # Load advanced completion system. compinit will automatically hook into 'expand-or-complete'.
+  bindkey '^I' expand-or-complete
   autoload -Uz compinit bashcompinit
   local zcompdump="$ZSH_COMPDUMP_DIR/zcompdump"
 
@@ -124,7 +119,6 @@ _jit_compinit() {
   compdef '_files' pbcopy
   {{- end }}
 
-  # [Safety]: Trigger the advanced completion widget that compinit just configured.
   zle expand-or-complete
 }
 

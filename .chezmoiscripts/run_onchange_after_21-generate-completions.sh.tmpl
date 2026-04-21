@@ -1,6 +1,6 @@
 #!/bin/zsh
 # [Architecture]: Compile-time Completion & Init Engine (Hardened Phase)
-# [Reference]: https://zsh.sourceforge.io/Doc/Release/Expansion.html#Filename-Generation
+# [Rationale]: Optimized for startup speed. Pure asset generation logic.
 # [Trigger]: Ecosystem Schema: {{ include ".chezmoidata/tools.yaml" | sha256sum }}
 
 set -euo pipefail
@@ -30,7 +30,6 @@ INIT_DIR="{{ .paths.xdg_cache }}/zsh/init"
 echo "[Infrastructure] Provisioning static Zsh assets..."
 mkdir -p "$COMP_DIR" "$INIT_DIR"
 
-# [Recovery]: Clean corrupted/recursive wordcode files safely using array assignment
 local -a stale_files
 stale_files=("$COMP_DIR"/*.zwc(N) "$INIT_DIR"/*.zwc(N))
 if (( ${#stale_files} > 0 )); then
@@ -60,9 +59,12 @@ generate_comp "{{ $id_helm }}" "helm" completion zsh > "$COMP_DIR/_helm"
 generate_comp "{{ $id_k9s }}" "k9s" completion zsh > "$COMP_DIR/_k9s"
 generate_comp "{{ $id_pnpm }}" "pnpm" completion zsh > "$COMP_DIR/_pnpm" || true
 
+# [Rationale]: Consolidate hs completion to avoid stream race conditions.
 echo "  [Completions] Generating for: hs" >&2
-echo "#compdef hs" > "$COMP_DIR/_hs"
-"$MISE_BIN" exec "{{ $id_hs }}" -- hs completion 2>/dev/null | sed "s|[^[:space:]]*/bin/hs|hs|g" >> "$COMP_DIR/_hs" || true
+{
+  echo "#compdef hs"
+  "$MISE_BIN" exec "{{ $id_hs }}" -- hs completion 2>/dev/null | sed "s|[^[:space:]]*/bin/hs|hs|g" || true
+} > "$COMP_DIR/_hs"
 
 "$MISE_BIN" exec "{{ $id_delta }}" -- delta --generate-completion zsh 2>/dev/null > "$COMP_DIR/_delta" || true
 
@@ -77,11 +79,9 @@ fi
 "$MISE_BIN" exec aqua:ajeetdsouza/zoxide -- zoxide init zsh > "$INIT_DIR/zoxide.zsh"
 "$MISE_BIN" exec aqua:starship/starship -- starship init zsh --print-full-init > "$INIT_DIR/starship.zsh"
 
-# [Rationale]: Use explicit array to handle zero-match cases deterministically.
 local -a init_scripts
 init_scripts=("$INIT_DIR"/*.zsh(N))
 for f in "${init_scripts[@]}"; do
-  # Skip already compiled files manually for maximum reliability
   [[ "$f" == *.zwc ]] && continue
   zcompile -U "$f"
 done
@@ -102,12 +102,31 @@ fi
 EOF
 fi
 
-# --- Phase 4: External Declarative Assets Compilation ---
-# [Rationale]: Avoid complex glob qualifiers in loop headers to prevent parser failure.
-local -a ext_completions
-EXT_COMP_DIR="{{ .paths.home }}/.config/zsh/completions"
-ext_completions=("$EXT_COMP_DIR"/_*(N-.))
-for f in "${ext_completions[@]}"; do
+# --- Phase 4: Unified Asset Compilation ---
+# [Rationale]: Use deterministic paths and verify readability before zcompile.
+# Generated assets from untrusted CLIs (e.g., hs) may contain bashisms that fail Zsh's strict AOT parser.
+# We gracefully catch compilation failures to allow JIT parsing fallback without breaking convergence.
+local -a compile_targets
+compile_targets=(
+  "$COMP_DIR"/_*(N-.)
+  "{{ .paths.home }}/.config/zsh/completions"/_*(N-.)
+)
+
+for f in "${compile_targets[@]}"; do
   [[ "$f" == *.zwc ]] && continue
-  zcompile -U "$f"
+  if [[ -r "$f" && -s "$f" ]]; then
+    zcompile -U "$f" 2>/dev/null || echo "  [Warn] AOT compilation bypassed for $f (Syntax constraints)." >&2
+  else
+    echo "  [Warn] Skipping unreadable or empty completion: $f" >&2
+  fi
 done
+
+# --- Phase 5: Sovereign Cache Invalidation ---
+ZSH_CACHE_DIR="{{ .paths.xdg_cache }}/zsh"
+local -a stale_dumps
+stale_dumps=("$ZSH_CACHE_DIR"/zcompdump*(N) "${ZDOTDIR:-$HOME}"/.zcompdump*(N))
+
+if (( ${#stale_dumps} > 0 )); then
+  echo "  [Infrastructure] Invalidating Zsh completion cache to force JIT rebuild..." >&2
+  rm -f "${stale_dumps[@]}"
+fi
