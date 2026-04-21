@@ -31,7 +31,6 @@ packages:
       brews:
         - openssl@3
         - colima
-        - clipboard
         - eza
         - xh
       casks: []

@@ -42,6 +42,70 @@ alias grep='rg'
 alias g='git'
 alias lg='lazygit'
 
+# =============================================================================
+# [Architecture]: Sovereign Clipboard Protocol (2026 Revised)
+# [Rationale]: Unifies 'pbcopy' and 'pbpaste' across macOS and WSL2.
+# [Ref-Darwin]: Uses native Swift bridge for bit-perfect file objects (multi-file).
+# [Ref-WSL2]: Uses Base64 EncodedCommand to bypass backslash escape corruption.
+# =============================================================================
+{{ if eq .osid "darwin" -}}
+# [Backend]: Local Swift-compiled native bridge
+pbcopy() {
+  local f
+  local -a file_args
+  if [[ $# -gt 0 && -e "$1" ]]; then
+    file_args=()
+    for f in "$@"; do
+      if [[ -e "$f" ]]; then
+        # [Architecture]: Resolve absolute paths via Zsh modifier.
+        file_args+=("${f:a}")
+      fi
+    done
+    pbfile "${file_args[@]}"
+  elif [[ $# -gt 0 ]]; then
+    printf "%s" "$*" | command pbcopy
+  else
+    command pbcopy
+  fi
+}
+
+pbpaste() {
+  command pbpaste
+}
+{{ else if .is_wsl -}}
+# [Backend]: win32yank / PowerShell .NET (Base64 EncodedCommand Protocol)
+# [Reference]: https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_pwsh?view=powershell-7.4#-encodedcommand-base64encodedcommand
+pbcopy() {
+  local f win_path ps_cmd encoded_cmd
+  if [[ $# -gt 0 && -e "$1" ]]; then
+    # [Architecture]: EncodedCommand Protocol
+    # [Rationale]: Passing raw strings to powershell.exe corrupts paths containing '\U' or '\t'.
+    # Declaring locals at function start prevents noise when TYPESET_SILENT is off.
+    ps_cmd="Add-Type -AssemblyName System.Windows.Forms; \$files = New-Object System.Collections.Specialized.StringCollection;"
+    for f in "$@"; do
+      if [[ -e "$f" ]]; then
+        win_path="$(wslpath -w "$f")"
+        # [Security]: Escape single quotes for PowerShell literal string safety.
+        ps_cmd+=" [void]\$files.Add('${win_path//\'/''}');"
+      fi
+    done
+    ps_cmd+=" [System.Windows.Forms.Clipboard]::SetFileDropList(\$files)"
+
+    # Convert UTF-8 to UTF-16LE and Base64 to bypass shell escape layers entirely.
+    encoded_cmd=$(printf "%s" "$ps_cmd" | iconv -t UTF-16LE | base64 | tr -d '\n')
+    powershell.exe -NoProfile -NonInteractive -EncodedCommand "$encoded_cmd"
+  elif [[ $# -gt 0 ]]; then
+    printf "%s" "$*" | win32yank.exe -i --crlf
+  else
+    win32yank.exe -i --crlf
+  fi
+}
+
+pbpaste() {
+  win32yank.exe -o --lf
+}
+{{ end -}}
+
 # --- Terminal Integration (OSC 7) ---
 # [Architecture]: Directory Synchronization for Modern Terminals
 # [Rationale]: Emits OSC 7 escape sequence to inform terminal of CWD.
@@ -68,6 +132,13 @@ autoload -Uz compinit
     compinit -C -d "$zcompdump"
   fi
 }
+
+# [Architecture]: JIT Completion Binding for Sovereign Functions
+# [Rationale]: Binds file-system completion to 'pbcopy' after the engine is initialized.
+# [Reference]: https://zsh.sourceforge.io/Doc/Release/Completion-System.html#Completion-System-Basics
+{{ if or (eq .osid "darwin") .is_wsl -}}
+compdef '_files' pbcopy
+{{- end }}
 
 # --- Shell Persistence ---
 HISTSIZE=100000

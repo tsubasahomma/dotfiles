@@ -1,0 +1,16 @@
+#!/bin/zsh
+# [Architecture]: Atomic Native Compilation
+# [Rationale]: Ensures the Swift clipboard bridge is compiled for the local architecture (AOT).
+# [Trigger]: pbfile.swift Hash: {{ include "dot_local/share/pbcopy/pbfile.swift" | sha256sum }}
+
+{{ if eq .osid "darwin" -}}
+SOURCE="{{ .paths.xdg_data }}/pbcopy/pbfile.swift"
+TARGET="{{ .paths.home }}/.local/bin/pbfile"
+
+if [[ -f "$SOURCE" ]]; then
+  echo "🔨 [Swift] Compiling native clipboard bridge..."
+  # [Optimization]: Use whole-module-optimization for sub-millisecond execution.
+  xcrun -sdk macosx swiftc -O -whole-module-optimization "$SOURCE" -o "$TARGET"
+  echo "✅ [Swift] pbfile converged."
+fi
+{{ end -}}
