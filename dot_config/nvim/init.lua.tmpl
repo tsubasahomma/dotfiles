@@ -29,9 +29,5 @@ vim.api.nvim_create_autocmd({ "VimEnter", "VimLeave" }, {
   end,
 })
 
--- [Provider]: Force isolated Python provider to prevent venv collision.
--- [Reference]: https://neovim.io/doc/user/provider.html#provider-python
-vim.g.python3_host_prog = "{{ .paths.xdg_data }}/nvim/venv/bin/python"
-
 -- Load LazyVim core.
 require("config.lazy")

@@ -23,6 +23,7 @@ mise_tools:
 
   # --- 3. Neovim Ecosystem ---
   "aqua:neovim/neovim": "0.12.1" # renovate: datasource=github-releases packageName=neovim/neovim
+  "pipx:neovim/pynvim": "0.6.0" # renovate: datasource=github-releases packageName=neovim/pynvim
   "npm:neovim": "5.4.0" # renovate: datasource=npm packageName=neovim
 
   # --- 4. SOTA Development & Context ---

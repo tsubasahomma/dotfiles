@@ -97,8 +97,6 @@ if [[ -f "$LOCK_FILE" ]]; then
     log_ok "Neovim lockfile (lazy-lock.json) is synchronized."
   else
     log_warn "Neovim lockfile drift detected. Ensure you run 'mise run update:lazy-lock' to commit changes."
-    # [Architecture]: Do not fail doctor in CI due to application-layer lockfile drift.
-    # The integration phase ensures it functions, but strict idempotency belongs to Phase 2.
     if [[ "$IS_CI" != "true" ]]; then HAS_ERROR=1; fi
   fi
 else
@@ -107,13 +105,21 @@ else
   HAS_ERROR=1
 fi
 
-NVIM_PYTHON="{{ .paths.xdg_data }}/nvim/venv/bin/python"
-if [[ -x "$NVIM_PYTHON" ]]; then
-  log_ok "Hermetic Python Provider provisioned ($NVIM_PYTHON)."
+# [Architecture]: End-to-End Provider Validation (Neovim 0.12 Spec)
+# [Reference]: https://neovim.io/doc/user/provider.html#provider-python
+# [Rationale]: Bypasses binary naming speculation (e.g., pynvim vs pynvim-python).
+# Executes Neovim's actual provider detection logic to prove the provider
+# is present and functional under the user's real runtime configuration.
+if command -v nvim >/dev/null 2>&1; then
+  if nvim --headless +"lua if vim.fn.has('python3') == 1 then print('PROVIDER_OK') end" +qa 2>&1 | grep -q "PROVIDER_OK"; then
+    log_ok "Python Provider is natively recognized and functional in Neovim."
+  else
+    log_err "Python Provider is dysfunctional or not recognized by Neovim."
+    log_guide "Ensure 'pipx:neovim/pynvim' is in tools.yaml and run 'mise install'."
+    HAS_ERROR=1
+  fi
 else
-  log_err "Hermetic Python Provider missing."
-  log_guide "mise run setup:nvim-provider"
-  HAS_ERROR=1
+  log_warn "Neovim executable not found in PATH. Skipping provider verification."
 fi
 
 echo "--- 5. Prose Linting Engine (Vale) ---"
@@ -150,10 +156,16 @@ else
 fi
 
 if [[ "$IS_CI" != "true" ]]; then
-  if echo "$PATH" | grep -q "^$HOME_DIR/.local/bin"; then
-    log_ok "PATH precedence correctly prioritized (.local/bin)."
+  # [Architecture]: Tiered PATH Precedence Verification
+  # [Rationale]: Ensures infrastructure paths (mise/aqua) precede system binaries.
+  # Static index-0 checks are avoided to support dynamic mise activation.
+  SYS_PATH="/usr/bin"
+  LOCAL_BIN="$HOME_DIR/.local/bin"
+  if [[ "$PATH" == *"$LOCAL_BIN"* ]] && [[ "${PATH%%$LOCAL_BIN*}" != *"$SYS_PATH"* ]]; then
+    log_ok "PATH precedence correctly prioritized (Infrastructure over System)."
   else
-    log_warn "PATH precedence violation detected. Verify shell initialization."
+    log_warn "PATH precedence violation detected. Infrastructure paths might be shadowed."
+    log_guide "Verify your shell initialization order in dot_zshrc."
   fi
 fi
 
