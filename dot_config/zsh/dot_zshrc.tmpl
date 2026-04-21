@@ -1,17 +1,17 @@
-# [Architecture]: Deterministic Zsh Configuration (Sovereign Anchor - Performance Optimized)
-# [Rationale]: Eliminates subshell forks and optimizes I/O paths for sub-20ms startup.
+# [Architecture]: Deterministic Zsh Configuration (Sovereign Anchor)
+# [Rationale]: Optimized for 2026 SOTA workflows. Uses 'mise activate' for
+# dynamic environment-switching and context-aware toolchains.
+# [Reference]: https://mise.jdx.dev/installing-mise.html#shells
 
 # --- Path Management ---
 typeset -U path PATH fpath FPATH
 path=(
   "$HOME/.local/bin"
-  "{{ .paths.xdg_data }}/mise/shims"
   "{{ .brew_prefix }}/bin"
   $path
 )
 
 # [Architecture]: Selective fpath (Startup Isolation)
-# [Rationale]: Exclude heavy site-functions from startup to eliminate 'stat' overhead.
 fpath=(
   "$XDG_CACHE_HOME/zsh/completions"
   "$XDG_CONFIG_HOME/zsh/completions"
@@ -20,6 +20,14 @@ fpath=(
 
 # --- Secret Resolution ---
 alias vrun='op run -- '
+
+# --- Infrastructure Activation ---
+# [Architecture]: Atomic Environment Injection
+# [Rationale]: Replaces manual shim management with the official activation hook.
+# This ensures [env] blocks in .mise.toml are dynamic and context-aware.
+if command -v mise >/dev/null 2>&1; then
+  eval "$(mise activate zsh)"
+fi
 
 # --- Static Initialization ---
 ZSH_INIT_DIR="$XDG_CACHE_HOME/zsh/init"
@@ -94,19 +102,16 @@ add-zsh-hook chpwd _osc7_cwd
 _osc7_cwd
 
 # =============================================================================
-# [Architecture]: JIT (Just-In-Time) Completion Engine (Stabilized)
+# [Architecture]: JIT (Just-In-Time) Completion Engine
 # =============================================================================
 ZSH_COMPDUMP_DIR="$XDG_CACHE_HOME/zsh"
 zstyle ':completion:*:*:git:*' script "$XDG_CONFIG_HOME/zsh/completions/git-completion.bash"
 
 _jit_compinit() {
-  # [JIT Path Resolution]: Add heavy site-functions only when needed.
   fpath+=("{{ .brew_prefix }}/share/zsh/site-functions")
-
   bindkey '^I' expand-or-complete
   autoload -Uz compinit bashcompinit
   local zcompdump="$ZSH_COMPDUMP_DIR/zcompdump"
-
   if [[ ! -f "$zcompdump" || "$XDG_CACHE_HOME/zsh/completions" -nt "$zcompdump" || "$XDG_CONFIG_HOME/zsh/completions" -nt "$zcompdump" ]]; then
     compinit -d "$zcompdump"
     zcompile "$zcompdump"
@@ -114,11 +119,9 @@ _jit_compinit() {
     compinit -C -d "$zcompdump"
   fi
   bashcompinit
-
   {{ if or (eq .osid "darwin") .is_wsl -}}
   compdef '_files' pbcopy
   {{- end }}
-
   zle expand-or-complete
 }
 

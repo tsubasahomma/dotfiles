@@ -1,6 +1,7 @@
--- [Architecture]: Proactive Audit Logic & Noise Suppression (2026 Standard)
--- [Reference]: https://docs.basedpyright.com/
--- [Reference]: https://github.com/folke/lazydev.nvim
+-- [Architecture]: Environment-Inherited LSP Configuration
+-- [Rationale]: Eliminates runtime shell execution (uv python find) inside Lua.
+-- Relies on the parent shell environment established by 'mise activate'.
+-- [Reference]: https://docs.basedpyright.com/latest/configuration/language-server-settings/
 
 return {
   {
@@ -35,27 +36,13 @@ return {
       servers = {
         pyright = { enabled = false },
         basedpyright = {
-          -- [Architecture]: 明示的に有効化し、他設定との競合を排除
           enabled = true,
-          -- [Interop]: Masonのバイナリ名を指定。あなたの環境の bin/basedpyright-langserver に対応
+          -- [Interop]: Mason-managed binary names.
           cmd = { "basedpyright-langserver", "--stdio" },
-          root_dir = function(fname)
-            local util = require("lspconfig.util")
-            return util.root_pattern(
-              "pyproject.toml",
-              "setup.py",
-              "setup.cfg",
-              "requirements.txt",
-              "Pipfile",
-              ".git"
-            )(fname)
-          end,
-          before_init = function(_, config)
-            local uv_path = vim.fn.trim(vim.fn.system("uv python find 2>/dev/null"))
-            if vim.v.shell_error == 0 and uv_path ~= "" then
-              config.settings.python.pythonPath = uv_path
-            end
-          end,
+          -- [Architecture]: Zero-Speculation Path Resolution
+          -- [Rationale]: By omitting settings.python.pythonPath, BasedPyright
+          -- defaults to the 'python' binary available in the current PATH,
+          -- which is correctly set by mise during the shell session.
           settings = {
             basedpyright = {
               analysis = {
