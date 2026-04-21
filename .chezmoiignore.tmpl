@@ -18,17 +18,27 @@
 
 # --- 2. Transient Cache & State Directories ---
 # [Rationale]: Declarative directory structure (via .keep) is managed by chezmoi.
-# Files generated inside (e.g., completions) are ignored.
+# Files generated inside (e.g., completions, history) are ignored.
 .cache/**
 !.cache/
 !.cache/zsh/
 !.cache/zsh/.keep
 
 .local/share/pnpm/**
+!.local/share/pnpm/
+!.local/share/pnpm/.keep
+
 .local/state/**
+!.local/state/
 !.local/state/ssh/
 !.local/state/ssh/sockets/
 !.local/state/ssh/sockets/.keep
+!.local/state/zsh/
+!.local/state/zsh/.keep
+!.local/state/python/
+!.local/state/python/.keep
+!.local/state/node/
+!.local/state/node/.keep
 
 # --- 3. Dynamic Artifacts & Noise ---
 .DS_Store
