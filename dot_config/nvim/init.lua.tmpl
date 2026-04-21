@@ -1,6 +1,6 @@
 -- [Architecture]: I/O Minimalist Bootstrap & Caching
 -- [Rationale]: Enable native Lua loader immediately to bypass file stat operations.
-{{/* [Reference]: https://neovim.io/doc/user/lua.html#_lua-module-vim.loader */}}
+-- [Reference]: https://neovim.io/doc/user/lua.html#vim.loader
 if vim.loader then
   vim.loader.enable()
 end
@@ -8,7 +8,7 @@ end
 -- [Architecture]: Terminal Identity Propagation (OSC 1337 / Physical Bypass)
 -- [Rationale]: Directly writes to /dev/tty to bypass Neovim's TUI buffer.
 -- This ensures the signal survives startup/exit and reaches the terminal server.
-{{/* [Reference]: https://wezfurlong.org/wezterm/config/lua/pane/get_user_vars.html */}}
+-- [Reference]: https://wezfurlong.org/wezterm/config/lua/pane/get_user_vars.html
 local function set_wezterm_var(name, value)
   if vim.env.TERM_PROGRAM ~= "WezTerm" then return end
   local str_value = value and "true" or "false"
@@ -29,52 +29,8 @@ vim.api.nvim_create_autocmd({ "VimEnter", "VimLeave" }, {
   end,
 })
 
--- [Architecture]: Infrastructure Layer / Environment Sanitization
--- [Rationale]: Mitigate Upstream Binary Relocation Defects (v0.11.x - v0.12.x).
--- Releases often leak build-time CI paths (/runner/work) into 'package.path'.
--- This function reconstructs a clean Lua search space based on physical local paths.
-local function reconstruct_package_path()
-  local data_path = vim.fn.stdpath("data")
-  local config_path = vim.fn.stdpath("config")
-  local runtime_path = vim.env.VIMRUNTIME
-
-  -- Define absolute truth for Lua module resolution.
-  local base_templates = {
-    runtime_path .. "/lua/?.lua",
-    runtime_path .. "/lua/?/init.lua",
-    config_path .. "/lua/?.lua",
-    config_path .. "/lua/?/init.lua",
-    data_path .. "/site/lua/?.lua",
-    -- Inject lazy.nvim root for Phase 0 bootstrap.
-    data_path .. "/lazy/nvim-lspconfig/lua/?.lua",
-    data_path .. "/lazy/*/lua/?.lua",
-    data_path .. "/lazy/*/lua/?/init.lua",
-  }
-
-  -- Filter out poisoned CI paths from existing environment.
-  local current_paths = vim.split(package.path, ";")
-  local clean_paths = {}
-
-  for _, path in ipairs(base_templates) do
-    table.insert(clean_paths, path)
-  end
-
-  for _, path in ipairs(current_paths) do
-    local is_poisoned = path:find("/runner/work") or path:find("stable/share/nvim/runtime")
-    if not is_poisoned and path ~= "" then
-      table.insert(clean_paths, path)
-    end
-  end
-
-  package.path = table.concat(clean_paths, ";")
-end
-
--- [Optimization]: Lazy Execution
-if vim.env.CI == "true" then
-  reconstruct_package_path()
-end
-
 -- [Provider]: Force isolated Python provider to prevent venv collision.
+-- [Reference]: https://neovim.io/doc/user/provider.html#provider-python
 vim.g.python3_host_prog = "{{ .paths.xdg_data }}/nvim/venv/bin/python"
 
 -- Load LazyVim core.
