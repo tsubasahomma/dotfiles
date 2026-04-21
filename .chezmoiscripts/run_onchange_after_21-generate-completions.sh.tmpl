@@ -1,15 +1,14 @@
 #!/bin/zsh
-# [Architecture]: Compile-time Completion & Init Engine (Deterministic Phase)
+# [Architecture]: Compile-time Completion & Init Engine (Hardened Phase)
+# [Reference]: https://zsh.sourceforge.io/Doc/Release/Expansion.html#Filename-Generation
 # [Trigger]: Ecosystem Schema: {{ include ".chezmoidata/tools.yaml" | sha256sum }}
 
 set -euo pipefail
 setopt extended_glob
 
-# [Architecture]: Path Sovereignty for Local Binaries
-# [Rationale]: Required to resolve symlinked GUI CLI tools (e.g., wezterm).
 export PATH="{{ .paths.home }}/.local/bin:$PATH"
 
-{{/* [Architecture]: FQI Alignment */ -}}
+{{/* [Template Variables] */ -}}
 {{- $id_gh := "aqua:cli/cli" -}}
 {{- $id_ripgrep := "aqua:BurntSushi/ripgrep" -}}
 {{- $id_fd := "aqua:sharkdp/fd" -}}
@@ -28,16 +27,22 @@ MISE_BIN="{{ .paths.mise }}"
 COMP_DIR="{{ .paths.xdg_cache }}/zsh/completions"
 INIT_DIR="{{ .paths.xdg_cache }}/zsh/init"
 
-echo "⚙️  [Infrastructure] Provisioning static Zsh assets..."
+echo "[Infrastructure] Provisioning static Zsh assets..."
 mkdir -p "$COMP_DIR" "$INIT_DIR"
 
-# [Architecture]: Precise Execution Wrapper
-generate_comp() {
+# [Recovery]: Clean corrupted/recursive wordcode files safely using array assignment
+local -a stale_files
+stale_files=("$COMP_DIR"/*.zwc(N) "$INIT_DIR"/*.zwc(N))
+if (( ${#stale_files} > 0 )); then
+  rm -f "${stale_files[@]}"
+fi
+
+function generate_comp {
   local mise_id="$1"
   local bin_name="$2"
   shift 2
-  echo "  📦 [Completions] Generating for: $bin_name" >&2
-  "$MISE_BIN" exec "$mise_id" -- "$bin_name" "$@" || echo "  ⚠️  [Warn] Failed to generate completions for $bin_name. Skipping." >&2
+  echo "  [Completions] Generating for: $bin_name" >&2
+  "$MISE_BIN" exec "$mise_id" -- "$bin_name" "$@" || echo "  [Warn] Failed to generate completions for $bin_name." >&2
 }
 
 # --- Phase 1: Verified Completion Generation ---
@@ -53,10 +58,9 @@ generate_comp "{{ $id_doggo }}" "doggo" completions zsh > "$COMP_DIR/_doggo"
 generate_comp "{{ $id_kubectl }}" "kubectl" completion zsh > "$COMP_DIR/_kubectl"
 generate_comp "{{ $id_helm }}" "helm" completion zsh > "$COMP_DIR/_helm"
 generate_comp "{{ $id_k9s }}" "k9s" completion zsh > "$COMP_DIR/_k9s"
-
 generate_comp "{{ $id_pnpm }}" "pnpm" completion zsh > "$COMP_DIR/_pnpm" || true
 
-echo "  📦 [Completions] Generating for: hs" >&2
+echo "  [Completions] Generating for: hs" >&2
 echo "#compdef hs" > "$COMP_DIR/_hs"
 "$MISE_BIN" exec "{{ $id_hs }}" -- hs completion 2>/dev/null | sed "s|[^[:space:]]*/bin/hs|hs|g" >> "$COMP_DIR/_hs" || true
 
@@ -64,42 +68,33 @@ echo "#compdef hs" > "$COMP_DIR/_hs"
 
 "{{ .chezmoi.executable }}" completion zsh > "$COMP_DIR/_chezmoi"
 
-# [Architecture]: GUI Proxy CLI Integration
-# [Rationale]: wezterm is symlinked into .local/bin. Executing a Windows binary
-# via WSL interop produces CRLF output. Must pipe through `tr` to prevent parsing failures.
 if command -v wezterm >/dev/null 2>&1; then
-  echo "  📦 [Completions] Generating for: wezterm" >&2
+  echo "  [Completions] Generating for: wezterm" >&2
   wezterm shell-completion --shell zsh 2>/dev/null | tr -d '\r' > "$COMP_DIR/_wezterm" || true
 fi
 
 # --- Phase 2: Static Init Generation & Compilation ---
-"$MISE_BIN" activate zsh > "$INIT_DIR/mise.zsh"
 "$MISE_BIN" exec aqua:ajeetdsouza/zoxide -- zoxide init zsh > "$INIT_DIR/zoxide.zsh"
 "$MISE_BIN" exec aqua:starship/starship -- starship init zsh --print-full-init > "$INIT_DIR/starship.zsh"
 
-for f in "$INIT_DIR"/*.zsh(N); do
+# [Rationale]: Use explicit array to handle zero-match cases deterministically.
+local -a init_scripts
+init_scripts=("$INIT_DIR"/*.zsh(N))
+for f in "${init_scripts[@]}"; do
+  # Skip already compiled files manually for maximum reliability
+  [[ "$f" == *.zwc ]] && continue
   zcompile -U "$f"
 done
 
 # --- Phase 3: Dynamic Toolchain Symlinking & JIT Completion ---
-echo "  🔗 [Symlinks] Provisioning deterministic targets for Lazy Loading..." >&2
 GCLOUD_DIR=$("$MISE_BIN" where gcloud 2>/dev/null || true)
 if [[ -n "$GCLOUD_DIR" && -f "$GCLOUD_DIR/completion.zsh.inc" ]]; then
   ln -sf "$GCLOUD_DIR/completion.zsh.inc" "$INIT_DIR/gcloud.zsh.inc"
-
-  echo "  📦 [Completions] Generating JIT stub for: gcloud" >&2
   cat << EOF > "$COMP_DIR/_gcloud"
 #compdef gcloud
-# [Architecture]: JIT (Just-In-Time) Completion Loader
-# [Rationale]: Defers bashcompinit and python argcomplete loading until the first TAB press.
-# This completely eliminates startup latency while preserving full auto-completion features.
-
 local gcloud_inc="${INIT_DIR}/gcloud.zsh.inc"
 if [[ -f "\$gcloud_inc" ]]; then
-  # 1. Load the heavy bashcompinit and register the actual completion handler
   source "\$gcloud_inc" 2>/dev/null
-
-  # 2. Forward the current completion request to the newly registered handler
   if (( \$+functions[_python_argcomplete] )); then
     _python_argcomplete "\$@"
   fi
@@ -108,11 +103,11 @@ EOF
 fi
 
 # --- Phase 4: External Declarative Assets Compilation ---
-echo "  ⚡ [Optimization] Compiling external declarative completions..." >&2
+# [Rationale]: Avoid complex glob qualifiers in loop headers to prevent parser failure.
+local -a ext_completions
 EXT_COMP_DIR="{{ .paths.home }}/.config/zsh/completions"
-
-# [Architecture]: Selective Wordcode Compilation
-# [Rationale]: Ignores bash core files (e.g., git-completion.bash) to prevent Zsh parser errors.
-for f in "$EXT_COMP_DIR"/_*(N-.); do
+ext_completions=("$EXT_COMP_DIR"/_*(N-.))
+for f in "${ext_completions[@]}"; do
+  [[ "$f" == *.zwc ]] && continue
   zcompile -U "$f"
 done

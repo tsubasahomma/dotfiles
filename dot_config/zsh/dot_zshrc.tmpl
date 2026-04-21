@@ -1,7 +1,7 @@
 {{- /* [Reference]: https://google.github.io/styleguide/shellguide.html */ -}}
 {{- /* [Reference]: https://wezfurlong.org/wezterm/shell-integration.html */ -}}
-# [Architecture]: Deterministic Zsh Configuration (Sovereign Anchor)
-# [Rationale]: Optimized for < 20ms startup. Enforces Hermetic Path Sovereignty.
+# [Architecture]: Deterministic Zsh Configuration (Sovereign Anchor - Stabilized)
+# [Rationale]: Restored advanced completion engine hook while preventing ZLE stack corruption.
 
 # --- Path Management ---
 typeset -U path PATH fpath FPATH
@@ -12,8 +12,6 @@ path=(
   $path
 )
 
-# [Architecture]: Completion Search Path (Strict Priority)
-# [Rationale]: Prioritize dynamically generated (Cache) and declaratively fetched (Config) completions.
 fpath=(
   "$XDG_CACHE_HOME/zsh/completions"
   "$XDG_CONFIG_HOME/zsh/completions"
@@ -26,7 +24,6 @@ alias vrun='op run -- '
 
 # --- Static Initialization ---
 ZSH_INIT_DIR="$XDG_CACHE_HOME/zsh/init"
-[[ -f "$ZSH_INIT_DIR/mise.zsh" ]] && source "$ZSH_INIT_DIR/mise.zsh"
 [[ -f "$ZSH_INIT_DIR/zoxide.zsh" ]] && source "$ZSH_INIT_DIR/zoxide.zsh"
 [[ -f "$ZSH_INIT_DIR/starship.zsh" ]] && source "$ZSH_INIT_DIR/starship.zsh"
 
@@ -44,13 +41,9 @@ alias g='git'
 alias lg='lazygit'
 
 # =============================================================================
-# [Architecture]: Sovereign Clipboard Protocol (2026 Revised)
-# [Rationale]: Unifies 'pbcopy' and 'pbpaste' across macOS and WSL2.
-# [Ref-Darwin]: Uses native Swift bridge for bit-perfect file objects (multi-file).
-# [Ref-WSL2]: Uses Base64 EncodedCommand to bypass backslash escape corruption.
+# [Architecture]: Sovereign Clipboard Protocol
 # =============================================================================
 {{ if eq .osid "darwin" -}}
-# [Backend]: Local Swift-compiled native bridge
 pbcopy() {
   local f
   local -a file_args
@@ -58,7 +51,6 @@ pbcopy() {
     file_args=()
     for f in "$@"; do
       if [[ -e "$f" ]]; then
-        # [Architecture]: Resolve absolute paths via Zsh modifier.
         file_args+=("${f:a}")
       fi
     done
@@ -69,30 +61,19 @@ pbcopy() {
     command pbcopy
   fi
 }
-
-pbpaste() {
-  command pbpaste
-}
+pbpaste() { command pbpaste; }
 {{ else if .is_wsl -}}
-# [Backend]: win32yank / PowerShell .NET (Base64 EncodedCommand Protocol)
-# [Reference]: https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_pwsh?view=powershell-7.4#-encodedcommand-base64encodedcommand
 pbcopy() {
   local f win_path ps_cmd encoded_cmd
   if [[ $# -gt 0 && -e "$1" ]]; then
-    # [Architecture]: EncodedCommand Protocol
-    # [Rationale]: Passing raw strings to powershell.exe corrupts paths containing '\U' or '\t'.
-    # Declaring locals at function start prevents noise when TYPESET_SILENT is off.
     ps_cmd="Add-Type -AssemblyName System.Windows.Forms; \$files = New-Object System.Collections.Specialized.StringCollection;"
     for f in "$@"; do
       if [[ -e "$f" ]]; then
         win_path="$(wslpath -w "$f")"
-        # [Security]: Escape single quotes for PowerShell literal string safety.
         ps_cmd+=" [void]\$files.Add('${win_path//\'/''}');"
       fi
     done
     ps_cmd+=" [System.Windows.Forms.Clipboard]::SetFileDropList(\$files)"
-
-    # Convert UTF-8 to UTF-16LE and Base64 to bypass shell escape layers entirely.
     encoded_cmd=$(printf "%s" "$ps_cmd" | iconv -t UTF-16LE | base64 | tr -d '\n')
     powershell.exe -NoProfile -NonInteractive -EncodedCommand "$encoded_cmd"
   elif [[ $# -gt 0 ]]; then
@@ -101,34 +82,34 @@ pbcopy() {
     win32yank.exe -i --crlf
   fi
 }
-
-pbpaste() {
-  win32yank.exe -o --lf
-}
+pbpaste() { win32yank.exe -o --lf; }
 {{ end -}}
 
 # --- Terminal Integration (OSC 7) ---
-# [Architecture]: Directory Synchronization for Modern Terminals
-# [Rationale]: Emits OSC 7 escape sequence to inform terminal of CWD.
-# Required for WezTerm + WSL2 to preserve directory context in new tabs.
+# [Safety]: Added fallback for HOST to prevent printf malformation.
 _osc7_cwd() {
-  printf "\033]7;file://%s%s\a" "${HOST}" "${PWD}"
+  local remote_host="${HOST:-$(hostname)}"
+  printf "\033]7;file://%s%s\a" "${remote_host}" "${PWD}"
 }
 autoload -Uz add-zsh-hook
 add-zsh-hook chpwd _osc7_cwd
 _osc7_cwd
 
-# --- Completion Engine ---
+# =============================================================================
+# [Architecture]: JIT (Just-In-Time) Completion Engine (Stabilized)
+# [Reference]: https://zsh.sourceforge.io/Doc/Release/Zsh-Line-Editor.html
+# =============================================================================
 ZSH_COMPDUMP_DIR="$XDG_CACHE_HOME/zsh"
-autoload -Uz compinit bashcompinit
-
-# [Architecture]: Git Completion Dependency Injection
-# [Rationale]: Configures Zsh to link the high-performance wrapper (_git) to its bash core engine.
-# [Reference]: https://zsh.sourceforge.io/Doc/Release/Completion-System.html
 zstyle ':completion:*:*:git:*' script "$XDG_CONFIG_HOME/zsh/completions/git-completion.bash"
 
-() {
-  setopt localoptions extendedglob
+_jit_compinit() {
+  # [Safety]: Rebind TAB to the standard completion widget.
+  # Rationale: Do NOT use '.expand-or-complete' as it bypasses compinit's advanced logic.
+  # Do NOT use 'zle -D' as destroying the active widget causes segmentation faults.
+  bindkey '^I' expand-or-complete
+
+  # Load advanced completion system. compinit will automatically hook into 'expand-or-complete'.
+  autoload -Uz compinit bashcompinit
   local zcompdump="$ZSH_COMPDUMP_DIR/zcompdump"
 
   if [[ ! -f "$zcompdump" || "$XDG_CACHE_HOME/zsh/completions" -nt "$zcompdump" || "$XDG_CONFIG_HOME/zsh/completions" -nt "$zcompdump" ]]; then
@@ -137,17 +118,18 @@ zstyle ':completion:*:*:git:*' script "$XDG_CONFIG_HOME/zsh/completions/git-comp
   else
     compinit -C -d "$zcompdump"
   fi
-
-  # [Architecture]: Bash Completion Compatibility
-  # [Rationale]: Must be initialized after compinit. Required by git-completion.bash.
   bashcompinit
+
+  {{ if or (eq .osid "darwin") .is_wsl -}}
+  compdef '_files' pbcopy
+  {{- end }}
+
+  # [Safety]: Trigger the advanced completion widget that compinit just configured.
+  zle expand-or-complete
 }
 
-# [Architecture]: JIT Completion Binding for Sovereign Functions
-# [Rationale]: Binds file-system completion to 'pbcopy' after the engine is initialized.
-{{ if or (eq .osid "darwin") .is_wsl -}}
-compdef '_files' pbcopy
-{{- end }}
+zle -N _jit_compinit
+bindkey '^I' _jit_compinit
 
 # --- Shell Persistence ---
 HISTSIZE=100000

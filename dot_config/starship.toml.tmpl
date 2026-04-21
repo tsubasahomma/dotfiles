@@ -7,8 +7,6 @@
 command_timeout = 3000
 scan_timeout = 100
 
-# [Architecture]: Visual Hierarchy
-# [Rationale]: Priority-ordered segments for maximum cognitive efficiency.
 format = """
 $os\
 $directory\
@@ -37,7 +35,6 @@ style = "bold blue"
 truncation_length = 4
 fish_style_pwd_dir_length = 1
 read_only = " 󰌾"
-# [Rationale]: Show the full path for the first 3 levels of monorepos.
 truncate_to_repo = true
 
 [character]
@@ -50,8 +47,6 @@ style = "bold cyan"
 format = "on [$symbol$branch]($style) "
 
 [git_status]
-# [Architecture]: Monorepo Optimization
-# [Rationale]: Prevent interactive hanging in massive repositories.
 style = "bold red"
 format = "([\\[$all_status$ahead_behind\\]]($style) )"
 ahead = "⇡"
@@ -64,13 +59,14 @@ ignore_submodules = true
 
 # =============================================================================
 # Language Modules: Sovereign Detection Protocol
-# [Rationale]: Explicitly whitelist metadata files. Extension-based
-# detection is strictly prohibited to eliminate noise in $HOME.
+# [Architecture]: Native File-System Scanning (Zero-Binary-Execution)
+# [Rationale]: By enforcing strict file detection rules and bypassing Shims
+# during directory traversal, Starship maintains immediate (<10ms) rendering.
+# Extension-based detection is prohibited to eliminate false positives.
 # =============================================================================
 
 [python]
 symbol = " "
-# [Interop]: Use 'raw' to prevent v-prefix doubling with mise.
 format = 'via [${symbol}${version}( \($virtualenv\))]($style) '
 version_format = "${raw}"
 detect_extensions = []
@@ -108,7 +104,6 @@ detect_files = [".terraform", "main.tf", "terragrunt.hcl"]
 [docker_context]
 symbol = " "
 format = 'on [$symbol$context]($style) '
-# [Rationale]: Only show if a Dockerfile exists or a local socket is active.
 only_with_files = true
 detect_files = ["Dockerfile", "docker-compose.yml", "docker-compose.yaml"]
 
