@@ -27,7 +27,7 @@ mise_tools:
 
   # --- 4. SOTA Development & Context ---
   "aqua:tree-sitter/tree-sitter": "0.26.8" # renovate: datasource=github-releases packageName=tree-sitter/tree-sitter
-  "aqua:pre-commit/pre-commit": "4.5.1" # renovate: datasource=github-releases packageName=pre-commit/pre-commit
+  "aqua:pre-commit/pre-commit": "4.6.0" # renovate: datasource=github-releases packageName=pre-commit/pre-commit
   "npm:repomix": "1.13.1" # renovate: datasource=npm packageName=repomix
 
   # --- 5. Engineering Utilities ---
