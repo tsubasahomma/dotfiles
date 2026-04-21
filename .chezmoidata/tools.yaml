@@ -60,7 +60,7 @@ mise_tools:
   "aqua:derailed/k9s": "0.50.18" # renovate: datasource=github-releases packageName=derailed/k9s
   "opentofu": "1.11.6" # renovate: datasource=github-releases packageName=opentofu/opentofu
   "tflint": "0.62.0" # renovate: datasource=github-releases packageName=terraform-linters/tflint
-  "terragrunt": "1.0.1" # renovate: datasource=github-releases packageName=gruntwork-io/terragrunt
+  "terragrunt": "1.0.2" # renovate: datasource=github-releases packageName=gruntwork-io/terragrunt
 
   # [Rationale]: gcloud (Google Cloud SDK) follows a proprietary release channel.
   # Automated tracking via GitHub is not feasible; requires manual intervention.
