@@ -45,9 +45,6 @@ install_winget_app {{ . | quote }}
 install_winget_app {{ . | quote }}
 {{ end -}}
 
-{{ range .packages.fonts.windows -}}
-install_winget_app {{ . | quote }}
-{{ end -}}
 {{- end }}
 
 echo "✅ [Infrastructure] Windows dependency provisioning complete."

@@ -19,11 +19,6 @@ cask {{ . | quote }}
 # Desktop & Media Provisioning (Bypassed in CI)
 # =============================================================================
 
-# --- Fonts ---
-{{ range .packages.fonts.darwin -}}
-cask {{ . | quote }}
-{{ end -}}
-
 # --- Media Processing ---
 {{ range .packages.media.darwin -}}
 brew {{ . | quote }}

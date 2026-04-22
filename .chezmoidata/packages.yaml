@@ -1,6 +1,5 @@
 # =============================================================================
 # [Architecture]: Declarative Package Schema (Zero-Toil Edition)
-# [Rationale]: 1Password is excluded as it is a Tier -2 requirement.
 # =============================================================================
 packages:
   headless:
@@ -46,6 +45,7 @@ packages:
       - notion
       - raycast
       - visual-studio-code
+      - 1password
     windows:
       - wez.wezterm.nightly
       - SlackTechnologies.Slack
@@ -54,14 +54,8 @@ packages:
       - Flow-Launcher.Flow-Launcher
       - Microsoft.PowerToys
       - Microsoft.VisualStudioCode
-
-  fonts:
-    darwin:
-      - font-jetbrains-mono-nerd-font
-      - font-biz-udgothic
-      - font-ibm-plex-sans-jp
-    windows:
-      - DEVCOM.JetBrainsMonoNerdFont
+      - AgileBits.1Password
+      - AgileBits.1Password.CLI
 
   media:
     darwin:
