@@ -30,12 +30,23 @@ packages:
       brews:
         - openssl@3
         - colima
+        - just
+        - atuin
+        - duckdb
+        - deno
         - eza
         - xh
+        - awscli
+        - azure-cli
       casks: []
     windows:
+      - Atuinsh.Atuin
+      - DuckDB.cli
+      - DenoLand.Deno
       - eza-community.eza
       - ducaale.xh
+      - Amazon.AWSCLI
+      - Microsoft.AzureCLI
 
   gui:
     darwin:
