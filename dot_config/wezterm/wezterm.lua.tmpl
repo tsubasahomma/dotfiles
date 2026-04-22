@@ -51,9 +51,17 @@ config.inactive_pane_hsb = {
   brightness = 0.5,
 }
 
+-- ============================================================================
 -- [Architecture]: Cross-OS Multiplexer Engine
+-- ============================================================================
+-- [Rationale]: WSL domain enumeration is delegated to WezTerm's native logic.
+-- If a preferred domain is provided via SSOT (chezmoi), it is injected here;
+-- otherwise, default_domain is left unset to preserve WezTerm's standard behavior.
+-- [Reference]: https://wezterm.org/config/lua/config/default_domain.html
 if wezterm.target_triple:find("windows") then
-  config.default_domain = "WSL:Ubuntu"
+{{- if hasKey . "default_wsl_domain" }}
+  config.default_domain = {{ .default_wsl_domain | quote }}
+{{- end }}
 else
   config.unix_domains = { { name = "unix" } }
   config.default_gui_startup_args = { "connect", "unix" }
