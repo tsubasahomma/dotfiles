@@ -71,13 +71,11 @@ end
 -- [Architecture]: Smart Splits (Zero-CLI Protocol Implementation)
 -- ============================================================================
 
-local function is_vim(pane)
+local function is_nvim_pane(pane)
   if not pane then return false end
   local vars = pane:get_user_vars()
   if vars and vars.IS_NVIM == "true" then return true end
-
-  local success, process_name = pcall(function() return pane:get_foreground_process_name() end)
-  return success and process_name and process_name:find("n?vim") ~= nil
+  return false
 end
 
 wezterm.on("user-var-changed", function(window, pane, name, value)
@@ -91,7 +89,7 @@ local function direction_keys(key, direction)
     key = key,
     mods = "CTRL",
     action = wezterm.action_callback(function(window, pane)
-      if is_vim(pane) then
+      if is_nvim_pane(pane) then
         window:perform_action(act.SendKey({ key = key, mods = "CTRL" }), pane)
       else
         window:perform_action(act.ActivatePaneDirection(direction), pane)
