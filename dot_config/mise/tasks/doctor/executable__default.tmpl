@@ -8,6 +8,7 @@ GREEN='\033[0;32m'
 RED='\033[0;31m'
 NC='\033[0m'
 
+IS_CI="${CI:-false}"
 MISE_BIN="{{ .paths.mise }}"
 HAS_ERROR=0
 
@@ -17,10 +18,17 @@ tasks=(
   "doctor:nvim"
   "doctor:vale"
   "doctor:toolchain"
-  "doctor:npm-backend"
-  "doctor:hubspot"
-  "doctor:completion"
 )
+
+if [[ "$IS_CI" != "true" ]]; then
+  tasks+=(
+    "doctor:npm-backend"
+    "doctor:hubspot"
+    "doctor:completion"
+  )
+else
+  printf "⚠️  Skipping workstation-only HubSpot CLI diagnostics in CI.\n"
+fi
 
 for task in "${tasks[@]}"; do
   if ! "$MISE_BIN" run "$task"; then
