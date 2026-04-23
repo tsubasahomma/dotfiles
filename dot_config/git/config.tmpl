@@ -241,26 +241,40 @@ Editing rules:
     st = status -sb
     sw = switch
     sc = switch -c
+    br = branch -vv
     root = rev-parse --show-toplevel
     optimize = maintenance run
 
+    # -- Stage / Commit --
+    aa = add --all
+    ap = add --patch
+    unstage = restore --staged --
+    ci = commit -v
+    cim = commit -m
+    amend = commit --amend --no-edit
+
     # -- Contextual Diff --
-    # [Intent]: reviewer/LLM friendly staged diff with:
+    # [Intent]: reviewer/LLM friendly diff with:
     # - -W: function context
     # - -U10: broader local context
     # - -M -C: rename/copy awareness on demand
     # - histogram + indent heuristic: readability bias
     ctx = diff --histogram -M -C -W -U10 --inter-hunk-context=3 --indent-heuristic
+    ctxs = diff --staged --histogram -M -C -W -U10 --inter-hunk-context=3 --indent-heuristic
+    ctxh = diff HEAD --histogram -M -C -W -U10 --inter-hunk-context=3 --indent-heuristic
+    ds = diff --staged
+    dh = diff HEAD
+    pr = !f() { base=${1:-origin/main}; git diff --histogram -M -C -W -U10 --inter-hunk-context=3 --indent-heuristic "$base...HEAD"; }; f
 
     # -- History & Inspection --
     last = log -1 HEAD --stat
     lg = log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit --date=relative
     adog = log --graph --all --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit --date=relative
-    review = diff --cached --stat --conflicted
+    review = diff --staged --histogram -M -C -W -U10 --inter-hunk-context=3 --indent-heuristic
 
     # -- Workflow --
     fix = !git-absorb
-    amend = commit --amend --no-edit
+    pf = push --force-with-lease
 
 # ================================================================
 # Context-Aware Identity Routing (Policy Layer)

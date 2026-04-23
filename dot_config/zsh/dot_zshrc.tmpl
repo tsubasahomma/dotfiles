@@ -35,17 +35,22 @@ ZSH_INIT_DIR="$XDG_CACHE_HOME/zsh/init"
 [[ -f "$ZSH_INIT_DIR/starship.zsh" ]] && source "$ZSH_INIT_DIR/starship.zsh"
 
 # --- Modern Unix Command Aliases ---
-alias ls='eza --icons'
-alias l='eza -lh --icons --git'
-alias lt='eza --tree --icons'
-alias cat='bat -pp'
-alias preview='bat'
-alias cd='z'
+if command -v eza >/dev/null 2>&1; then
+  alias ls='eza --icons'
+  alias l='eza -lh --icons --git'
+  alias la='eza -a --icons'
+  alias ll='eza -lah --icons --git'
+  alias lt='eza --tree --icons'
+  alias tree='eza --tree'
+fi
+if command -v bat >/dev/null 2>&1; then
+  alias preview='bat'
+fi
 alias cdi='zi'
-alias find='fd'
-alias grep='rg'
-alias g='git'
 alias lg='lazygit'
+alias ..='cd ..'
+alias ...='cd ../..'
+alias mkdirp='mkdir -p'
 
 # =============================================================================
 # [Architecture]: Sovereign Clipboard Protocol
