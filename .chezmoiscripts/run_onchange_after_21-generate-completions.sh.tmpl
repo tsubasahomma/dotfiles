@@ -21,7 +21,6 @@ export PATH="{{ .paths.home }}/.local/bin:$PATH"
 {{- $id_k9s := "aqua:derailed/k9s" -}}
 {{- $id_lazygit := "aqua:jesseduffield/lazygit" -}}
 {{- $id_delta := "github:dandavison/delta" -}}
-{{- $id_hs := "npm:@hubspot/cli" -}}
 {{- $id_pnpm := "pnpm" -}}
 
 MISE_BIN="{{ .paths.mise }}"
@@ -59,7 +58,6 @@ generate_comp "{{ $id_kubectl }}" "kubectl" completion zsh > "$COMP_DIR/_kubectl
 generate_comp "{{ $id_helm }}" "helm" completion zsh > "$COMP_DIR/_helm"
 generate_comp "{{ $id_k9s }}" "k9s" completion zsh > "$COMP_DIR/_k9s"
 generate_comp "{{ $id_lazygit }}" "lazygit" completion zsh > "$COMP_DIR/_lazygit"
-generate_comp "{{ $id_hs }}" "hs" completion zsh > "$COMP_DIR/_hs"
 generate_comp "{{ $id_pnpm }}" "pnpm" completion zsh > "$COMP_DIR/_pnpm" || true
 
 "$MISE_BIN" exec "{{ $id_delta }}" -- delta --generate-completion zsh 2>/dev/null > "$COMP_DIR/_delta" || true

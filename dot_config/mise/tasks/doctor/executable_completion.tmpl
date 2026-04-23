@@ -30,13 +30,13 @@ echo "--- 9. Completion Capability Verification ---"
 if [[ -d "$COMP_DIR" ]]; then
   log_ok "Completion cache directory exists at $COMP_DIR."
 else
-  log_warn "Completion cache directory is missing at $COMP_DIR."
+  log_warn "Completion cache directory is missing at $COMP_DIR. Static asset checks will be skipped."
 fi
 
 if [[ -f "$COMP_DIR/_hs" ]]; then
   log_ok "Static HubSpot completion asset is present in cache."
 else
-  log_warn "Static HubSpot completion asset is not present in cache."
+  log_warn "Static HubSpot completion asset is not present in cache. This probe only verifies generated output and Zsh loadability."
 fi
 
 if ! "$MISE_BIN" exec npm:@hubspot/cli -- hs --help > /dev/null 2>&1; then
