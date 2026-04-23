@@ -19,8 +19,8 @@ export PATH="{{ .paths.home }}/.local/bin:$PATH"
 {{- $id_kubectl := "kubectl" -}}
 {{- $id_helm := "helm" -}}
 {{- $id_k9s := "aqua:derailed/k9s" -}}
+{{- $id_lazygit := "aqua:jesseduffield/lazygit" -}}
 {{- $id_delta := "github:dandavison/delta" -}}
-{{- $id_hs := "npm:@hubspot/cli" -}}
 {{- $id_pnpm := "pnpm" -}}
 
 MISE_BIN="{{ .paths.mise }}"
@@ -29,6 +29,7 @@ INIT_DIR="{{ .paths.xdg_cache }}/zsh/init"
 
 echo "[Infrastructure] Provisioning static Zsh assets..."
 mkdir -p "$COMP_DIR" "$INIT_DIR"
+rm -f "$COMP_DIR/_hs"
 
 local -a stale_files
 stale_files=("$COMP_DIR"/*.zwc(N) "$INIT_DIR"/*.zwc(N))
@@ -57,14 +58,8 @@ generate_comp "{{ $id_doggo }}" "doggo" completions zsh > "$COMP_DIR/_doggo"
 generate_comp "{{ $id_kubectl }}" "kubectl" completion zsh > "$COMP_DIR/_kubectl"
 generate_comp "{{ $id_helm }}" "helm" completion zsh > "$COMP_DIR/_helm"
 generate_comp "{{ $id_k9s }}" "k9s" completion zsh > "$COMP_DIR/_k9s"
+generate_comp "{{ $id_lazygit }}" "lazygit" completion zsh > "$COMP_DIR/_lazygit"
 generate_comp "{{ $id_pnpm }}" "pnpm" completion zsh > "$COMP_DIR/_pnpm" || true
-
-# [Rationale]: Consolidate hs completion to avoid stream race conditions.
-echo "  [Completions] Generating for: hs" >&2
-{
-  echo "#compdef hs"
-  "$MISE_BIN" exec "{{ $id_hs }}" -- hs completion 2>/dev/null | sed "s|[^[:space:]]*/bin/hs|hs|g" || true
-} > "$COMP_DIR/_hs"
 
 "$MISE_BIN" exec "{{ $id_delta }}" -- delta --generate-completion zsh 2>/dev/null > "$COMP_DIR/_delta" || true
 
@@ -104,7 +99,7 @@ fi
 
 # --- Phase 4: Unified Asset Compilation ---
 # [Rationale]: Use deterministic paths and verify readability before zcompile.
-# Generated assets from untrusted CLIs (e.g., hs) may contain bashisms that fail Zsh's strict AOT parser.
+# Generated assets from third-party CLIs may contain bashisms that fail Zsh's strict AOT parser.
 # We gracefully catch compilation failures to allow JIT parsing fallback without breaking convergence.
 local -a compile_targets
 compile_targets=(
