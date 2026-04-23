@@ -62,12 +62,14 @@ config.inactive_pane_hsb = {
 -- [Architecture]: Cross-OS Multiplexer Engine
 -- ============================================================================
 -- [Rationale]: WSL domain enumeration is delegated to WezTerm's native logic.
--- If a preferred domain is provided via SSOT (chezmoi), it is injected here;
--- otherwise, default_domain is left unset to preserve WezTerm's standard behavior.
+-- On Windows, the rendered config must explicitly target the active WSL domain
+-- to avoid WezTerm falling back to the built-in "local" domain.
 -- [Reference]: https://wezterm.org/config/lua/config/default_domain.html
 if wezterm.target_triple:find("windows") then
-{{- if hasKey . "default_wsl_domain" }}
-  config.default_domain = {{ .default_wsl_domain | quote }}
+{{ if .is_wsl -}}
+{{- $wsl_distro_name := env "WSL_DISTRO_NAME" | trim -}}
+{{- if eq $wsl_distro_name "" }}{{ fail "[FATAL] WSL_DISTRO_NAME is empty; cannot render WezTerm default_domain for Windows." }}{{ end -}}
+  config.default_domain = {{ printf "WSL:%s" $wsl_distro_name | quote }}
 {{- end }}
 else
   config.unix_domains = { { name = "unix" } }
