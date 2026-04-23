@@ -57,6 +57,7 @@ packages:
       - raycast
       - visual-studio-code
       - 1password
+      - 1password-cli
     windows:
       - wez.wezterm.nightly
       - SlackTechnologies.Slack
