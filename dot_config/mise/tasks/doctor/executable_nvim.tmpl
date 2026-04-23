@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+# [MISE] description="Verify Neovim lockfile and provider health"
+{{/* [Reference]: https://mise.jdx.dev/tasks/file-tasks.html */}}{{ "" -}}
+{{/* [Reference]: https://neovim.io/doc/user/provider.html#provider-python */}}{{ "" -}}
+
+set -euo pipefail
+
+GREEN='\033[0;32m'
+RED='\033[0;31m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m'
+
+log_ok() { printf "  ${GREEN}✅ %s${NC}\n" "$1"; }
+log_warn() { printf "  ${YELLOW}⚠️  %s${NC}\n" "$1"; }
+log_err() { printf "  ${RED}❌ %s${NC}\n" "$1"; }
+log_guide() { printf "  ${BLUE}👉 %s${NC}\n" "$1"; }
+
+IS_CI="${CI:-false}"
+LOCK_FILE="{{ .paths.xdg_config }}/nvim/lazy-lock.json"
+HAS_ERROR=0
+
+echo "--- 4. Neovim Deterministic State ---"
+if [[ -f "$LOCK_FILE" ]]; then
+  if chezmoi verify "$LOCK_FILE" >/dev/null 2>&1; then
+    log_ok "Neovim lockfile (lazy-lock.json) is synchronized."
+  else
+    log_warn "Neovim lockfile drift detected. Ensure you run 'mise run update:lazy-lock' to commit changes."
+    if [[ "$IS_CI" != "true" ]]; then HAS_ERROR=1; fi
+  fi
+else
+  log_err "Neovim lockfile is missing."
+  log_guide "mise run integrate:nvim && chezmoi add $LOCK_FILE"
+  HAS_ERROR=1
+fi
+
+if command -v nvim >/dev/null 2>&1; then
+  if nvim --headless +"lua if vim.fn.has('python3') == 1 then print('PROVIDER_OK') end" +qa 2>&1 | grep -q "PROVIDER_OK"; then
+    log_ok "Python Provider is natively recognized and functional in Neovim."
+  else
+    log_err "Python Provider is dysfunctional or not recognized by Neovim."
+    log_guide "Ensure 'pipx:neovim/pynvim' is in tools.yaml and run 'mise install'."
+    HAS_ERROR=1
+  fi
+else
+  log_warn "Neovim executable not found in PATH. Skipping provider verification."
+fi
+
+exit "$HAS_ERROR"

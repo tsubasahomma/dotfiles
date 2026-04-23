@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+# [MISE] description="System Health Check Orchestrator"
+{{/* [Reference]: https://mise.jdx.dev/tasks/file-tasks.html */}}{{ "" -}}
+
+set -euo pipefail
+
+GREEN='\033[0;32m'
+RED='\033[0;31m'
+NC='\033[0m'
+
+MISE_BIN="{{ .paths.mise }}"
+HAS_ERROR=0
+
+tasks=(
+  "doctor:security"
+  "doctor:identity"
+  "doctor:nvim"
+  "doctor:vale"
+  "doctor:toolchain"
+  "doctor:npm-backend"
+  "doctor:hubspot"
+  "doctor:completion"
+)
+
+for task in "${tasks[@]}"; do
+  if ! "$MISE_BIN" run "$task"; then
+    HAS_ERROR=1
+  fi
+done
+
+printf "\n"
+if [[ "$HAS_ERROR" -eq 0 ]]; then
+  printf "${GREEN}✨ System Health Evaluation Complete (Zero Drift)${NC}\n"
+  exit 0
+else
+  printf "${RED}❌ System Health Evaluation Failed. Address the errors above.${NC}\n"
+  exit 1
+fi

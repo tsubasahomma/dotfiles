@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+# [MISE] description="Verify HubSpot CLI install artifacts and execution"
+{{/* [Reference]: https://mise.jdx.dev/tasks/file-tasks.html */}}{{ "" -}}
+
+set -euo pipefail
+
+GREEN='\033[0;32m'
+RED='\033[0;31m'
+BLUE='\033[0;34m'
+NC='\033[0m'
+
+log_ok() { printf "  ${GREEN}✅ %s${NC}\n" "$1"; }
+log_err() { printf "  ${RED}❌ %s${NC}\n" "$1"; }
+log_guide() { printf "  ${BLUE}👉 %s${NC}\n" "$1"; }
+
+MISE_BIN="{{ .paths.mise }}"
+TOOL_ID="npm:@hubspot/cli"
+INSTALL_DIR="$($MISE_BIN where "$TOOL_ID" 2>/dev/null || true)"
+HAS_ERROR=0
+
+echo "--- 8. HubSpot CLI Verification ---"
+if [[ -n "$INSTALL_DIR" && -d "$INSTALL_DIR" ]]; then
+  log_ok "HubSpot CLI install directory resolved to $INSTALL_DIR."
+else
+  log_err "HubSpot CLI install directory could not be resolved."
+  log_guide "Run 'mise install $TOOL_ID' and inspect npm backend diagnostics."
+  HAS_ERROR=1
+fi
+
+if [[ -n "$INSTALL_DIR" ]] && find "$INSTALL_DIR" \( -type f -o -type l \) -name hs -print -quit | grep -q .; then
+  log_ok "HubSpot CLI exposes an 'hs' executable artifact inside the install directory."
+else
+  log_err "HubSpot CLI does not expose an 'hs' executable artifact inside the install directory."
+  log_guide "Inspect '$INSTALL_DIR' and compare it with the expected package layout."
+  HAS_ERROR=1
+fi
+
+if "$MISE_BIN" exec "$TOOL_ID" -- hs --version > /dev/null 2>&1; then
+  log_ok "HubSpot CLI executes successfully via mise."
+else
+  log_err "HubSpot CLI failed to execute via 'mise exec'."
+  log_guide "Run 'mise exec $TOOL_ID -- hs --version' and inspect the resulting error."
+  HAS_ERROR=1
+fi
+
+exit "$HAS_ERROR"

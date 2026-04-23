@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+# [MISE] description="Verify infrastructure security permissions"
+{{/* [Reference]: https://mise.jdx.dev/tasks/file-tasks.html */}}{{ "" -}}
+
+set -euo pipefail
+
+GREEN='\033[0;32m'
+NC='\033[0m'
+
+log_ok() { printf "  ${GREEN}✅ %s${NC}\n" "$1"; }
+
+HOME_DIR="{{ .paths.home }}"
+
+echo "--- 1. Infrastructure Security & Permissions ---"
+for dir in "$HOME_DIR/.ssh" "{{ .paths.xdg_state }}/ssh"; do
+  if [[ -d "$dir" ]]; then
+    chmod 700 "$dir"
+    log_ok "Permissions secured for $dir (0700)."
+  fi
+done
+
+exit 0

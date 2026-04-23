@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+# [MISE] description="Verify Vale configuration and style packages"
+{{/* [Reference]: https://mise.jdx.dev/tasks/file-tasks.html */}}{{ "" -}}
+
+set -euo pipefail
+
+GREEN='\033[0;32m'
+RED='\033[0;31m'
+BLUE='\033[0;34m'
+NC='\033[0m'
+
+log_ok() { printf "  ${GREEN}✅ %s${NC}\n" "$1"; }
+log_err() { printf "  ${RED}❌ %s${NC}\n" "$1"; }
+log_guide() { printf "  ${BLUE}👉 %s${NC}\n" "$1"; }
+
+MISE_BIN="{{ .paths.mise }}"
+VALE_CONFIG="{{ .paths.xdg_config }}/vale/vale.ini"
+HAS_ERROR=0
+
+echo "--- 5. Prose Linting Engine (Vale) ---"
+if [[ -f "$VALE_CONFIG" ]]; then
+  if "$MISE_BIN" exec vale -- vale --config="$VALE_CONFIG" ls-config > /dev/null 2>&1; then
+    log_ok "Vale configuration loaded successfully."
+
+    STYLE_DIR="{{ .paths.xdg_data }}/vale/styles/Google"
+    if [[ -d "$STYLE_DIR" ]]; then
+      log_ok "External style packages (Google) provisioned."
+    else
+      log_err "External style packages missing at $STYLE_DIR."
+      log_guide "chezmoi apply (or manual: vale --config=\"$VALE_CONFIG\" sync)"
+      HAS_ERROR=1
+    fi
+  else
+    log_err "Vale failed to parse configuration at $VALE_CONFIG."
+    HAS_ERROR=1
+  fi
+else
+  log_err "Vale configuration missing at $VALE_CONFIG."
+  log_guide "chezmoi apply"
+  HAS_ERROR=1
+fi
+
+exit "$HAS_ERROR"

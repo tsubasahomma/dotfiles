@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+# [MISE] description="Verify npm backend install artifacts for npm-managed tools"
+{{/* [Reference]: https://mise.jdx.dev/tasks/file-tasks.html */}}{{ "" -}}
+
+set -euo pipefail
+
+GREEN='\033[0;32m'
+RED='\033[0;31m'
+BLUE='\033[0;34m'
+NC='\033[0m'
+
+log_ok() { printf "  ${GREEN}✅ %s${NC}\n" "$1"; }
+log_err() { printf "  ${RED}❌ %s${NC}\n" "$1"; }
+log_guide() { printf "  ${BLUE}👉 %s${NC}\n" "$1"; }
+
+MISE_BIN="{{ .paths.mise }}"
+TOOL_ID="npm:@hubspot/cli"
+INSTALL_DIR="$($MISE_BIN where "$TOOL_ID" 2>/dev/null || true)"
+HAS_ERROR=0
+
+echo "--- 7. npm Backend Install Artifact Verification ---"
+if "$MISE_BIN" tool "$TOOL_ID" > /dev/null 2>&1; then
+  log_ok "mise recognizes $TOOL_ID as a configured npm-backed tool."
+else
+  log_err "mise does not recognize $TOOL_ID as a configured npm-backed tool."
+  log_guide "Verify the tool declaration and rerun 'mise install'."
+  HAS_ERROR=1
+fi
+
+if [[ -n "$INSTALL_DIR" && -d "$INSTALL_DIR" ]]; then
+  log_ok "npm backend install directory resolved to $INSTALL_DIR."
+else
+  log_err "npm backend install directory could not be resolved for $TOOL_ID."
+  log_guide "Run 'mise install $TOOL_ID' and inspect the npm backend output."
+  HAS_ERROR=1
+fi
+
+if [[ -n "$INSTALL_DIR" ]] && find "$INSTALL_DIR" -mindepth 1 -print -quit | grep -q .; then
+  log_ok "npm backend install directory contains artifacts."
+else
+  log_err "npm backend install directory appears empty."
+  log_guide "Inspect '$INSTALL_DIR' to confirm whether the package manager produced install artifacts."
+  HAS_ERROR=1
+fi
+
+if [[ -n "$INSTALL_DIR" ]] && find "$INSTALL_DIR" -name package.json -print -quit | grep -q .; then
+  log_ok "npm backend install directory contains package metadata."
+else
+  log_err "npm backend install directory does not contain package metadata."
+  log_guide "Inspect '$INSTALL_DIR' to confirm whether package extraction completed successfully."
+  HAS_ERROR=1
+fi
+
+exit "$HAS_ERROR"
