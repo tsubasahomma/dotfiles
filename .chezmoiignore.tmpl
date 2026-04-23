@@ -65,5 +65,10 @@ renovate.json5
 
 # --- 5. OS-Specific Overrides ---
 {{ if ne .osid "darwin" -}}
+{{- if not .is_wsl }}
+# [Rationale]: The WezTerm launcher shim is only valid on macOS and WSL.
+# Plain Linux and CI runners should not manage this target.
+.local/bin/wezterm
+{{- end }}
 Library/**
 {{ end -}}
