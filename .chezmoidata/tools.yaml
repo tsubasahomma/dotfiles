@@ -10,7 +10,7 @@ mise_tools:
   "aqua:jdx/usage": "3.2.1" # renovate: datasource=github-releases packageName=jdx/usage
   "node": "24.15.0" # renovate: datasource=node-version
   "python": "3.14.4" # renovate: datasource=python-version
-  "pnpm": "10.33.1" # renovate: datasource=npm
+  "pnpm": "10.33.2" # renovate: datasource=npm
   "core:deno": "2.7.13" # renovate: datasource=github-releases packageName=denoland/deno
   "rust": "1.95.0" # renovate: datasource=github-releases packageName=rust-lang/rust
   "go": "1.26.2" # renovate: datasource=golang-version
@@ -80,4 +80,4 @@ mise_tools:
   "npm:repomix": "1.13.1" # renovate: datasource=npm packageName=repomix
   "npm:@openai/codex": "0.123.0" # renovate: datasource=npm packageName=@openai/codex
   "npm:@anthropic-ai/claude-code": "2.1.118" # renovate: datasource=npm packageName=@anthropic-ai/claude-code
-  "npm:@google/gemini-cli": "0.38.2" # renovate: datasource=npm packageName=@google/gemini-cli
+  "npm:@google/gemini-cli": "0.39.0" # renovate: datasource=npm packageName=@google/gemini-cli
