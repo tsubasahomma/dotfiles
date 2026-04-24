@@ -2,6 +2,7 @@
 # [MISE] description="Verify Neovim lockfile and provider health"
 {{/* [Reference]: https://mise.jdx.dev/tasks/file-tasks.html */}}{{ "" -}}
 {{/* [Reference]: https://neovim.io/doc/user/provider.html#provider-python */}}{{ "" -}}
+{{/* [Reference]: https://neovim.io/doc/user/provider.html#provider-nodejs */}}{{ "" -}}
 
 set -euo pipefail
 
@@ -18,6 +19,7 @@ log_guide() { printf "  ${BLUE}👉 %s${NC}\n" "$1"; }
 
 IS_CI="${CI:-false}"
 LOCK_FILE="{{ .paths.xdg_config }}/nvim/lazy-lock.json"
+MISE_BIN="{{ .paths.mise }}"
 HAS_ERROR=0
 
 echo "--- 4. Neovim Deterministic State ---"
@@ -35,11 +37,29 @@ else
 fi
 
 if command -v nvim >/dev/null 2>&1; then
-  if nvim --headless +"lua if vim.fn.has('python3') == 1 then print('PROVIDER_OK') end" +qa 2>&1 | grep -q "PROVIDER_OK"; then
+  if nvim --headless +"lua if vim.fn.has('python3') == 1 then print('PYTHON_PROVIDER_OK') end" +qa 2>&1 | grep -q "PYTHON_PROVIDER_OK"; then
     log_ok "Python Provider is natively recognized and functional in Neovim."
   else
     log_err "Python Provider is dysfunctional or not recognized by Neovim."
     log_guide "Ensure 'pipx:neovim/pynvim' is in tools.yaml and run 'mise install'."
+    HAS_ERROR=1
+  fi
+
+  NODE_HOST="$("$MISE_BIN" which neovim-node-host 2>/dev/null || true)"
+
+  if [[ -n "$NODE_HOST" && -x "$NODE_HOST" ]]; then
+    log_ok "Node.js Provider host executable resolved via mise ($NODE_HOST)."
+  else
+    log_err "Node.js Provider host executable could not be resolved via mise."
+    log_guide "Ensure 'npm:neovim' is in tools.yaml and run 'mise install'."
+    HAS_ERROR=1
+  fi
+
+  if [[ -n "$NODE_HOST" ]] && "$NODE_HOST" --version >/dev/null 2>&1; then
+    log_ok "Node.js Provider host executable runs successfully."
+  else
+    log_err "Node.js Provider host executable failed to run."
+    log_guide "Run '\"$NODE_HOST\" --version' and inspect the error."
     HAS_ERROR=1
   fi
 else

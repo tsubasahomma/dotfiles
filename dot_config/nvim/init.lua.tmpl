@@ -29,5 +29,15 @@ vim.api.nvim_create_autocmd({ "VimEnter", "VimLeave" }, {
   end,
 })
 
+-- [Provider]: Resolve Node.js host from the active executable path.
+-- [Rationale]: Keeps mise as the source of truth while avoiding hardcoded
+-- install paths. The resolved executable may be an npm wrapper; Neovim handles
+-- the provider check through its own provider implementation.
+-- [Reference]: https://neovim.io/doc/user/provider.html#provider-nodejs
+local node_host = vim.fn.exepath("neovim-node-host")
+if node_host ~= "" then
+  vim.g.node_host_prog = node_host
+end
+
 -- Load LazyVim core.
 require("config.lazy")
