@@ -1,0 +1,26 @@
+-- [Architecture]: Protocol-Driven Outbound Navigation (Smart Splits)
+-- [Rationale]: Emits an OSC 1337 signal when reaching the vim boundary,
+-- delegating the pane switch to WezTerm's event listener.
+local function signal_move_to_wezterm(direction)
+  if vim.env.TERM_PROGRAM ~= "WezTerm" then return end
+  local osc = string.format("\027]1337;SetUserVar=MOVE_SIGNAL=%s\007", vim.base64.encode(direction))
+  local f = io.open("/dev/tty", "wb")
+  if f then
+    f:write(osc)
+    f:flush()
+    f:close()
+  end
+end
+
+local function move_or_signal(key, direction)
+  local prev_win = vim.api.nvim_get_current_win()
+  vim.cmd("wincmd " .. key)
+  if prev_win == vim.api.nvim_get_current_win() then
+    signal_move_to_wezterm(direction)
+  end
+end
+
+vim.keymap.set("n", "<C-h>", function() move_or_signal("h", "Left") end)
+vim.keymap.set("n", "<C-j>", function() move_or_signal("j", "Down") end)
+vim.keymap.set("n", "<C-k>", function() move_or_signal("k", "Up") end)
+vim.keymap.set("n", "<C-l>", function() move_or_signal("l", "Right") end)
