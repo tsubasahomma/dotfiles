@@ -46,7 +46,7 @@ mise_tools:
   # --- 6. Data & GTM Operations ---
   "aqua:noahgorstein/jqp": "0.8.0" # renovate: datasource=github-releases packageName=noahgorstein/jqp
   "go:github.com/mikefarah/yq/v4": "4.53.2" # renovate: datasource=github-releases packageName=mikefarah/yq
-  "npm:@hubspot/cli": "8.4.0" # renovate: datasource=npm packageName=@hubspot/cli
+  "npm:@hubspot/cli": "8.5.0" # renovate: datasource=npm packageName=@hubspot/cli
 
   # --- 7. Documentation & Prose ---
   "aqua:errata-ai/vale": "3.14.1" # renovate: datasource=github-releases packageName=errata-ai/vale
@@ -78,6 +78,6 @@ mise_tools:
 
   # --- 10. AI Coding & Context Engineering ---
   "npm:repomix": "1.13.1" # renovate: datasource=npm packageName=repomix
-  "npm:@openai/codex": "0.124.0" # renovate: datasource=npm packageName=@openai/codex
+  "npm:@openai/codex": "0.125.0" # renovate: datasource=npm packageName=@openai/codex
   "npm:@anthropic-ai/claude-code": "2.1.119" # renovate: datasource=npm packageName=@anthropic-ai/claude-code
   "npm:@google/gemini-cli": "0.39.1" # renovate: datasource=npm packageName=@google/gemini-cli
