@@ -34,11 +34,7 @@ return {
         },
       },
       servers = {
-        pyright = { enabled = false },
         basedpyright = {
-          enabled = true,
-          -- [Interop]: Mason-managed binary names.
-          cmd = { "basedpyright-langserver", "--stdio" },
           -- [Architecture]: Zero-Speculation Path Resolution
           -- [Rationale]: By omitting settings.python.pythonPath, BasedPyright
           -- defaults to the 'python' binary available in the current PATH,
@@ -52,7 +48,6 @@ return {
             },
           },
         },
-        ruff = {},
         typos_lsp = {
           init_options = {
             diagnosticSeverity = "Hint",
