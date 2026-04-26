@@ -24,6 +24,11 @@ require("lazy").setup({
     -- from $PATH (provided via mise) for Markdown, JSON, and YAML.
     { import = "lazyvim.plugins.extras.formatting.prettier" },
 
+    -- [Rationale]: Use project-local ESLint for diagnostics and code actions
+    -- while preserving Prettier as the formatting owner.
+    -- [Reference]: https://www.lazyvim.org/extras/linting/eslint
+    { import = "lazyvim.plugins.extras.linting.eslint" },
+
     -- Language-specific extras for 2026 SOTA workflows.
     { import = "lazyvim.plugins.extras.lang.python" },
     { import = "lazyvim.plugins.extras.lang.typescript" },
