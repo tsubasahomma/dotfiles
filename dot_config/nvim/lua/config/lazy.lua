@@ -36,6 +36,9 @@ require("lazy").setup({
     -- Test workflow extra.
     { import = "lazyvim.plugins.extras.test.core" },
 
+    -- Debug workflow extra.
+    { import = "lazyvim.plugins.extras.dap.core" },
+
     -- [Architecture]: 2026 SOTA Engines
     -- [Rationale]: Replaces legacy mini-animate, fzf-lua, and nvim-cmp with
     -- unified, Rust-backed, or native-speed alternatives.

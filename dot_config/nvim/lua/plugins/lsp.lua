@@ -81,6 +81,7 @@ return {
     opts = {
       ensure_installed = {
         "basedpyright",
+        "debugpy",
         "harper-ls",
         "typos-lsp",
       },
