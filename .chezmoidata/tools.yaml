@@ -30,6 +30,7 @@ mise_tools:
   # --- 4. SOTA Development ---
   "aqua:tree-sitter/tree-sitter": "0.26.8" # renovate: datasource=github-releases packageName=tree-sitter/tree-sitter
   "aqua:pre-commit/pre-commit": "4.6.0" # renovate: datasource=github-releases packageName=pre-commit/pre-commit
+  "pipx:pytest": "9.0.3" # renovate: datasource=pypi packageName=pytest
 
   # --- 5. Engineering Utilities ---
   "aqua:casey/just": "1.50.0" # renovate: datasource=github-releases packageName=casey/just

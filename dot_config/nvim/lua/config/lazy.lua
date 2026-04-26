@@ -33,6 +33,9 @@ require("lazy").setup({
     { import = "lazyvim.plugins.extras.lang.markdown" },
     { import = "lazyvim.plugins.extras.lang.docker" },
 
+    -- Test workflow extra.
+    { import = "lazyvim.plugins.extras.test.core" },
+
     -- [Architecture]: 2026 SOTA Engines
     -- [Rationale]: Replaces legacy mini-animate, fzf-lua, and nvim-cmp with
     -- unified, Rust-backed, or native-speed alternatives.
