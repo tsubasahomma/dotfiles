@@ -9,8 +9,10 @@ return {
     -- [Note]: LazyVim handles the 'config' and triggers. We only provide the 'opts'.
     opts = {
       linters_by_ft = {
-        markdown = { "vale" },
+        bash = { "shellcheck" },
         gitcommit = { "vale" },
+        markdown = { "vale" },
+        sh = { "shellcheck" },
       },
       -- [Critical]: Define linter overrides in 'linters' table to allow
       -- LazyVim's internal setup function to merge them correctly.
