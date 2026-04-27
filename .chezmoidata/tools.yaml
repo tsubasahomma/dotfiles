@@ -14,7 +14,7 @@ mise_tools:
   "core:deno": "2.7.13" # renovate: datasource=github-releases packageName=denoland/deno
   "rust": "1.95.0" # renovate: datasource=github-releases packageName=rust-lang/rust
   "go": "1.26.2" # renovate: datasource=golang-version
-  "aqua:astral-sh/uv": "0.11.7" # renovate: datasource=github-releases packageName=astral-sh/uv
+  "aqua:astral-sh/uv": "0.11.8" # renovate: datasource=github-releases packageName=astral-sh/uv
 
   # --- 2. Sovereign Identity & VCS ---
   "aqua:cli/cli": "2.91.0" # renovate: datasource=github-releases packageName=cli/cli
@@ -41,7 +41,7 @@ mise_tools:
   "aqua:BurntSushi/ripgrep": "15.1.0" # renovate: datasource=github-releases packageName=BurntSushi/ripgrep
   "aqua:sharkdp/fd": "10.4.2" # renovate: datasource=github-releases packageName=sharkdp/fd
   "aqua:starship/starship": "1.25.0" # renovate: datasource=github-releases packageName=starship/starship
-  "aqua:junegunn/fzf": "v0.71.0" # renovate: datasource=github-releases packageName=junegunn/fzf
+  "aqua:junegunn/fzf": "v0.72.0" # renovate: datasource=github-releases packageName=junegunn/fzf
   "aqua:sharkdp/hyperfine": "1.20.0" # renovate: datasource=github-releases packageName=sharkdp/hyperfine
 
   # --- 6. Data & GTM Operations ---
@@ -80,7 +80,7 @@ mise_tools:
   "aqua:sachaos/viddy": "1.3.0" # renovate: datasource=github-releases packageName=sachaos/viddy
 
   # --- 10. AI Coding & Context Engineering ---
-  "npm:repomix": "1.13.1" # renovate: datasource=npm packageName=repomix
+  "npm:repomix": "1.14.0" # renovate: datasource=npm packageName=repomix
   "npm:@openai/codex": "0.125.0" # renovate: datasource=npm packageName=@openai/codex
   "npm:@anthropic-ai/claude-code": "2.1.119" # renovate: datasource=npm packageName=@anthropic-ai/claude-code
   "npm:@google/gemini-cli": "0.39.1" # renovate: datasource=npm packageName=@google/gemini-cli
