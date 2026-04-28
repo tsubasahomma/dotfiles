@@ -82,5 +82,5 @@ mise_tools:
   # --- 10. AI Coding & Context Engineering ---
   "npm:repomix": "1.14.0" # renovate: datasource=npm packageName=repomix
   "npm:@openai/codex": "0.125.0" # renovate: datasource=npm packageName=@openai/codex
-  "npm:@anthropic-ai/claude-code": "2.1.119" # renovate: datasource=npm packageName=@anthropic-ai/claude-code
+  "npm:@anthropic-ai/claude-code": "2.1.121" # renovate: datasource=npm packageName=@anthropic-ai/claude-code
   "npm:@google/gemini-cli": "0.39.1" # renovate: datasource=npm packageName=@google/gemini-cli
