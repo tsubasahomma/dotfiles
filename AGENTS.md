@@ -26,8 +26,11 @@ repository evidence shows a conflict. Report the conflict instead of guessing.
 
 For detailed LLM and workflow guidance, use
 [docs/llm/README.md](./docs/llm/README.md) and
-[docs/workflows/README.md](./docs/workflows/README.md). Keep this file as the
-repository-wide entry point rather than duplicating detailed process rules here.
+[docs/workflows/README.md](./docs/workflows/README.md). For comment hygiene and
+comment routing, use
+[docs/llm/comment-guidelines.md](./docs/llm/comment-guidelines.md). Keep this
+file as the repository-wide entry point rather than duplicating detailed process
+rules here.
 
 ## Behavior preservation
 
