@@ -23,6 +23,8 @@ provisioning behavior.
   validation review, link review, and LLM failure modes.
 - [Chezmoi template guidelines](./chezmoi-template-guidelines.md):
   source-state and rendered-target guidance for Go Template files.
+- [Chezmoi action graph](../chezmoi/action-graph.md): repository-owned
+  action graph and script contracts for current behavior.
 
 ## Related workflow docs
 

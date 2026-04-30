@@ -89,6 +89,7 @@ Detailed LLM-assisted maintenance rules live in:
 
 - [Repository agent guidance](./AGENTS.md)
 - [LLM collaboration guidance](./docs/llm/README.md)
+- [Chezmoi action graph](./docs/chezmoi/action-graph.md)
 - [Workflow documentation](./docs/workflows/README.md)
 
 ## References

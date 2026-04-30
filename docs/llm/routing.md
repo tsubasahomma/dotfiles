@@ -135,6 +135,9 @@ cleanup into a Worker scope unless the assigned issue explicitly includes it.
 
 ### Chezmoi template changes
 
+Use [Chezmoi action graph](../chezmoi/action-graph.md) for the
+repository-owned action graph and script contracts before behavior-preserving
+refactoring.
 Inspect source-state and rendered-target impact. Be careful with Go Template
 comments, whitespace trimming, shebang placement, blank lines, and target-language
 syntax. See [Chezmoi template guidelines](./chezmoi-template-guidelines.md).
