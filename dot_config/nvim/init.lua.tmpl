@@ -8,7 +8,7 @@ end
 -- [Architecture]: Terminal Identity Propagation (OSC 1337 / Physical Bypass)
 -- [Rationale]: Directly writes to /dev/tty to bypass Neovim's TUI buffer.
 -- This ensures the signal survives startup/exit and reaches the terminal server.
--- [Reference]: https://wezfurlong.org/wezterm/config/lua/pane/get_user_vars.html
+-- [Reference]: https://wezterm.org/config/lua/pane/get_user_vars.html
 local function set_wezterm_var(name, value)
   if vim.env.TERM_PROGRAM ~= "WezTerm" then return end
   local str_value = value and "true" or "false"
