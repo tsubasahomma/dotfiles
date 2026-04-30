@@ -25,5 +25,5 @@ decisions in this chezmoi-managed dotfiles repository.
   boundaries and validation expectations.
 - [Pull request template](../../.github/pull_request_template.md): current PR
   body structure.
-- [Change request issue template](../../.github/ISSUE_TEMPLATE/change-request.md):
-  current scoped issue template.
+- [Change request issue form](../../.github/ISSUE_TEMPLATE/change-request.yml):
+  current scoped issue form.

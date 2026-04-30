@@ -83,6 +83,14 @@ mise run doctor
 - **Check Drift**: `chezmoi verify`
 - **De-provisioning (Purge)**: Restore the host to its original state by following the [Purge Sequence in ARCHITECTURE.md](./ARCHITECTURE.md).
 
+## LLM collaboration
+
+Detailed LLM-assisted maintenance rules live in:
+
+- [Repository agent guidance](./AGENTS.md)
+- [LLM collaboration guidance](./docs/llm/README.md)
+- [Workflow documentation](./docs/workflows/README.md)
+
 ## References
 
 - [chezmoi Documentation](https://www.chezmoi.io/user-guide/command-overview/)

@@ -58,13 +58,13 @@ close it on merge.
 For a tracking issue split across multiple PRs, only the final planned PR should
 close the issue.
 
-PR2 for issue #132 should use:
+For an intermediate PR in a multi-PR issue, use:
 
 ```text
-Refs #132
+Refs #<issue-number>
 ```
 
-It should not use `Closes #132`.
+It should not use `Closes #<issue-number>`.
 
 ## Issue checkbox updates
 
