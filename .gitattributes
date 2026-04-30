@@ -13,11 +13,10 @@
 
 # [Rationale]: GitHub Linguist Overrides
 # Mark data and templates as their underlying language for better UI
-.chezmoidata.yaml linguist-language=yaml
+.chezmoidata/*.yaml linguist-language=yaml
 *.sh.tmpl linguist-language=shell
 *.lua.tmpl linguist-language=lua
 
 # [Rationale]: Exclude meta-tools from source archives (git archive)
 .github/ export-ignore
-.repomixignore export-ignore
 repomix.config.json export-ignore
