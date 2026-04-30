@@ -3,6 +3,10 @@
 Use [AGENTS.md](../AGENTS.md) as the primary repository-wide guidance for this
 repository.
 
+Use [docs/llm/README.md](../docs/llm/README.md) and
+[docs/workflows/README.md](../docs/workflows/README.md) for detailed LLM
+collaboration and workflow guidance.
+
 This is a chezmoi-managed dotfiles source-state repository. Keep suggestions
 small, scoped, and behavior-preserving.
 

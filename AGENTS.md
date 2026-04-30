@@ -24,6 +24,11 @@ When sources conflict, prefer the most specific reliable source for the task:
 Do not override explicit issue constraints with general guidance unless current
 repository evidence shows a conflict. Report the conflict instead of guessing.
 
+For detailed LLM and workflow guidance, use
+[docs/llm/README.md](./docs/llm/README.md) and
+[docs/workflows/README.md](./docs/workflows/README.md). Keep this file as the
+repository-wide entry point rather than duplicating detailed process rules here.
+
 ## Behavior preservation
 
 Preserve existing behavior unless the assigned issue explicitly scopes a change.
