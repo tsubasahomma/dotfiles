@@ -1,11 +1,12 @@
 #!/bin/sh
 # [chezmoi-script]: L0 (POSIX Shell) Tiering
 # [Rationale]: Guaranteed execution even without Zsh/Mise environment.
-# [Staff Engineer Note]: Refactored to eliminate Zsh-specific array/typeset syntax.
-# [LLM Context]: This script is already strictly idempotent through lazy evaluation.
-#                The BACKUP_ROOT is ONLY created if a target file physically exists.
-#                Do NOT propose refactoring to prevent empty directory creation.
-
+{{/*
+Source-only maintainer note:
+This script intentionally stays POSIX-compatible. BACKUP_ROOT is created lazily
+only after a legacy target is found, so do not refactor it into eager directory
+creation.
+*/}}
 set -eu
 
 BACKUP_ROOT="{{ .paths.xdg_state }}/chezmoi/backup/legacy_$(date +%Y%m%d_%H%M%S)"

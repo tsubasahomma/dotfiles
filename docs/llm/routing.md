@@ -126,6 +126,13 @@ Prefer `docs/llm/` or `docs/workflows/` for durable guidance. Validate with
 `git diff --check`, `pre-commit run --all-files`, Markdown link checks, and
 `repomix` when LLM routing or snapshot guidance changes.
 
+### Comment and reference hygiene changes
+
+Use [Comment guidelines](./comment-guidelines.md) before changing comments,
+references, or labels. Preserve comments that carry operational, safety,
+generated-file, trigger, or tool-metadata meaning. Do not mix broad vocabulary
+cleanup into a Worker scope unless the assigned issue explicitly includes it.
+
 ### Chezmoi template changes
 
 Inspect source-state and rendered-target impact. Be careful with Go Template

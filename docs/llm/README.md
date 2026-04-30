@@ -15,6 +15,8 @@ provisioning behavior.
   contents, command output, validation output, CI evidence, and Repomix snapshots.
 - [Diff output guardrails](./diff-output-guardrails.md): safe patch, heredoc,
   guarded-script, and non-patch output formats.
+- [Comment guidelines](./comment-guidelines.md): comment usefulness,
+  source-only versus target-visible routing, labels, and LLM maintenance notes.
 - [Commit message guidelines](./commit-message-guidelines.md): Conventional
   Commit structure, issue reference rules, and validation claim discipline.
 - [Review protocol](./review-protocol.md): scope review, behavior preservation,
