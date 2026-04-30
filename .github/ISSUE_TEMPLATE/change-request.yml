@@ -1,0 +1,105 @@
+name: Change request
+description: Propose a scoped repository change with validation evidence.
+title: "[Change]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this form for scoped dotfiles repository changes. Focus on the
+        desired outcome, boundaries, constraints, and validation evidence.
+  - type: textarea
+    id: goal
+    attributes:
+      label: Goal
+      description: Describe the desired end state in one or two sentences.
+      placeholder: Establish a repository-wide entry point for...
+    validations:
+      required: true
+  - type: textarea
+    id: background
+    attributes:
+      label: Background
+      description: Explain why this change is needed and note prior decisions.
+      placeholder: The current repository needs...
+    validations:
+      required: true
+  - type: textarea
+    id: in_scope
+    attributes:
+      label: In scope
+      description: List what will be done.
+      placeholder: |
+        - Add...
+        - Update...
+    validations:
+      required: true
+  - type: textarea
+    id: out_of_scope
+    attributes:
+      label: Out of scope
+      description: List what will not be done.
+      placeholder: |
+        - Do not change provisioning behavior.
+        - Do not introduce new dependencies.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance_criteria
+    attributes:
+      label: Acceptance criteria
+      description: Define objective, observable, and independent conditions.
+      placeholder: |
+        - [ ] The repository contains...
+        - [ ] Existing behavior is preserved...
+    validations:
+      required: true
+  - type: textarea
+    id: validation
+    attributes:
+      label: Validation
+      description: List executable checks or evidence needed before completion.
+      placeholder: |
+        - [ ] `git diff --check`
+        - [ ] `pre-commit run --all-files`
+        - [ ] `repomix`
+        - [ ] GitHub Actions CI passes
+    validations:
+      required: true
+  - type: textarea
+    id: constraints
+    attributes:
+      label: Constraints
+      description: List hard requirements and limitations.
+      placeholder: |
+        - Do not change provisioning, identity, shell, editor, or CI behavior.
+        - Do not edit generated `repomix-*.xml` files.
+    validations:
+      required: true
+  - type: textarea
+    id: risks
+    attributes:
+      label: Risks
+      description: Identify known risks or uncertainties.
+      placeholder: |
+        - Risk 1
+        - Risk 2
+    validations:
+      required: false
+  - type: textarea
+    id: references
+    attributes:
+      label: References
+      description: Link authoritative sources, related issues, or prior decisions.
+      placeholder: |
+        - https://docs.github.com/...
+        - #123
+    validations:
+      required: false
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes
+      description: Add clarifications that do not fit the sections above.
+      placeholder: Add optional notes here.
+    validations:
+      required: false

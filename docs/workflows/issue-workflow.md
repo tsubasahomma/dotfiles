@@ -37,8 +37,8 @@ A useful issue should include:
 - risks
 - references
 
-Use the current [change request issue template](../../.github/ISSUE_TEMPLATE/change-request.md)
-unless a future PR replaces it with a structured issue form.
+Use the current [change request issue form](../../.github/ISSUE_TEMPLATE/change-request.yml)
+for scoped repository changes.
 
 ## Scope boundaries
 

@@ -92,7 +92,7 @@ Check links to current files, especially:
 - [AGENTS.md](../../AGENTS.md)
 - [GitHub Copilot instructions](../../.github/copilot-instructions.md)
 - [Pull request template](../../.github/pull_request_template.md)
-- [Change request issue template](../../.github/ISSUE_TEMPLATE/change-request.md)
+- [Change request issue form](../../.github/ISSUE_TEMPLATE/change-request.yml)
 - [Repomix instruction router](../../repomix-instruction.md)
 - [Repomix config](../../repomix.config.json)
 - [Workflow docs](../workflows/README.md)
@@ -162,9 +162,8 @@ A good review comment identifies:
 Prefer:
 
 ```text
-docs/workflows/pull-request-workflow.md links to a future issue-form file that
-does not exist in this PR. Please link to the current Markdown issue template
-until the issue-form PR creates the YAML file.
+docs/workflows/issue-workflow.md links to the removed Markdown issue template.
+Please update the link to the current YAML issue form.
 ```
 
 Avoid vague comments:

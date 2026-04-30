@@ -55,9 +55,9 @@ If the change affects LLM routing or Repomix guidance, also run:
 repomix
 ```
 
-## PR2 recommended validation
+## LLM and workflow documentation validation
 
-For the documentation PR that adds `docs/llm/` and `docs/workflows/`, use:
+For documentation changes that affect LLM or workflow guidance, use:
 
 ```sh
 git diff --check
@@ -65,9 +65,10 @@ pre-commit run --all-files
 repomix
 ```
 
-Also run the Markdown relative link helper because this PR creates many new docs.
+Also run the Markdown relative link helper when the change adds, removes, or
+updates repository-relative links.
 
-Do not require `chezmoi diff` for this PR unless `.chezmoiignore.tmpl` or other
+Do not require `chezmoi diff` unless `.chezmoiignore.tmpl` or other
 rendered-output-sensitive template files change.
 
 ## Markdown relative link validation
@@ -82,6 +83,7 @@ import re
 root = Path(".").resolve()
 files = list(Path("docs").rglob("*.md")) + [
     Path("AGENTS.md"),
+    Path("README.md"),
     Path("repomix-instruction.md"),
     Path(".github/copilot-instructions.md"),
     Path(".github/pull_request_template.md"),

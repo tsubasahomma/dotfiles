@@ -62,9 +62,8 @@ Closes #<issue-number>
 
 Only use the closing keyword after remaining acceptance criteria are complete.
 
-The current PR template may still contain default closing-keyword wording until a
-later PR updates it. Do not modify the template unless the assigned issue or PR
-slice explicitly authorizes it.
+The current PR template defaults to `Refs #` to avoid accidental issue closure.
+Change it to a closing keyword only when the PR should close the issue on merge.
 
 ## Labels
 

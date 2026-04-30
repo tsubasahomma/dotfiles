@@ -18,7 +18,9 @@
 
 - [ ] `git diff --check`
 - [ ] `pre-commit run --all-files`
-- [ ] `mise run doctor`
+- [ ] Markdown relative links resolve, when Markdown links change
+- [ ] `repomix`, when LLM guidance or snapshot routing changes
+- [ ] `mise run doctor`, when setup, toolchain, rendered config, or task behavior changes
 - [ ] GitHub Actions CI passes
 
 ## Risk and rollback
@@ -41,6 +43,6 @@
 
 ## Linked issue
 
-<!-- Use a closing keyword when this pull request should close an issue after merge. -->
+<!-- Use Refs #<issue-number> for partial progress. Use Closes #<issue-number> only when this pull request should close the issue on merge. -->
 
-Closes #
+Refs #
