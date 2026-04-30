@@ -1,5 +1,5 @@
-# [Rationale]: Zero-Speculation Local-First Hook Configuration.
-# Leverage binaries managed by 'mise' to ensure 1:1 parity between dev and CI.
+# Local hooks use binaries managed by mise.
+# This keeps developer and CI hook execution aligned.
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
@@ -15,7 +15,7 @@ repos:
         name: shfmt
         entry: shfmt
         language: system
-        # [Rationale]: Target only pure shell scripts. Templates are excluded to avoid AST collision.
+        # Target only pure shell scripts; templates are excluded to avoid AST collisions.
         files: \.(sh|zsh|zshrc|zshenv)$
         args: ["-i", "2", "-ci", "-sr", "-w"]
 
@@ -23,7 +23,7 @@ repos:
         name: stylua
         entry: stylua
         language: system
-        # [Rationale]: Target only pure lua files. Templates are excluded to avoid AST collision.
+        # Target only pure Lua files; templates are excluded to avoid AST collisions.
         files: \.lua$
-        # [Rationale]: No --config-path needed. StyLua auto-detects .editorconfig by default.
+        # StyLua auto-detects .editorconfig, so no --config-path is needed.
         args: []

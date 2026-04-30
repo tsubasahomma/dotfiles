@@ -12,15 +12,15 @@ max_line_length = 100
 [*.sh]
 shell_variant = posix
 
-# [Rationale]: Support for chezmoi template files
+# Support chezmoi template files.
 [*.{sh,lua,toml,yaml,json}.tmpl]
 indent_size = 2
 
-# [Rationale]: Markdown trailing spaces are meaningful for line breaks
+# Preserve Markdown trailing spaces because they are meaningful line breaks.
 [*.md]
 trim_trailing_whitespace = false
 max_line_length = off
 
-# [Rationale]: Makefile requires physical tabs
+# Makefile recipes require physical tabs.
 [Makefile]
 indent_style = tab
