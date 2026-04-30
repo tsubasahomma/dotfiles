@@ -1,6 +1,6 @@
 # =============================================================================
-# [Architecture]: Hermetic Toolchain Integrity (Sovereign Tier 1+)
-# [Rationale]: Managed via mise global config. Versions locked via Renovate.
+# Toolchain versions are managed through mise global configuration.
+# Renovate tracks versions through inline metadata comments below.
 # [Reference]: https://mise.jdx.dev/dev-tools/backends/
 # =============================================================================
 
@@ -16,7 +16,7 @@ mise_tools:
   "go": "1.26.2" # renovate: datasource=golang-version
   "aqua:astral-sh/uv": "0.11.8" # renovate: datasource=github-releases packageName=astral-sh/uv
 
-  # --- 2. Sovereign Identity & VCS ---
+  # --- 2. Identity and VCS ---
   "aqua:cli/cli": "2.92.0" # renovate: datasource=github-releases packageName=cli/cli
   "aqua:jesseduffield/lazygit": "0.61.1" # renovate: datasource=github-releases packageName=jesseduffield/lazygit
   "cargo:git-absorb": "0.9.0" # renovate: datasource=crate packageName=git-absorb
@@ -27,7 +27,7 @@ mise_tools:
   "pipx:neovim/pynvim": "0.6.0" # renovate: datasource=github-releases packageName=neovim/pynvim
   "npm:neovim": "5.4.0" # renovate: datasource=npm packageName=neovim
 
-  # --- 4. SOTA Development ---
+  # --- 4. Development Tooling ---
   "aqua:tree-sitter/tree-sitter": "0.26.8" # renovate: datasource=github-releases packageName=tree-sitter/tree-sitter
   "aqua:pre-commit/pre-commit": "4.6.0" # renovate: datasource=github-releases packageName=pre-commit/pre-commit
   "pipx:pytest": "9.0.3" # renovate: datasource=pypi packageName=pytest
@@ -69,7 +69,7 @@ mise_tools:
   "terragrunt": "1.0.3" # renovate: datasource=github-releases packageName=gruntwork-io/terragrunt
 
   "aqua:aws/aws-cli": "2.34.34" # renovate: datasource=github-releases packageName=aws/aws-cli
-  # [Rationale]: gcloud (Google Cloud SDK) follows a proprietary release channel.
+  # gcloud (Google Cloud SDK) follows a proprietary release channel.
   # Automated tracking via GitHub is not feasible; requires manual intervention.
   "gcloud": "565.0.0"
 
