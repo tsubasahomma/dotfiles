@@ -1,9 +1,9 @@
 #!/bin/zsh
 {{ "" -}}
 # =============================================================================
-# [Architecture]: Atomic Identity Convergence (Phase 50)
-# [Rationale]: Extracts public keys directly from the Chezmoi AST (in-memory) and
-# provisions all downstream Git/SSH configurations in an O(1) idempotent pass.
+# Phase 50 converges generated identity files atomically.
+# Public keys are read from chezmoi template data and never from generated files.
+# The pass provisions downstream Git and SSH configuration idempotently.
 # Logic is strictly encapsulated in .chezmoitemplates.
 # [Reference]: https://www.chezmoi.io/reference/special-directories/chezmoitemplates/
 # [Trigger]: {{ .ssh_keys_hash }}
@@ -17,12 +17,12 @@ SSH_SOCKET_DIR="$SSH_STATE_DIR/sockets"
 GIT_CONFIG_DIR="{{ .paths.xdg_config }}/git/identities"
 ALLOWED_SIGNERS="{{ .paths.xdg_config }}/git/allowed_signers"
 
-# [Architecture]: Ensure all SSH/Git state directories exist.
+# Ensure all SSH and Git state directories exist before writing generated files.
 # Including XDG-compliant state and socket directories to prevent bind errors.
 mkdir -p "$SSH_DIR" "$SSH_STATE_DIR" "$SSH_SOCKET_DIR" "$GIT_CONFIG_DIR" "$(dirname "$ALLOWED_SIGNERS")"
 chmod 700 "$SSH_DIR" "$SSH_STATE_DIR"
 
-# [Architecture]: Enforce clean state for generated artifacts.
+# Remove stale generated Git identity includes before writing the new set.
 rm -rf "$GIT_CONFIG_DIR"
 mkdir -p "$GIT_CONFIG_DIR"
 TEMP_SIGNERS=$(mktemp)
@@ -32,13 +32,13 @@ echo "🔐 [Identity] Converging Content-Addressable Sovereign Identities..."
 {{ $home := .paths.home -}}
 {{ range .identities -}}
 # --- Provisioning Identity: {{ .name }} ({{ .email }}) ---
-# [Architecture]: Content-Addressable Path Resolution
+# Generated public key paths include identity hash material.
 PUBKEY_FILE="$SSH_DIR/id_{{ .key_type }}_{{ .email }}_{{ .key_hash }}.pub"
 echo {{ .public_key | quote }} > "$PUBKEY_FILE"
 chmod 600 "$PUBKEY_FILE"
 
 CONFIG_FILE="$GIT_CONFIG_DIR/config_{{ .email }}_{{ .key_hash }}"
-# [Architecture]: Delegate logic to isolated template.
+# Delegate generated Git config content to the shared identity template.
 cat << 'EOF' > "$CONFIG_FILE"
 {{ includeTemplate "git_identity_config.tmpl" (dict "name" .name "email" .email "public_key" .public_key "key_type" .key_type "key_hash" .key_hash "home" $home) }}
 EOF
@@ -50,7 +50,7 @@ echo "  ✅ Synced context routing: {{ .email }} [Hash: {{ .key_hash }}]"
 {{ end -}}
 
 {{ if not .identities -}}
-# [Architecture]: Graceful fallback for uninitialized CI environments.
+# CI can verify file generation even when no user identities are mapped.
 echo "ci-bot@example.com namespaces=\"git\" ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAI_CI_FALLBACK_KEY_STUB" >> "$TEMP_SIGNERS"
 echo "⚠️  [Identity] No sovereign identities mapped. CI fallback stub generated."
 {{ end -}}

@@ -8,7 +8,7 @@ echo "🔒 [Security] Enforcing permissions on dynamic cryptographic assets..."
 
 SSH_DIR="{{ .paths.home }}/.ssh"
 
-# [Architecture]: 0700 directory permissions are now declaratively guaranteed
+# 0700 directory permissions are declared before SSH sockets are used.
 # by chezmoi's 'private_' source state attributes. This script only manages
 # files dynamically extracted post-provisioning.
 

@@ -29,7 +29,7 @@ Use Go Template comments for source-state-only rationale that should not appear
 in the rendered target file:
 
 ```gotemplate
-{{/* [Rationale]: Source-only explanation for maintainers. */}}
+{{/* Source-only explanation for maintainers. */}}
 ```
 
 Use this for:
@@ -47,11 +47,11 @@ explanation.
 Examples:
 
 ```sh
-# [Rationale]: Keep this visible in the rendered shell script.
+# Keep this visible in the rendered shell script.
 ```
 
 ```lua
--- [Rationale]: Keep this visible in the rendered Lua file.
+-- Keep this visible in the rendered Lua file.
 ```
 
 Use this for:
@@ -69,7 +69,8 @@ Prefer:
 
 ```gotemplate
 {{/*
-[Rationale]: This branch is source-state-only documentation.
+Source-only maintainer note:
+This branch is source-state-only documentation.
 It explains why the rendered output must not include these notes.
 */}}
 ```

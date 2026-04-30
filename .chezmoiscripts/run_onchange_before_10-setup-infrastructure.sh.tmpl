@@ -1,12 +1,12 @@
 {{ if eq .osid "darwin" -}}
 #!/bin/zsh
 # [chezmoi-script]: Tier 1 (Zsh)
-# [Architecture]: macOS Provisioning Engine.
+# macOS provisioning installs the generated Brewfile before runtime setup.
 # dot_config/homebrew/Brewfile.tmpl hash: {{ include "dot_config/homebrew/Brewfile.tmpl" | sha256sum }}
 
 set -euo pipefail
 
-# [Architecture]: Localized Binary Resolution
+# Resolve bootstrap binaries through chezmoi before invoking installers.
 CURL_BIN="{{ lookPath "curl" }}"
 BASH_BIN="{{ lookPath "bash" }}"
 
@@ -49,7 +49,7 @@ rm "$TEMP_BREWFILE"
 {{ else if eq .osid "linux" -}}
 #!/bin/sh
 # [chezmoi-script]: L0 (POSIX Shell) Tiering
-# [Architecture]: OS-Agnostic Linux Provisioning Engine.
+# Linux provisioning installs the generated package list before runtime setup.
 # [Trigger]: Linux package list hash: {{ includeTemplate "linux-packages.list.tmpl" . | sha256sum }}
 
 set -eu
@@ -57,7 +57,7 @@ set -eu
 echo "🛡️  [Tier 1] Executing Infrastructure Assertion Gate..."
 
 # [Security]: Non-Interactive Sudo Assertion
-# [Rationale]: Prevents silent hang-ups during automated provisioning.
+# Non-interactive sudo avoids silent hangs during automated provisioning.
 if ! sudo -n true 2>/dev/null; then
   echo "❌ [Fatal] Non-interactive sudo is not configured."
   echo "👉 Action Required: Run 'sudo visudo' and configure passwordless sudo for this user."

@@ -1,6 +1,6 @@
--- [Architecture]: Asynchronous Prose Linting Engine (Idempotent Config)
--- [Rationale]: Switches to 'opts' pattern to ensure custom vale settings
--- survive LazyVim's markdown extra merging while maintaining path-agnostic parsing.
+-- Configure prose and shell linting without replacing LazyVim setup hooks.
+-- The opts pattern keeps custom Vale settings across LazyVim's markdown extra
+-- merging while maintaining path-agnostic parsing.
 -- [Reference]: https://github.com/mfussenegger/nvim-lint
 
 return {

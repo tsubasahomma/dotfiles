@@ -1,5 +1,5 @@
-// [Architecture]: Deterministic Dependency Governance
-// [Rationale]: Enforces immutable action digests via Renovate to prevent supply-chain attacks.
+// Renovate keeps GitHub Actions digests pinned for dependency governance.
+// Immutable action digests reduce supply-chain drift in workflow updates.
 // [Reference]: https://docs.renovatebot.com/presets-helpers/#helperspingithubactiondigests
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",

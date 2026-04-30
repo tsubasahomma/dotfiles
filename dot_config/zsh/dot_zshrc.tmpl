@@ -1,6 +1,6 @@
-# [Architecture]: Deterministic Zsh Configuration (Sovereign Anchor)
-# [Rationale]: Optimized for 2026 SOTA workflows. Uses 'mise activate' for
-# dynamic environment-switching and context-aware toolchains.
+# Zsh startup is ordered around XDG paths, mise activation, and generated assets.
+# Use 'mise activate' for dynamic environment switching and context-aware
+# toolchains.
 # [Reference]: https://mise.jdx.dev/installing-mise.html#shells
 
 # --- Path Management ---
@@ -11,7 +11,7 @@ path=(
   $path
 )
 
-# [Architecture]: Selective fpath (Startup Isolation)
+# fpath includes generated completions before default completion discovery runs.
 fpath=(
   "$XDG_CACHE_HOME/zsh/completions"
   "$XDG_CONFIG_HOME/zsh/completions"
@@ -22,9 +22,8 @@ fpath=(
 alias vrun='op run -- '
 
 # --- Infrastructure Activation ---
-# [Architecture]: Atomic Environment Injection
-# [Rationale]: Replaces manual shim management with the official activation hook.
-# This ensures [env] blocks in .mise.toml are dynamic and context-aware.
+# mise activation replaces manual shim management.
+# The activation hook keeps [env] blocks dynamic and context-aware.
 if command -v mise >/dev/null 2>&1; then
   eval "$(mise activate zsh)"
 fi
@@ -53,7 +52,7 @@ alias ...='cd ../..'
 alias mkdirp='mkdir -p'
 
 # =============================================================================
-# [Architecture]: Sovereign Clipboard Protocol
+# Clipboard bridge
 # =============================================================================
 {{ if eq .osid "darwin" -}}
 pbcopy() {
@@ -107,7 +106,7 @@ add-zsh-hook chpwd _osc7_cwd
 _osc7_cwd
 
 # =============================================================================
-# [Architecture]: JIT (Just-In-Time) Completion Engine
+# Lazy completion initialization
 # =============================================================================
 ZSH_COMPDUMP_DIR="$XDG_CACHE_HOME/zsh"
 zstyle ':completion:*:*:git:*' script "$XDG_CONFIG_HOME/zsh/completions/git-completion.bash"

@@ -13,8 +13,8 @@ install_winget_app() {
   if ! winget.exe list --id "$app_id" > /dev/null 2>&1; then
     echo "📦 [Infrastructure] Installing $app_id on Windows..."
 
-    # [Architecture]: Volatile Package Handling
-    # [Rationale]: Nightly builds often suffer from manifest hash drift.
+    # Nightly packages can have volatile WinGet manifests.
+    # Hash verification is bypassed only for nightly package IDs.
     # Conditional bypass is required to ensure non-interactive convergence.
     extra_flags=""
     if echo "$app_id" | grep -q "nightly"; then

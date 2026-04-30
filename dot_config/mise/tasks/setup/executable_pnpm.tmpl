@@ -4,7 +4,7 @@
 
 set -euo pipefail
 
-# [Architecture]: Force PNPM_HOME to align with XDG Base Directory specification
+# Force PNPM_HOME to align with the XDG Base Directory specification.
 PNPM_HOME="{{ .paths.xdg_data }}/pnpm"
 
 echo "📦 [Node] Configuring pnpm global bin directory..."

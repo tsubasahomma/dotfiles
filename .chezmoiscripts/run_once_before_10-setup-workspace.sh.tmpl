@@ -1,6 +1,6 @@
 #!/bin/zsh
 # [chezmoi-script]: Source: '.chezmoiscripts/run_...' vs Dry-run: '.chezmoiscripts/...'
-# [Rationale]: Guarantee the existence of all dynamically routed workspaces.
+# Ensure all dynamically routed workspace directories exist before later scripts run.
 
 set -euo pipefail
 
@@ -18,7 +18,7 @@ echo "📁 [Workspace] Provisioning dynamically routed workspace directories..."
 # [Policy]: Target mapping for {{ $name }}
 RAW_DIR="{{ $normalized_dir }}"
 
-# [Architecture]: Strip wildcard suffixes (e.g., /Jitera*) to safely resolve the base directory
+# Strip wildcard suffixes (e.g., /Jitera*) to safely resolve the base directory.
 BASE_DIR="${RAW_DIR%%\**}"
 
 if [[ ! -d "$BASE_DIR" ]]; then

@@ -1,12 +1,12 @@
--- [Architecture]: I/O Minimalist Bootstrap & Caching
--- [Rationale]: Enable native Lua loader immediately to bypass file stat operations.
+-- Enable the native Lua loader before loading the rest of the configuration.
+-- This reduces repeated Lua module lookup work during startup.
 -- [Reference]: https://neovim.io/doc/user/lua.html#vim.loader
 if vim.loader then
   vim.loader.enable()
 end
 
--- [Architecture]: Terminal Identity Propagation (OSC 1337 / Physical Bypass)
--- [Rationale]: Directly writes to /dev/tty to bypass Neovim's TUI buffer.
+-- Propagate Neovim pane state to WezTerm through OSC 1337.
+-- Direct writes to /dev/tty bypass Neovim's TUI buffer.
 -- This ensures the signal survives startup/exit and reaches the terminal server.
 -- [Reference]: https://wezterm.org/config/lua/pane/get_user_vars.html
 local function set_wezterm_var(name, value)
@@ -30,7 +30,7 @@ vim.api.nvim_create_autocmd({ "VimEnter", "VimLeave" }, {
 })
 
 -- [Provider]: Resolve Node.js host from the active executable path.
--- [Rationale]: Keeps mise as the source of truth while avoiding hardcoded
+-- Keep mise as the source of truth while avoiding hardcoded
 -- install paths. The resolved executable may be an npm wrapper; Neovim handles
 -- the provider check through its own provider implementation.
 -- [Reference]: https://neovim.io/doc/user/provider.html#provider-nodejs

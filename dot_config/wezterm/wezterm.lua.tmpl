@@ -22,18 +22,18 @@ end
 
 local config = wezterm.config_builder()
 
--- [Architecture]: Infrastructure Sovereignty
+-- Disable WezTerm update checks because this repository owns convergence.
 config.check_for_updates = false
 config.audible_bell = "Disabled"
 config.scrollback_lines = 100000
 
--- [Architecture]: 2026 Modern UI Standards
+-- Window chrome and padding are kept minimal and explicit.
 config.window_decorations = "RESIZE"
 config.window_background_opacity = 1.0
 config.window_padding = { left = 12, right = 12, top = 10, bottom = 8 }
 config.hide_tab_bar_if_only_one_tab = true
 
--- [Architecture]: Sovereign Typography & Rendering
+-- Font fallback and rendering settings are explicit for cross-language text.
 config.front_end = "WebGpu"
 config.colors = wezterm.get_builtin_color_schemes()["Dracula"]
 config.key_map_preference = "Physical"
@@ -44,15 +44,15 @@ config.bold_brightens_ansi_colors = true
 config.allow_square_glyphs_to_overflow_width = "Always"
 config.use_cap_height_to_scale_fallback_fonts = true
 
--- [Architecture]: Linguistic Interop
+-- IME and composed-key settings preserve Japanese input behavior.
 config.use_ime = true
 config.send_composed_key_when_left_alt_is_pressed = true
 
--- [Architecture]: SRE Diagnostic Clarity
+-- Underline rendering is tuned for diagnostic readability.
 config.underline_thickness = "2pt"
 config.underline_position = "-2pt"
 
--- [Architecture]: Operational Determinism
+-- Window behavior is fixed to avoid accidental layout changes.
 config.adjust_window_size_when_changing_font_size = false
 config.window_close_confirmation = "AlwaysPrompt"
 config.selection_word_boundary = " \t\n{}[]()\"'`,"
@@ -62,9 +62,9 @@ config.inactive_pane_hsb = {
 }
 
 -- ============================================================================
--- [Architecture]: Cross-OS Multiplexer Engine
+-- Cross-OS multiplexer routing
 -- ============================================================================
--- [Rationale]: WSL domain enumeration is delegated to WezTerm's native logic.
+-- WSL domain enumeration is delegated to WezTerm's native logic.
 -- On Windows, the rendered config must explicitly target the active WSL domain
 -- to avoid WezTerm falling back to the built-in "local" domain.
 -- [Reference]: https://wezterm.org/config/lua/config/default_domain.html
@@ -80,7 +80,7 @@ else
 end
 
 -- ============================================================================
--- [Architecture]: Smart Splits (Zero-CLI Protocol Implementation)
+-- Smart Splits protocol bridge
 -- ============================================================================
 
 local function is_nvim_pane(pane)
@@ -116,7 +116,7 @@ local function direction_keys(key, direction)
 end
 
 -- ============================================================================
--- [Architecture]: Keyboard Driven Multiplexer & Command Palette
+-- Keyboard-driven multiplexer and command palette bindings
 -- ============================================================================
 config.leader = { key = "b", mods = "CTRL", timeout_milliseconds = 1000 }
 config.keys = {

@@ -3,6 +3,6 @@
 
 set -euo pipefail
 
-# [Rationale]: Redirecting stdin from /dev/null prevents hanging on interactive prompts.
+# Redirecting stdin from /dev/null prevents hanging on interactive prompts.
 echo "📦 [Neovim] Converging plugins via lazy.nvim..."
 "{{ .paths.mise }}" exec aqua:neovim/neovim -- nvim --headless "+Lazy! restore" +qa < /dev/null

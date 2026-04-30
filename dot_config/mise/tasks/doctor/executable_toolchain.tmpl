@@ -30,8 +30,8 @@ else
 fi
 
 if [[ "$IS_CI" != "true" ]]; then
-  # [Architecture]: Tiered PATH Precedence Verification
-  # [Rationale]: Ensures infrastructure paths (mise/aqua) precede system binaries.
+  # Verify PATH precedence for mise and aqua before system binaries.
+  # This catches accidental fallback to globally installed tools.
   # Static index-0 checks are avoided to support dynamic mise activation.
   SYS_PATH="/usr/bin"
   LOCAL_BIN="$HOME_DIR/.local/bin"

@@ -1,5 +1,5 @@
--- [Architecture]: Environment-Inherited LSP Configuration
--- [Rationale]: Eliminates runtime shell execution (uv python find) inside Lua.
+-- LSP configuration inherits tool paths from the parent shell environment.
+-- This avoids running shell discovery commands from Lua during startup.
 -- Relies on the parent shell environment established by 'mise activate'.
 -- [Reference]: https://docs.basedpyright.com/latest/configuration/language-server-settings/
 
@@ -35,9 +35,8 @@ return {
       },
       servers = {
         basedpyright = {
-          -- [Architecture]: Zero-Speculation Path Resolution
-          -- [Rationale]: By omitting settings.python.pythonPath, BasedPyright
-          -- defaults to the 'python' binary available in the current PATH,
+          -- Omit pythonPath so BasedPyright resolves Python from PATH.
+          -- BasedPyright defaults to the python binary available in the current PATH,
           -- which is correctly set by mise during the shell session.
           settings = {
             basedpyright = {

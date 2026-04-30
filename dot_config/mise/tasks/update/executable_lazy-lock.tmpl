@@ -36,7 +36,7 @@ echo "📦 [Neovim] Headless plugin update initiated..."
 # --- 3. State Promotion ---
 chezmoi add "$LOCK_FILE"
 
-# [Architecture]: Diff against the specific managed file in the source state.
+# Diff against the specific managed file in the source state.
 if git diff --quiet -- "$CHEZMOI_DIR/dot_config/nvim/lazy-lock.json"; then
   echo "✅ [State] No plugin updates found. lazy-lock.json is up to date."
   git checkout -
@@ -48,13 +48,13 @@ fi
 echo "🚀 [State] Updates detected. Committing and generating Pull Request..."
 git add "$CHEZMOI_DIR/dot_config/nvim/lazy-lock.json"
 
-# [Architecture]: GPG/SSH signature is inherently applied here via user's Git configuration.
+# GPG/SSH signing is applied here through the user's Git configuration.
 git commit -m "chore(deps): atomic neovim plugin convergence" \
            -m "Automated lazy-lock.json update via update:lazy-lock task."
 
 git push -u origin "$BRANCH_NAME"
 
-# [Architecture]: Force local Fast-Forward merge in the PR body to protect SSH signatures.
+# The PR body asks maintainers to use local fast-forward merge to preserve signatures.
 # [Interop]: Standard 'dependencies' label applied.
 gh pr create --title "chore(deps): atomic neovim plugin convergence" \
              --label "dependencies" \

@@ -1,5 +1,5 @@
--- [Architecture]: Unified UI & Performance Engine (2026 SOTA Corrected)
--- [Rationale]: Explicitly return modified opts table to ensure lazy.nvim applies overrides.
+-- UI and performance plugin overrides.
+-- Return the modified opts table so lazy.nvim applies overrides.
 -- [Reference]: https://github.com/folke/snacks.nvim
 
 return {
