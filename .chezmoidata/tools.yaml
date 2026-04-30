@@ -40,7 +40,7 @@ mise_tools:
   "aqua:sharkdp/bat": "0.26.1" # renovate: datasource=github-releases packageName=sharkdp/bat
   "aqua:BurntSushi/ripgrep": "15.1.0" # renovate: datasource=github-releases packageName=BurntSushi/ripgrep
   "aqua:sharkdp/fd": "10.4.2" # renovate: datasource=github-releases packageName=sharkdp/fd
-  "aqua:starship/starship": "1.25.0" # renovate: datasource=github-releases packageName=starship/starship
+  "aqua:starship/starship": "1.25.1" # renovate: datasource=github-releases packageName=starship/starship
   "aqua:junegunn/fzf": "v0.72.0" # renovate: datasource=github-releases packageName=junegunn/fzf
   "aqua:sharkdp/hyperfine": "1.20.0" # renovate: datasource=github-releases packageName=sharkdp/hyperfine
 
@@ -81,6 +81,6 @@ mise_tools:
 
   # --- 10. AI Coding & Context Engineering ---
   "npm:repomix": "1.14.0" # renovate: datasource=npm packageName=repomix
-  "npm:@openai/codex": "0.125.0" # renovate: datasource=npm packageName=@openai/codex
+  "npm:@openai/codex": "0.128.0" # renovate: datasource=npm packageName=@openai/codex
   "npm:@anthropic-ai/claude-code": "2.1.123" # renovate: datasource=npm packageName=@anthropic-ai/claude-code
-  "npm:@google/gemini-cli": "0.40.0" # renovate: datasource=npm packageName=@google/gemini-cli
+  "npm:@google/gemini-cli": "0.40.1" # renovate: datasource=npm packageName=@google/gemini-cli
