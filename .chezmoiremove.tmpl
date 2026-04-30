@@ -1,36 +1,37 @@
-# =============================================================================
-# [Architecture]: Chezmoi Removal Manifest (Target-Path Convention)
-# [Rationale]: Patterns below MUST match the TARGET path (relative to $HOME).
-# =============================================================================
+{{/*
+Source-only maintainer note:
+Patterns below must match target paths relative to $HOME.
+*/}}
 
 .gitconfig
 .vale.ini
 
-# [Architecture]: Legacy Shell Purge (XDG Purism)
+{{/* Remove legacy shell startup files superseded by XDG-routed configuration. */}}
 .zshrc
 .bashrc
 .bash_profile
 .profile
 .zshrc2
 
-# [Architecture]: Completion Cache Purge
-# [Rationale]: Prevents Zsh from falling back to default home-dir dumps,
-# which causes significant 'System' time overhead during compaudit.
+{{/*
+Remove completion cache files that can make Zsh fall back to home-directory dumps.
+Those dumps increase compaudit overhead.
+*/}}
 .zcompdump*
 .cache/zsh/completions/_hyperfine
 
-# [Architecture]: Neovim Components Purge (2026 SOTA Migration)
+{{/* Remove legacy Neovim component paths from previous editor configurations. */}}
 .config/nvim/lua/plugins/fzf.lua
 
-# [Architecture]: Zero-Trust Identity Purge (Phase 50 Refactor)
+{{/* Remove legacy identity files superseded by generated Git identity includes. */}}
 .gitconfig.local
 .config/git/config_personal
 
-# [Architecture]: Legacy & Unidentified Artifact Purge
+{{/* Remove legacy artifact paths that should not remain in the target home directory. */}}
 --request
 
-# [Architecture]: Vale XDG Migration Purge (Phase 22)
+{{/* Remove the legacy Vale config path after XDG migration. */}}
 .config/vale/.vale.ini
 
-# [Architecture]: Agent Scoping Path Correction
+{{/* Remove the previous 1Password agent config path after scoped path correction. */}}
 Library/Group Containers/2BUA8C4S2C.com.1password/Library/Application Support/1Password/ssh/agent.toml

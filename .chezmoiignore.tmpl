@@ -1,9 +1,8 @@
 {{- /* [Reference]: https://www.chezmoi.io/reference/special-files/chezmoiignore/ */ -}}
-# =============================================================================
-# [Architecture]: Deterministic Target Ignore Protocol (Zero-Drift)
-# [Rationale]: White-list first approach for managed Infrastructure directories.
-# Ensures declarative directory existence while ignoring dynamic side-effects.
-# =============================================================================
+{{/*
+Source-only maintainer note:
+Ignore dynamic target files while preserving directories that chezmoi manages declaratively.
+*/}}
 
 # --- 1. Secret & Cryptographic Boundaries ---
 **/.ssh/id_*
@@ -11,14 +10,16 @@
 **/.ssh/known_hosts*
 **/.ssh/*.backup
 .gnupg/**
-# [Rationale]: Ignore dynamic socket noise but preserve the base directory.
+{{/* Ignore dynamic socket noise but preserve the base directory. */}}
 .1password/**
 !.1password/
 !.1password/.keep
 
 # --- 2. Transient Cache & State Directories ---
-# [Rationale]: Declarative directory structure (via .keep) is managed by chezmoi.
-# Files generated inside (e.g., completions, history) are ignored.
+{{/*
+Declarative directory structure is managed through .keep files.
+Generated files inside these directories are ignored.
+*/}}
 .cache/**
 !.cache/
 !.cache/zsh/
@@ -50,7 +51,7 @@ package-lock.json
 pnpm-lock.yaml
 
 # --- 4. Repository Orchestration (Strict Isolation) ---
-# [Rationale]: Do NOT deploy repository management files to $HOME.
+{{/* Do not deploy repository management files to $HOME. */}}
 README.md
 LICENSE
 ARCHITECTURE.md
@@ -70,8 +71,10 @@ renovate.json5
 # --- 5. OS-Specific Overrides ---
 {{ if ne .osid "darwin" -}}
 {{- if not .is_wsl }}
-# [Rationale]: The WezTerm launcher shim is only valid on macOS and WSL.
-# Plain Linux and CI runners should not manage this target.
+{{/*
+The WezTerm launcher shim is only valid on macOS and WSL.
+Plain Linux and CI runners should not manage this target.
+*/}}
 .local/bin/wezterm
 {{- end }}
 Library/**

@@ -1,22 +1,22 @@
-# [Rationale]: Absolute EOL normalization for cross-platform convergence
+# Normalize text files to LF across platforms.
 * text=auto eol=lf
 
-# [Rationale]: Force LF for all scripts and templates to prevent execution failure on Linux
-# [Architecture]: Added *.tmpl to cover files like executable_doctor.tmpl that lack .sh extension.
+# Force LF for scripts and templates to prevent execution failures on Linux.
+# Include *.tmpl because some executable templates do not have a shell extension.
 *.tmpl text eol=lf
 *.sh text eol=lf
 *.zsh text eol=lf
 
-# [Rationale]: Prevent binary corruption in templates (if any)
+# Prevent binary corruption for image assets.
 *.png binary
 *.jpg binary
 
-# [Rationale]: GitHub Linguist Overrides
+# GitHub Linguist overrides.
 # Mark data and templates as their underlying language for better UI
 .chezmoidata/*.yaml linguist-language=yaml
 *.sh.tmpl linguist-language=shell
 *.lua.tmpl linguist-language=lua
 
-# [Rationale]: Exclude meta-tools from source archives (git archive)
+# Exclude repository meta files from git archive output.
 .github/ export-ignore
 repomix.config.json export-ignore

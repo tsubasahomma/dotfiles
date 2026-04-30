@@ -29,14 +29,14 @@ sourceDir = {{ .chezmoi.sourceDir | quote }}
 {{-   $brew_prefix = "/home/linuxbrew/.linuxbrew" -}}
 {{- end -}}
 
-{{- /* --- 2. Sovereign Identity Verification (Tier -2 Assertion) --- */}}
+{{- /* --- 2. Identity prerequisite checks (Tier -2 assertion) --- */}}
 {{- $local_bin := joinPath $home ".local/bin" -}}
 {{- $mise_bin := joinPath $local_bin "mise" -}}
 {{- if not (stat $mise_bin) -}}
 {{-   $mise_bin = lookPath "mise" | default $mise_bin -}}
 {{- end -}}
 
-{{- /* [Architecture]: Resolve op binary path without speculation */}}
+{{- /* Resolve op binary path from the current platform without guessing. */}}
 {{- $op_bin := "" -}}
 {{- if $is_wsl -}}
 {{-   $win_op := output "powershell.exe" "-NoProfile" "-NonInteractive" "-Command" "(Get-Command op.exe -ErrorAction SilentlyContinue).Source | Write-Host -NoNewline" -}}
@@ -113,7 +113,7 @@ sourceDir = {{ .chezmoi.sourceDir | quote }}
 {{-   $ssh_auth_sock = joinPath $home ".1password/agent.sock" -}}
 {{- end -}}
 
-{{- /* [Architecture]: Deterministic Signature Helper Resolution (Cross-Platform) */ -}}
+{{- /* Resolve the SSH signing helper for the current platform. */ -}}
 {{- $op_sign := "" -}}
 {{- if eq $osid "darwin" -}}
 {{-   $op_sign = "/Applications/1Password.app/Contents/MacOS/op-ssh-sign" -}}

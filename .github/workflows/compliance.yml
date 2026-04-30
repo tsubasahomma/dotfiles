@@ -1,6 +1,6 @@
-# [Architecture]: Sovereign Infrastructure Validation Pipeline (2026 SOTA)
+# Chezmoi state validation stays separate from mise runtime integration.
 # [Reference]: https://mise.jdx.dev/continuous-integration.html
-# [Rationale]: Strictly decouples infrastructure state (chezmoi) from runtime provision (mise).
+# This workflow applies chezmoi first, then runs mise-managed integration checks.
 name: compliance
 
 on:
@@ -34,7 +34,7 @@ jobs:
 
     steps:
       - name: Checkout Repository
-        # [Architecture]: Target Node.js 24 environment. Hash will be pinned securely by Renovate.
+        # Checkout runs on Node.js 24 through FORCE_JAVASCRIPT_ACTIONS_TO_NODE24; Renovate pins the action hash.
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           fetch-depth: 0
@@ -51,7 +51,7 @@ jobs:
 
       - name: Phase 2 - Idempotency Proof (Static Convergence)
         run: |
-          # [Architecture]: Strict bit-for-bit state verification.
+          # Verify that the applied chezmoi state remains byte-for-byte converged.
           if ! chezmoi verify; then
             echo "❌ [Idempotency Failure] State drift detected."
             chezmoi status

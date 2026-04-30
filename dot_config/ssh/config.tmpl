@@ -1,7 +1,7 @@
-{{- /* [Architecture]: Defensive Schema Extraction */ -}}
+{{- /* Extract optional SSH agent path without assuming the data key exists. */ -}}
 {{- $ssh_auth_sock := "" -}}
 {{- if hasKey . "paths" }}{{ if hasKey .paths "ssh_auth_sock" }}{{ $ssh_auth_sock = .paths.ssh_auth_sock }}{{ end }}{{ end -}}
-# [Rationale]: Modular & XDG-compliant SSH configuration (2026).
+# Modular SSH configuration routed through XDG paths.
 # [Security]: Hardened defaults with ControlPersist for high-performance infrastructure.
 
 # ================================================================
@@ -24,12 +24,12 @@ Host *
 {{ end }}    ForwardAgent yes
 
     # --- Reliability & Automation ---
-    # [2026 Best Practice]: Avoid hang on new hosts while maintaining security.
+    # Avoid hanging on first connection to a new host while still recording host keys.
     StrictHostKeyChecking accept-new
     ServerAliveInterval 60
     ServerAliveCountMax 5
     HashKnownHosts yes
 
     # --- XDG Compliance ---
-    # [Rationale]: Prevent ~/.ssh/known_hosts pollution.
+    # Store known_hosts under XDG state instead of ~/.ssh.
     UserKnownHostsFile {{ .paths.xdg_state }}/ssh/known_hosts

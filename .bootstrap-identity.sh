@@ -1,6 +1,6 @@
 #!/bin/sh
-# [Architecture]: Tier -1 & 0 Bootstrapping (Sovereign Provisioning)
-# [Rationale]: Pure POSIX script to ensure 'mise' exists and is correctly resolved.
+# Tier -1 and Tier 0 bootstrap ensure mise exists before chezmoi hooks run.
+# POSIX shell keeps this path available before the managed shell environment exists.
 # [Reference]: https://mise.jdx.dev/getting-started.html
 # [Reference]: https://mise.jdx.dev/configuration.html#mise-trusted-config-paths
 
@@ -15,10 +15,10 @@ LOCAL_BIN="$HOME/.local/bin"
 MISE_SHIMS="$HOME/.local/share/mise/shims"
 mkdir -p "$LOCAL_BIN"
 
-# [Architecture]: Inject shims and local bin into PATH for hook execution.
+# Add mise shims and the local bin directory for hook execution.
 export PATH="$MISE_SHIMS:$LOCAL_BIN:$PATH"
 
-# [Architecture]: Deterministic Binary Discovery
+# Resolve the mise binary before installing it as a fallback.
 if command -v mise > /dev/null 2>&1; then
   MISE_BIN=$(command -v mise)
 else
@@ -35,21 +35,21 @@ else
 fi
 
 # --- Phase: Tier 0 (Environment Convergence) ---
-# [Rationale]: Suppress interactive prompts and enable deterministic bootstrapping.
+# Suppress interactive prompts during bootstrap.
 export MISE_YES=1
 export MISE_QUIET=1
 
-# [Architecture]: Pre-emptive Trust Assertion
-# [Rationale]: Whitelist the source directory to prevent interactive "Trust this file?" prompts.
+# Trust the source directory before running install.
+# This prevents interactive "Trust this file?" prompts.
 export MISE_TRUSTED_CONFIG_PATHS="$HOME/.local/share/chezmoi"
 
-# [Architecture]: Strict Dependency Isolation (Sandboxing)
+# Use a temporary mise config so bootstrap dependencies stay isolated.
 _MISE_SANDBOX=$(mktemp -d)
 trap 'rm -rf "$_MISE_SANDBOX"' EXIT
 export MISE_GLOBAL_CONFIG_FILE="$_MISE_SANDBOX/config.toml"
 
-# [Architecture]: Assert Trust on the repository state
+# Trust the repository source state before installing tools.
 "$MISE_BIN" trust "$HOME/.local/share/chezmoi"
 
-# [Rationale]: Silence on success. No echo is emitted unless an error occurs.
+# Stay silent on success; only errors should produce output.
 env XDG_CONFIG_HOME="$_MISE_SANDBOX" "$MISE_BIN" install

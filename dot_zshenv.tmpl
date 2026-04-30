@@ -1,14 +1,14 @@
-{{- /* [Rationale]: XDG Base Directory bootstrap. Minimal footprint in $HOME. */ -}}
+{{- /* Bootstrap XDG paths early while keeping the home directory footprint small. */ -}}
 export ZDOTDIR="{{ .paths.xdg_config }}/zsh"
 
-# [Architecture]: Deep XDG Integration
+# XDG base directories are exported before shell startup reads downstream config.
 export XDG_CONFIG_HOME="{{ .paths.xdg_config }}"
 export XDG_DATA_HOME="{{ .paths.xdg_data }}"
 export XDG_STATE_HOME="{{ .paths.xdg_state }}"
 export XDG_CACHE_HOME="{{ .paths.xdg_cache }}"
 
 # =============================================================================
-# [Architecture]: Strict XDG Purism (Zero $HOME Pollution)
+# Route tool state away from $HOME where the tool supports an XDG path.
 # =============================================================================
 {{/* [Reference]: https://nodejs.org/api/repl.html#environment-variable-options */ -}}
 export NODE_REPL_HISTORY="$XDG_STATE_HOME/node/repl_history"
@@ -17,40 +17,40 @@ export npm_config_userconfig="$XDG_CONFIG_HOME/npm/npmrc"
 {{/* [Reference]: https://docs.npmjs.com/cli/v11/using-npm/config#environment-variables */ -}}
 export npm_config_cache="$XDG_CACHE_HOME/npm"
 {{/* [Reference]: https://docs.python.org/3/using/cmdline.html#envvar-PYTHON_HISTORY */ -}}
-{{/* [Rationale]: Natively supported in Python 3.13+ to prevent ~/.python_history pollution. */ -}}
+{{/* Python 3.13+ supports PYTHON_HISTORY for routing REPL history out of $HOME. */ -}}
 export PYTHON_HISTORY="$XDG_STATE_HOME/python/history"
 
 # =============================================================================
 
-# [Architecture]: WSL2 to Windows Interop (Identity Relay)
-# [Rationale]: Propagate authentication context to the Windows host seamlessly.
+# WSL exports the 1Password biometric unlock flag to the Windows host.
+# WSLENV carries the authentication context across the WSL/Windows boundary.
 {{ if .is_wsl -}}
 export OP_BIOMETRIC_UNLOCK_ENABLED="true"
 export WSLENV="OP_BIOMETRIC_UNLOCK_ENABLED/u:$WSLENV"
 {{ end -}}
 
-# [Rationale]: Identity Bridge Persistence for SSH operations.
+# SSH_AUTH_SOCK points Git and SSH clients at the managed agent bridge.
 export SSH_AUTH_SOCK="{{ .ssh_auth_sock }}"
 
-# [Rationale]: Node.js Toolchain Persistence.
+# PNPM_HOME follows the XDG data directory used by the managed Node.js toolchain.
 export PNPM_HOME="{{ .paths.xdg_data }}/pnpm"
 
-# [Architecture]: Ripgrep Configuration Linkage
+# ripgrep reads its managed configuration through RIPGREP_CONFIG_PATH.
 export RIPGREP_CONFIG_PATH="$XDG_CONFIG_HOME/ripgrep/config"
 
 {{/* [Reference]: https://vale.sh/docs/vale-ini#search-process */}}
-# [Architecture]: Vale Configuration Routing
+# Vale reads its managed configuration through VALE_CONFIG_PATH.
 export VALE_CONFIG_PATH="$XDG_CONFIG_HOME/vale/vale.ini"
 
 # =============================================================================
-# [Architecture]: Infrastructure Foundation
-# [Rationale]: Enforce XDG compliance for Cloud SDK and Nx.
+# Cloud SDK and Nx state are routed through XDG paths.
+# Keep generated caches and configuration out of repository and home-directory roots.
 # =============================================================================
 {{/* [Reference]: https://docs.cloud.google.com/sdk/docs/configurations */}}
 export CLOUDSDK_CONFIG="$XDG_CONFIG_HOME/gcloud"
 
-# [Architecture]: Hermetic Python Binding for gcloud
-# [Rationale]: Bind strictly to mise-managed python shim to ensure execution determinism.
+# gcloud uses the mise-managed Python shim for consistent execution.
+# This avoids falling back to a system Python with different packages or versioning.
 export CLOUDSDK_PYTHON="{{ .paths.xdg_data }}/mise/shims/python"
 
 {{/* [Reference]: https://nx.dev/docs/reference/environment-variables */}}

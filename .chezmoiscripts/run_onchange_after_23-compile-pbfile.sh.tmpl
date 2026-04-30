@@ -1,6 +1,6 @@
 #!/bin/zsh
-# [Architecture]: Atomic Native Compilation
-# [Rationale]: Ensures the Swift clipboard bridge is compiled for the local architecture (AOT).
+# Compile the native clipboard bridge for the local architecture.
+# Ahead-of-time compilation keeps pbfile available as a local executable.
 # [Trigger]: pbfile.swift Hash: {{ include "dot_local/share/pbcopy/pbfile.swift" | sha256sum }}
 
 {{ if eq .osid "darwin" -}}

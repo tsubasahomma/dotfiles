@@ -1,7 +1,7 @@
 {{- /* [Reference]: https://developer.1password.com/docs/ssh/agent/config/ */ -}}
-# [Architecture]: Sovereign SSH Agent Configuration (Account-Aware)
-# [Rationale]: Specifying 'account' is mandatory for disambiguation in multi-account environments.
-# Bypasses all Vault routing ambiguities by binding directly to Item UUID + Account ID.
+# Account-aware SSH agent configuration.
+# Specifying 'account' disambiguates keys in multi-account environments.
+# Bind directly to Item UUID and Account ID to avoid vault routing ambiguity.
 
 {{ range .identities -}}
 [[ssh-keys]]

@@ -1,6 +1,6 @@
--- [Architecture]: Text-based Directory Editor
--- [Rationale]: Enables bulk renaming and rapid filesystem traversal
--- by treating directories as standard editable buffers.
+-- Text-based directory editing.
+-- Treating directories as editable buffers enables bulk renaming
+-- and rapid filesystem traversal.
 return {
   {
     "stevearc/oil.nvim",

@@ -36,12 +36,12 @@ opt.termguicolors = true
 opt.ignorecase = true
 opt.smartcase = true
 
--- [Strategy]: 2026 Sovereign Spell Enforcement
+-- Spell checking starts disabled and can be enabled per editing context.
 opt.spell = false
 opt.spelllang = { "en" }
 opt.spelloptions = "camel"
 
--- [Architecture]: WSL2 Deterministic Clipboard Provider
+-- WSL clipboard provider uses win32yank for Windows interoperability.
 -- [Reference]: :help provider-clipboard
 if vim.fn.has("wsl") == 1 then
   vim.g.clipboard = {

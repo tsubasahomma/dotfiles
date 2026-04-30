@@ -1,6 +1,6 @@
 #!/bin/sh
 # [chezmoi-script]: L0 (POSIX Shell) Tiering
-# [Rationale]: Guaranteed execution even without Zsh/Mise environment.
+# POSIX shell keeps the legacy backup path available before Zsh or mise exists.
 {{/*
 Source-only maintainer note:
 This script intentionally stays POSIX-compatible. BACKUP_ROOT is created lazily

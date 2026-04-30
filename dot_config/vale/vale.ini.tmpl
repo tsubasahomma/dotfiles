@@ -1,15 +1,15 @@
 {{- /* [Reference]: https://vale.sh/docs/vale-ini */ -}}
-# [Architecture]: Deterministic Prose Linter Configuration
-# [Rationale]: Enforce Google Style Guide via XDG-compliant pathing.
+# Vale configuration is routed through XDG-managed paths.
+# Google style checks use the managed StylesPath below.
 
 # --- Global Settings ---
 StylesPath = {{ .paths.xdg_data }}/vale/styles
 MinAlertLevel = suggestion
 
-# [Architecture]: External Style Dependencies
-# [Rationale]: Declarative package management for Vale styles.
+# Vale style packages are installed declaratively.
+# The Google package is resolved by Vale package management.
 Packages = Google
 
 [*.md]
-# [Rationale]: Core standard for documentation within the Eternal Platform.
+# Markdown prose uses Google style checks by default.
 BasedOnStyles = Google

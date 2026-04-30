@@ -1,7 +1,7 @@
 {{- /* [Reference]: https://starship.rs/config/ */ -}}
-# [Architecture]: Deterministic Infrastructure Prompt (Sovereign Edition)
-# [Rationale]: Reverts manual file-detection overrides to leverage Starship's
-# native Rust-backed optimized scanning, ensuring 1:1 parity with 'mise' states.
+# Prompt modules rely on Starship native detection.
+# Manual file-detection overrides are avoided so Starship's scanning behavior
+# stays aligned with managed runtime state.
 
 command_timeout = 3000
 scan_timeout = 100
@@ -57,10 +57,10 @@ deleted = "✘"
 ignore_submodules = true
 
 # =============================================================================
-# Language Modules: Native Detection Protocol
-# [Rationale]: Rely on standard detection to ensure long-term compatibility
+# Language Modules: Native Detection
+# Rely on standard detection to ensure long-term compatibility
 # with ecosystem evolution (e.g. pyproject.toml, pnpm-workspace.yaml).
-# Performance is guaranteed by scan_timeout and WebGpu rendering.
+# Performance is bounded by scan_timeout and terminal rendering settings.
 # =============================================================================
 
 [python]

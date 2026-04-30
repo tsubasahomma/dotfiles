@@ -1,16 +1,16 @@
 {{- /* [Reference]: https://mise.jdx.dev/configuration.html */ -}}
-# [Architecture]: Single Source of Truth (SSOT) for Toolchains.
-# [Rationale]: All tools are dynamically expanded from FQIs in tools.yaml.
+# Repository tool versions are generated from the central tool data.
+# Fully qualified tool identifiers are expanded from tools.yaml.
 
 [env]
-# [Rationale]: Skip Python GitHub attestation verification to reduce latency/noise.
+# Skip Python GitHub attestation verification to reduce mise install latency and noise.
 # [Reference]: https://mise.jdx.dev/lang/python.html
 MISE_PYTHON_GITHUB_ATTESTATIONS = "false"
 PNPM_HOME = "{{ .paths.xdg_data }}/pnpm"
 
 [tools]
-# [Architecture]: Deterministic Layering
-# [Rationale]: Explicitly define core runtimes before derivative backends (npm:, cargo:).
+# Core runtimes are declared before tools that depend on runtime backends.
+# This keeps npm: and cargo: tool resolution behind their runtime declarations.
 "node" = "{{ index .mise_tools "node" }}"
 "python" = "{{ index .mise_tools "python" }}"
 "go" = "{{ index .mise_tools "go" }}"

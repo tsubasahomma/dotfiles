@@ -1,7 +1,7 @@
 #!/bin/sh
 {{ "" -}}
-# [Architecture]: Sovereign Session Validation
-# [Rationale]: Prevents cascading failures by asserting 1Password availability.
+# Validate 1Password session availability before identity-dependent steps run.
+# Missing or locked 1Password sessions are handled before later provisioning steps.
 # [Reference]: https://developer.1password.com/docs/cli/reference/commands/account
 
 set -eu

@@ -1,10 +1,10 @@
--- [Architecture]: Diagnostic & LSP Reference Aggregator
--- [Rationale]: Provides a deterministic list of all code issues and
--- references, eliminating "hidden" errors.
+-- Diagnostic and LSP reference aggregation.
+-- Trouble centralizes code issues and references in a reviewable list,
+-- reducing the chance of hidden diagnostics.
 return {
   {
     "folke/trouble.nvim",
-    opts = {}, -- Default 2026 config is highly optimized.
+    opts = {}, -- Default options are sufficient for this integration.
     keys = {
       { "<leader>xx", "<cmd>Trouble diagnostics toggle<cr>", desc = "Diagnostics (Trouble)" },
       {

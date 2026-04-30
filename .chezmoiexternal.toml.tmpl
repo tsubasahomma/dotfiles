@@ -1,8 +1,8 @@
 {{- /* [Reference]: https://www.chezmoi.io/reference/special-files/chezmoiexternal-format/ */ -}}
-# =============================================================================
-# [Architecture]: Legacy Purge | Phase 18 Deterministic Edition
-# [Rationale]: Elimination of redundant binary management.
-# =============================================================================
+{{/*
+Source-only maintainer note:
+External resources are limited to assets that are not managed by package managers.
+*/}}
 
 {{/* 1. Platform Normalization */ -}}
 {{- $os_std := "linux" -}}
@@ -23,15 +23,13 @@
     path = "win32yank.exe"
 {{- end }}
 
-# [Architecture]: Deterministic bat Themes
-# [Rationale]: Ensure Catppuccin Mocha is available for delta/bat without manual intervention.
+{{/* Ensure Catppuccin Mocha is available for delta and bat without manual setup. */}}
 [".config/bat/themes/Catppuccin Mocha.tmTheme"]
     type = "file"
     url = "https://github.com/catppuccin/bat/raw/main/themes/Catppuccin%20Mocha.tmTheme"
     refreshPeriod = "168h"
 
-# [Architecture]: Sovereign Completion Assets (SSOT)
-# [Rationale]: Decouples completion definitions from binary packages and guarantees cross-platform parity.
+{{/* Completion definitions are fetched separately from binary packages for cross-platform parity. */}}
 [".config/zsh/completions/_eza"]
     type = "file"
     url = "https://raw.githubusercontent.com/eza-community/eza/main/completions/zsh/_eza"

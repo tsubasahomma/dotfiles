@@ -1,4 +1,4 @@
--- [Architecture]: High-Fidelity Search, Replace, and Edit Engine
+-- Search, replace, and edit plugins.
 -- [Reference]: https://github.com/echasnovski/mini.surround
 
 return {

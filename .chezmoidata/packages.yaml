@@ -1,5 +1,5 @@
 # =============================================================================
-# [Architecture]: Declarative Package Schema (Zero-Toil Edition)
+# Declarative package schema for workstation provisioning.
 # =============================================================================
 packages:
   headless:

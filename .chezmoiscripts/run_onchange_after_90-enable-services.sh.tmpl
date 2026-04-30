@@ -1,8 +1,8 @@
 #!/bin/zsh
 {{ "" -}}
 # =============================================================================
-# [Architecture]: Service Orchestration (Phase 90)
-# [Rationale]: Declaratively manages user-level Systemd services.
+# Phase 90 manages user-level services after configuration files converge.
+# User services are enabled only when the current environment requires them.
 # [Trigger]: 1Password Bridge Hash: {{ include "dot_config/systemd/user/1password-bridge.service.tmpl" | sha256sum }}
 # =============================================================================
 

@@ -1,14 +1,13 @@
 #!/usr/bin/env bash
 {{/* [Reference]: https://www.chezmoi.io/user-guide/use-scripts-to-perform-actions/ */}}{{ "" -}}
-# [Architecture]: Runtime Convergence Engine (Mise Delegate)
+# Runtime convergence is delegated to mise after chezmoi applies source state.
 # [Trigger]: config.toml.tmpl hash: {{ include "dot_config/mise/config.toml.tmpl" | sha256sum }}
 # [Trigger]: tools.yaml hash: {{ include ".chezmoidata/tools.yaml" | sha256sum }}
 
 set -euo pipefail
 
-# [Architecture]: Subshell Context Isolation
-# [Rationale]: Path injection is required here because this subshell executes
-# before Zsh initialization is fully bootstrapped with the new configuration.
+# This script runs before the new Zsh environment is fully initialized.
+# PATH injection is required because this subshell executes before Zsh bootstrap completes.
 export PNPM_HOME="{{ .paths.xdg_data }}/pnpm"
 export PATH="$PNPM_HOME:{{ .paths.home }}/.local/bin:$PATH"
 
@@ -21,10 +20,10 @@ fi
 
 echo "📦 [Phase 20] Executing Runtime Convergence via Mise..."
 
-# [Architecture]: Phase 1 - Tool Installation (Idempotent)
+# Phase 1 installs declared tools idempotently.
 "$MISE_BIN" install
 
-# [Architecture]: Phase 2 - Task Orchestration (Idempotent Setup)
+# Phase 2 runs the idempotent setup task graph.
 "$MISE_BIN" run setup
 
 echo "✅ [Phase 20] Runtime convergence complete."

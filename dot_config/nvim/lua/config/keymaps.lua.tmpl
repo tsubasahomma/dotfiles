@@ -1,6 +1,6 @@
--- [Architecture]: Protocol-Driven Outbound Navigation (Smart Splits)
--- [Rationale]: Emits an OSC 1337 signal when reaching the vim boundary,
--- delegating the pane switch to WezTerm's event listener.
+-- Smart Splits outbound navigation uses OSC 1337 user variables.
+-- When Neovim reaches a window boundary, it delegates pane movement
+-- to WezTerm's event listener.
 local function signal_move_to_wezterm(direction)
   if vim.env.TERM_PROGRAM ~= "WezTerm" then return end
   local osc = string.format("\027]1337;SetUserVar=MOVE_SIGNAL=%s\007", vim.base64.encode(direction))

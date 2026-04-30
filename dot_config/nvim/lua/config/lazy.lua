@@ -11,7 +11,7 @@ if not vim.loop.fs_stat(lazypath) then
 end
 vim.opt.rtp:prepend(lazypath)
 
--- [Rationale]: Detect CI environment to disable non-deterministic background tasks.
+-- Detect CI so background update checks can be disabled.
 local is_ci = os.getenv("CI") == "true"
 
 -- Initialize lazy.nvim with correct path conventions and noise suppression.
@@ -20,16 +20,16 @@ require("lazy").setup({
     -- Core LazyVim framework.
     { "LazyVim/LazyVim", import = "lazyvim.plugins" },
 
-    -- [Rationale]: Prettier extra ensures Neovim uses the 'prettier' binary
-    -- from $PATH (provided via mise) for Markdown, JSON, and YAML.
+    -- Prettier extra uses the 'prettier' binary from $PATH for Markdown,
+    -- JSON, and YAML.
     { import = "lazyvim.plugins.extras.formatting.prettier" },
 
-    -- [Rationale]: Use project-local ESLint for diagnostics and code actions
+    -- Use project-local ESLint for diagnostics and code actions
     -- while preserving Prettier as the formatting owner.
     -- [Reference]: https://www.lazyvim.org/extras/linting/eslint
     { import = "lazyvim.plugins.extras.linting.eslint" },
 
-    -- Language-specific extras for 2026 SOTA workflows.
+    -- Language-specific extras used by the managed editor baseline.
     { import = "lazyvim.plugins.extras.lang.python" },
     { import = "lazyvim.plugins.extras.lang.typescript" },
     { import = "lazyvim.plugins.extras.lang.json" },
@@ -46,9 +46,9 @@ require("lazy").setup({
     -- Debug workflow extra.
     { import = "lazyvim.plugins.extras.dap.core" },
 
-    -- [Architecture]: 2026 SOTA Engines
-    -- [Rationale]: Replaces legacy mini-animate, fzf-lua, and nvim-cmp with
-    -- unified, Rust-backed, or native-speed alternatives.
+    -- Editor UI and completion extras.
+    -- These extras replace legacy mini-animate, fzf-lua, and nvim-cmp with
+    -- maintained LazyVim defaults.
     -- [Reference]: https://www.lazyvim.org/extras/editor/snacks_picker
     { import = "lazyvim.plugins.extras.editor.snacks_picker" },
     { import = "lazyvim.plugins.extras.coding.blink" },
@@ -64,7 +64,7 @@ require("lazy").setup({
     enabled = false,
     hererocks = false,
   },
-  -- [Rationale]: Disable auto-checker in CI to maintain absolute idempotency.
+  -- Disable the auto-checker in CI to keep runs idempotent.
   checker = { enabled = not is_ci },
   performance = {
     rtp = {

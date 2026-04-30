@@ -1,4 +1,4 @@
-{{- /* [Architecture]: Deterministic Target Resolution (Zero-Trust Interop) */ -}}
+{{- /* Resolve the WezTerm executable path across macOS and WSL boundaries. */ -}}
 {{- /* [Reference]: https://www.chezmoi.io/reference/templates/functions/output/ */ -}}
 {{- $osid := "linux" -}}
 {{- if hasKey . "osid" }}{{ $osid = .osid }}{{ end -}}

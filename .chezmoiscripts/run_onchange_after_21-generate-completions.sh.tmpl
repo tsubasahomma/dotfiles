@@ -1,6 +1,6 @@
 #!/bin/zsh
-# [Architecture]: Compile-time Completion & Init Engine (Hardened Phase)
-# [Rationale]: Optimized for startup speed. Pure asset generation logic.
+# Generate static Zsh completions and init assets during convergence.
+# Prebuilt assets keep interactive shell startup fast.
 # [Trigger]: Ecosystem Schema: {{ include ".chezmoidata/tools.yaml" | sha256sum }}
 
 set -euo pipefail
@@ -97,7 +97,7 @@ EOF
 fi
 
 # --- Phase 4: Unified Asset Compilation ---
-# [Rationale]: Use deterministic paths and verify readability before zcompile.
+# Use managed paths and verify readability before zcompile.
 # Generated assets from third-party CLIs may contain bashisms that fail Zsh's strict AOT parser.
 # We gracefully catch compilation failures to allow JIT parsing fallback without breaking convergence.
 local -a compile_targets
@@ -115,7 +115,7 @@ for f in "${compile_targets[@]}"; do
   fi
 done
 
-# --- Phase 5: Sovereign Cache Invalidation ---
+# --- Phase 5: Completion Cache Invalidation ---
 ZSH_CACHE_DIR="{{ .paths.xdg_cache }}/zsh"
 local -a stale_dumps
 stale_dumps=("$ZSH_CACHE_DIR"/zcompdump*(N) "${ZDOTDIR:-$HOME}"/.zcompdump*(N))
