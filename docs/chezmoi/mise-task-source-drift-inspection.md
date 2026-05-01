@@ -32,7 +32,7 @@ This document covers read-only inspection of:
 
 This document does not:
 
-- define the desired future mise task taxonomy
+- replace the target taxonomy in [Mise task taxonomy](./mise-task-taxonomy.md)
 - rename or regroup `setup:*`, `doctor:*`, `integrate:*`, `sync:*`, or `update:*`
   tasks
 - introduce a `converge:*`, `repair:*`, or other future task group
@@ -80,6 +80,9 @@ Repository-local conventions used here:
   evidence is reported as unmanaged local target-state drift.
 - Drift reporting is evidence collection, not authorization to mutate target
   state.
+- Future taxonomy decisions should use [Mise task taxonomy](./mise-task-taxonomy.md)
+  for target roles and this workflow for source-state versus local target-state
+  evidence.
 
 If official mise or chezmoi documentation does not define a repository-local
 ownership convention, this document labels the convention as repository-local.
@@ -315,4 +318,5 @@ Before using drift evidence to guide a future task refactor, verify:
   normalizing them
 - prior observed examples such as `setup:nvim-provider` and
   `setup:python-provider` were treated as drift examples only
-- future taxonomy or cleanup decisions were deferred to separately scoped issues
+- future taxonomy decisions used [Mise task taxonomy](./mise-task-taxonomy.md) and
+  cleanup decisions were deferred to separately scoped issues

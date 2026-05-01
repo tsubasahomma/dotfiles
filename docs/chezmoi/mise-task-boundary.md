@@ -16,7 +16,8 @@ the read-only
 [Chezmoi script contract inspection](./script-contract-inspection.md) workflow,
 the [Chezmoi script trigger audit](./script-trigger-audit.md), the
 [Bootstrap and identity boundary](./bootstrap-identity-boundary.md), the
-[Chezmoi data contract boundary](./data-contract-boundary.md), and the
+[Chezmoi data contract boundary](./data-contract-boundary.md), the
+[Mise task taxonomy](./mise-task-taxonomy.md), and the
 [Mise task source drift inspection](./mise-task-source-drift-inspection.md)
 workflow.
 
@@ -116,9 +117,11 @@ Current task ownership is represented by rendered file tasks.
 | `sync:*` | `dot_config/mise/tasks/sync/*` | Performs explicit synchronization workflows that copy or bridge rendered state to another surface. |
 | `update:*` | `dot_config/mise/tasks/update/*` | Performs mutation-oriented maintenance workflows that can create branches, commits, or pull requests. |
 
-The current taxonomy is descriptive, not normative. Future task grouping,
-renaming, dependency cleanup, or logic migration should be scoped separately.
-Use [Mise task source drift inspection](./mise-task-source-drift-inspection.md)
+The current table is descriptive, not normative. For target role boundaries
+and future review criteria, see [Mise task taxonomy](./mise-task-taxonomy.md).
+That taxonomy is a repository-local review model expected to evolve through
+future scoped issues; it is not authorization to change tasks by itself. Use
+[Mise task source drift inspection](./mise-task-source-drift-inspection.md)
 when local mise task visibility needs to be compared with repository-managed
 source-state ownership before changing task boundaries.
 
@@ -329,10 +332,11 @@ PR:
 - Review whether `update:lazy-lock` should keep its current alias metadata.
 - Review whether doctor task warnings, guide paths, and hard failures should be
   made more uniform.
-- Review whether task names should distinguish convergence, validation,
-  synchronization, and mutation more explicitly.
-- Consider generating task documentation from mise only after the desired task
-  taxonomy is settled.
+- Use [Mise task taxonomy](./mise-task-taxonomy.md) to review whether task
+  names should distinguish setup, convergence, validation, repair,
+  synchronization, integration, and update responsibilities more explicitly.
+- Consider generating task documentation from mise only after the repository-local
+  target taxonomy is stable enough for generated documentation.
 
 Future changes in these areas can be behavior-sensitive because they may affect
 chezmoi script execution, mise task resolution, CI, local validation, or

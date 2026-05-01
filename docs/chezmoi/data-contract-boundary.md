@@ -23,7 +23,8 @@ the read-only
 [Chezmoi script contract inspection](./script-contract-inspection.md) workflow,
 the [Chezmoi script trigger audit](./script-trigger-audit.md), the
 [Bootstrap and identity boundary](./bootstrap-identity-boundary.md), the
-[Mise task boundary](./mise-task-boundary.md), and
+[Mise task boundary](./mise-task-boundary.md), the
+[Mise task taxonomy](./mise-task-taxonomy.md), and
 [WSL2 convergence validation](./wsl2-convergence-validation.md).
 
 ## Scope and non-goals
@@ -128,7 +129,7 @@ convention.
 | Git identity fragment | `.chezmoitemplates/git_identity_config.tmpl` | Reusable template fragment | Centralizes the generated per-identity Git config shape used during identity convergence. |
 | Linux package fragment | `.chezmoitemplates/linux-packages.list.tmpl` | Reusable template fragment | Converts static package data plus host OS release data into the Linux package list used by infrastructure setup. |
 | External resources | `.chezmoiexternal.toml.tmpl` | Templated source-state externals | Declares non-package-manager assets and WSL2-specific external entries. |
-| Mise task taxonomy | `dot_config/mise/tasks/**` | Repository-local task scripts | Uses rendered data to expose setup, doctor, integrate, sync, and update tasks. |
+| Mise task taxonomy | [`dot_config/mise/tasks/`](../../dot_config/mise/tasks/) and [Mise task taxonomy](./mise-task-taxonomy.md) | Repository-local task scripts and target review model | Uses rendered data to expose current setup, doctor, integrate, sync, and update tasks while documenting target roles for future scoped ownership decisions. |
 
 ## Static .chezmoidata contracts
 

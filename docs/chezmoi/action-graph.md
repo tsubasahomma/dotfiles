@@ -18,6 +18,8 @@ For the bootstrap, 1Password, identity, SSH, and WSL2 bridge boundary, see
 [Bootstrap and identity boundary](./bootstrap-identity-boundary.md).
 For the focused mise task delegation boundary, see
 [Mise task boundary](./mise-task-boundary.md).
+For the repository-local target mise task taxonomy used to review future task
+ownership changes, see [Mise task taxonomy](./mise-task-taxonomy.md).
 For read-only mise task source drift inspection, see
 [Mise task source drift inspection](./mise-task-source-drift-inspection.md).
 For the static, dynamic, and reusable template data ownership boundary, see
@@ -452,7 +454,10 @@ requirements for issue #143 unless a future Commander decision scopes them.
   - evaluate whether additional package, tool, or identity-adjacent constants
     should move to `.chezmoidata/`
 - Mise task taxonomy:
-  - clarify task group responsibilities without changing task behavior
+  - use [Mise task taxonomy](./mise-task-taxonomy.md) as the repository-local
+    target review model for future task ownership decisions
+  - keep future task renaming or regrouping in separately scoped
+    behavior-preserving issues
 - Bootstrap and password-manager boundary hardening:
   - separately audit `.bootstrap-identity.sh`, 1Password CLI usage, and WSL2
     relay assumptions
