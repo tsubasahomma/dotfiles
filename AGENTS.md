@@ -17,9 +17,12 @@ When sources conflict, prefer the most specific reliable source for the task:
 2. The assigned GitHub issue, pull request, or review scope.
 3. Current local file contents, diffs, command output, and CI evidence.
 4. This repository guidance.
-5. Repository docs such as [README.md](./README.md) and
+5. Focused repository docs for the touched surface, such as
+   [docs/chezmoi/action-graph.md](./docs/chezmoi/action-graph.md) for
+   chezmoi orchestration contracts.
+6. Repository entry points such as [README.md](./README.md) and
    [ARCHITECTURE.md](./ARCHITECTURE.md).
-6. Official tool documentation when needed.
+7. Official tool documentation when needed.
 
 Do not override explicit issue constraints with general guidance unless current
 repository evidence shows a conflict. Report the conflict instead of guessing.

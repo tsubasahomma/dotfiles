@@ -81,7 +81,7 @@ mise run doctor
 - **Update Toolchains**: `mise install`
 - **Update Neovim Locks**: `mise run update:lazy-lock`
 - **Check Drift**: `chezmoi verify`
-- **De-provisioning (Purge)**: Restore the host to its original state by following the [Purge Sequence in ARCHITECTURE.md](./ARCHITECTURE.md).
+- **De-provisioning (Purge)**: Restore the host toward a clean environment by following the [operational purge guidance in ARCHITECTURE.md](./ARCHITECTURE.md#de-provisioning-purge-sequence).
 
 ## LLM collaboration
 

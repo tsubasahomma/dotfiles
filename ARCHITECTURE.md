@@ -1,29 +1,72 @@
-# Engineering Specification
+# Architecture documentation routing
 
-This document defines the technical logic and constraints of the Deterministic Infrastructure Engine.
+`ARCHITECTURE.md` is a routed legacy architecture entry point and high-level
+repository overview. Focused docs under [`docs/chezmoi/`](./docs/chezmoi/) are
+the source of truth for chezmoi orchestration contracts.
 
-## System Lifecycle
+This document keeps durable repository context and routes readers to focused
+contract documents. It does not define the detailed chezmoi action graph, script
+trigger contracts, bootstrap and identity boundaries, mise task delegation, data
+ownership, or WSL2 convergence validation by itself.
 
-The provisioning process follows a strict tiered model to resolve dependencies without circularity or speculation.
+## Current role
 
-### Tiered Execution Model
+Use this file for:
 
-| Phase       | Definition               | Mechanism                                                                                                    |
-| :---------- | :----------------------- | :----------------------------------------------------------------------------------------------------------- |
-| **Tier -2** | Infrastructure Assertion | Manual setup of 1Password schema, FDA, and Sudoers.                                                          |
-| **Tier -1** | Identity Relay           | [`.bootstrap-identity.sh`](./.bootstrap-identity.sh) provisions `mise` and establishes the 1Password bridge. |
-| **Tier 0**  | Hermetic Convergence     | `mise` pins `chezmoi` and `op` to repo-defined versions.                                                     |
-| **Tier 1**  | System Provisioning      | Phase 10 scripts install Homebrew (macOS) or APT/DNF (Linux) packages.                                       |
-| **Tier 2**  | Runtime Convergence      | Phase 20 scripts provision language runtimes and Neovim providers via absolute paths.                        |
-| **Tier 3**  | Trust Aggregation        | Phase 50+ scripts extract SSH keys and generate Git `allowed_signers`.                                       |
+- a high-level map of repository architecture documentation;
+- operational teardown guidance that existing README links depend on;
+- durable context that is not better owned by a focused contract document;
+- follow-up candidates for future documentation relocation or replacement.
+
+Do not use this file as the detailed source of truth for behavior-sensitive
+chezmoi refactoring. Start from the focused contract document that matches the
+touched surface.
+
+## Focused chezmoi contract documents
+
+| Surface | Source of truth |
+| :------ | :-------------- |
+| Current chezmoi action graph, script order, script contracts, and validation surfaces | [`docs/chezmoi/action-graph.md`](./docs/chezmoi/action-graph.md) |
+| Read-only commands for collecting script-contract evidence | [`docs/chezmoi/script-contract-inspection.md`](./docs/chezmoi/script-contract-inspection.md) |
+| Audit of current script trigger contracts and trigger follow-up candidates | [`docs/chezmoi/script-trigger-audit.md`](./docs/chezmoi/script-trigger-audit.md) |
+| Bootstrap, 1Password, identity, SSH signing, SSH agent, WSL2 bridge, and CI fallback boundaries | [`docs/chezmoi/bootstrap-identity-boundary.md`](./docs/chezmoi/bootstrap-identity-boundary.md) |
+| Boundary between `.chezmoiscripts/*` and repository-local mise tasks | [`docs/chezmoi/mise-task-boundary.md`](./docs/chezmoi/mise-task-boundary.md) |
+| Static `.chezmoidata/`, dynamic `.chezmoi.toml.tmpl`, reusable template, and data consumer boundaries | [`docs/chezmoi/data-contract-boundary.md`](./docs/chezmoi/data-contract-boundary.md) |
+| Local WSL2 convergence validation expectations and redaction guidance | [`docs/chezmoi/wsl2-convergence-validation.md`](./docs/chezmoi/wsl2-convergence-validation.md) |
+
+## High-level repository model
+
+This repository is a chezmoi-managed dotfiles source-state repository. At a high
+level, it combines:
+
+- `chezmoi` source-state files, templates, externals, hooks, and scripts;
+- repository-local `mise` toolchain and task definitions;
+- static repository data under `.chezmoidata/`;
+- dynamic host, path, identity, 1Password, SSH, and WSL2 data derived during
+  chezmoi template evaluation;
+- rendered target configuration for shell, Git, SSH, 1Password, Homebrew, mise,
+  WezTerm, Neovim, and related tools;
+- local validation and GitHub Actions compliance checks.
+
+This overview is intentionally narrow. Detailed sequencing, rerun behavior,
+hard-fail boundaries, soft-fallback boundaries, and validation expectations live
+in the focused docs listed above.
+
+## Operational teardown guidance
+
+The following purge sequence is operational teardown guidance for removing the
+currently managed local state. It is not a full architecture contract and does
+not prove convergence, idempotency, or behavior preservation.
 
 ### De-provisioning (Purge) Sequence
 
-To reverse the infrastructure state and restore the host to a clean environment, execute the following steps in order. This process adheres to the "Inverse Function" principle of managed infrastructure.
+To reverse the managed infrastructure state and restore the host toward a clean
+environment, execute the following steps in order.
 
-#### 1. Selective Managed State Removal
+#### 1. Selective managed state removal
 
-Remove only the files and directories explicitly managed by the engine. This minimizes impact on unmanaged local data.
+Remove only files and directories currently reported as managed by chezmoi. This
+minimizes impact on unmanaged local data.
 
 ```zsh
 # Remove managed targets relative to HOME
@@ -33,75 +76,54 @@ chezmoi managed --path-style absolute -0 | xargs -0 rm -rf --
 chezmoi purge
 ```
 
-#### 2. Platform-Specific Teardown
+#### 2. Platform-specific teardown
 
 **macOS (Apple Silicon)**:
 
-- **Package Force-Sync**: Remove all brews, casks, and taps not defined in the managed Brewfile.
+- **Package force-sync**: Remove Homebrew-managed packages and Homebrew itself
+  when a full host reset is intended.
   ```zsh
   brew list --cask | xargs -I {} brew uninstall --cask --zap {}
   NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/uninstall.sh)"
   sudo rm -rf /opt/homebrew
   ```
-- **TCC Revocation**: Manually revoke "Full Disk Access" for the terminal emulator in System Settings.
+- **TCC revocation**: Manually revoke Full Disk Access for the terminal emulator
+  in System Settings.
 
 **WSL2 (Ubuntu)**:
 
-- **Service Termination**: Stop and disable the user-level identity bridge.
+- **Service termination**: Stop and disable the user-level identity bridge.
   ```zsh
   systemctl --user disable --now 1password-bridge.service
   rm -f "$HOME/.1password/agent.sock"
   ```
-- **Shell Reversion**: Restore the default system shell.
+- **Shell reversion**: Restore the default system shell when a full reset is
+  intended.
   ```zsh
-  sudo chsh -s /bin/bash $USER
+  sudo chsh -s /bin/bash "$USER"
   ```
 
-#### 3. Local State Wipe (Optional / Aggressive)
+#### 3. Local state wipe (optional / aggressive)
 
 > [!WARNING]
-> The following command permanently deletes all application configurations, local data, and caches (including shell history). Execute only if a total environment reset is required.
+> The following command permanently deletes application configurations, local
+> data, caches, and shell history under the selected directories. Execute only
+> when a total local environment reset is intended.
 
 ```zsh
 rm -rf "$HOME/.config" "$HOME/.local" "$HOME/.cache"
 ```
 
-### Identity Bridge Sequence (WSL2)
+## Follow-up candidates
 
-The engine utilizes `npiperelay` and `socat` to bridge the WSL2 UNIX socket to the Windows 1Password Named Pipe.
+The current routing keeps `ARCHITECTURE.md` as a thin legacy entry point. Future
+issues may evaluate whether to:
 
-```mermaid
-sequenceDiagram
-    participant Shell as WSL2 (Zsh)
-    participant Relay as npiperelay.exe
-    participant App as 1Password (Windows)
+- retire `ARCHITECTURE.md` after all inbound links route elsewhere;
+- move architecture routing under `docs/`;
+- rename this file to better reflect its routing role;
+- move purge and de-provisioning guidance to a workflow or operations document;
+- replace remaining high-level architecture prose with narrower focused docs.
 
-    Shell->>Shell: op read / ssh-sign
-    Shell->>Relay: Connect via socat (UNIX Socket)
-    Relay->>App: Bridge to //./pipe/1Password-Service
-    App-->>Relay: Decrypted Data / Signature
-    Relay-->>Shell: Return Payload
-```
-
-## Context-Aware Identity Routing
-
-The engine enforces a zero-trust identity model using Git [`includeIf`](https://git-scm.com/docs/git-config#Documentation/git-config.txt-includeIfconditionpath) directives. Identity routing is directory-based and deterministic.
-
-- **Discovery Logic**: `chezmoi` filters 1Password SSH Key items by the `dotfiles-ssh-key` tag.
-- **Dynamic Scoping**: For each identified item, the engine extracts the `dotfiles` section fields (`dotfiles_git_name`, `dotfiles_git_email`, `dotfiles_git_dirs`) to generate scoped `includeIf` directives.
-- **Security**: No global `user.email` is defined. Git operations outside mapped directories will fail, preventing identity leakage.
-
-## Filesystem Standards
-
-The environment strictly adheres to the XDG Base Directory Specification to ensure a clean `$HOME`.
-
-| Category   | Path             | Purpose                                           |
-| :--------- | :--------------- | :------------------------------------------------ |
-| **Config** | `~/.config`      | Static configuration files (Read-Only source).    |
-| **Data**   | `~/.local/share` | Persistent application data and shims.            |
-| **State**  | `~/.local/state` | Persistent but variable metadata (e.g., history). |
-| **Cache**  | `~/.cache`       | Ephemeral data and generated completions.         |
-
-## Rationale for [`.bootstrap-identity.sh`](./.bootstrap-identity.sh)
-
-The Tier -1 script exists because `chezmoi` templates cannot be evaluated before the toolchain itself is converged. By temporarily re-routing `XDG_CONFIG_HOME`, the engine forces `mise` to process only the local Tier 0 configuration, ensuring an invariant starting state for the rest of the application.
+These are candidates only. They are not hidden requirements for the current
+routing shape.

@@ -15,9 +15,12 @@ When sources conflict, prefer the most specific reliable source for the task:
 2. The assigned issue, pull request, review, or Worker prompt.
 3. Current local evidence such as file contents, diffs, command output, and CI.
 4. [Repository agent guidance](../../AGENTS.md).
-5. Repository docs such as [README.md](../../README.md) and
+5. Focused repository docs for the touched surface, such as
+   [Chezmoi action graph](../chezmoi/action-graph.md) for chezmoi
+   orchestration contracts.
+6. Repository entry points such as [README.md](../../README.md) and
    [ARCHITECTURE.md](../../ARCHITECTURE.md).
-6. Official tool documentation when needed.
+7. Official tool documentation when needed.
 
 Do not override explicit issue constraints with general guidance. If current
 local evidence contradicts the issue or prompt, report the conflict and ask the
@@ -28,6 +31,8 @@ Commander Thread for a scope decision.
 Start with these repository-wide entry points:
 
 - [AGENTS.md](../../AGENTS.md): repository-wide boundaries and validation posture.
+- [Architecture documentation routing](../../ARCHITECTURE.md): high-level
+  repository overview and routed legacy architecture entry point.
 - [LLM collaboration index](./README.md): LLM-specific guidance.
 - [Workflow documentation](../workflows/README.md): issue, PR, validation, merge,
   and closure workflows.
@@ -135,9 +140,9 @@ cleanup into a Worker scope unless the assigned issue explicitly includes it.
 
 ### Chezmoi template changes
 
-Use [Chezmoi action graph](../chezmoi/action-graph.md) for the
-repository-owned action graph and script contracts before behavior-preserving
-refactoring.
+Use [Chezmoi action graph](../chezmoi/action-graph.md) and the focused
+`docs/chezmoi/` contract documents for repository-owned orchestration contracts
+before behavior-preserving refactoring.
 Inspect source-state and rendered-target impact. Be careful with Go Template
 comments, whitespace trimming, shebang placement, blank lines, and target-language
 syntax. See [Chezmoi template guidelines](./chezmoi-template-guidelines.md).
