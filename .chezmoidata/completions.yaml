@@ -1,0 +1,22 @@
+# =============================================================================
+# Completion generation tool-key inventory.
+# Values are mise tool keys defined in .chezmoidata/tools.yaml.
+# =============================================================================
+
+completions:
+  tool_keys:
+    gh: "aqua:cli/cli"
+    rg: "aqua:BurntSushi/ripgrep"
+    fd: "aqua:sharkdp/fd"
+    uv: "aqua:astral-sh/uv"
+    starship: "aqua:starship/starship"
+    yq: "go:github.com/mikefarah/yq/v4"
+    doggo: "aqua:mr-karan/doggo"
+    kubectl: "kubectl"
+    helm: "helm"
+    k9s: "aqua:derailed/k9s"
+    lazygit: "aqua:jesseduffield/lazygit"
+    delta: "github:dandavison/delta"
+    pnpm: "pnpm"
+    zoxide: "aqua:ajeetdsouza/zoxide"
+    gcloud: "gcloud"

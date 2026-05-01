@@ -9,19 +9,22 @@ setopt extended_glob
 export PATH="{{ .paths.home }}/.local/bin:$PATH"
 
 {{/* [Template Variables] */ -}}
-{{- $id_gh := "aqua:cli/cli" -}}
-{{- $id_ripgrep := "aqua:BurntSushi/ripgrep" -}}
-{{- $id_fd := "aqua:sharkdp/fd" -}}
-{{- $id_uv := "aqua:astral-sh/uv" -}}
-{{- $id_starship := "aqua:starship/starship" -}}
-{{- $id_yq := "go:github.com/mikefarah/yq/v4" -}}
-{{- $id_doggo := "aqua:mr-karan/doggo" -}}
-{{- $id_kubectl := "kubectl" -}}
-{{- $id_helm := "helm" -}}
-{{- $id_k9s := "aqua:derailed/k9s" -}}
-{{- $id_lazygit := "aqua:jesseduffield/lazygit" -}}
-{{- $id_delta := "github:dandavison/delta" -}}
-{{- $id_pnpm := "pnpm" -}}
+{{- $tool_keys := .completions.tool_keys -}}
+{{- $id_gh := index $tool_keys "gh" -}}
+{{- $id_ripgrep := index $tool_keys "rg" -}}
+{{- $id_fd := index $tool_keys "fd" -}}
+{{- $id_uv := index $tool_keys "uv" -}}
+{{- $id_starship := index $tool_keys "starship" -}}
+{{- $id_yq := index $tool_keys "yq" -}}
+{{- $id_doggo := index $tool_keys "doggo" -}}
+{{- $id_kubectl := index $tool_keys "kubectl" -}}
+{{- $id_helm := index $tool_keys "helm" -}}
+{{- $id_k9s := index $tool_keys "k9s" -}}
+{{- $id_lazygit := index $tool_keys "lazygit" -}}
+{{- $id_delta := index $tool_keys "delta" -}}
+{{- $id_pnpm := index $tool_keys "pnpm" -}}
+{{- $id_zoxide := index $tool_keys "zoxide" -}}
+{{- $id_gcloud := index $tool_keys "gcloud" -}}
 
 MISE_BIN="{{ .paths.mise }}"
 COMP_DIR="{{ .paths.xdg_cache }}/zsh/completions"
@@ -70,8 +73,8 @@ if command -v wezterm >/dev/null 2>&1; then
 fi
 
 # --- Phase 2: Static Init Generation & Compilation ---
-"$MISE_BIN" exec aqua:ajeetdsouza/zoxide -- zoxide init zsh > "$INIT_DIR/zoxide.zsh"
-"$MISE_BIN" exec aqua:starship/starship -- starship init zsh --print-full-init > "$INIT_DIR/starship.zsh"
+"$MISE_BIN" exec {{ $id_zoxide }} -- zoxide init zsh > "$INIT_DIR/zoxide.zsh"
+"$MISE_BIN" exec {{ $id_starship }} -- starship init zsh --print-full-init > "$INIT_DIR/starship.zsh"
 
 local -a init_scripts
 init_scripts=("$INIT_DIR"/*.zsh(N))
@@ -81,7 +84,7 @@ for f in "${init_scripts[@]}"; do
 done
 
 # --- Phase 3: Dynamic Toolchain Symlinking & JIT Completion ---
-GCLOUD_DIR=$("$MISE_BIN" where gcloud 2>/dev/null || true)
+GCLOUD_DIR=$("$MISE_BIN" where {{ $id_gcloud }} 2>/dev/null || true)
 if [[ -n "$GCLOUD_DIR" && -f "$GCLOUD_DIR/completion.zsh.inc" ]]; then
   ln -sf "$GCLOUD_DIR/completion.zsh.inc" "$INIT_DIR/gcloud.zsh.inc"
   cat << EOF > "$COMP_DIR/_gcloud"

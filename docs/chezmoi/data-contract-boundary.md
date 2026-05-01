@@ -32,6 +32,7 @@ This document is documentation-only and audit-only.
 It covers current data ownership across:
 
 - [`.chezmoidata/packages.yaml`](../../.chezmoidata/packages.yaml)
+- [`.chezmoidata/completions.yaml`](../../.chezmoidata/completions.yaml)
 - [`.chezmoidata/tools.yaml`](../../.chezmoidata/tools.yaml)
 - [`.chezmoi.toml.tmpl`](../../.chezmoi.toml.tmpl)
 - [`.chezmoitemplates/git_identity_config.tmpl`](../../.chezmoitemplates/git_identity_config.tmpl)
@@ -96,13 +97,14 @@ Official references:
 
 Repository-local contracts used here:
 
-- `packages.yaml` and `tools.yaml` are repository-local schema names.
-- `packages`, `mise_tools`, `op_status`, `identities`, `ssh_keys_hash`,
-  `paths.*`, WSL2 bridge values, and mise task taxonomy are repository-local
-  contracts.
+- `packages.yaml`, `tools.yaml`, and `completions.yaml` are repository-local
+  schema names.
+- `packages`, `mise_tools`, `completions.tool_keys`, `op_status`,
+  `identities`, `ssh_keys_hash`, `paths.*`, WSL2 bridge values, and mise task
+  taxonomy are repository-local contracts.
 - Chezmoi does not define this repository's package taxonomy, mise tool map,
-  1Password identity item conventions, SSH key metadata shape, path map, or task
-  grouping semantics.
+  completion generation tool-key map, 1Password identity item conventions, SSH
+  key metadata shape, path map, or task grouping semantics.
 - Official documentation does not define whether the hardcoded values identified
   later should be moved to `.chezmoidata/`; those are repository-local follow-up
   candidates only.
@@ -117,6 +119,7 @@ convention.
 | --- | --- | --- | --- |
 | Package selections | `.chezmoidata/packages.yaml` | Static repository data | Owns package lists consumed by Homebrew, Linux package-list generation, and WSL2 Windows dependency installation. |
 | Tool versions | `.chezmoidata/tools.yaml` | Static repository data | Owns mise tool declarations and version strings consumed by rendered mise configuration and tool-dependent script triggers. |
+| Completion tool-key inventory | `.chezmoidata/completions.yaml` | Static repository data | Owns completion-generation local-name to mise tool-key mappings consumed by the completion generation script. |
 | Host and path data | `.chezmoi.toml.tmpl` | Dynamic config data | Derives OS, architecture, WSL2, Homebrew prefix, XDG paths, mise path, and other host-local values. |
 | 1Password state | `.chezmoi.toml.tmpl` | Dynamic session data | Resolves the `op` binary, session readiness, and behavior-sensitive identity discovery inputs. |
 | Identity data | `.chezmoi.toml.tmpl` | Dynamic secret-adjacent data | Derives identity metadata from 1Password SSH Key item structure without storing secret material in repository data. |
@@ -152,6 +155,30 @@ Current consumers:
 The package schema is repository-local. Chezmoi defines how `.chezmoidata/`
 becomes template data; it does not define this repository's `packages` shape,
 package groups, or platform taxonomy.
+
+### `.chezmoidata/completions.yaml`
+
+Current contract:
+
+- Owns repository completion-generation tool-key lookup constants under the
+  `completions.tool_keys` key.
+- Maps completion-local names to existing mise tool keys declared in
+  `.chezmoidata/tools.yaml`.
+- Stores no tool versions and owns no package selections.
+- Is static repository data, not host-discovered data.
+- Can affect rendered `run_onchange_` scripts when completion tool-key mappings
+  render into script content.
+
+Current consumers:
+
+| Consumer | Current use |
+| --- | --- |
+| [`.chezmoiscripts/run_onchange_after_21-generate-completions.sh.tmpl`](../../.chezmoiscripts/run_onchange_after_21-generate-completions.sh.tmpl) | Renders mise tool keys used for static Zsh completion and init asset generation. |
+
+The completion tool-key schema is repository-local. Chezmoi defines how
+`.chezmoidata/` becomes template data; it does not define this repository's
+completion generation inventory, local completion names, or mise tool-key
+selection policy.
 
 ### `.chezmoidata/tools.yaml`
 
@@ -258,7 +285,7 @@ action graph table.
 | `.chezmoiscripts/run_onchange_before_00-install-windows-deps.sh.tmpl` | `packages.headless.windows`, `packages.gui.windows` | `is_wsl`, `CI` | None | WSL2-only Windows dependency installation. |
 | `.chezmoiscripts/run_onchange_before_10-setup-infrastructure.sh.tmpl` | `packages.*` through rendered Brewfile or Linux list | `osid`, binary discovery helpers | `linux-packages.list.tmpl` | Host package provisioning before runtime setup. |
 | `.chezmoiscripts/run_onchange_after_20-setup-runtimes.sh.tmpl` | `mise_tools` through rendered config and hash | `paths.mise`, `paths.xdg_data`, `paths.home` | None | Runtime setup after rendered mise config exists. |
-| `.chezmoiscripts/run_onchange_after_21-generate-completions.sh.tmpl` | `mise_tools` hash | `paths.*` | None | Completion generation from rendered tool ecosystem. |
+| `.chezmoiscripts/run_onchange_after_21-generate-completions.sh.tmpl` | `mise_tools` hash, `completions.tool_keys` | `paths.*` | None | Completion generation from rendered tool ecosystem and static completion tool-key inventory. |
 | `.chezmoiscripts/run_once_before_10-setup-workspace.sh.tmpl` | None | `paths.home`, `identities` | None | Workspace directory creation from dynamic identity routing. |
 | `.chezmoiscripts/run_onchange_after_50-converge-identities.sh.tmpl` | None | `paths.*`, `identities`, `ssh_keys_hash` | `git_identity_config.tmpl` | Generated SSH public-key files, Git identity configs, and allowed signers. |
 | `.chezmoiscripts/run_onchange_after_51-sync-windows-agent.sh.tmpl` | None | `is_wsl`, `paths.xdg_config` | None | WSL2 1Password agent config sync. |
@@ -284,7 +311,6 @@ behavior, or review boundaries.
 | --- | --- | --- | --- |
 | External resource inventory, URLs, and refresh periods | `.chezmoiexternal.toml.tmpl` | `.chezmoidata/` plus a rendering template | Would need careful review because external target names and refresh cadence affect source-state inputs. |
 | Legacy dotfile backup target list | `.chezmoiscripts/run_onchange_before_00-backup-legacy-dots.sh.tmpl` | `.chezmoidata/` or a template fragment | Would affect a `run_onchange_` script and must preserve backup behavior exactly. |
-| Completion generation inventory | `.chezmoiscripts/run_onchange_after_21-generate-completions.sh.tmpl` | `.chezmoidata/` or a template fragment | Would need to preserve generated file names, command selection, and trigger behavior. |
 | Repeated identity output naming policy | `.chezmoiscripts/run_onchange_after_50-converge-identities.sh.tmpl` and `.chezmoitemplates/git_identity_config.tmpl` | Template fragment cleanup, not necessarily `.chezmoidata/` | Secret-adjacent and behavior-sensitive; should avoid storing dynamic identity data statically. |
 | WSL2 sync target naming and copy destinations | WSL2 sync scripts and rendered WSL2 surfaces | Template fragment or documented constants | Must preserve Windows interop, bridge, and rendered target behavior. |
 | Shell PATH segment grouping | `dot_config/zsh/dot_zshrc.tmpl` and `dot_zshenv.tmpl` | Template fragment or documented shell-path contract | Shell startup order is behavior-sensitive and should not be normalized casually. |
@@ -327,15 +353,13 @@ Potential follow-up issues:
    while preserving target names, URLs, refresh cadence, and WSL2 branches.
 2. Review whether legacy backup targets should become a documented static list or
    remain inline script content.
-3. Review completion generation inventory for possible template-fragment or data
-   extraction without changing generated completions.
-4. Review identity output generation for smaller reusable fragments while
+3. Review identity output generation for smaller reusable fragments while
    keeping identity data dynamic and secret-adjacent.
-5. Review whether WSL2 bridge constants need a dedicated boundary document or
+4. Review whether WSL2 bridge constants need a dedicated boundary document or
    static contract after current behavior is fully validated.
-6. Review package schema naming only after package behavior, script triggers,
+5. Review package schema naming only after package behavior, script triggers,
    and platform support are explicitly preserved.
-7. Review mise tool data shape only after runtime installation, Renovate
+6. Review mise tool data shape only after runtime installation, Renovate
    tracking, and CI behavior are explicitly preserved.
 
 Each follow-up should be behavior-preserving, separately scoped, and validated
