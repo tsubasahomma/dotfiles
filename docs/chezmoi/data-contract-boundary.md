@@ -22,8 +22,9 @@ Use this document with the current [Chezmoi action graph](./action-graph.md),
 the read-only
 [Chezmoi script contract inspection](./script-contract-inspection.md) workflow,
 the [Chezmoi script trigger audit](./script-trigger-audit.md), the
-[Bootstrap and identity boundary](./bootstrap-identity-boundary.md), and the
-[Mise task boundary](./mise-task-boundary.md).
+[Bootstrap and identity boundary](./bootstrap-identity-boundary.md), the
+[Mise task boundary](./mise-task-boundary.md), and
+[WSL2 convergence validation](./wsl2-convergence-validation.md).
 
 ## Scope and non-goals
 
@@ -355,8 +356,8 @@ Potential follow-up issues:
    remain inline script content.
 3. Review identity output generation for smaller reusable fragments while
    keeping identity data dynamic and secret-adjacent.
-4. Review whether WSL2 bridge constants need a dedicated boundary document or
-   static contract after current behavior is fully validated.
+4. Use [WSL2 convergence validation](./wsl2-convergence-validation.md) before
+   changing WSL2 bridge constants or validation-sensitive behavior.
 5. Review package schema naming only after package behavior, script triggers,
    and platform support are explicitly preserved.
 6. Review mise tool data shape only after runtime installation, Renovate

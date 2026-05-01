@@ -20,6 +20,8 @@ For the focused mise task delegation boundary, see
 [Mise task boundary](./mise-task-boundary.md).
 For the static, dynamic, and reusable template data ownership boundary, see
 [Chezmoi data contract boundary](./data-contract-boundary.md).
+For the focused WSL2 local validation contract, see
+[WSL2 convergence validation](./wsl2-convergence-validation.md).
 
 ## Scope and non-goals
 
@@ -449,7 +451,8 @@ requirements for issue #143 unless a future Commander decision scopes them.
   - separately audit `.bootstrap-identity.sh`, 1Password CLI usage, and WSL2
     relay assumptions
 - WSL2 convergence contracts:
-  - define targeted WSL2 validation commands and evidence expectations
+  - use [WSL2 convergence validation](./wsl2-convergence-validation.md) when
+    scoping future WSL2 behavior changes
 - Architecture documentation:
   - evaluate whether `ARCHITECTURE.md` should be restructured, replaced, or
     routed to this action graph document in a later PR
