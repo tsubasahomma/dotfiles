@@ -1,6 +1,6 @@
 #!/bin/zsh
 {{ "" -}}
-# Phase 52 syncs the rendered WezTerm config to the Windows host.
+# Phase 52 delegates rendered WezTerm Windows sync to mise.
 # [Trigger]: WezTerm Config Hash: {{ include "dot_config/wezterm/wezterm.lua.tmpl" | sha256sum }}
 
 set -euo pipefail
@@ -11,13 +11,6 @@ if [[ "${CI:-false}" == "true" ]]; then
   exit 0
 fi
 
-WIN_HOME=$(powershell.exe -NoProfile -NonInteractive -Command '[Console]::Write($env:USERPROFILE)' | tr -d '\r')
-DST_CONFIG_WIN="$(wslpath -u "$WIN_HOME")/.wezterm.lua"
-
-SRC_CONFIG="{{ .paths.xdg_config }}/wezterm/wezterm.lua"
-if [[ -f "$SRC_CONFIG" ]]; then
-  echo "🌉 [Infrastructure] Syncing WezTerm configuration to Windows..."
-  mkdir -p "$(dirname "$DST_CONFIG_WIN")"
-  cp -f "$SRC_CONFIG" "$DST_CONFIG_WIN"
-fi
+echo "⚡ [Delegate] Invoking mise task: sync:wezterm"
+exec "{{ .paths.mise }}" run sync:wezterm
 {{- end }}

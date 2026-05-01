@@ -238,12 +238,12 @@ Current tasks:
 
 Current relationship to chezmoi scripts:
 
-- The current action graph already has a separate
-  `.chezmoiscripts/run_onchange_after_52-sync-wezterm-config.sh.tmpl` path for
-  WezTerm config synchronization.
-- This document does not move that logic into or out of `sync:wezterm`.
-- The overlap between script-level sync and `sync:*` task naming is a follow-up
-  taxonomy candidate, not a change in this PR.
+- `.chezmoiscripts/run_onchange_after_52-sync-wezterm-config.sh.tmpl` owns phase
+  ordering, the rendered WezTerm config trigger hash, WSL2-only branch behavior,
+  CI skip behavior, and explicit delegation.
+- `sync:wezterm` owns the reusable WezTerm sync implementation, including
+  Windows profile discovery, `wslpath` conversion, source-config no-op behavior,
+  destination directory creation, and Windows `.wezterm.lua` copying.
 
 ### `update:*`
 
@@ -327,8 +327,8 @@ PR:
   should be renamed or regrouped.
 - Review whether direct script delegation to `setup:bat` and `setup:vale` should
   remain separate from the broader `setup` orchestrator.
-- Review whether `sync:wezterm` should be wired into the same boundary as the
-  current WezTerm sync script or kept as a separate operator task.
+- Review whether future `sync:*` tasks should use the same thin phase gate
+  delegation pattern as WezTerm sync when script-trigger ownership is required.
 - Review whether future task metadata should be represented in file-task
   metadata or rendered configuration.
 - Review whether `update:lazy-lock` should keep its current alias metadata.

@@ -235,7 +235,7 @@ Do not claim CI proves local WSL2 convergence.
 | `1password-bridge.service` rendering | The systemd user service renders only when `.is_wsl` is true and `.npiperelay_wsl` is not empty. | Rendered-output inspection. |
 | Service enablement | Phase 90 enables and starts the bridge service only when WSL2 relay data is present. | Local WSL2 runtime validation. |
 | `socat` bridge | The service removes the stale Unix socket and starts `socat` to bridge the Unix socket to the Windows OpenSSH agent pipe through `npiperelay.exe`. | Local WSL2 runtime validation. |
-| WezTerm Windows sync | Phase 52 and `sync:wezterm` copy rendered WezTerm config to the Windows host on WSL2 and skip in CI. | Source-state, rendered-output, and local runtime validation when in scope. |
+| WezTerm Windows sync | Phase 52 owns rendered trigger and delegation behavior; `sync:wezterm` copies rendered WezTerm config to the Windows host on WSL2 and skips in CI. | Source-state, rendered-output, and local runtime validation when in scope. |
 | CI fallback | CI exercises automation-safe paths and skips or softens local interactive requirements. | CI validation only. |
 
 ## Read-only command bundle
@@ -418,8 +418,8 @@ behavior-aware issue before implementation.
    contract as `dot_zshenv.tmpl`.
 4. Review whether `npiperelay.exe`, Windows profile, and sync destination
    handling should have a more explicit fallback or diagnostic path.
-5. Review whether WezTerm Windows sync and the `sync:wezterm` task should share a
-   single validation entry point.
+5. Review whether WezTerm Windows sync should gain a redaction-safe validation
+   helper for the delegated `sync:wezterm` path.
 6. Review whether service enablement should report more actionable local
    diagnostics without exposing sensitive paths.
 7. Review whether WSL2 external-resource validation for `win32yank.exe` should
