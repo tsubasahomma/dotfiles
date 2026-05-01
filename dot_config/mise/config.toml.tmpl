@@ -32,7 +32,3 @@ npm.package_manager = "pnpm"
 
 [settings.github]
 credential_command = "{{ .paths.op }} read 'op://Development/mise-cli-token/credential'"
-
-[tasks.setup]
-description = "Provision all ecosystem dependencies"
-depends = ["setup:security", "setup:pnpm", "setup:bat", "setup:vale"]

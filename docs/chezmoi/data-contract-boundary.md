@@ -128,7 +128,7 @@ convention.
 | Git identity fragment | `.chezmoitemplates/git_identity_config.tmpl` | Reusable template fragment | Centralizes the generated per-identity Git config shape used during identity convergence. |
 | Linux package fragment | `.chezmoitemplates/linux-packages.list.tmpl` | Reusable template fragment | Converts static package data plus host OS release data into the Linux package list used by infrastructure setup. |
 | External resources | `.chezmoiexternal.toml.tmpl` | Templated source-state externals | Declares non-package-manager assets and WSL2-specific external entries. |
-| Mise task taxonomy | `dot_config/mise/config.toml.tmpl` and `dot_config/mise/tasks/**` | Repository-local task data and scripts | Uses rendered data to expose setup, doctor, integrate, sync, and update tasks. |
+| Mise task taxonomy | `dot_config/mise/tasks/**` | Repository-local task scripts | Uses rendered data to expose setup, doctor, integrate, sync, and update tasks. |
 
 ## Static .chezmoidata contracts
 
@@ -229,7 +229,7 @@ Current consumers:
 | --- | --- |
 | `.chezmoiscripts/*` | Uses `paths.*`, `osid`, `is_wsl`, `op_status`, `identities`, `ssh_keys_hash`, and WSL2 bridge values for provisioning, setup, identity convergence, bridge sync, and service enablement. |
 | `.chezmoiexternal.toml.tmpl` | Uses architecture and WSL2 data to select external source-state entries. |
-| `dot_config/mise/config.toml.tmpl` | Uses `mise_tools`, `paths.xdg_data`, and `paths.op` to render user-level mise configuration. |
+| `dot_config/mise/config.toml.tmpl` | Uses `mise_tools`, `paths.xdg_data`, and `paths.op` to render user-level mise settings and tools. |
 | `dot_config/mise/tasks/**` | Uses `paths.*`, `identities`, `is_wsl`, and tool paths for setup, doctor, integrate, sync, and update tasks. |
 | rendered Git surfaces | Use `paths.op_sign`, `paths.xdg_config`, `paths.home`, `identities`, and SSH key metadata for signing and scoped identity routing. |
 | rendered SSH surfaces | Use `paths.xdg_config`, `paths.xdg_state`, and SSH socket data for config includes, control sockets, known-hosts paths, and agent routing. |
@@ -294,7 +294,7 @@ action graph table.
 | `.chezmoiscripts/run_onchange_after_90-enable-services.sh.tmpl` | None | `is_wsl`, `npiperelay_wsl` | None | WSL2 bridge service enablement. |
 | `.chezmoiexternal.toml.tmpl` | None | architecture and WSL2 data | None | Non-package-manager external source-state resources. |
 | `dot_config/homebrew/Brewfile.tmpl` | `packages.headless.*`, `packages.gui.*`, `packages.media.*` | Host branch selected by script/template context | None | macOS package declaration surface. |
-| `dot_config/mise/config.toml.tmpl` | `mise_tools` | `paths.xdg_data`, `paths.op` | None | Rendered user-level mise settings, tools, and task config. |
+| `dot_config/mise/config.toml.tmpl` | `mise_tools` | `paths.xdg_data`, `paths.op` | None | Rendered user-level mise settings and tools. |
 | `dot_config/mise/tasks/**` | Rendered tool config indirectly | `paths.*`, `identities`, `is_wsl`, tool paths | None | Rendered setup, doctor, integrate, sync, and update task behavior. |
 | `dot_config/git/config.tmpl` | None | `paths.op_sign`, `paths.xdg_config`, `identities`, identity metadata | Generated identity files from `git_identity_config.tmpl` | SSH signing and scoped Git identity routing. |
 | `dot_config/ssh/config.tmpl` and `private_dot_ssh/symlink_config.tmpl` | None | `paths.xdg_config`, `paths.xdg_state`, SSH socket data | None | SSH config include, socket, and state path routing. |

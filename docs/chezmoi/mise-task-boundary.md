@@ -86,7 +86,7 @@ Repository-local contracts used here:
 - `.mise.toml` owns the bootstrap toolchain declaration needed before rendered
   user-level mise configuration is available.
 - `dot_config/mise/config.toml.tmpl` owns the rendered user-level mise tool and
-  task configuration.
+  settings configuration.
 - `dot_config/mise/tasks/**` owns rendered user-level mise file tasks.
 - The `executable_` source-state prefix makes rendered task files executable;
   the source-state files are tracked as `100644` and this issue does not change
@@ -102,11 +102,11 @@ filling the gap with community convention.
 
 ## Repository-local task taxonomy
 
-Current task ownership is split across one TOML task and rendered file tasks.
+Current task ownership is represented by rendered file tasks.
 
 | Task surface | Current owner | Repository-local role |
 | --- | --- | --- |
-| `setup` | `dot_config/mise/config.toml.tmpl` | Orchestrates setup subtasks through `depends = ["setup:security", "setup:pnpm", "setup:bat", "setup:vale"]`. |
+| `setup` | `dot_config/mise/tasks/setup/executable__default.tmpl` | Orchestrates setup subtasks through `depends = ["setup:security", "setup:pnpm", "setup:bat", "setup:vale"]`. |
 | `setup:*` | `dot_config/mise/tasks/setup/*` | Converges local setup artifacts after runtime tools and rendered config are available. |
 | `doctor` | `dot_config/mise/tasks/doctor/executable__default.tmpl` | Orchestrates repository-local health checks and exits non-zero when one or more doctor subtasks fail. |
 | `doctor:*` | `dot_config/mise/tasks/doctor/*` | Performs focused health probes for security, identity, Neovim, Vale, toolchain, npm backend, HubSpot CLI, and completions. |
@@ -158,7 +158,7 @@ Current tasks:
 
 Current orchestration:
 
-- `setup` is defined in `dot_config/mise/config.toml.tmpl`.
+- `setup` is defined by `dot_config/mise/tasks/setup/executable__default.tmpl`.
 - `setup` depends on `setup:security`, `setup:pnpm`, `setup:bat`, and
   `setup:vale`.
 - `run_onchange_after_20-setup-runtimes.sh.tmpl` runs `mise run setup`.
@@ -319,8 +319,8 @@ PR:
   remain separate from the broader `setup` orchestrator.
 - Review whether `sync:wezterm` should be wired into the same boundary as the
   current WezTerm sync script or kept as a separate operator task.
-- Review whether task dependencies should remain in `dot_config/mise/config.toml.tmpl`
-  or move into file-task metadata.
+- Review whether future task metadata should be represented in file-task
+  metadata or rendered configuration.
 - Review whether `update:lazy-lock` should keep its current alias metadata.
 - Review whether doctor task warnings, guide paths, and hard failures should be
   made more uniform.

@@ -269,6 +269,8 @@ Official mise semantics used here:
 - file tasks must be executable for mise to detect them
 - grouped file-task directories create task names such as `setup:bat` and
   `doctor:nvim`
+- `_default` file tasks define group-level task names such as `setup` and
+  `doctor`
 - `# [MISE]` comments are supported task metadata comments
 
 Repository-local contract:
@@ -276,7 +278,7 @@ Repository-local contract:
 - `run_onchange_after_20-setup-runtimes.sh.tmpl` delegates to:
   - `mise install`
   - `mise run setup`
-- The rendered `setup` task depends on:
+- The rendered `setup` group-level file task depends on:
   - `setup:security`
   - `setup:pnpm`
   - `setup:bat`
