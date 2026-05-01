@@ -9,6 +9,10 @@ The goal is to make future chezmoi refactoring reviewable and
 behavior-preserving. This document describes current behavior; it does not
 declare the current structure to be ideal.
 
+For reusable read-only commands that collect script contract evidence without
+duplicating this table, see
+[Chezmoi script contract inspection](./script-contract-inspection.md).
+
 ## Scope and non-goals
 
 This document covers the current graph across:
