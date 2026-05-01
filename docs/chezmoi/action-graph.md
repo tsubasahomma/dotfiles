@@ -18,6 +18,8 @@ For the bootstrap, 1Password, identity, SSH, and WSL2 bridge boundary, see
 [Bootstrap and identity boundary](./bootstrap-identity-boundary.md).
 For the focused mise task delegation boundary, see
 [Mise task boundary](./mise-task-boundary.md).
+For read-only mise task source drift inspection, see
+[Mise task source drift inspection](./mise-task-source-drift-inspection.md).
 For the static, dynamic, and reusable template data ownership boundary, see
 [Chezmoi data contract boundary](./data-contract-boundary.md).
 For the focused WSL2 local validation contract, see
@@ -258,7 +260,9 @@ chezmoi phase model.
 ## Mise task boundary
 
 The focused mise task delegation contract is documented in
-[Mise task boundary](./mise-task-boundary.md).
+[Mise task boundary](./mise-task-boundary.md). The read-only workflow for
+comparing repository-managed task source state with locally visible mise tasks is
+documented in [Mise task source drift inspection](./mise-task-source-drift-inspection.md).
 
 Mise tasks in this repository are rendered file tasks under
 [`dot_config/mise/tasks/`](../../dot_config/mise/tasks).

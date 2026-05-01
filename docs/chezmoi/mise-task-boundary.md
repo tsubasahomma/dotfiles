@@ -15,8 +15,10 @@ Use this document with the current [Chezmoi action graph](./action-graph.md),
 the read-only
 [Chezmoi script contract inspection](./script-contract-inspection.md) workflow,
 the [Chezmoi script trigger audit](./script-trigger-audit.md), the
-[Bootstrap and identity boundary](./bootstrap-identity-boundary.md), and the
-[Chezmoi data contract boundary](./data-contract-boundary.md).
+[Bootstrap and identity boundary](./bootstrap-identity-boundary.md), the
+[Chezmoi data contract boundary](./data-contract-boundary.md), and the
+[Mise task source drift inspection](./mise-task-source-drift-inspection.md)
+workflow.
 
 ## Scope and non-goals
 
@@ -116,6 +118,9 @@ Current task ownership is represented by rendered file tasks.
 
 The current taxonomy is descriptive, not normative. Future task grouping,
 renaming, dependency cleanup, or logic migration should be scoped separately.
+Use [Mise task source drift inspection](./mise-task-source-drift-inspection.md)
+when local mise task visibility needs to be compared with repository-managed
+source-state ownership before changing task boundaries.
 
 ## Current delegation map
 
