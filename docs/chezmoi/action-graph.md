@@ -18,6 +18,8 @@ For the bootstrap, 1Password, identity, SSH, and WSL2 bridge boundary, see
 [Bootstrap and identity boundary](./bootstrap-identity-boundary.md).
 For the focused mise task delegation boundary, see
 [Mise task boundary](./mise-task-boundary.md).
+For the static, dynamic, and reusable template data ownership boundary, see
+[Chezmoi data contract boundary](./data-contract-boundary.md).
 
 ## Scope and non-goals
 

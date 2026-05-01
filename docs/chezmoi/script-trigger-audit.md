@@ -15,7 +15,9 @@ The current script-contract baseline is
 bootstrap, 1Password, identity, SSH, and WSL2 bridge boundary is documented in
 [Bootstrap and identity boundary](./bootstrap-identity-boundary.md). The mise task
 delegation boundary is documented in
-[Mise task boundary](./mise-task-boundary.md).
+[Mise task boundary](./mise-task-boundary.md). The static and dynamic data
+contract boundary is documented in
+[Chezmoi data contract boundary](./data-contract-boundary.md).
 
 ## Scope and non-goals
 

@@ -14,8 +14,9 @@ lockfiles, or CI behavior.
 Use this document with the current [Chezmoi action graph](./action-graph.md),
 the read-only
 [Chezmoi script contract inspection](./script-contract-inspection.md) workflow,
-the [Chezmoi script trigger audit](./script-trigger-audit.md), and the
-[Bootstrap and identity boundary](./bootstrap-identity-boundary.md).
+the [Chezmoi script trigger audit](./script-trigger-audit.md), the
+[Bootstrap and identity boundary](./bootstrap-identity-boundary.md), and the
+[Chezmoi data contract boundary](./data-contract-boundary.md).
 
 ## Scope and non-goals
 

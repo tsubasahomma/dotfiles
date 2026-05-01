@@ -17,7 +17,9 @@ from this workflow is
 1Password, identity, SSH, and WSL2 bridge boundary review, see
 [Bootstrap and identity boundary](./bootstrap-identity-boundary.md). The focused
 mise task delegation boundary is documented in
-[Mise task boundary](./mise-task-boundary.md).
+[Mise task boundary](./mise-task-boundary.md). For static and dynamic
+chezmoi data ownership boundaries, see
+[Chezmoi data contract boundary](./data-contract-boundary.md).
 
 ## Scope
 
