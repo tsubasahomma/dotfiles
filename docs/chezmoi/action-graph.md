@@ -20,6 +20,8 @@ For the focused mise task delegation boundary, see
 [Mise task boundary](./mise-task-boundary.md).
 For the repository-local target mise task taxonomy used to review future task
 ownership changes, see [Mise task taxonomy](./mise-task-taxonomy.md).
+For the current doctor and future repair task boundary audit, see
+[Doctor and repair task boundary](./doctor-repair-task-boundary.md).
 For read-only mise task source drift inspection, see
 [Mise task source drift inspection](./mise-task-source-drift-inspection.md).
 For the static, dynamic, and reusable template data ownership boundary, see

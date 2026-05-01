@@ -64,6 +64,7 @@ Use this validation contract with these baseline documents:
 - [Chezmoi script trigger audit](./script-trigger-audit.md)
 - [Bootstrap and identity boundary](./bootstrap-identity-boundary.md)
 - [Mise task boundary](./mise-task-boundary.md)
+- [Doctor and repair task boundary](./doctor-repair-task-boundary.md)
 - [Chezmoi data contract boundary](./data-contract-boundary.md)
 
 Official semantics used here:

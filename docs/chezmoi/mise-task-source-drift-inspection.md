@@ -33,6 +33,8 @@ This document covers read-only inspection of:
 This document does not:
 
 - replace the target taxonomy in [Mise task taxonomy](./mise-task-taxonomy.md)
+- replace the current doctor-boundary audit in
+  [Doctor and repair task boundary](./doctor-repair-task-boundary.md)
 - rename or regroup `setup:*`, `doctor:*`, `integrate:*`, `sync:*`, or `update:*`
   tasks
 - introduce a `converge:*`, `repair:*`, or other future task group

@@ -128,6 +128,8 @@ A future issue should avoid putting repair or state-changing recovery actions in
 `doctor:*` unless the issue explicitly preserves and documents the current
 behavior. When a task needs to mutate local state to fix a problem, it is a
 candidate for `repair:*` or for being split into `doctor:*` plus `repair:*`.
+Use [Doctor and repair task boundary](./doctor-repair-task-boundary.md) as the
+current doctor-boundary audit before scoping such a change.
 
 ### `repair:*`
 
