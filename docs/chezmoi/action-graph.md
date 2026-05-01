@@ -12,6 +12,8 @@ declare the current structure to be ideal.
 For reusable read-only commands that collect script contract evidence without
 duplicating this table, see
 [Chezmoi script contract inspection](./script-contract-inspection.md).
+For the focused trigger-contract classification derived from that evidence,
+see [Chezmoi script trigger audit](./script-trigger-audit.md).
 
 ## Scope and non-goals
 

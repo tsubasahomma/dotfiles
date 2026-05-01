@@ -11,7 +11,9 @@ tasks. The current contract baseline remains
 [Chezmoi action graph](./action-graph.md).
 
 This document focuses on command-driven evidence collection. It does not
-duplicate the full action graph table.
+duplicate the full action graph table. The trigger-contract audit derived
+from this workflow is
+[Chezmoi script trigger audit](./script-trigger-audit.md).
 
 ## Scope
 
