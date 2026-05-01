@@ -13,7 +13,8 @@ lockfile, or CI behavior.
 
 Use this document with the current [Chezmoi action graph](./action-graph.md),
 the read-only [Chezmoi script contract inspection](./script-contract-inspection.md)
-workflow, and the [Chezmoi script trigger audit](./script-trigger-audit.md).
+workflow, the [Chezmoi script trigger audit](./script-trigger-audit.md), and the
+[Mise task boundary](./mise-task-boundary.md).
 
 ## Scope and non-goals
 

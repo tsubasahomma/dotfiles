@@ -16,6 +16,8 @@ For the focused trigger-contract classification derived from that evidence,
 see [Chezmoi script trigger audit](./script-trigger-audit.md).
 For the bootstrap, 1Password, identity, SSH, and WSL2 bridge boundary, see
 [Bootstrap and identity boundary](./bootstrap-identity-boundary.md).
+For the focused mise task delegation boundary, see
+[Mise task boundary](./mise-task-boundary.md).
 
 ## Scope and non-goals
 
@@ -247,6 +249,9 @@ chezmoi phase model.
 | [`.chezmoiscripts/run_onchange_after_90-enable-services.sh.tmpl`](../../.chezmoiscripts/run_onchange_after_90-enable-services.sh.tmpl)             | after `90`, WSL2 service path | Enable user-level services after configuration files converge.                     | Re-runs when rendered service-management script content changes, including the bridge service hash.                                                   | `.is_wsl`, `.npiperelay_wsl`, rendered systemd user service.                                          | Explicit `dot_config/systemd/user/1password-bridge.service.tmpl` hash comment.        | Runs `systemctl --user daemon-reload` and enables the service only when WSL2 relay data is present.                                          | `systemctl --user` failure when the WSL2 service path is active.                                                                                                        | Reports that no environment-specific services are required when WSL2 relay conditions are not met.                     | WSL2 local apply, `mise run doctor:identity`, service status inspection.                    |
 
 ## Mise task boundary
+
+The focused mise task delegation contract is documented in
+[Mise task boundary](./mise-task-boundary.md).
 
 Mise tasks in this repository are rendered file tasks under
 [`dot_config/mise/tasks/`](../../dot_config/mise/tasks).

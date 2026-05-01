@@ -13,7 +13,9 @@ The current script-contract baseline is
 [Chezmoi action graph](./action-graph.md). The evidence collection workflow is
 [Chezmoi script contract inspection](./script-contract-inspection.md). The
 bootstrap, 1Password, identity, SSH, and WSL2 bridge boundary is documented in
-[Bootstrap and identity boundary](./bootstrap-identity-boundary.md).
+[Bootstrap and identity boundary](./bootstrap-identity-boundary.md). The mise task
+delegation boundary is documented in
+[Mise task boundary](./mise-task-boundary.md).
 
 ## Scope and non-goals
 

@@ -15,7 +15,9 @@ duplicate the full action graph table. The trigger-contract audit derived
 from this workflow is
 [Chezmoi script trigger audit](./script-trigger-audit.md). For bootstrap,
 1Password, identity, SSH, and WSL2 bridge boundary review, see
-[Bootstrap and identity boundary](./bootstrap-identity-boundary.md).
+[Bootstrap and identity boundary](./bootstrap-identity-boundary.md). The focused
+mise task delegation boundary is documented in
+[Mise task boundary](./mise-task-boundary.md).
 
 ## Scope
 
@@ -174,7 +176,7 @@ Inspect documented mise task boundaries:
 ```sh
 rg -n \
   'Mise task boundary|mise run|setup:|doctor:|integrate:|sync:|update:' \
-  docs/chezmoi/action-graph.md
+  docs/chezmoi/action-graph.md docs/chezmoi/mise-task-boundary.md
 ```
 
 ## WSL2 branch inspection
@@ -277,7 +279,7 @@ run git ls-files -s dot_config/mise/tasks
 run rg -n --hidden 'is_wsl|WSL|wsl|Windows|windows_user|npiperelay|winget|PowerShell|wslpath|win32yank|1password-bridge' .chezmoi.toml.tmpl .chezmoiexternal.toml.tmpl .chezmoiscripts dot_zshenv.tmpl dot_config
 run rg -n --hidden '\[hooks\.|read-source-state|bootstrap-identity|\.bootstrap-identity\.sh' .chezmoi.toml.tmpl .bootstrap-identity.sh docs/chezmoi/action-graph.md
 run rg -n --hidden 'type =|url =|urls =|refreshPeriod|path =|checksum|win32yank|bat|Catppuccin|completion|eza|git-completion' .chezmoiexternal.toml.tmpl .chezmoiscripts dot_config
-run rg -n 'Script execution contract|Mise task boundary|Host-specific branches|External resources|Bootstrap and hook boundary|Follow-up candidates' docs/chezmoi/action-graph.md
+run rg -n 'Script execution contract|Mise task boundary|Host-specific branches|External resources|Bootstrap and hook boundary|Follow-up candidates' docs/chezmoi/action-graph.md docs/chezmoi/mise-task-boundary.md
 ```
 
 Before sharing the output, skim it for local paths or account-specific values
