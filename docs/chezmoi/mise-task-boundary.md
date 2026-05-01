@@ -18,7 +18,8 @@ the [Chezmoi script trigger audit](./script-trigger-audit.md), the
 [Bootstrap and identity boundary](./bootstrap-identity-boundary.md), the
 [Chezmoi data contract boundary](./data-contract-boundary.md), the
 [Mise task taxonomy](./mise-task-taxonomy.md), the
-[Doctor and repair task boundary](./doctor-repair-task-boundary.md), and the
+[Doctor and repair task boundary](./doctor-repair-task-boundary.md),
+[Thin chezmoi phase gate rules](./thin-phase-gate-rules.md), and the
 [Mise task source drift inspection](./mise-task-source-drift-inspection.md)
 workflow.
 

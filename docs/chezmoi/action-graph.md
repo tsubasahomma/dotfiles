@@ -22,6 +22,8 @@ For the repository-local target mise task taxonomy used to review future task
 ownership changes, see [Mise task taxonomy](./mise-task-taxonomy.md).
 For the current doctor and future repair task boundary audit, see
 [Doctor and repair task boundary](./doctor-repair-task-boundary.md).
+For thin chezmoi phase gate rules for future script-thinning issues, see
+[Thin chezmoi phase gate rules](./thin-phase-gate-rules.md).
 For read-only mise task source drift inspection, see
 [Mise task source drift inspection](./mise-task-source-drift-inspection.md).
 For the static, dynamic, and reusable template data ownership boundary, see
