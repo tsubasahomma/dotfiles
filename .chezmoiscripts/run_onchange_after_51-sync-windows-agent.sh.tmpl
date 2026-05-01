@@ -1,6 +1,6 @@
 #!/bin/zsh
-{{ "" -}}
 # Phase 51 syncs the rendered 1Password agent config to the Windows host.
+# [Trigger]: 1Password agent config hash: {{ includeTemplate "dot_config/1Password/ssh/private_agent.toml.tmpl" . | sha256sum }}
 
 set -euo pipefail
 
