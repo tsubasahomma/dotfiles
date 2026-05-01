@@ -64,7 +64,7 @@ mise_tools:
   "helm": "4.1.4" # renovate: datasource=github-releases packageName=helm/helm
   "aqua:derailed/k9s": "0.50.18" # renovate: datasource=github-releases packageName=derailed/k9s
   "opentofu": "1.11.6" # renovate: datasource=github-releases packageName=opentofu/opentofu
-  "terraform": "1.15.0" # renovate: datasource=github-releases packageName=hashicorp/terraform
+  "terraform": "1.15.1" # renovate: datasource=github-releases packageName=hashicorp/terraform
   "tflint": "0.62.0" # renovate: datasource=github-releases packageName=terraform-linters/tflint
   "terragrunt": "1.0.3" # renovate: datasource=github-releases packageName=gruntwork-io/terragrunt
 
@@ -82,5 +82,5 @@ mise_tools:
   # --- 10. AI Coding & Context Engineering ---
   "npm:repomix": "1.14.0" # renovate: datasource=npm packageName=repomix
   "npm:@openai/codex": "0.128.0" # renovate: datasource=npm packageName=@openai/codex
-  "npm:@anthropic-ai/claude-code": "2.1.123" # renovate: datasource=npm packageName=@anthropic-ai/claude-code
+  "npm:@anthropic-ai/claude-code": "2.1.126" # renovate: datasource=npm packageName=@anthropic-ai/claude-code
   "npm:@google/gemini-cli": "0.40.1" # renovate: datasource=npm packageName=@google/gemini-cli
