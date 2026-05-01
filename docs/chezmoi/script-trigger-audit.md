@@ -11,7 +11,9 @@ output proves convergence or idempotency.
 
 The current script-contract baseline is
 [Chezmoi action graph](./action-graph.md). The evidence collection workflow is
-[Chezmoi script contract inspection](./script-contract-inspection.md).
+[Chezmoi script contract inspection](./script-contract-inspection.md). The
+bootstrap, 1Password, identity, SSH, and WSL2 bridge boundary is documented in
+[Bootstrap and identity boundary](./bootstrap-identity-boundary.md).
 
 ## Scope and non-goals
 

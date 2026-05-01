@@ -14,6 +14,8 @@ duplicating this table, see
 [Chezmoi script contract inspection](./script-contract-inspection.md).
 For the focused trigger-contract classification derived from that evidence,
 see [Chezmoi script trigger audit](./script-trigger-audit.md).
+For the bootstrap, 1Password, identity, SSH, and WSL2 bridge boundary, see
+[Bootstrap and identity boundary](./bootstrap-identity-boundary.md).
 
 ## Scope and non-goals
 

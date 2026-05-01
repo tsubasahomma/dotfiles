@@ -13,7 +13,9 @@ tasks. The current contract baseline remains
 This document focuses on command-driven evidence collection. It does not
 duplicate the full action graph table. The trigger-contract audit derived
 from this workflow is
-[Chezmoi script trigger audit](./script-trigger-audit.md).
+[Chezmoi script trigger audit](./script-trigger-audit.md). For bootstrap,
+1Password, identity, SSH, and WSL2 bridge boundary review, see
+[Bootstrap and identity boundary](./bootstrap-identity-boundary.md).
 
 ## Scope
 
