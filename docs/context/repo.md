@@ -78,8 +78,8 @@ Follow these local rules unless the active issue says otherwise:
   1Password Desktop, SSH agent bridge, user systemd, or workstation convergence.
 - Do not change runtime versions, tool versions, package lists, dependencies, or
   lockfiles from a context-documentation issue.
-- Do not delete or thin remaining workflow or Repomix evidence outside the
-  child issue that explicitly scopes that collapse.
+- Do not delete or thin remaining Repomix evidence outside the child issue
+  that explicitly scopes that collapse.
 
 ## Behavior-sensitive boundaries
 
@@ -143,7 +143,7 @@ For documentation-only context or routing changes, use evidence from:
 - `pre-commit run --all-files`
 - Markdown relative link validation, when repository-relative Markdown links are
   added, removed, or changed
-- `repomix`, when context routing, assistant guidance, workflow guidance,
+- `repomix`, when context routing, assistant guidance, workflow contracts,
   Repomix guidance, or generated snapshot routing changes
 - GitHub Actions CI after PR creation, when required by branch protection or
   reviewer request
@@ -185,7 +185,7 @@ that reason rather than marking it complete.
 | target path | The rendered path managed or affected by chezmoi after source-state attributes and templates are evaluated. |
 | generated context artifact | A generated Repomix artifact under `.context/repomix/**`; it is read-only evidence, not tracked source documentation. |
 | surface operating contract | `docs/context/surfaces.md`, the compact map for behavior-sensitive surface routing, failure prevention, required evidence, validation routing, and deep source links. |
-| workflow guidance | Local issue, pull request, validation, merge, closure, Commander, and Worker procedures under `docs/context/local/workflows/**` until the later workflow collapse issue. |
+| workflow contract | Local issue, pull request, validation, merge, closure, Commander, and Worker procedures in [`docs/context/workflows.md`](./workflows.md). |
 | root context manifest | `AGENTS.md`, the concise repository-wide assistant entry point. |
 | adapter | Vendor-specific assistant entry point such as `.github/copilot-instructions.md`; adapters should route to the LLM-agnostic context architecture. |
 | 1Password identity | Repository-discovered identity metadata from prepared 1Password SSH Key items used for Git authoring, SSH signing, and SSH routing. |

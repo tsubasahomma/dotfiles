@@ -44,16 +44,16 @@ when provenance is required for review.
 The files in the Option A+ map are the active operating contracts. They should be
 short, task-oriented, and directly useful during LLM runtime.
 
-The remaining context paths are current deep evidence for later collapse work:
+The remaining context path is current deep evidence for later collapse work:
 
 | Deep evidence path | Use it for now |
 | --- | --- |
-| [`local/workflows/**`](./local/workflows/README.md) | Workflow procedure evidence that later issues may collapse into `workflows.md`. |
 | [`repomix/**`](./repomix/README.md) | Tracked Repomix instruction and consumption evidence that later issues may collapse into `repomix.md`. |
 
-Do not treat those directories as the target architecture. They are evidence,
-not containers to preserve for continuity. Behavior-sensitive surface routing now
-belongs in [`surfaces.md`](./surfaces.md).
+Do not treat that directory as the target architecture. It is evidence, not a
+container to preserve for continuity. Behavior-sensitive surface routing belongs
+in [`surfaces.md`](./surfaces.md), and workflow procedure belongs in
+[`workflows.md`](./workflows.md).
 
 ## Routing rules
 

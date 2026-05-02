@@ -24,9 +24,8 @@ entry point and task-to-context router:
 - [evals](../evals.md) for regression cases covering predictable LLM-context
   failures.
 
-Remaining context paths under `docs/context/local/workflows/**` and
-`docs/context/repomix/**` are deep evidence for later collapse work. Do not
-treat them as the primary architecture.
+Remaining context paths under `docs/context/repomix/**` are deep evidence for
+later collapse work. Do not treat them as the primary architecture.
 
 This repository is a chezmoi-managed dotfiles source-state repository. Preserve
 existing provisioning, identity, editor, shell, Git, mise, Homebrew, and GitHub

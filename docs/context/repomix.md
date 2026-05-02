@@ -45,6 +45,6 @@ Use Repomix snapshots as read-only evidence for repository structure and current
 file contents. Prefer fresh local diffs, command output, CI evidence, or
 maintainer-provided current files when they conflict with a snapshot.
 
-Run `repomix` when assistant guidance, context routing, workflow guidance,
+Run `repomix` when assistant guidance, context routing, workflow contracts,
 Repomix guidance, or generated snapshot routing changes. Do not hand-edit the
 generated XML.

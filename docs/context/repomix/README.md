@@ -21,5 +21,5 @@ rules belong in [`../kernel.md`](../kernel.md), reusable output contracts belong
 in [`../protocols.md`](../protocols.md), regression cases belong in
 [`../evals.md`](../evals.md), dotfiles-specific repository rules belong in
 [`../repo.md`](../repo.md), surface routing belongs in
-[`../surfaces.md`](../surfaces.md), and remaining workflow evidence stays under
-[`../local/workflows/`](../local/workflows/) until a later collapse issue.
+[`../surfaces.md`](../surfaces.md), and workflow procedure belongs in
+[`../workflows.md`](../workflows.md).

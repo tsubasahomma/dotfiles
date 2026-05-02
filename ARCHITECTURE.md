@@ -30,7 +30,7 @@ matches the touched area.
 | Context architecture and active context routing | [`docs/context/README.md`](./docs/context/README.md) |
 | Repository identity, source-state model, behavior boundaries, validation baseline, and documentation entry points | [`docs/context/repo.md`](./docs/context/repo.md) |
 | Behavior-sensitive surface routing for Chezmoi, mise, identity, WSL2, Neovim, and GitHub Actions | [`docs/context/surfaces.md`](./docs/context/surfaces.md) |
-| Issue, PR, validation, merge, closure, Commander, and Worker procedures | [`docs/context/local/workflows/README.md`](./docs/context/local/workflows/README.md) |
+| Issue, PR, validation, merge, closure, Commander, and Worker procedures | [`docs/context/workflows.md`](./docs/context/workflows.md) |
 
 ## High-level repository model
 
