@@ -48,13 +48,12 @@ The remaining context paths are current deep evidence for later collapse work:
 
 | Deep evidence path | Use it for now |
 | --- | --- |
-| [`local/surface-registry.md`](./local/surface-registry.md) | Surface registry evidence that later issues may collapse into `surfaces.md`. |
-| [`local/surfaces/**`](./local/surfaces/README.md) | Surface capsule evidence that later issues may collapse into `surfaces.md`. |
 | [`local/workflows/**`](./local/workflows/README.md) | Workflow procedure evidence that later issues may collapse into `workflows.md`. |
 | [`repomix/**`](./repomix/README.md) | Tracked Repomix instruction and consumption evidence that later issues may collapse into `repomix.md`. |
 
 Do not treat those directories as the target architecture. They are evidence,
-not containers to preserve for continuity.
+not containers to preserve for continuity. Behavior-sensitive surface routing now
+belongs in [`surfaces.md`](./surfaces.md).
 
 ## Routing rules
 

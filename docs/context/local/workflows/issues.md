@@ -68,8 +68,8 @@ For this dotfiles repository, issue boundaries commonly protect:
 - GitHub issue and pull request templates;
 - generated Repomix output.
 
-Use the [Repository operating contract](../../repo.md) and
-[Local surface capsules](../surfaces/README.md) when the issue touches a
+Use the [Repository operating contract](../../repo.md) and the
+[Surface operating contract](../../surfaces.md) when the issue touches a
 behavior-sensitive surface.
 
 ## Out-of-scope findings

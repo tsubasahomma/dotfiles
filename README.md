@@ -89,7 +89,7 @@ metadata and these repository-defined fields:
 | Field    | `dotfiles_git_dirs`  | Comma-separated directory globs for scoped Git identity routing. |
 
 For identity boundaries, use the
-[Identity surface capsule](./docs/context/local/surfaces/identity.md) and the
+[Surface operating contract](./docs/context/surfaces.md) and the
 [Repository operating contract](./docs/context/repo.md).
 
 ### Prepare your host
@@ -144,7 +144,7 @@ Replace `<linux-username>` with the WSL2 Ubuntu user that runs
 `chezmoi init --apply`.
 
 For WSL2 validation boundaries, use the
-[WSL2 surface capsule](./docs/context/local/surfaces/wsl2.md) and the
+[Surface operating contract](./docs/context/surfaces.md) and the
 [Repository operating contract](./docs/context/repo.md).
 
 ### Run chezmoi init
@@ -207,9 +207,7 @@ Use these focused documents when the README isn't enough:
 | --- | --- |
 | [Context architecture](./docs/context/README.md) | Repository context architecture and routing. |
 | [Repository operating contract](./docs/context/repo.md) | Source-state boundaries, behavior-sensitive repository boundaries, supported host posture, and validation baseline. |
-| [Chezmoi surface capsule](./docs/context/local/surfaces/chezmoi.md) | Source state, rendered target state, templates, scripts, and phase gates. |
-| [Identity surface capsule](./docs/context/local/surfaces/identity.md) | 1Password, identity discovery, SSH signing, and agent routing. |
-| [WSL2 surface capsule](./docs/context/local/surfaces/wsl2.md) | WSL2 bridge assumptions and local validation boundaries. |
+| [Surface operating contract](./docs/context/surfaces.md) | Chezmoi, mise, WSL2, identity, Neovim, and GitHub Actions surface routing, evidence, and validation boundaries. |
 
 External references:
 

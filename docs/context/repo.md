@@ -78,8 +78,8 @@ Follow these local rules unless the active issue says otherwise:
   1Password Desktop, SSH agent bridge, user systemd, or workstation convergence.
 - Do not change runtime versions, tool versions, package lists, dependencies, or
   lockfiles from a context-documentation issue.
-- Do not delete or thin remaining surface, workflow, or Repomix evidence outside
-  the child issue that explicitly scopes that collapse.
+- Do not delete or thin remaining workflow or Repomix evidence outside the
+  child issue that explicitly scopes that collapse.
 
 ## Behavior-sensitive boundaries
 
@@ -184,7 +184,7 @@ that reason rather than marking it complete.
 | source-state path | A repository path using chezmoi source-state naming, such as `dot_config/**`, `private_dot_ssh/**`, or `.chezmoiscripts/**`. |
 | target path | The rendered path managed or affected by chezmoi after source-state attributes and templates are evaluated. |
 | generated context artifact | A generated Repomix artifact under `.context/repomix/**`; it is read-only evidence, not tracked source documentation. |
-| surface capsule | A compact document under `docs/context/local/surfaces/**` that prevents predictable mistakes for one behavior-sensitive local surface until the later surface collapse issue. |
+| surface operating contract | `docs/context/surfaces.md`, the compact map for behavior-sensitive surface routing, failure prevention, required evidence, validation routing, and deep source links. |
 | workflow guidance | Local issue, pull request, validation, merge, closure, Commander, and Worker procedures under `docs/context/local/workflows/**` until the later workflow collapse issue. |
 | root context manifest | `AGENTS.md`, the concise repository-wide assistant entry point. |
 | adapter | Vendor-specific assistant entry point such as `.github/copilot-instructions.md`; adapters should route to the LLM-agnostic context architecture. |

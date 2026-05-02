@@ -29,11 +29,7 @@ matches the touched area.
 | :------ | :-------------- |
 | Context architecture and active context routing | [`docs/context/README.md`](./docs/context/README.md) |
 | Repository identity, source-state model, behavior boundaries, validation baseline, and documentation entry points | [`docs/context/repo.md`](./docs/context/repo.md) |
-| Chezmoi source state, templates, scripts, rendered target state, and phase gates | [`docs/context/local/surfaces/chezmoi.md`](./docs/context/local/surfaces/chezmoi.md) |
-| Mise tasks, task metadata, doctor checks, and task ownership evidence | [`docs/context/local/surfaces/mise.md`](./docs/context/local/surfaces/mise.md) |
-| 1Password, identity discovery, SSH signing, and agent routing | [`docs/context/local/surfaces/identity.md`](./docs/context/local/surfaces/identity.md) |
-| WSL2 bridge assumptions and local validation boundaries | [`docs/context/local/surfaces/wsl2.md`](./docs/context/local/surfaces/wsl2.md) |
-| GitHub Actions CI semantics and remote CI evidence | [`docs/context/local/surfaces/github-actions.md`](./docs/context/local/surfaces/github-actions.md) |
+| Behavior-sensitive surface routing for Chezmoi, mise, identity, WSL2, Neovim, and GitHub Actions | [`docs/context/surfaces.md`](./docs/context/surfaces.md) |
 | Issue, PR, validation, merge, closure, Commander, and Worker procedures | [`docs/context/local/workflows/README.md`](./docs/context/local/workflows/README.md) |
 
 ## High-level repository model

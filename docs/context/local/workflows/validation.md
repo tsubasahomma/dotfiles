@@ -45,23 +45,12 @@ instead of marking the check complete.
 
 ## Surface-specific routing
 
-Route behavior-sensitive validation through the local surface guidance:
+Route behavior-sensitive validation through the
+[Surface operating contract](../../surfaces.md). It covers Chezmoi, mise, WSL2,
+identity, Neovim, and GitHub Actions routing.
 
-- [Chezmoi](../surfaces/chezmoi.md) for source-state, templates, scripts,
-  rendered output, and trigger-sensitive behavior;
-- [Mise](../surfaces/mise.md) for task source state, metadata, tool resolution,
-  and health-check behavior;
-- [WSL2](../surfaces/wsl2.md) for Windows interop, user systemd, and bridge
-  behavior;
-- [Identity](../surfaces/identity.md) for 1Password, SSH signing, scoped Git
-  identity, and secret-adjacent evidence;
-- [Neovim](../surfaces/neovim.md) for plugin state, providers, and headless
-  integration;
-- [GitHub Actions](../surfaces/github-actions.md) for workflow semantics and
-  remote CI evidence.
-
-Do not duplicate those surface rules in workflow reports. Link to them and state
-which evidence was actually collected.
+Do not duplicate surface rules in workflow reports. Link to the surface contract
+and state which evidence was actually collected.
 
 ## CI versus local evidence
 

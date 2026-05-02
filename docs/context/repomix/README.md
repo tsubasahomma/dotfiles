@@ -20,6 +20,6 @@ This directory contains Repomix consumption guidance only. Reusable operating
 rules belong in [`../kernel.md`](../kernel.md), reusable output contracts belong
 in [`../protocols.md`](../protocols.md), regression cases belong in
 [`../evals.md`](../evals.md), dotfiles-specific repository rules belong in
-[`../repo.md`](../repo.md), and remaining surface and workflow evidence stays
-under [`../local/surfaces/`](../local/surfaces/) and
-[`../local/workflows/`](../local/workflows/) until later collapse issues.
+[`../repo.md`](../repo.md), surface routing belongs in
+[`../surfaces.md`](../surfaces.md), and remaining workflow evidence stays under
+[`../local/workflows/`](../local/workflows/) until a later collapse issue.
