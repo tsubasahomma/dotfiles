@@ -16,7 +16,7 @@ against the current migration plan.
 
 | Target path | Responsibility |
 | --- | --- |
-| `docs/context/core/**` | Reusable context guidance that can move to another repository with minimal edits. |
+| `docs/context/core/**` | Reusable context guidance for principles, evidence, output, review, validation, generated artifacts, drift control, and out-of-scope findings. |
 | `docs/context/local/**` | Dotfiles-specific extension layer that records local repository identity, boundaries, glossary, validation routing, and surface registry. |
 | `docs/context/local/surfaces/**` | Compact local surface capsules that prevent predictable assistant mistakes and route reviewers to the right local evidence. |
 | `docs/context/local/workflows/**` | Local issue, pull request, validation, merge, and closure workflow guidance aligned with this architecture. |
@@ -47,8 +47,9 @@ anchors:
 - `docs/workflows/**`
 - `docs/chezmoi/**`
 
-The Repomix instruction router now lives at
-[docs/context/repomix/instructions.md](./repomix/instructions.md).
+Core reusable guidance now starts at
+[docs/context/core/README.md](./core/README.md). The Repomix instruction
+router lives at [docs/context/repomix/instructions.md](./repomix/instructions.md).
 
 Future migration issues should distill durable requirements before moving,
 compressing, or deleting any old surface. Prefer preserving constraints,
@@ -65,7 +66,6 @@ without expanding the active patch.
 This contract excludes:
 
 - performing the full documentation migration
-- distilling full reusable core guidance
 - distilling full repository-specific local guidance
 - creating full local surface capsules
 - migrating workflow guidance
@@ -80,6 +80,6 @@ This contract excludes:
 After each child issue merges, compare the resulting repository state against
 this contract and the migration map before creating the next child issue.
 
-The expected next step after the skeleton and Repomix routing work is a
-separately scoped issue for distilling reusable guidance into
-`docs/context/core/**`.
+After reusable core guidance is distilled, the expected next step is a
+separately scoped issue for distilling repository-specific guidance into
+`docs/context/local/**`.

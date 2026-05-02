@@ -1,20 +1,33 @@
-# Core context skeleton
+# Core context guidance
 
 ## Purpose
 
-This directory is the future home for reusable, repository-agnostic context
-guidance.
+This directory contains reusable, repository-agnostic context guidance for
+LLM-assisted maintenance.
 
-Future child issues should distill durable rules here only when they can be
-transplanted to another repository with minimal edits.
+Copy this layer to another repository when the target repository wants shared
+rules for evidence handling, routing, output formats, review classification,
+validation reporting, generated artifacts, drift control, and out-of-scope
+findings.
 
-## Current status
+## Core documents
 
-This issue creates the routing skeleton only. Do not copy legacy manuals into
-this directory during the Repomix routing step.
+- [Context principles](./principles.md): reusable context architecture,
+  routing, scope, maintenance, and out-of-scope finding principles.
+- [Evidence discipline](./evidence.md): source hierarchy, unknown-state rules,
+  validation evidence, generated artifacts, and sensitive data handling.
+- [Output discipline](./output.md): output format selection, strict patch rules,
+  guarded scripts, non-patch deliverables, and whitespace discipline.
+- [Review discipline](./review.md): review priorities, finding classification,
+  validation review, drift control, and follow-up handling.
 
-## Routing
+## Reusable boundary
+
+Core guidance should describe durable rules that survive repository migration.
+Keep repository-specific identity, behavior boundaries, domain constraints,
+workflow procedures, and tool-specific operating details in the local context
+layer instead of duplicating them here.
 
 Use [Context migration map](../migration-map.md) before moving guidance into this
-layer. Keep dotfiles-specific, chezmoi-specific, workstation-specific, and
-operator-specific assumptions out of core guidance.
+layer. Old file boundaries are not durable requirements; preserve the reusable
+rule, not the legacy document shape.
