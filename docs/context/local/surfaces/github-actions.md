@@ -39,8 +39,7 @@ Treat these as behavior-sensitive unless explicitly scoped:
 
 ## Evidence and routing links
 
-- [Local validation map](../validation.md)
-- [Local behavior boundaries](../boundaries.md)
+- [Repository operating contract](../../repo.md)
 - [Local workflow routing](../workflows/README.md)
 - [Compliance workflow](../../../../.github/workflows/compliance.yml)
 - [Pull request template](../../../../.github/pull_request_template.md)
@@ -48,7 +47,7 @@ Treat these as behavior-sensitive unless explicitly scoped:
 ## Validation routing
 
 For documentation-only capsule or routing edits, use baseline documentation
-validation from [Local validation map](../validation.md).
+validation from the [Repository operating contract](../../repo.md).
 
 If a change touches workflow YAML, workflow commands, action pins, permissions,
 triggers, matrix behavior, CI phase order, or branch-protection claims, remote

@@ -37,9 +37,7 @@ Treat these as behavior-sensitive unless explicitly scoped:
 
 ## Evidence and routing links
 
-- [Local repository profile](../profile.md)
-- [Local behavior boundaries](../boundaries.md)
-- [Local validation map](../validation.md)
+- [Repository operating contract](../../repo.md)
 - [Identity surface capsule](./identity.md)
 - [README](../../../../README.md)
 - [`dot_config/systemd/user/1password-bridge.service.tmpl`](../../../../dot_config/systemd/user/1password-bridge.service.tmpl)
@@ -49,7 +47,7 @@ Treat these as behavior-sensitive unless explicitly scoped:
 ## Validation routing
 
 For documentation-only capsule or routing edits, use baseline documentation
-validation from [Local validation map](../validation.md).
+validation from the [Repository operating contract](../../repo.md).
 
 If the change touches WSL2 bridge behavior, Windows interop, user systemd,
 Windows-side sync paths, SSH agent routing, or WSL-specific rendered branches,

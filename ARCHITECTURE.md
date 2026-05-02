@@ -28,9 +28,7 @@ matches the touched area.
 | Surface | Current routing |
 | :------ | :-------------- |
 | Context architecture and active context routing | [`docs/context/README.md`](./docs/context/README.md) |
-| Repository identity, source-state model, and documentation entry points | [`docs/context/local/profile.md`](./docs/context/local/profile.md) |
-| Behavior-sensitive repository boundaries | [`docs/context/local/boundaries.md`](./docs/context/local/boundaries.md) |
-| Validation routing by touched surface | [`docs/context/local/validation.md`](./docs/context/local/validation.md) |
+| Repository identity, source-state model, behavior boundaries, validation baseline, and documentation entry points | [`docs/context/repo.md`](./docs/context/repo.md) |
 | Chezmoi source state, templates, scripts, rendered target state, and phase gates | [`docs/context/local/surfaces/chezmoi.md`](./docs/context/local/surfaces/chezmoi.md) |
 | Mise tasks, task metadata, doctor checks, and task ownership evidence | [`docs/context/local/surfaces/mise.md`](./docs/context/local/surfaces/mise.md) |
 | 1Password, identity discovery, SSH signing, and agent routing | [`docs/context/local/surfaces/identity.md`](./docs/context/local/surfaces/identity.md) |

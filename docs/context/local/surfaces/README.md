@@ -21,10 +21,10 @@ domain manuals.
 
 ## Routing rule
 
-Start with the active issue and current repository evidence. Use
-[Local behavior boundaries](../boundaries.md) for repository-wide constraints and
-[Local validation map](../validation.md) for validation routing. Use these
-capsules only for surface-specific failure prevention.
+Start with the active issue and current repository evidence. Use the
+[Repository operating contract](../../repo.md) for repository-wide constraints
+and validation baseline. Use these capsules only for surface-specific failure
+prevention.
 
 If a future change needs detailed behavior claims, inspect current source state,
 rendered output, command output, or CI evidence instead of relying on retired

@@ -90,7 +90,7 @@ metadata and these repository-defined fields:
 
 For identity boundaries, use the
 [Identity surface capsule](./docs/context/local/surfaces/identity.md) and the
-[Local behavior boundaries](./docs/context/local/boundaries.md).
+[Repository operating contract](./docs/context/repo.md).
 
 ### Prepare your host
 
@@ -145,7 +145,7 @@ Replace `<linux-username>` with the WSL2 Ubuntu user that runs
 
 For WSL2 validation boundaries, use the
 [WSL2 surface capsule](./docs/context/local/surfaces/wsl2.md) and the
-[Local validation map](./docs/context/local/validation.md).
+[Repository operating contract](./docs/context/repo.md).
 
 ### Run chezmoi init
 
@@ -206,8 +206,7 @@ Use these focused documents when the README isn't enough:
 | Document | Use it for |
 | --- | --- |
 | [Context architecture](./docs/context/README.md) | Repository context architecture and routing. |
-| [Local behavior boundaries](./docs/context/local/boundaries.md) | Behavior-sensitive repository boundaries. |
-| [Local validation map](./docs/context/local/validation.md) | Validation routing by touched surface. |
+| [Repository operating contract](./docs/context/repo.md) | Source-state boundaries, behavior-sensitive repository boundaries, supported host posture, and validation baseline. |
 | [Chezmoi surface capsule](./docs/context/local/surfaces/chezmoi.md) | Source state, rendered target state, templates, scripts, and phase gates. |
 | [Identity surface capsule](./docs/context/local/surfaces/identity.md) | 1Password, identity discovery, SSH signing, and agent routing. |
 | [WSL2 surface capsule](./docs/context/local/surfaces/wsl2.md) | WSL2 bridge assumptions and local validation boundaries. |

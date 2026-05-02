@@ -57,9 +57,7 @@ which rendered file, if any, should contain it.
 
 ## Evidence and routing links
 
-- [Local repository profile](../profile.md)
-- [Local behavior boundaries](../boundaries.md)
-- [Local validation map](../validation.md)
+- [Repository operating contract](../../repo.md)
 - [Mise surface capsule](./mise.md)
 - [WSL2 surface capsule](./wsl2.md)
 - [Identity surface capsule](./identity.md)
@@ -71,7 +69,7 @@ which rendered file, if any, should contain it.
 ## Validation routing
 
 For documentation-only capsule or routing edits, use baseline documentation
-validation from [Local validation map](../validation.md).
+validation from the [Repository operating contract](../../repo.md).
 
 If the change touches source-state templates, scripts, data, or rendered-output
 claims, add rendered-output evidence appropriate to the touched surface, such as

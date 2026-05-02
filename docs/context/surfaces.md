@@ -25,6 +25,7 @@ validation without turning each surface into a manual.
 
 ## Current evidence to inspect before later collapse work
 
+- [`repo.md`](./repo.md) for repository-wide behavior boundaries and validation baseline.
 - [`local/surface-registry.md`](./local/surface-registry.md)
 - [`local/surfaces/README.md`](./local/surfaces/README.md)
 - [`local/surfaces/chezmoi.md`](./local/surfaces/chezmoi.md)
@@ -33,8 +34,6 @@ validation without turning each surface into a manual.
 - [`local/surfaces/identity.md`](./local/surfaces/identity.md)
 - [`local/surfaces/neovim.md`](./local/surfaces/neovim.md)
 - [`local/surfaces/github-actions.md`](./local/surfaces/github-actions.md)
-- [`local/boundaries.md`](./local/boundaries.md)
-- [`local/validation.md`](./local/validation.md)
 
 ## Minimal surface map
 
@@ -49,6 +48,7 @@ validation without turning each surface into a manual.
 
 ## Minimal routing guidance
 
-Load this file when a task touches or cites a behavior-sensitive surface. Use the
-deep evidence links only when the compact row is not enough or when a later child
-issue explicitly collapses surface capsules.
+Load this file when a task touches or cites a behavior-sensitive surface. Use
+[`repo.md`](./repo.md) for repository-wide boundaries and the local validation
+baseline. Use the deep evidence links only when the compact row is not enough or
+when a later child issue explicitly collapses surface capsules.

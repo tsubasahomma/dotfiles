@@ -42,8 +42,7 @@ Treat these as behavior-sensitive unless explicitly scoped:
 
 ## Evidence and routing links
 
-- [Local behavior boundaries](../boundaries.md)
-- [Local validation map](../validation.md)
+- [Repository operating contract](../../repo.md)
 - [Chezmoi surface capsule](./chezmoi.md)
 - [`dot_config/mise/tasks/`](../../../../dot_config/mise/tasks/)
 - [`dot_config/mise/tasks/doctor/`](../../../../dot_config/mise/tasks/doctor/)
@@ -52,7 +51,7 @@ Treat these as behavior-sensitive unless explicitly scoped:
 ## Validation routing
 
 For documentation-only capsule or routing edits, use baseline documentation
-validation from [Local validation map](../validation.md).
+validation from the [Repository operating contract](../../repo.md).
 
 If a change touches task source state, task metadata, task behavior, tool
 resolution, health-check behavior, versions, dependencies, or lockfiles, route to

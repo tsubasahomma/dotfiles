@@ -41,8 +41,7 @@ Treat these as behavior-sensitive unless explicitly scoped:
 
 ## Evidence and routing links
 
-- [Local behavior boundaries](../boundaries.md)
-- [Local validation map](../validation.md)
+- [Repository operating contract](../../repo.md)
 - [WSL2 surface capsule](./wsl2.md)
 - [Chezmoi surface capsule](./chezmoi.md)
 - [`dot_config/mise/tasks/doctor/executable_identity.tmpl`](../../../../dot_config/mise/tasks/doctor/executable_identity.tmpl)
@@ -54,7 +53,7 @@ Treat these as behavior-sensitive unless explicitly scoped:
 ## Validation routing
 
 For documentation-only capsule or routing edits, use baseline documentation
-validation from [Local validation map](../validation.md).
+validation from the [Repository operating contract](../../repo.md).
 
 If a change touches identity data, templates, generated identity routing, SSH
 signing, SSH config, or agent behavior, validation must use redacted structural

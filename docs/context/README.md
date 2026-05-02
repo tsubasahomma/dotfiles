@@ -44,12 +44,11 @@ when provenance is required for review.
 The files in the Option A+ map are the active operating contracts. They should be
 short, task-oriented, and directly useful during LLM runtime.
 
-The remaining context directories are current deep evidence for later collapse
-work:
+The remaining context paths are current deep evidence for later collapse work:
 
 | Deep evidence path | Use it for now |
 | --- | --- |
-| [`local/**`](./local/README.md) | Dotfiles-specific repository profile, boundaries, validation, routing, and glossary evidence that later issues may collapse into `repo.md`. |
+| [`local/surface-registry.md`](./local/surface-registry.md) | Surface registry evidence that later issues may collapse into `surfaces.md`. |
 | [`local/surfaces/**`](./local/surfaces/README.md) | Surface capsule evidence that later issues may collapse into `surfaces.md`. |
 | [`local/workflows/**`](./local/workflows/README.md) | Workflow procedure evidence that later issues may collapse into `workflows.md`. |
 | [`repomix/**`](./repomix/README.md) | Tracked Repomix instruction and consumption evidence that later issues may collapse into `repomix.md`. |

@@ -88,8 +88,9 @@ evidence, inspected state, or explicit maintainer confirmation behind it. Local
 checks do not prove GitHub Actions CI passed, and a clean patch application does
 not prove semantic correctness.
 
-Use [Local workflow validation](./validation.md) and the
-[Local validation map](../validation.md) to choose checks for the touched surface.
+Use [Workflow validation guidance](./validation.md) and the
+[Repository operating contract](../../repo.md) to choose checks for the touched
+surface.
 
 ## Review notes
 

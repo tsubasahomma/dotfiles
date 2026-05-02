@@ -9,8 +9,9 @@ and closure decisions.
 Use these documents for repository workflow procedure. Use
 [`../../kernel.md`](../../kernel.md) for reusable evidence, scope, and review
 discipline; [`../../protocols.md`](../../protocols.md) for reusable output
-contracts; and the [Local validation map](../validation.md) plus
-[Local surface capsules](../surfaces/README.md) for touched-surface validation.
+contracts; the [Repository operating contract](../../repo.md) for repository-wide
+validation baseline; and [Local surface capsules](../surfaces/README.md) for
+touched-surface validation.
 
 ## Workflow documents
 
@@ -30,8 +31,8 @@ contracts; and the [Local validation map](../validation.md) plus
 This directory should contain concise procedures, not reusable assistant rules or
 surface capsules.
 
-Do not duplicate rules already covered by shared operating contracts,
-repository-wide local behavior boundaries, or surface-specific capsules. Link to
-those documents instead.
+Do not duplicate rules already covered by shared operating contracts, the
+repository operating contract, or surface-specific capsules. Link to those
+documents instead.
 
 Retired workflow documentation is no longer an active routing target.

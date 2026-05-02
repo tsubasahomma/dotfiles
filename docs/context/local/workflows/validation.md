@@ -6,9 +6,9 @@ Use this workflow when reporting validation for issues, PRs, and review
 summaries in this dotfiles repository.
 
 This document focuses on workflow reporting. Use the
-[Local validation map](../validation.md) to choose checks by touched surface, and
-use [`../../kernel.md`](../../kernel.md) for reusable validation evidence
-rules.
+[Repository operating contract](../../repo.md) to choose checks by touched
+surface, and use [`../../kernel.md`](../../kernel.md) for reusable validation
+evidence rules.
 
 ## Requirements versus evidence
 

@@ -39,8 +39,7 @@ Treat these as behavior-sensitive unless explicitly scoped:
 
 ## Evidence and routing links
 
-- [Local behavior boundaries](../boundaries.md)
-- [Local validation map](../validation.md)
+- [Repository operating contract](../../repo.md)
 - [`dot_config/nvim/`](../../../../dot_config/nvim/)
 - [`dot_config/nvim/lazy-lock.json`](../../../../dot_config/nvim/lazy-lock.json)
 - [`dot_config/mise/tasks/integrate/executable_nvim.tmpl`](../../../../dot_config/mise/tasks/integrate/executable_nvim.tmpl)
@@ -51,7 +50,7 @@ Treat these as behavior-sensitive unless explicitly scoped:
 ## Validation routing
 
 For documentation-only capsule or routing edits, use baseline documentation
-validation from [Local validation map](../validation.md).
+validation from the [Repository operating contract](../../repo.md).
 
 If a change touches Neovim source state, rendered templates, providers, plugin
 configuration, lockfile state, or integration behavior, route validation to the
