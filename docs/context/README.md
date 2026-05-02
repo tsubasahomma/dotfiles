@@ -51,8 +51,10 @@ Core reusable guidance now starts at
 [docs/context/core/README.md](./core/README.md). Dotfiles-specific guidance now
 starts at [docs/context/local/README.md](./local/README.md). Compact local
 surface capsules now start at
-[docs/context/local/surfaces/README.md](./local/surfaces/README.md). The Repomix
-instruction router lives at
+[docs/context/local/surfaces/README.md](./local/surfaces/README.md). Local
+workflow guidance now starts at
+[docs/context/local/workflows/README.md](./local/workflows/README.md). The
+Repomix instruction router lives at
 [docs/context/repomix/instructions.md](./repomix/instructions.md).
 
 Future migration issues should distill durable requirements before moving,
@@ -70,7 +72,6 @@ without expanding the active patch.
 This contract excludes:
 
 - performing the full documentation migration
-- migrating detailed workflow procedures
 - converting `AGENTS.md` into the final root context manifest
 - adding `.github/instructions/**`
 - preserving obsolete documentation by archiving it
@@ -82,6 +83,8 @@ This contract excludes:
 After each child issue merges, compare the resulting repository state against
 this contract and the migration map before creating the next child issue.
 
-After compact local surface capsules are distilled, the expected next step is a
-separately scoped issue for local workflow guidance under
-`docs/context/local/workflows/**`.
+After local workflow guidance is distilled, the expected next step is a
+separately scoped issue for root router and obsolete surface cleanup. That later
+issue should compare current repository state against the parent issue and
+migration map before changing `AGENTS.md`, adapters, or legacy documentation
+surfaces.

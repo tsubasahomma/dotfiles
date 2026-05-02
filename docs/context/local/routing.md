@@ -15,7 +15,7 @@ For dotfiles repository work, route context in this order:
 2. Use [Context architecture](../README.md) to identify the target context layer.
 3. Use [Core context guidance](../core/README.md) for reusable assistant rules.
 4. Use this local layer for repository-specific identity, behavior boundaries,
-   local validation routing, and surface routing.
+   local validation routing, surface routing, and workflow procedures.
 5. Use legacy `docs/llm/**`, `docs/workflows/**`, and `docs/chezmoi/**`
    documents as migration evidence until later scoped issues replace or remove
    them.
@@ -41,7 +41,7 @@ migrated or intentionally discarded:
 | Legacy surface | Current relationship |
 | --- | --- |
 | `docs/llm/**` | Migration input for reusable core rules, local repository rules, and later workflow/root-adapter cleanup. |
-| `docs/workflows/**` | Migration input for future `docs/context/local/workflows/**` procedure migration. |
+| `docs/workflows/**` | Migration input for local workflow procedures now distilled under `docs/context/local/workflows/**`; keep as legacy input until later cleanup. |
 | `docs/chezmoi/**` | Migration evidence for future compact surface capsules and behavior-sensitive local constraints. |
 | `README.md` | Current first-run and operator-facing entry point. |
 | `ARCHITECTURE.md` | Legacy high-level architecture and teardown routing input. |

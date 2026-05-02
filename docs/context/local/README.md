@@ -28,6 +28,8 @@ findings.
   migration evidence, and failure-prevention focus for local surfaces.
 - [Local context routing](./routing.md): relationships between core guidance,
   local guidance, root routers, adapters, legacy inputs, and Repomix context.
+- [Local workflow routing](./workflows/README.md): issue, PR, validation, merge,
+  closure, Commander, and Worker procedures.
 
 ## Local surface capsules
 
@@ -41,11 +43,15 @@ failure-prevention routing for behavior-sensitive surfaces:
 - [Neovim](./surfaces/neovim.md)
 - [GitHub Actions](./surfaces/github-actions.md)
 
-## Deferred local areas
+## Local workflow guidance
 
-- [Local workflow routing](./workflows/README.md) remains the future home for
-  issue, pull request, validation, merge, and closure procedures. Workflow
-  procedures remain out of scope for the surface capsule layer.
+[Local workflow guidance](./workflows/README.md) provides concise procedures for
+scoped issue handling, Commander and Worker coordination, pull requests,
+validation reporting, merge decisions, and issue closure.
+
+Workflow guidance should route reusable evidence, output, and review rules to
+`docs/context/core/**`, and route behavior-sensitive validation to the local
+validation map and surface capsules.
 
 ## Migration boundary
 
