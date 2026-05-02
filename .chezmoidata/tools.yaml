@@ -43,6 +43,7 @@ mise_tools:
   "aqua:starship/starship": "1.25.1" # renovate: datasource=github-releases packageName=starship/starship
   "aqua:junegunn/fzf": "v0.72.0" # renovate: datasource=github-releases packageName=junegunn/fzf
   "aqua:sharkdp/hyperfine": "1.20.0" # renovate: datasource=github-releases packageName=sharkdp/hyperfine
+  "go:github.com/boyter/scc/v3": "3.7.0" # renovate: datasource=github-releases packageName=boyter/scc
 
   # --- 6. Data & GTM Operations ---
   "aqua:noahgorstein/jqp": "0.8.0" # renovate: datasource=github-releases packageName=noahgorstein/jqp
