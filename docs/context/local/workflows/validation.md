@@ -7,8 +7,8 @@ summaries in this dotfiles repository.
 
 This document focuses on workflow reporting. Use the
 [Local validation map](../validation.md) to choose checks by touched surface, and
-use [Core evidence discipline](../../core/evidence.md) for reusable validation
-evidence rules.
+use [`../../kernel.md`](../../kernel.md) for reusable validation evidence
+rules.
 
 ## Requirements versus evidence
 

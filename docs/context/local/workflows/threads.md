@@ -55,13 +55,13 @@ Worker should:
 
 1. classify candidate guidance by target responsibility;
 2. identify the smallest target file list;
-3. link reusable core rules instead of duplicating them;
+3. link shared operating-contract rules instead of duplicating them;
 4. link local and surface guidance for repository-specific behavior boundaries;
 5. call out ambiguity, stale material, and out-of-scope findings;
 6. produce a strict patch only after the plan is accepted or explicitly
    requested.
 
-Use [Core output discipline](../../core/output.md) for patch format and
+Use [`../../protocols.md`](../../protocols.md) for patch format and
 non-patch deliverable boundaries.
 
 ## Child issue sequencing

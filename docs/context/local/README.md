@@ -9,10 +9,10 @@ Use it for repository identity, source-state rules, behavior boundaries, local
 terms, validation routing, surface routing, and relationships between root
 routers, adapters, source state, and Repomix context.
 
-Use [Core context guidance](../core/README.md) for reusable assistant rules such
-as evidence discipline, output format selection, review classification,
-validation evidence, generated artifacts, drift control, and out-of-scope
-findings.
+Use the shared operating contracts for reusable assistant rules:
+[`../kernel.md`](../kernel.md) for evidence, scope, review, validation, and
+generated artifact discipline; [`../protocols.md`](../protocols.md) for output
+format selection; and [`../evals.md`](../evals.md) for regression cases.
 
 ## Local documents
 
@@ -26,8 +26,9 @@ findings.
   repository surface.
 - [Local surface registry](./surface-registry.md): current capsule routing and
   failure-prevention focus for local surfaces.
-- [Local context routing](./routing.md): relationships between core guidance,
-  local guidance, root routers, adapters, source state, and Repomix context.
+- [Local context routing](./routing.md): relationships between shared operating
+  contracts, local guidance, root routers, adapters, source state, and Repomix
+  context.
 - [Local workflow routing](./workflows/README.md): issue, PR, validation, merge,
   closure, Commander, and Worker procedures.
 
@@ -50,8 +51,8 @@ scoped issue handling, Commander and Worker coordination, pull requests,
 validation reporting, merge decisions, and issue closure.
 
 Workflow guidance should route reusable evidence, output, and review rules to
-`docs/context/core/**`, and route behavior-sensitive validation to the local
-validation map and surface capsules.
+the shared operating contracts, and route behavior-sensitive validation to the
+local validation map and surface capsules.
 
 ## Active context boundary
 
@@ -59,5 +60,7 @@ Use current context documents, source-state files, rendered-output inspection,
 command output, and CI evidence that match the touched surface. Historical or
 removed documentation surfaces are provenance, not active routing targets.
 
-Do not copy reusable core rules into this local layer. Link to
-`docs/context/core/**` instead, and keep dotfiles-specific assumptions here.
+Do not copy reusable operating rules into this local layer. Link to
+[`../kernel.md`](../kernel.md), [`../protocols.md`](../protocols.md), or
+[`../evals.md`](../evals.md) instead, and keep dotfiles-specific assumptions
+here.

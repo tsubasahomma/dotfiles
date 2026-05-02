@@ -16,6 +16,8 @@ directly or tracked as source documentation.
 
 ## Scope boundary
 
-This directory contains Repomix consumption guidance only. Reusable context rules
-belong under `docs/context/core/**`, and dotfiles-specific extensions belong
-under `docs/context/local/**`.
+This directory contains Repomix consumption guidance only. Reusable operating
+rules belong in [`../kernel.md`](../kernel.md), reusable output contracts belong
+in [`../protocols.md`](../protocols.md), regression cases belong in
+[`../evals.md`](../evals.md), and dotfiles-specific extensions belong under
+[`../local/`](../local/).

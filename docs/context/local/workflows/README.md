@@ -7,8 +7,9 @@ Commander and Worker coordination, pull requests, validation reporting, merge,
 and closure decisions.
 
 Use these documents for repository workflow procedure. Use
-[Core context guidance](../../core/README.md) for reusable evidence, output, and
-review discipline, and use the [Local validation map](../validation.md) plus
+[`../../kernel.md`](../../kernel.md) for reusable evidence, scope, and review
+discipline; [`../../protocols.md`](../../protocols.md) for reusable output
+contracts; and the [Local validation map](../validation.md) plus
 [Local surface capsules](../surfaces/README.md) for touched-surface validation.
 
 ## Workflow documents
@@ -29,8 +30,8 @@ review discipline, and use the [Local validation map](../validation.md) plus
 This directory should contain concise procedures, not reusable assistant rules or
 surface capsules.
 
-Do not duplicate rules already covered by `docs/context/core/**`, repository-wide
-local behavior boundaries, or surface-specific capsules. Link to those documents
-instead.
+Do not duplicate rules already covered by shared operating contracts,
+repository-wide local behavior boundaries, or surface-specific capsules. Link to
+those documents instead.
 
 Retired workflow documentation is no longer an active routing target.

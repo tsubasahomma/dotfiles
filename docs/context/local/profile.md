@@ -63,7 +63,9 @@ Use the current entry point that matches the task:
 | [`.github/copilot-instructions.md`](../../../.github/copilot-instructions.md) | GitHub Copilot adapter. |
 | [`ARCHITECTURE.md`](../../../ARCHITECTURE.md) | High-level architecture and teardown overview. |
 | [`docs/context/README.md`](../README.md) | Context architecture entry point. |
-| [`docs/context/core/README.md`](../core/README.md) | Reusable context guidance. |
+| [`docs/context/kernel.md`](../kernel.md) | Reusable reasoning, evidence, context, and scope-control contract. |
+| [`docs/context/protocols.md`](../protocols.md) | Reusable output contract. |
+| [`docs/context/evals.md`](../evals.md) | LLM-context regression cases. |
 | [`docs/context/local/README.md`](./README.md) | Dotfiles-specific context extension layer. |
 | [`docs/context/local/surfaces/README.md`](./surfaces/README.md) | Behavior-sensitive surface capsules. |
 | [`docs/context/local/workflows/README.md`](./workflows/README.md) | Local workflow guidance. |

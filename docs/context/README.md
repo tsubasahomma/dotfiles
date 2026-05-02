@@ -44,12 +44,11 @@ when provenance is required for review.
 The files in the Option A+ map are the active operating contracts. They should be
 short, task-oriented, and directly useful during LLM runtime.
 
-The existing context directories remain available as current deep evidence for
-later collapse work:
+The remaining context directories are current deep evidence for later collapse
+work:
 
 | Deep evidence path | Use it for now |
 | --- | --- |
-| [`core/**`](./core/README.md) | Reusable evidence, output, review, and context principles that later issues may collapse into `kernel.md`, `protocols.md`, or `evals.md`. |
 | [`local/**`](./local/README.md) | Dotfiles-specific repository profile, boundaries, validation, routing, and glossary evidence that later issues may collapse into `repo.md`. |
 | [`local/surfaces/**`](./local/surfaces/README.md) | Surface capsule evidence that later issues may collapse into `surfaces.md`. |
 | [`local/workflows/**`](./local/workflows/README.md) | Workflow procedure evidence that later issues may collapse into `workflows.md`. |
@@ -64,8 +63,8 @@ not containers to preserve for continuity.
 2. Select only the Option A+ file that owns the task.
 3. Add repository source files, command output, CI evidence, or generated
    snapshots only when the selected contract requires them.
-4. Use old context directories only as deep evidence for a scoped collapse,
-   comparison, or surface-specific inspection.
+4. Use remaining context directories only as deep evidence for a scoped
+   collapse, comparison, or surface-specific inspection.
 5. Do not change repository behavior, generated artifacts, scripts, tasks,
    templates, CI semantics, versions, dependencies, or lockfiles unless the
    active issue explicitly scopes that behavior change.

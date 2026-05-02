@@ -34,10 +34,10 @@ Option A+ operating-contract files:
 - [Evals](./docs/context/evals.md) for regression cases covering predictable
   LLM-context failures.
 
-Existing context directories under `docs/context/core/**`,
-`docs/context/local/**`, `docs/context/local/surfaces/**`,
-`docs/context/local/workflows/**`, and `docs/context/repomix/**` are deep
-evidence for later collapse work, not the primary architecture.
+Remaining context directories under `docs/context/local/**`,
+`docs/context/local/surfaces/**`, `docs/context/local/workflows/**`, and
+`docs/context/repomix/**` are deep evidence for later collapse work, not the
+primary architecture.
 
 ## Source and evidence hierarchy
 

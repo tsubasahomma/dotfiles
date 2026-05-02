@@ -13,7 +13,8 @@ For dotfiles repository work, route context in this order:
 1. Start with the active user request, issue, pull request, review, or validation
    evidence.
 2. Use [Context architecture](../README.md) to identify the target context layer.
-3. Use [Core context guidance](../core/README.md) for reusable assistant rules.
+3. Use [`kernel.md`](../kernel.md), [`protocols.md`](../protocols.md), or
+   [`evals.md`](../evals.md) for reusable assistant rules.
 4. Use this local layer for repository-specific identity, behavior boundaries,
    local validation routing, surface routing, and workflow procedures.
 5. Use current source-state files and validation evidence for detailed behavior
@@ -37,7 +38,7 @@ adapter.
 | --- | --- |
 | [README.md](../../../README.md) | First-run and operator-facing bootstrap entry point. |
 | [ARCHITECTURE.md](../../../ARCHITECTURE.md) | High-level architecture and teardown overview that routes to current context surfaces. |
-| [Core context guidance](../core/README.md) | Reusable assistant rules. |
+| [`kernel.md`](../kernel.md) and [`protocols.md`](../protocols.md) | Reusable assistant rules and output contracts. |
 | [Local context guidance](./README.md) | Dotfiles-specific extension layer. |
 | [Local surface capsules](./surfaces/README.md) | Behavior-sensitive surface routing. |
 | [Local workflow guidance](./workflows/README.md) | Issue, PR, validation, merge, closure, Commander, and Worker procedures. |
