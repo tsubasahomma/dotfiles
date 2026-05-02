@@ -48,8 +48,10 @@ anchors:
 - `docs/chezmoi/**`
 
 Core reusable guidance now starts at
-[docs/context/core/README.md](./core/README.md). The Repomix instruction
-router lives at [docs/context/repomix/instructions.md](./repomix/instructions.md).
+[docs/context/core/README.md](./core/README.md). Dotfiles-specific guidance now
+starts at [docs/context/local/README.md](./local/README.md). The Repomix
+instruction router lives at
+[docs/context/repomix/instructions.md](./repomix/instructions.md).
 
 Future migration issues should distill durable requirements before moving,
 compressing, or deleting any old surface. Prefer preserving constraints,
@@ -66,9 +68,8 @@ without expanding the active patch.
 This contract excludes:
 
 - performing the full documentation migration
-- distilling full repository-specific local guidance
 - creating full local surface capsules
-- migrating workflow guidance
+- migrating detailed workflow procedures
 - converting `AGENTS.md` into the final root context manifest
 - adding `.github/instructions/**`
 - preserving obsolete documentation by archiving it
@@ -80,6 +81,6 @@ This contract excludes:
 After each child issue merges, compare the resulting repository state against
 this contract and the migration map before creating the next child issue.
 
-After reusable core guidance is distilled, the expected next step is a
-separately scoped issue for distilling repository-specific guidance into
-`docs/context/local/**`.
+After repository-specific local guidance is distilled, the expected next step is
+a separately scoped issue for compact surface capsules under
+`docs/context/local/surfaces/**`.
