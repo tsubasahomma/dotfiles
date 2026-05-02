@@ -23,6 +23,29 @@ Review in this order:
 Do not start with style preferences when scope, behavior, or validation may be
 wrong.
 
+Inspect broadly enough to notice correctness, safety, docs-impact, and follow-up
+findings. Patch narrowly enough to stay inside the assigned issue or PR slice.
+Preserve useful findings that are outside the current patch scope instead of
+silently dropping them or mixing them into the current diff.
+
+## Finding classification
+
+Classify findings before deciding whether they should change the current patch.
+
+Blocking findings affect correctness, safety, scope alignment, behavior
+preservation, required validation, broken links, or reviewability for the
+assigned issue or PR slice. Fix or request correction before recommending
+approval.
+
+Non-blocking follow-ups are useful improvements that do not block the current
+change. Record them with the observed issue, why they are not blocking, and the
+evidence a future issue would need. Do not implement them in the current patch
+unless the Commander or maintainer explicitly expands the scope.
+
+Out-of-scope findings belong outside the current patch even when they are
+correct. Report them clearly, avoid losing the evidence, and do not create
+follow-up issues automatically unless the maintainer asks for that action.
+
 ## Scope alignment
 
 Compare the diff against the assigned issue, PR slice, Worker prompt, or
@@ -64,6 +87,23 @@ Pay special attention to:
 - runtime versions, tool versions, dependencies, and lockfiles
 
 Do not assume a behavior change is safe because it is small.
+
+## Documentation impact scanning
+
+When code, scripts, tasks, source-state files, operator commands, or documented
+behavior are deleted, renamed, or semantically changed, scan documentation for
+stale references before treating the change as complete.
+
+At minimum, review affected references in `README.md`, `AGENTS.md`, `.github/`,
+`docs/`, and `repomix-instruction.md` when those surfaces could describe the
+changed behavior. Keep the resulting patch limited to current-scope stale or
+misleading documentation. Preserve adjacent but non-blocking findings as
+follow-ups instead of expanding the PR.
+
+Durable documentation should not retain transient issue-specific, PR-specific,
+or conversation-specific meta wording unless the document intentionally has a
+historical decision log. Prefer wording that describes the current repository
+contract, audit basis, or behavior without embedding temporary review context.
 
 ## Validation evidence
 
@@ -130,6 +170,8 @@ Check that docs:
 - use dotfiles-specific terminology
 - avoid monorepo-specific assumptions
 - avoid unsupported claims about tool behavior
+- avoid transient issue-specific or conversation-specific meta wording unless a
+  historical decision log is intentional
 - link to durable repository files when relevant
 
 ## Common LLM failure modes
@@ -147,6 +189,9 @@ Watch for:
 - closing keywords on non-final PRs
 - incidental template comment rewrites
 - unsupported claims about rendered output
+- missing documentation impact scans after deletion, rename, or semantic change
+- durable docs retaining transient issue-specific or conversation-specific meta
+  wording
 
 Request targeted corrections rather than broad rewrites.
 

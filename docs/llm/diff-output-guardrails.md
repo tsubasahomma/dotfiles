@@ -32,14 +32,15 @@ Use guarded scripts when:
 
 Use non-patch output when the deliverable is not a repository change, such as:
 
+- reusable prompt
 - issue body
 - pull request body
+- review comment
 - commit message
 - review summary
 - command bundle
 - validation bundle
 - inspection bundle
-- reusable prompt
 
 Label non-patch deliverables clearly. Do not present them as apply-ready patches.
 
@@ -139,7 +140,14 @@ Examples:
 - validation command bundle
 
 When generated Markdown includes nested triple-backtick fences, wrap the outer
-chat block with quadruple backticks.
+chat block with quadruple backticks. This applies to prompts, issue bodies, PR
+bodies, review comments, command bundles, validation bundles, inspection
+bundles, reusable prompts, and any other generated Markdown deliverable that
+contains an inner triple-backtick block.
+
+Patch blocks are different: patch code fences must contain only patch content.
+Do not add explanatory prose, labels, validation notes, or nested non-patch
+Markdown inside a patch block.
 
 ## Generated-file discipline
 

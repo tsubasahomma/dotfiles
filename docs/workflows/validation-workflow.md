@@ -71,6 +71,26 @@ updates repository-relative links.
 Do not require `chezmoi diff` unless `.chezmoiignore.tmpl` or other
 rendered-output-sensitive template files change.
 
+## Documentation impact scanning
+
+Plan a documentation impact scan when a change deletes, renames, or
+semantically changes code, scripts, mise tasks, source-state files, operator
+commands, documented behavior, or validation entry points. The scan checks
+whether durable docs still describe the old name, behavior, command, phase, task,
+or file as current.
+
+Choose search terms from the changed surface, such as the old filename, new
+filename, task name, command name, script phase, documented behavior phrase, and
+operator-facing command. Focus on likely documentation surfaces first:
+
+```sh
+rg -n "old-name|new-name|task-name|command-name" README.md AGENTS.md .github docs repomix-instruction.md
+```
+
+The scan is validation planning, not permission to broaden the patch. Fix stale
+current-scope documentation that would make the PR misleading. Report adjacent
+or non-blocking findings as follow-ups unless the issue explicitly scopes them.
+
 ## Markdown relative link validation
 
 Use this helper when documentation changes introduce repository-relative links:
@@ -220,6 +240,18 @@ Use:
 - focused review of changed workflow semantics
 
 Do not claim CI passed until the user provides CI evidence.
+
+## Documentation impact and stale-reference reporting
+
+When a docs impact scan finds stale references, report how they were handled:
+
+- updated in the current patch because they were current-scope and misleading
+- reported as non-blocking follow-ups because they were useful but outside scope
+- left unchanged because they were historical records or intentionally scoped
+  decision logs
+
+Do not mark the scan complete unless the searched terms and touched surfaces are
+clear from command output, review notes, or maintainer confirmation.
 
 ## Avoid heavyweight checks by default
 

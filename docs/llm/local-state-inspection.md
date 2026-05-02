@@ -54,16 +54,20 @@ repomix --config repomix.config.json
 When several facts are needed, ask for a compact inspection bundle instead of
 one command at a time.
 
+Prefer `zsh` for repository inspection bundles when shell-specific behavior
+matters in this repository. Avoid zsh read-only variable names such as `status`;
+use names such as `exit_code` or `rc` when capturing command results.
+
 A useful pre-work bundle:
 
-```sh
+```zsh
 set +e
 
 run() {
   printf '\n===== %s =====\n' "$*"
   "$@"
-  status=$?
-  printf -- '----- exit code: %s -----\n' "$status"
+  exit_code=$?
+  printf -- '----- exit code: %s -----\n' "$exit_code"
 }
 
 run git branch --show-current
@@ -76,6 +80,8 @@ run find .github -maxdepth 3 -type f
 Keep inspection bundles diagnostic:
 
 - use read-only commands
+- tailor commands to the touched surface instead of always using a generic
+  repository-wide bundle
 - avoid printing secrets or unredacted environment values
 - continue after failures so later state is still visible
 - keep validation pass claims separate from diagnostic output
@@ -117,6 +123,40 @@ exited successfully.
 
 Do not infer one check from another. Local `pre-commit run --all-files` does not
 prove GitHub Actions passed.
+
+## Redaction-safe output capture
+
+For longer inspection bundles, it is acceptable to write output under `/tmp/**`
+for later attachment or pasting after review. Keep the path temporary, avoid
+secrets, and redact local usernames, home directories, install paths, account
+metadata, and other machine-specific values before sharing.
+
+Example pattern:
+
+```zsh
+mkdir -p /tmp/dotfiles-inspection
+output_file="/tmp/dotfiles-inspection/$(date +%Y%m%d%H%M%S)-inspection.txt"
+
+{
+  set +e
+
+  run() {
+    printf '\n===== %s =====\n' "$*"
+    "$@"
+    rc=$?
+    printf -- '----- exit code: %s -----\n' "$rc"
+  }
+
+  run git status --short
+  run git diff --stat
+  run rg -n "pattern" docs README.md
+} >"$output_file" 2>&1
+
+printf 'Inspection output written to %s\n' "$output_file"
+```
+
+Do not treat captured output as shareable until it has been reviewed and
+redacted.
 
 ## Validation evidence handling
 
