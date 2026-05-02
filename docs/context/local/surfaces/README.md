@@ -1,25 +1,31 @@
-# Local surface routing
+# Local surface capsules
 
 ## Purpose
 
-This directory is the future home for compact dotfiles surface capsules.
+This directory contains compact dotfiles surface capsules.
 
-Surface capsules should prevent predictable LLM mistakes and route reviewers to
-the correct local evidence. They should not become full domain manuals.
+Surface capsules prevent predictable LLM mistakes on behavior-sensitive local
+surfaces and route reviewers to the right evidence. They are not full domain
+manuals and do not replace detailed migration evidence.
 
-## Current status
+## Capsule index
 
-No full surface capsules exist yet.
+| Surface | Use when the work touches or cites |
+| --- | --- |
+| [Chezmoi](./chezmoi.md) | source-state files, rendered target state, templates, scripts, script ordering, trigger-sensitive rendered content, or phase gates. |
+| [Mise](./mise.md) | mise tasks, task grouping, task metadata, source-state versus local task visibility, doctor checks, or repair-adjacent behavior. |
+| [WSL2](./wsl2.md) | Windows interop, Windows-side tools, `op.exe`, `npiperelay.exe`, user systemd, SSH agent bridge, or local WSL2 validation. |
+| [Identity](./identity.md) | 1Password identity metadata, generated identity files, SSH signing, scoped Git identity routing, or secret-adjacent evidence. |
+| [Neovim](./neovim.md) | LazyVim configuration, providers, `lazy-lock.json`, headless integration, or rendered Neovim templates. |
+| [GitHub Actions](./github-actions.md) | `.github/workflows/**`, compliance workflow semantics, remote CI evidence, or branch-protection status. |
 
-Use the [Local surface registry](../surface-registry.md) to identify future
-capsule candidates, migration evidence, and failure-prevention focus. Existing
-[chezmoi documentation](../../../chezmoi/) remains migration evidence until a
-later scoped issue distills it.
+## Routing rule
 
-## Future capsule candidates
+Start with the active issue and current repository evidence. Use
+[Local behavior boundaries](../boundaries.md) for repository-wide constraints and
+[Local validation map](../validation.md) for validation routing. Use these
+capsules only for surface-specific failure prevention.
 
-Future child issues may add concise capsules for surfaces such as chezmoi, mise,
-WSL2, Neovim, identity, and GitHub Actions.
-
-A future capsule should link to detailed evidence instead of copying long legacy
-documents into this directory.
+Legacy `docs/chezmoi/**`, `docs/llm/**`, and `docs/workflows/**` files remain
+migration inputs until later scoped issues replace or remove their durable
+content.

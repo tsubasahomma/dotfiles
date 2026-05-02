@@ -24,18 +24,28 @@ findings.
   workflow, and surface guidance.
 - [Local validation map](./validation.md): validation routing by touched
   repository surface.
-- [Local surface registry](./surface-registry.md): future capsule candidates,
+- [Local surface registry](./surface-registry.md): current capsule routing,
   migration evidence, and failure-prevention focus for local surfaces.
 - [Local context routing](./routing.md): relationships between core guidance,
   local guidance, root routers, adapters, legacy inputs, and Repomix context.
 
+## Local surface capsules
+
+[Local surface capsules](./surfaces/README.md) provide compact
+failure-prevention routing for behavior-sensitive surfaces:
+
+- [Chezmoi](./surfaces/chezmoi.md)
+- [Mise](./surfaces/mise.md)
+- [WSL2](./surfaces/wsl2.md)
+- [Identity](./surfaces/identity.md)
+- [Neovim](./surfaces/neovim.md)
+- [GitHub Actions](./surfaces/github-actions.md)
+
 ## Deferred local areas
 
-- [Local surface routing](./surfaces/README.md) remains the future home for
-  compact surface capsules. This issue adds only a registry and routing pointer.
 - [Local workflow routing](./workflows/README.md) remains the future home for
-  issue, pull request, validation, merge, and closure procedures. This issue
-  adds only routing guidance.
+  issue, pull request, validation, merge, and closure procedures. Workflow
+  procedures remain out of scope for the surface capsule layer.
 
 ## Migration boundary
 

@@ -13,12 +13,12 @@ routing changes, or behavior changes beyond the active child issue scope.
 
 | Source or legacy surface | Classification | Target treatment | Current status |
 | --- | --- | --- | --- |
-| `AGENTS.md` | Root guidance input. | Distill later into a concise root context manifest that points to `docs/context/README.md`. | Remains unchanged through issue #194. |
+| `AGENTS.md` | Root guidance input. | Distill later into a concise root context manifest that points to `docs/context/README.md`. | Remains unchanged through issue #196. |
 | `repomix-instruction.md` | Former root Repomix instruction input. | Relocated under `docs/context/repomix/**`; keep generated output under `.context/repomix/**`. | Moved to `docs/context/repomix/instructions.md` in issue #190. |
-| `.github/copilot-instructions.md` | Vendor-specific adapter input. | Thin later into an adapter that points to the language-model-agnostic context architecture. Keep Copilot-specific guidance out of the primary architecture. | Remains unchanged through issue #194. |
-| `docs/llm/**` | Reusable assistant guidance and local failure-prevention input. | Distill repository-agnostic rules into `docs/context/core/**` and dotfiles-specific rules into `docs/context/local/**`. | Reusable core rules were distilled in issue #192, and local repository guidance is distilled in issue #194. The legacy surface remains a migration input until later workflow and root-router work completes. |
-| `docs/workflows/**` | Local workflow guidance input. | Distill issue, PR, validation, merge, and closure rules into `docs/context/local/workflows/**`. | Local routing exists after issue #194, but workflow procedures remain a later migration input. |
-| `docs/chezmoi/**` | Local surface evidence input. | Compress durable chezmoi, mise, WSL2, Neovim, identity, and GitHub Actions constraints into `docs/context/local/surfaces/**`. | Surface registry exists after issue #194, but full surface capsules remain later work. |
+| `.github/copilot-instructions.md` | Vendor-specific adapter input. | Thin later into an adapter that points to the language-model-agnostic context architecture. Keep Copilot-specific guidance out of the primary architecture. | Remains unchanged through issue #196. |
+| `docs/llm/**` | Reusable assistant guidance and local failure-prevention input. | Distill repository-agnostic rules into `docs/context/core/**`, dotfiles-specific rules into `docs/context/local/**`, and surface-specific rules into `docs/context/local/surfaces/**`. | Reusable core rules were distilled in issue #192, local repository guidance was distilled in issue #194, and local surface capsules were distilled in issue #196. The legacy surface remains a migration input until later workflow and root-router work completes. |
+| `docs/workflows/**` | Local workflow guidance input. | Distill issue, PR, validation, merge, and closure rules into `docs/context/local/workflows/**`. | Local routing exists after issue #194, but workflow procedures remain a later migration input after issue #196. |
+| `docs/chezmoi/**` | Local surface evidence input. | Compress durable chezmoi, mise, WSL2, Neovim, identity, and GitHub Actions constraints into `docs/context/local/surfaces/**`. | Compact surface capsules were created in issue #196. The legacy surface remains migration evidence until later cleanup confirms its durable guidance has been migrated or intentionally discarded. |
 
 ## Target area map
 
@@ -85,8 +85,7 @@ After each child issue merges, compare the repository against this map:
 
 ## Next handoff
 
-After repository-specific local guidance is distilled, the next child issue can
-use this map to scope compact surface capsules under
-`docs/context/local/surfaces/**`. That later issue should decide the exact file
-list from the post-merge repository state rather than treating this map as a
-prewritten patch.
+After compact surface capsules are distilled, the next child issue can use this
+map to scope local workflow guidance under `docs/context/local/workflows/**`.
+That later issue should decide the exact file list from the post-merge
+repository state rather than treating this map as a prewritten patch.
