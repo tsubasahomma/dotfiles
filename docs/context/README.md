@@ -2,15 +2,17 @@
 
 ## Purpose
 
-This directory is the durable architecture entry point for language-model-agnostic
-repository context.
+This directory is the active architecture entry point for
+language-model-agnostic repository context.
 
-It defines the organization for reusable context guidance, dotfiles-specific
-extensions, surface capsules, workflow guidance, and Repomix context while
-keeping repository behavior unchanged.
+It organizes reusable context guidance, dotfiles-specific extensions, surface
+capsules, workflow guidance, and Repomix context while keeping repository
+behavior unchanged.
 
-Use [Context migration map](./migration-map.md) to review how the former legacy
-surfaces were retired and where their durable guidance now lives.
+Use this document to choose the current context layer for a task. Use historical
+issue or PR ledgers only when the active task names them or when provenance is
+needed for review; completed planning artifacts are not day-to-day routing
+inputs.
 
 ## Architecture layers
 
@@ -39,29 +41,23 @@ Generated Repomix output belongs under `.context/repomix/**`.
 Vendor-specific adapters should route to this shared architecture instead of
 becoming the primary architecture.
 
-## Retired legacy surfaces
+## Active context contract
 
-The former assistant, workflow, and long-form chezmoi documentation surfaces were
-migration inputs. Their durable guidance has been distilled into the current
-context architecture or intentionally discarded as obsolete duplicate audit
-material.
+Start active work from current evidence:
 
-Use these current entry points instead:
+- the active user request, issue, pull request, review, or validation output;
+- current source-state files, diffs, rendered output, command output, or CI
+  evidence;
+- the focused context layer that matches the touched surface.
 
-- [AGENTS.md](../../AGENTS.md) for the root context manifest.
-- [Core context guidance](./core/README.md) for reusable assistant rules.
-- [Local context guidance](./local/README.md) for repository-specific rules.
-- [Local surface capsules](./local/surfaces/README.md) for behavior-sensitive
-  surface routing.
-- [Local workflow guidance](./local/workflows/README.md) for issue, PR,
-  validation, merge, closure, Commander, and Worker procedures.
-- [Repomix instruction router](./repomix/instructions.md) for packed snapshot
-  consumers.
+Do not route daily work through completed planning or handoff artifacts.
+Historical issues and PRs are useful provenance, but they should not override
+current repository evidence or current context guidance.
 
-The issue #185 / PR #186 hardening remains preserved by the current architecture:
-inspect broadly, patch narrowly, avoid invented local state, require validation
-evidence, treat generated artifacts as read-only evidence, and record useful
-out-of-scope findings without expanding the active patch.
+Preserve the active safety discipline: inspect broadly enough to avoid local
+mistakes, patch only the assigned scope, avoid invented local state, require
+validation evidence, treat generated artifacts as read-only evidence, and record
+useful out-of-scope findings without expanding the active patch.
 
 ## Non-goals for this architecture
 
@@ -71,10 +67,5 @@ This architecture does not authorize:
   dependencies, or lockfiles;
 - hand-editing generated context artifacts;
 - archiving obsolete documentation merely to avoid deletion;
-- making a vendor-specific adapter the primary context architecture.
-
-## Roadmap use
-
-After each child issue merges, compare the resulting repository state against
-this architecture and the migration map before creating or closing follow-up
-work.
+- making a vendor-specific adapter the primary context architecture;
+- preserving completed project history as active assistant context.

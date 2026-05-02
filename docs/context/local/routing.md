@@ -43,9 +43,11 @@ adapter.
 | [Local workflow guidance](./workflows/README.md) | Issue, PR, validation, merge, closure, Commander, and Worker procedures. |
 | [Repomix context routing](../repomix/README.md) | Tracked Repomix consumption guidance. |
 
-Retired legacy surfaces should not be used as active context anchors. If a
-future issue needs detailed behavior evidence, inspect current source state,
-rendered output, command output, or CI evidence that matches the touched surface.
+Removed documentation surfaces should not be used as active context anchors.
+Do not restore former `docs/llm/**`, `docs/workflows/**`, or `docs/chezmoi/**`
+paths as context anchors. If a future issue needs detailed behavior evidence,
+inspect current source state, rendered output, command output, or CI evidence
+that matches the touched surface.
 
 ## Repomix relationship
 

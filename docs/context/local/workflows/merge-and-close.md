@@ -6,7 +6,7 @@ Use this workflow when deciding whether a PR is ready to merge and whether an
 issue should close.
 
 Merge and closure decisions should preserve traceability between the issue
-contract, PR evidence, validation, and parent roadmap.
+contract, PR evidence, validation, and parent ledger when one applies.
 
 ## Merge decision inputs
 
@@ -88,14 +88,14 @@ Keep closure comments factual and avoid unsupported readiness claims.
 
 After a child issue merges, compare the resulting repository state against:
 
-- the parent issue ledger;
-- [Context migration map](../../migration-map.md);
+- the parent issue ledger, when one applies;
 - the child issue acceptance criteria;
 - the merged PR body and validation evidence;
-- current repository evidence.
+- current repository evidence;
+- any active planning document explicitly named by the issue.
 
-Use that comparison to decide the next child issue. Do not pre-create later child
-issues from stale roadmap wording.
+Use that comparison to decide any next child issue. Do not pre-create later
+child issues from stale planning wording.
 
 ## Rollback after merge
 

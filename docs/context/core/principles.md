@@ -17,7 +17,7 @@ Prefer compact routing and durable rules over duplicated manuals. Add new core
 rules only when they prevent repeated mistakes or clarify decisions that apply
 across repositories.
 
-Avoid copying long legacy documents into core. Distill the rule, decision point,
+Avoid copying long source documents into core. Distill the rule, decision point,
 or failure-prevention requirement that remains useful after repository-specific
 examples are removed.
 
@@ -81,15 +81,15 @@ context layer rather than generalizing it into core.
 ## Maintain drift control
 
 Context guidance drifts when it duplicates commands, repeats detailed local
-procedures, or preserves obsolete architecture language after a migration step.
+procedures, or preserves obsolete architecture language after project state changes.
 
 Prefer:
 
 - one concise router for each layer
 - focused documents with distinct responsibilities
 - relative links that resolve in the current tree
-- status wording that matches the current migration phase
-- deletion of obsolete prose only after durable rules are migrated or
+- status wording that matches current repository state
+- deletion of obsolete prose only after durable rules are represented or
   intentionally discarded in a scoped issue
 
 Do not archive stale documentation merely to avoid deciding whether it still has

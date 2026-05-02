@@ -10,7 +10,7 @@ and closure decisions separated enough that each PR remains reviewable.
 
 ## Thread roles
 
-Planning Threads may shape the roadmap, compare alternatives, and draft issue
+Planning Threads may shape a plan, compare alternatives, and draft issue
 bodies. They should not be treated as implementation evidence unless their
 output is copied into an issue, PR, command output, or current repository file.
 
@@ -20,7 +20,8 @@ Commander Threads own:
 - Worker Thread handoff prompts;
 - PR slicing;
 - cross-PR synthesis;
-- post-merge comparison against the parent issue and migration map;
+- post-merge comparison against the parent ledger, child issue, merged PR
+  evidence, and current repository state;
 - final closure recommendations.
 
 Worker Threads own:
@@ -49,7 +50,8 @@ Generated Repomix snapshots are read-only evidence, not editable source.
 
 ## File-plan-first workflow
 
-Before producing a patch for a documentation migration issue, a Worker should:
+Before producing a patch for a documentation architecture or cleanup issue, a
+Worker should:
 
 1. classify candidate guidance by target responsibility;
 2. identify the smallest target file list;
@@ -71,9 +73,10 @@ After each child issue merges, the Commander Thread should compare the result
 against:
 
 - the parent issue ledger;
-- [Context migration map](../../migration-map.md);
+- the child issue acceptance criteria;
 - the merged PR body and validation evidence;
-- the current repository state.
+- the current repository state;
+- any active planning document explicitly named by the issue.
 
 The comparison should decide the next child issue from current evidence instead
 of assuming an earlier provisional sequence is still exact.

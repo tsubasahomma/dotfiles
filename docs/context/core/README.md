@@ -23,11 +23,11 @@ findings.
 
 ## Reusable boundary
 
-Core guidance should describe durable rules that survive repository migration.
+Core guidance should describe durable rules that transfer across repositories.
 Keep repository-specific identity, behavior boundaries, domain constraints,
 workflow procedures, and tool-specific operating details in the local context
 layer instead of duplicating them here.
 
-Use [Context migration map](../migration-map.md) before moving guidance into this
-layer. Old file boundaries are not durable requirements; preserve the reusable
-rule, not the legacy document shape.
+Before adding guidance to this layer, remove repository-specific nouns,
+host-specific assumptions, operator-specific procedures, and issue-specific
+history. Preserve the reusable rule, not the old document shape.

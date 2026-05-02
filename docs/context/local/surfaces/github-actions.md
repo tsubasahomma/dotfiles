@@ -5,8 +5,8 @@
 Use this capsule when work touches or cites GitHub Actions workflows, compliance
 CI semantics, branch-protection evidence, or remote CI status.
 
-Keep CI guidance focused on behavior boundaries. Workflow procedure migration
-belongs under `docs/context/local/workflows/**`, not in this capsule.
+Keep CI guidance focused on behavior boundaries. Workflow procedures belong under
+`docs/context/local/workflows/**`, not in this capsule.
 
 ## Predictable LLM failure modes
 
@@ -58,6 +58,5 @@ or required. Local checks do not prove remote CI status.
 ## Out of scope
 
 This capsule does not authorize workflow behavior changes, action updates,
-branch-protection edits, secret or environment changes, PR procedure migration,
-merge procedure migration, or treating CI as local workstation convergence
-proof.
+branch-protection edits, secret or environment changes, PR or merge procedure
+ownership, or treating CI as local workstation convergence proof.

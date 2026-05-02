@@ -49,7 +49,7 @@ Check whether the change:
 - touches only authorized files or surfaces
 - avoids unrelated cleanup
 - leaves local or surface-specific work for the proper layer
-- avoids deleting or archiving migration inputs unless explicitly scoped
+- avoids deleting or archiving source evidence unless explicitly scoped
 - keeps vendor-specific adapters out of the primary architecture unless scoped
 
 If the patch discovers adjacent problems, record them separately rather than
@@ -99,7 +99,7 @@ Review comments for durable maintenance value.
 Keep comments that explain non-obvious behavior, safety boundaries, idempotency,
 generated-file handling, trigger-sensitive metadata, external specifications, or
 source-state versus rendered-target distinctions. Remove or rewrite comments that
-only restate nearby code, preserve obsolete migration history, claim unsupported
+only restate nearby code, preserve obsolete project history, claim unsupported
 authority, or use decorative labels without a concrete maintenance distinction.
 
 Preserve functional comments that tools or maintainers rely on, such as mise task
@@ -128,7 +128,7 @@ Watch for:
 - duplicated guidance across layers
 - local rules leaking into reusable core
 - reusable rules duplicated in local docs
-- old roadmap wording after a migration step completes
+- old planning wording after work completes
 - long manuals where a router or compact capsule would be clearer
 - archived obsolete docs that should instead be migrated or discarded by scope
 

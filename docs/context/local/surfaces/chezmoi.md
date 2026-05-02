@@ -86,4 +86,4 @@ lockfiles change.
 
 This capsule does not authorize script rewrites, trigger normalization, template
 whitespace cleanup, behavior changes, task delegation, generated output edits, or
-legacy documentation restoration.
+removed documentation restoration.

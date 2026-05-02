@@ -17,7 +17,6 @@ surface, and workflow guidance.
 | local context layer | `docs/context/local/**`, the dotfiles-specific extension layer for repository identity, behavior boundaries, validation routing, and local routing. |
 | surface capsule | A compact document under `docs/context/local/surfaces/**` that prevents predictable mistakes for one behavior-sensitive local surface. |
 | workflow guidance | Local issue, pull request, validation, merge, closure, Commander, and Worker procedures under `docs/context/local/workflows/**`. |
-| retired legacy surface | A former documentation surface recorded in the migration map after its durable guidance was migrated or intentionally discarded. |
 | root context manifest | `AGENTS.md`, the concise repository-wide assistant entry point. |
 | adapter | Vendor-specific assistant entry point such as `.github/copilot-instructions.md`; adapters should route to the LLM-agnostic context architecture. |
 | 1Password identity | Repository-discovered identity metadata from prepared 1Password SSH Key items used for Git authoring, SSH signing, and SSH routing. |

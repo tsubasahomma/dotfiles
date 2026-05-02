@@ -53,11 +53,11 @@ Workflow guidance should route reusable evidence, output, and review rules to
 `docs/context/core/**`, and route behavior-sensitive validation to the local
 validation map and surface capsules.
 
-## Migration boundary
+## Active context boundary
 
-Retired legacy surfaces are not active documentation anchors. Use current
-context documents, source-state files, rendered-output inspection, command
-output, and CI evidence that match the touched surface.
+Use current context documents, source-state files, rendered-output inspection,
+command output, and CI evidence that match the touched surface. Historical or
+removed documentation surfaces are provenance, not active routing targets.
 
 Do not copy reusable core rules into this local layer. Link to
 `docs/context/core/**` instead, and keep dotfiles-specific assumptions here.

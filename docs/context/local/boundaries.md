@@ -53,8 +53,9 @@ Follow these local rules unless the active issue says otherwise:
 - Do not change runtime versions, tool versions, package lists, dependencies, or
   lockfiles from a context-documentation issue.
 - Do not hand-edit generated Repomix output or rendered target files.
-- Do not delete, archive, or thin legacy guidance surfaces until a scoped issue
-  confirms their durable guidance has been migrated or intentionally discarded.
+- Do not delete, archive, or thin current context guidance surfaces until a
+  scoped issue confirms their durable requirements are represented or
+  intentionally discarded.
 
 ## Scoped exceptions
 

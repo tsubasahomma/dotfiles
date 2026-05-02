@@ -27,8 +27,8 @@ workflow guidance issue.
 
 ## Parent and child sequencing
 
-Use parent issues for architecture or migration programs that need independently
-reviewable child issues.
+Use parent issues for architecture or multi-step programs that need
+independently reviewable child issues.
 
 For parent issue programs:
 

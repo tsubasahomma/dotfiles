@@ -68,6 +68,3 @@ Use the current entry point that matches the task:
 | [`docs/context/local/surfaces/README.md`](./surfaces/README.md) | Behavior-sensitive surface capsules. |
 | [`docs/context/local/workflows/README.md`](./workflows/README.md) | Local workflow guidance. |
 | [`docs/context/repomix/README.md`](../repomix/README.md) | Tracked Repomix context routing. |
-
-Retired legacy surfaces are recorded in the
-[Context migration map](../migration-map.md). They are not active routing targets.

@@ -27,7 +27,7 @@ matches the touched area.
 
 | Surface | Current routing |
 | :------ | :-------------- |
-| Context architecture and migration state | [`docs/context/README.md`](./docs/context/README.md) and [`docs/context/migration-map.md`](./docs/context/migration-map.md) |
+| Context architecture and active context routing | [`docs/context/README.md`](./docs/context/README.md) |
 | Repository identity, source-state model, and documentation entry points | [`docs/context/local/profile.md`](./docs/context/local/profile.md) |
 | Behavior-sensitive repository boundaries | [`docs/context/local/boundaries.md`](./docs/context/local/boundaries.md) |
 | Validation routing by touched surface | [`docs/context/local/validation.md`](./docs/context/local/validation.md) |
