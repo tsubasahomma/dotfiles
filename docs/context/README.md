@@ -1,71 +1,71 @@
-# Context architecture
+# Context operating contract
 
 ## Purpose
 
-This directory is the active architecture entry point for
-language-model-agnostic repository context.
+This directory is the task-to-context router for LLM-assisted repository
+maintenance.
 
-It organizes reusable context guidance, dotfiles-specific extensions, surface
-capsules, workflow guidance, and Repomix context while keeping repository
-behavior unchanged.
+Use this file first to choose the smallest sufficient context for the task. Load
+no more context than the task needs, then inspect current repository evidence for
+the touched files or surfaces.
 
-Use this document to choose the current context layer for a task. Use historical
-issue or PR ledgers only when the active task names them or when provenance is
-needed for review; completed planning artifacts are not day-to-day routing
-inputs.
+Completed planning artifacts, old handoff prompts, and merged issue discussions
+are not daily routing inputs. Use them only when the active task names them or
+when provenance is required for review.
 
-## Architecture layers
+## Option A+ target file map
 
-| Target path | Responsibility |
+| File | Responsibility |
 | --- | --- |
-| `AGENTS.md` | Concise root context manifest for repository identity, evidence hierarchy, safety boundaries, generated artifact discipline, patch discipline, validation discipline, and scope control. |
-| `.github/copilot-instructions.md` | Thin GitHub Copilot adapter that routes to the shared context architecture. |
-| `docs/context/core/**` | Reusable context guidance for principles, evidence, output, review, validation, generated artifacts, drift control, and out-of-scope findings. |
-| `docs/context/local/**` | Dotfiles-specific extension layer that records local repository identity, boundaries, glossary, validation routing, and surface registry. |
-| `docs/context/local/surfaces/**` | Compact local surface capsules that prevent predictable assistant mistakes and route reviewers to current local evidence. |
-| `docs/context/local/workflows/**` | Local issue, pull request, validation, merge, closure, Commander, and Worker workflow guidance aligned with this architecture. |
-| `docs/context/repomix/**` | Tracked guidance for consuming Repomix context artifacts and keeping generated context separate from source documentation. |
-| `.context/repomix/**` | Generated Repomix output storage. Generated artifacts in this path remain read-only evidence, not editable source. |
+| [`README.md`](./README.md) | Entry point and task-to-context router. |
+| [`kernel.md`](./kernel.md) | Instruction precedence, evidence precedence, context economy, scope control, unknown-state rules, current-file requirements, and generated artifact discipline. |
+| [`protocols.md`](./protocols.md) | Patch, command, validation-report, PR, commit, code-fence, heredoc, whitespace, and final-newline output contracts. |
+| [`repo.md`](./repo.md) | Dotfiles source-state model, editable boundaries, behavior-preserving constraints, supported host posture, root document roles, and local validation baseline. |
+| [`surfaces.md`](./surfaces.md) | Compact behavior-sensitive surface map for Chezmoi, mise, WSL2, identity, Neovim, and GitHub Actions. |
+| [`workflows.md`](./workflows.md) | Issue, thread, PR, validation, merge, and closure procedure contracts. |
+| [`repomix.md`](./repomix.md) | Repomix generation, consumption, focused snapshot, generated-output, and stale-snapshot contract. |
+| [`evals.md`](./evals.md) | Regression cases and acceptance checks for predictable LLM-context failures. |
 
-## Separation contract
+## Task-to-context routing
 
-Reusable core guidance must avoid dotfiles-specific, chezmoi-specific,
-workstation-specific, and operator-specific assumptions.
+| Task | Load first | Add only when needed |
+| --- | --- | --- |
+| Issue scoping, issue review, or scope comparison | [`workflows.md`](./workflows.md), [`kernel.md`](./kernel.md) | Active issue or parent ledger, current repository files named by the issue. |
+| Patch generation or patch review | [`protocols.md`](./protocols.md), [`kernel.md`](./kernel.md) | [`repo.md`](./repo.md), touched source files, surface row in [`surfaces.md`](./surfaces.md). |
+| PR body, commit message, or branch guidance | [`protocols.md`](./protocols.md), [`workflows.md`](./workflows.md) | Active issue, repository PR template, validation evidence. |
+| Validation planning or validation reporting | [`repo.md`](./repo.md), [`workflows.md`](./workflows.md), [`kernel.md`](./kernel.md) | Surface row in [`surfaces.md`](./surfaces.md), command output, CI evidence. |
+| Behavior-sensitive surface work | [`surfaces.md`](./surfaces.md), [`repo.md`](./repo.md), [`kernel.md`](./kernel.md) | Current source state, rendered output, command output, or CI evidence for the touched surface. |
+| Workflow procedure work | [`workflows.md`](./workflows.md), [`protocols.md`](./protocols.md) | Current issue, PR, validation, merge, or closure evidence. |
+| Repomix generation or snapshot consumption | [`repomix.md`](./repomix.md), [`kernel.md`](./kernel.md) | [`docs/context/repomix/instructions.md`](./repomix/instructions.md), `repomix.config.json`, current snapshot evidence. |
+| Eval or regression-case work | [`evals.md`](./evals.md), [`kernel.md`](./kernel.md), [`protocols.md`](./protocols.md) | Current failure example, active issue, and changed operating-contract files. |
 
-Repository-specific assumptions belong under `docs/context/local/**`.
-Surface-specific constraints belong under `docs/context/local/surfaces/**`.
-Workflow procedures belong under `docs/context/local/workflows/**`.
-Repomix consumption guidance belongs under `docs/context/repomix/**`.
-Generated Repomix output belongs under `.context/repomix/**`.
+## Operating contracts versus deep evidence
 
-Vendor-specific adapters should route to this shared architecture instead of
-becoming the primary architecture.
+The files in the Option A+ map are the active operating contracts. They should be
+short, task-oriented, and directly useful during LLM runtime.
 
-## Active context contract
+The existing context directories remain available as current deep evidence for
+later collapse work:
 
-Start active work from current evidence:
+| Deep evidence path | Use it for now |
+| --- | --- |
+| [`core/**`](./core/README.md) | Reusable evidence, output, review, and context principles that later issues may collapse into `kernel.md`, `protocols.md`, or `evals.md`. |
+| [`local/**`](./local/README.md) | Dotfiles-specific repository profile, boundaries, validation, routing, and glossary evidence that later issues may collapse into `repo.md`. |
+| [`local/surfaces/**`](./local/surfaces/README.md) | Surface capsule evidence that later issues may collapse into `surfaces.md`. |
+| [`local/workflows/**`](./local/workflows/README.md) | Workflow procedure evidence that later issues may collapse into `workflows.md`. |
+| [`repomix/**`](./repomix/README.md) | Tracked Repomix instruction and consumption evidence that later issues may collapse into `repomix.md`. |
 
-- the active user request, issue, pull request, review, or validation output;
-- current source-state files, diffs, rendered output, command output, or CI
-  evidence;
-- the focused context layer that matches the touched surface.
+Do not treat those directories as the target architecture. They are evidence,
+not containers to preserve for continuity.
 
-Do not route daily work through completed planning or handoff artifacts.
-Historical issues and PRs are useful provenance, but they should not override
-current repository evidence or current context guidance.
+## Routing rules
 
-Preserve the active safety discipline: inspect broadly enough to avoid local
-mistakes, patch only the assigned scope, avoid invented local state, require
-validation evidence, treat generated artifacts as read-only evidence, and record
-useful out-of-scope findings without expanding the active patch.
-
-## Non-goals for this architecture
-
-This architecture does not authorize:
-
-- changing repository behavior, scripts, tasks, CI semantics, versions,
-  dependencies, or lockfiles;
-- hand-editing generated context artifacts;
-- archiving obsolete documentation merely to avoid deletion;
-- making a vendor-specific adapter the primary context architecture;
-- preserving completed project history as active assistant context.
+1. Start from the active user request, issue, PR, review, or validation evidence.
+2. Select only the Option A+ file that owns the task.
+3. Add repository source files, command output, CI evidence, or generated
+   snapshots only when the selected contract requires them.
+4. Use old context directories only as deep evidence for a scoped collapse,
+   comparison, or surface-specific inspection.
+5. Do not change repository behavior, generated artifacts, scripts, tasks,
+   templates, CI semantics, versions, dependencies, or lockfiles unless the
+   active issue explicitly scopes that behavior change.

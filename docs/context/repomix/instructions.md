@@ -5,17 +5,29 @@ this repository.
 
 Use [AGENTS.md](../../../AGENTS.md) as the root context manifest.
 
-Use [docs/context/README.md](../README.md) as the durable context architecture
-entry point:
+Use [docs/context/README.md](../README.md) as the Option A+ operating-contract
+entry point and task-to-context router:
 
-- [core guidance](../core/README.md) for reusable evidence, output, review, and
-  scope-control rules;
-- [local guidance](../local/README.md) for dotfiles-specific repository
-  boundaries;
-- [local surface capsules](../local/surfaces/README.md) for behavior-sensitive
-  surface routing;
-- [local workflow guidance](../local/workflows/README.md) for issue, PR,
-  validation, merge, closure, Commander, and Worker procedures.
+- [kernel](../kernel.md) for instruction precedence, evidence precedence,
+  context economy, scope control, unknown-state rules, current-file
+  requirements, and generated artifact discipline;
+- [protocols](../protocols.md) for patch, command, validation-report, PR,
+  commit, code-fence, heredoc, whitespace, and final-newline output contracts;
+- [repo](../repo.md) for dotfiles source-state boundaries, behavior-preserving
+  constraints, supported host posture, root document roles, and local validation
+  baseline;
+- [surfaces](../surfaces.md) for behavior-sensitive surface routing;
+- [workflows](../workflows.md) for issue, thread, PR, validation, merge, and
+  closure procedure contracts;
+- [repomix](../repomix.md) for Repomix generation, consumption,
+  generated-output, focused snapshot, and stale-snapshot rules;
+- [evals](../evals.md) for regression cases covering predictable LLM-context
+  failures.
+
+Existing context directories under `docs/context/core/**`,
+`docs/context/local/**`, `docs/context/local/surfaces/**`,
+`docs/context/local/workflows/**`, and `docs/context/repomix/**` are deep
+evidence for later collapse work. Do not treat them as the primary architecture.
 
 This repository is a chezmoi-managed dotfiles source-state repository. Preserve
 existing provisioning, identity, editor, shell, Git, mise, Homebrew, and GitHub

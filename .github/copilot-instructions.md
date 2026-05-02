@@ -5,9 +5,12 @@ This file is the GitHub Copilot adapter for this repository.
 Use [AGENTS.md](../AGENTS.md) as the root context manifest, then route durable
 repository context through [docs/context/README.md](../docs/context/README.md).
 
-Copilot-specific guidance is secondary to the shared context architecture:
+Copilot-specific guidance is secondary to the shared Option A+ operating
+contract:
 
 - Keep suggestions small, scoped, and behavior-preserving.
+- Use [docs/context/README.md](../docs/context/README.md) to select the smallest
+  sufficient context before relying on deeper evidence.
 - Prefer repository-relative links only when the target exists in the current
   repository state.
 - Do not add `.github/instructions/**` unless an assigned issue explicitly
@@ -17,6 +20,6 @@ Copilot-specific guidance is secondary to the shared context architecture:
   cleanup.
 - Treat Repomix snapshots and generated output as read-only evidence.
 
-For surface-specific constraints, use
-[local surface capsules](../docs/context/local/surfaces/README.md). For workflow
-procedure, use [local workflow guidance](../docs/context/local/workflows/README.md).
+For surface-specific constraints, start with
+[docs/context/surfaces.md](../docs/context/surfaces.md). For workflow procedure,
+start with [docs/context/workflows.md](../docs/context/workflows.md).

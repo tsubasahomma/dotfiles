@@ -12,21 +12,32 @@ artifacts.
 
 ## Mandatory context entry point
 
-Use [docs/context/README.md](./docs/context/README.md) as the durable context
-architecture entry point.
+Use [docs/context/README.md](./docs/context/README.md) as the operating-contract
+entry point and task-to-context router.
 
-Context layers:
+Option A+ operating-contract files:
 
-- [Core context guidance](./docs/context/core/README.md) for reusable assistant
-  rules.
-- [Local context guidance](./docs/context/local/README.md) for dotfiles-specific
-  repository rules.
-- [Local surface capsules](./docs/context/local/surfaces/README.md) for
-  behavior-sensitive surface routing.
-- [Local workflow guidance](./docs/context/local/workflows/README.md) for issue,
-  pull request, validation, merge, closure, Commander, and Worker procedures.
-- [Repomix context routing](./docs/context/repomix/README.md) for tracked
-  Repomix consumption guidance.
+- [Kernel](./docs/context/kernel.md) for instruction precedence, evidence
+  precedence, context economy, scope control, unknown-state rules, and generated
+  artifact discipline.
+- [Protocols](./docs/context/protocols.md) for patch, command,
+  validation-report, PR, commit, code-fence, heredoc, whitespace, and final
+  newline output contracts.
+- [Repo](./docs/context/repo.md) for dotfiles source-state boundaries,
+  behavior-preserving constraints, supported host posture, root document roles,
+  and local validation baseline.
+- [Surfaces](./docs/context/surfaces.md) for behavior-sensitive surface routing.
+- [Workflows](./docs/context/workflows.md) for issue, thread, PR, validation,
+  merge, and closure procedure contracts.
+- [Repomix](./docs/context/repomix.md) for Repomix generation, consumption,
+  generated-output, focused snapshot, and stale-snapshot rules.
+- [Evals](./docs/context/evals.md) for regression cases covering predictable
+  LLM-context failures.
+
+Existing context directories under `docs/context/core/**`,
+`docs/context/local/**`, `docs/context/local/surfaces/**`,
+`docs/context/local/workflows/**`, and `docs/context/repomix/**` are deep
+evidence for later collapse work, not the primary architecture.
 
 ## Source and evidence hierarchy
 
@@ -35,10 +46,11 @@ When sources conflict, prefer the most specific current evidence for the task:
 1. active user instructions;
 2. assigned issue, pull request, review, or validation scope;
 3. current file contents, diffs, command output, or CI evidence;
-4. `docs/context/**` guidance for the touched layer or surface;
-5. repository entry points such as [README.md](./README.md) and
+4. the Option A+ operating-contract file that owns the task;
+5. deep evidence under `docs/context/**` when the router calls for it;
+6. repository entry points such as [README.md](./README.md) and
    [ARCHITECTURE.md](./ARCHITECTURE.md);
-6. official tool documentation when repository evidence requires it.
+7. official tool documentation when repository evidence requires it.
 
 Do not invent repository state, command results, validation status, CI status,
 issue state, file paths, tool versions, or generated artifact contents.
