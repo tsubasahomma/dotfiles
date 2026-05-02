@@ -312,7 +312,6 @@ behavior, or review boundaries.
 | Candidate | Current location | Possible future owner | Review note |
 | --- | --- | --- | --- |
 | External resource inventory, URLs, and refresh periods | `.chezmoiexternal.toml.tmpl` | `.chezmoidata/` plus a rendering template | Would need careful review because external target names and refresh cadence affect source-state inputs. |
-| Legacy dotfile backup target list | `.chezmoiscripts/run_onchange_before_00-backup-legacy-dots.sh.tmpl` | `.chezmoidata/` or a template fragment | Would affect a `run_onchange_` script and must preserve backup behavior exactly. |
 | Repeated identity output naming policy | `.chezmoiscripts/run_onchange_after_50-converge-identities.sh.tmpl` and `.chezmoitemplates/git_identity_config.tmpl` | Template fragment cleanup, not necessarily `.chezmoidata/` | Secret-adjacent and behavior-sensitive; should avoid storing dynamic identity data statically. |
 | WSL2 sync target naming and copy destinations | WSL2 sync scripts and rendered WSL2 surfaces | Template fragment or documented constants | Must preserve Windows interop, bridge, and rendered target behavior. |
 | Shell PATH segment grouping | `dot_config/zsh/dot_zshrc.tmpl` and `dot_zshenv.tmpl` | Template fragment or documented shell-path contract | Shell startup order is behavior-sensitive and should not be normalized casually. |
@@ -353,15 +352,13 @@ Potential follow-up issues:
 
 1. Audit whether external resource declarations should be backed by static data
    while preserving target names, URLs, refresh cadence, and WSL2 branches.
-2. Review whether legacy backup targets should become a documented static list or
-   remain inline script content.
-3. Review identity output generation for smaller reusable fragments while
+2. Review identity output generation for smaller reusable fragments while
    keeping identity data dynamic and secret-adjacent.
-4. Use [WSL2 convergence validation](./wsl2-convergence-validation.md) before
+3. Use [WSL2 convergence validation](./wsl2-convergence-validation.md) before
    changing WSL2 bridge constants or validation-sensitive behavior.
-5. Review package schema naming only after package behavior, script triggers,
+4. Review package schema naming only after package behavior, script triggers,
    and platform support are explicitly preserved.
-6. Review mise tool data shape only after runtime installation, Renovate
+5. Review mise tool data shape only after runtime installation, Renovate
    tracking, and CI behavior are explicitly preserved.
 
 Each follow-up should be behavior-preserving, separately scoped, and validated

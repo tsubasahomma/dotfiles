@@ -85,14 +85,15 @@ This audit is based on:
   [Chezmoi action graph](./action-graph.md)
 - the read-only inspection workflow in
   [Chezmoi script contract inspection](./script-contract-inspection.md)
-- fresh local inspection output collected for issue #150
+- fresh local inspection output collected for issue #150 and updated to match
+  the current script inventory
 
-Fresh inspection summary:
+Current inspection summary:
 
-- Current `.chezmoiscripts/*` count: 14
+- Current `.chezmoiscripts/*` count: 13
 - `run_once`: 1 script
-- `run_onchange`: 13 scripts
-- `before`: 5 scripts
+- `run_onchange`: 12 scripts
+- `before`: 4 scripts
 - `after`: 9 scripts
 - Scripts without an explicit `[Trigger]` label are not automatically defects.
 
@@ -111,7 +112,6 @@ Fresh inspection summary:
 
 | Script | Trigger-contract status | Evidence | Follow-up recommendation |
 | --- | --- | --- | --- |
-| [`.chezmoiscripts/run_onchange_before_00-backup-legacy-dots.sh.tmpl`](../../.chezmoiscripts/run_onchange_before_00-backup-legacy-dots.sh.tmpl) | Rendered-content dependency without explicit `[Trigger]` label. | The script is `run_onchange_`; rendered paths and the hardcoded legacy target list are part of script content. | No action recommended for issue #150. A future behavior-sensitive issue could review whether this script needs clearer trigger documentation, but this audit does not recommend adding a hash. |
 | [`.chezmoiscripts/run_onchange_before_00-install-windows-deps.sh.tmpl`](../../.chezmoiscripts/run_onchange_before_00-install-windows-deps.sh.tmpl) | Explicit checksum trigger. | The script renders a `[Trigger]` checksum for `.chezmoidata/packages.yaml` and also renders the Windows package list. | No action recommended. |
 | [`.chezmoiscripts/run_onchange_before_00-validate-session.sh.tmpl`](../../.chezmoiscripts/run_onchange_before_00-validate-session.sh.tmpl) | Dynamic rendered branch without explicit `[Trigger]` label. | The script content is driven by `.op_status` and `CI`. This is volatile session-state-adjacent evidence, not a stable source-file checksum input. | No action recommended. Do not hash volatile 1Password session state as part of this audit. |
 | [`.chezmoiscripts/run_onchange_before_10-setup-infrastructure.sh.tmpl`](../../.chezmoiscripts/run_onchange_before_10-setup-infrastructure.sh.tmpl) | Explicit checksum content with mixed repository-local label style. | The macOS branch renders a Brewfile hash without `[Trigger]`; the Linux branch renders a `[Trigger]` checksum for the generated Linux package list. | Follow-up candidate only for label consistency. Do not normalize the comments or hashes in issue #150. |

@@ -43,8 +43,16 @@ Prepare these generic requirements before running the bootstrap command:
 - 1Password CLI integration enabled.
 - Required 1Password SSH Key items created with the repository-defined tags and
   fields.
+- Pre-existing unmanaged dotfiles reviewed, backed up, or removed.
 - Any host-specific prerequisites for the supported host path you are
   bootstrapping.
+
+> [!IMPORTANT]
+> This repository doesn't automatically move or back up pre-existing unmanaged
+> dotfiles during first apply. Review, back up, or remove conflicting regular
+> files before running `chezmoi init --apply`. In particular, an existing
+> regular `~/.ssh/config` may conflict with the managed compatibility symlink
+> that routes SSH configuration through the XDG config path.
 
 ### Create a GitHub token
 
