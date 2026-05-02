@@ -7,7 +7,7 @@ context architecture.
 
 Use it for repository identity, source-state rules, behavior boundaries, local
 terms, validation routing, surface routing, and relationships between root
-routers, adapters, and legacy documentation inputs.
+routers, adapters, source state, and Repomix context.
 
 Use [Core context guidance](../core/README.md) for reusable assistant rules such
 as evidence discipline, output format selection, review classification,
@@ -24,10 +24,10 @@ findings.
   workflow, and surface guidance.
 - [Local validation map](./validation.md): validation routing by touched
   repository surface.
-- [Local surface registry](./surface-registry.md): current capsule routing,
-  migration evidence, and failure-prevention focus for local surfaces.
+- [Local surface registry](./surface-registry.md): current capsule routing and
+  failure-prevention focus for local surfaces.
 - [Local context routing](./routing.md): relationships between core guidance,
-  local guidance, root routers, adapters, legacy inputs, and Repomix context.
+  local guidance, root routers, adapters, source state, and Repomix context.
 - [Local workflow routing](./workflows/README.md): issue, PR, validation, merge,
   closure, Commander, and Worker procedures.
 
@@ -55,9 +55,9 @@ validation map and surface capsules.
 
 ## Migration boundary
 
-Existing `docs/llm/**`, `docs/workflows/**`, and `docs/chezmoi/**` documents
-remain migration inputs until later scoped issues distill, replace, or remove
-their durable guidance.
+Retired legacy surfaces are not active documentation anchors. Use current
+context documents, source-state files, rendered-output inspection, command
+output, and CI evidence that match the touched surface.
 
 Do not copy reusable core rules into this local layer. Link to
 `docs/context/core/**` instead, and keep dotfiles-specific assumptions here.

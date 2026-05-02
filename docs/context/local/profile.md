@@ -45,9 +45,8 @@ source documentation.
 The README documents the supported first-run path for macOS and Windows 11 with
 WSL2 Ubuntu 24.04 or later.
 
-Other Linux distributions may appear in source-state logic, package data, or
-legacy documentation, but they are not currently documented as supported
-first-run targets.
+Other Linux distributions may appear in source-state logic or package data, but
+they are not currently documented as supported first-run targets.
 
 Do not treat GitHub Actions CI as proof of local WSL2, Windows interop,
 1Password Desktop, SSH agent bridge, user systemd, or workstation runtime
@@ -60,14 +59,15 @@ Use the current entry point that matches the task:
 | Entry point | Current role |
 | --- | --- |
 | [`README.md`](../../../README.md) | First-run and operator-facing bootstrap entry point. |
-| [`AGENTS.md`](../../../AGENTS.md) | Current repository-wide assistant guidance and future root manifest input. |
-| [`.github/copilot-instructions.md`](../../../.github/copilot-instructions.md) | Current GitHub Copilot adapter input. |
-| [`ARCHITECTURE.md`](../../../ARCHITECTURE.md) | Legacy high-level architecture and teardown routing input. |
+| [`AGENTS.md`](../../../AGENTS.md) | Root context manifest. |
+| [`.github/copilot-instructions.md`](../../../.github/copilot-instructions.md) | GitHub Copilot adapter. |
+| [`ARCHITECTURE.md`](../../../ARCHITECTURE.md) | High-level architecture and teardown overview. |
 | [`docs/context/README.md`](../README.md) | Context architecture entry point. |
 | [`docs/context/core/README.md`](../core/README.md) | Reusable context guidance. |
 | [`docs/context/local/README.md`](./README.md) | Dotfiles-specific context extension layer. |
+| [`docs/context/local/surfaces/README.md`](./surfaces/README.md) | Behavior-sensitive surface capsules. |
+| [`docs/context/local/workflows/README.md`](./workflows/README.md) | Local workflow guidance. |
 | [`docs/context/repomix/README.md`](../repomix/README.md) | Tracked Repomix context routing. |
 
-Focused legacy documents under `docs/llm/**`, `docs/workflows/**`, and
-`docs/chezmoi/**` remain migration inputs until later issues replace or remove
-them.
+Retired legacy surfaces are recorded in the
+[Context migration map](../migration-map.md). They are not active routing targets.

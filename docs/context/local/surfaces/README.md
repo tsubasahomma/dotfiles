@@ -5,8 +5,8 @@
 This directory contains compact dotfiles surface capsules.
 
 Surface capsules prevent predictable LLM mistakes on behavior-sensitive local
-surfaces and route reviewers to the right evidence. They are not full domain
-manuals and do not replace detailed migration evidence.
+surfaces and route reviewers to the right current evidence. They are not full
+domain manuals.
 
 ## Capsule index
 
@@ -26,6 +26,6 @@ Start with the active issue and current repository evidence. Use
 [Local validation map](../validation.md) for validation routing. Use these
 capsules only for surface-specific failure prevention.
 
-Legacy `docs/chezmoi/**`, `docs/llm/**`, and `docs/workflows/**` files remain
-migration inputs until later scoped issues replace or remove their durable
-content.
+If a future change needs detailed behavior claims, inspect current source state,
+rendered output, command output, or CI evidence instead of relying on retired
+long-form documentation.

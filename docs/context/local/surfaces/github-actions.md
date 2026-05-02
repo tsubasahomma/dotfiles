@@ -44,7 +44,6 @@ Treat these as behavior-sensitive unless explicitly scoped:
 - [Local workflow routing](../workflows/README.md)
 - [Compliance workflow](../../../../.github/workflows/compliance.yml)
 - [Pull request template](../../../../.github/pull_request_template.md)
-- [Validation workflow migration input](../../../workflows/validation-workflow.md)
 
 ## Validation routing
 

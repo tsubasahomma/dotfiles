@@ -43,11 +43,13 @@ Treat these as behavior-sensitive unless explicitly scoped:
 
 - [Local behavior boundaries](../boundaries.md)
 - [Local validation map](../validation.md)
-- [Bootstrap and identity boundary](../../../chezmoi/bootstrap-identity-boundary.md)
-- [Chezmoi data contract boundary](../../../chezmoi/data-contract-boundary.md)
 - [WSL2 surface capsule](./wsl2.md)
+- [Chezmoi surface capsule](./chezmoi.md)
 - [`dot_config/mise/tasks/doctor/executable_identity.tmpl`](../../../../dot_config/mise/tasks/doctor/executable_identity.tmpl)
 - [`.chezmoitemplates/git_identity_config.tmpl`](../../../../.chezmoitemplates/git_identity_config.tmpl)
+- [`.chezmoiscripts/run_onchange_after_50-converge-identities.sh.tmpl`](../../../../.chezmoiscripts/run_onchange_after_50-converge-identities.sh.tmpl)
+- [`dot_config/1Password/ssh/private_agent.toml.tmpl`](../../../../dot_config/1Password/ssh/private_agent.toml.tmpl)
+- [`dot_config/ssh/`](../../../../dot_config/ssh/)
 
 ## Validation routing
 

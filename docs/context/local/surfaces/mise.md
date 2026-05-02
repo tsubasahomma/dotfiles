@@ -5,8 +5,8 @@
 Use this capsule when work touches or cites mise configuration, file tasks, task
 metadata, task grouping, doctor checks, or repair-adjacent behavior.
 
-Keep task guidance compact and behavior-preserving. Detailed task taxonomy and
-audit documents remain migration evidence.
+Keep task guidance compact and behavior-preserving. Inspect current task source
+state and command output for detailed behavior claims.
 
 ## Predictable LLM failure modes
 
@@ -17,8 +17,8 @@ audit documents remain migration evidence.
 - Changing `# [MISE]` metadata, aliases, dependencies, executable bits, or task
   descriptions without explicit issue scope.
 - Hiding persistent local mutation behind validation-only `doctor:*` wording.
-- Creating `converge:*` or `repair:*` tasks because legacy docs discuss them as
-  future taxonomy candidates.
+- Creating `converge:*` or `repair:*` tasks because prior discussion treated
+  them as future taxonomy candidates.
 - Running or recommending broad repair commands when the active issue is
   documentation-only.
 
@@ -44,11 +44,10 @@ Treat these as behavior-sensitive unless explicitly scoped:
 
 - [Local behavior boundaries](../boundaries.md)
 - [Local validation map](../validation.md)
-- [Mise task boundary](../../../chezmoi/mise-task-boundary.md)
-- [Mise task taxonomy](../../../chezmoi/mise-task-taxonomy.md)
-- [Mise task source drift inspection](../../../chezmoi/mise-task-source-drift-inspection.md)
-- [Doctor and repair task boundary](../../../chezmoi/doctor-repair-task-boundary.md)
+- [Chezmoi surface capsule](./chezmoi.md)
 - [`dot_config/mise/tasks/`](../../../../dot_config/mise/tasks/)
+- [`dot_config/mise/tasks/doctor/`](../../../../dot_config/mise/tasks/doctor/)
+- [`.mise.toml`](../../../../.mise.toml)
 
 ## Validation routing
 

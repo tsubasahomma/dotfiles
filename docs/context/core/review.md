@@ -92,6 +92,24 @@ absence of prose inside patch content, stable whitespace, and final newlines.
 For non-patch deliverables, verify that they are clearly labeled and do not look
 like apply-ready repository changes.
 
+## Comment review
+
+Review comments for durable maintenance value.
+
+Keep comments that explain non-obvious behavior, safety boundaries, idempotency,
+generated-file handling, trigger-sensitive metadata, external specifications, or
+source-state versus rendered-target distinctions. Remove or rewrite comments that
+only restate nearby code, preserve obsolete migration history, claim unsupported
+authority, or use decorative labels without a concrete maintenance distinction.
+
+Preserve functional comments that tools or maintainers rely on, such as mise task
+metadata, Renovate extraction comments, generated-file headers, trigger hashes,
+and specification references.
+
+Use source-only comments for maintainer-only context and target-language comments
+only when the rendered target file should carry the explanation. Do not change
+rendered-output-sensitive comment syntax or whitespace as incidental cleanup.
+
 ## Link and reference review
 
 When Markdown links change, verify that relative links resolve from the file

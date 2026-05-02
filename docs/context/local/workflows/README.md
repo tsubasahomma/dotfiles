@@ -33,5 +33,4 @@ Do not duplicate rules already covered by `docs/context/core/**`, repository-wid
 local behavior boundaries, or surface-specific capsules. Link to those documents
 instead.
 
-Existing `docs/workflows/**` files remain migration inputs until a later scoped
-issue removes or redirects obsolete surfaces.
+Retired workflow documentation is no longer an active routing target.

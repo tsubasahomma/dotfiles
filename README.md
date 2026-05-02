@@ -88,8 +88,9 @@ metadata and these repository-defined fields:
 | Field    | `dotfiles_git_email` | Git author email for the identity.                               |
 | Field    | `dotfiles_git_dirs`  | Comma-separated directory globs for scoped Git identity routing. |
 
-For the detailed identity contract, see
-[Bootstrap and identity boundary](./docs/chezmoi/bootstrap-identity-boundary.md).
+For identity boundaries, use the
+[Identity surface capsule](./docs/context/local/surfaces/identity.md) and the
+[Local behavior boundaries](./docs/context/local/boundaries.md).
 
 ### Prepare your host
 
@@ -142,8 +143,9 @@ Use `sudo visudo` and add a rule for the target WSL2 Ubuntu user:
 Replace `<linux-username>` with the WSL2 Ubuntu user that runs
 `chezmoi init --apply`.
 
-For WSL2 validation boundaries, see
-[WSL2 convergence validation](./docs/chezmoi/wsl2-convergence-validation.md).
+For WSL2 validation boundaries, use the
+[WSL2 surface capsule](./docs/context/local/surfaces/wsl2.md) and the
+[Local validation map](./docs/context/local/validation.md).
 
 ### Run chezmoi init
 
@@ -201,11 +203,14 @@ Use the failing surface to choose the next check:
 
 Use these focused documents when the README isn't enough:
 
-| Document                                                                         | Use it for                                                     |
-| -------------------------------------------------------------------------------- | -------------------------------------------------------------- |
-| [Bootstrap and identity boundary](./docs/chezmoi/bootstrap-identity-boundary.md) | 1Password, identity discovery, SSH signing, and agent routing. |
-| [WSL2 convergence validation](./docs/chezmoi/wsl2-convergence-validation.md)     | WSL2 bridge assumptions and local validation boundaries.       |
-| [Chezmoi action graph](./docs/chezmoi/action-graph.md)                           | Script phases, rendered surfaces, and validation routing.      |
+| Document | Use it for |
+| --- | --- |
+| [Context architecture](./docs/context/README.md) | Repository context architecture and routing. |
+| [Local behavior boundaries](./docs/context/local/boundaries.md) | Behavior-sensitive repository boundaries. |
+| [Local validation map](./docs/context/local/validation.md) | Validation routing by touched surface. |
+| [Chezmoi surface capsule](./docs/context/local/surfaces/chezmoi.md) | Source state, rendered target state, templates, scripts, and phase gates. |
+| [Identity surface capsule](./docs/context/local/surfaces/identity.md) | 1Password, identity discovery, SSH signing, and agent routing. |
+| [WSL2 surface capsule](./docs/context/local/surfaces/wsl2.md) | WSL2 bridge assumptions and local validation boundaries. |
 
 External references:
 
@@ -220,8 +225,8 @@ This README is documentation only. It doesn't change provisioning, identity,
 mise, GitHub Actions, CI, package lists, tool versions, runtime versions,
 dependencies, or lockfiles.
 
-Don't edit generated `repomix-*.xml` files. Treat Repomix snapshots as read-only
-repository evidence.
+Don't edit generated `repomix-*.xml` files or Repomix output under
+`.context/repomix/**`. Treat Repomix snapshots as read-only repository evidence.
 
 Don't treat GitHub Actions CI as proof of local WSL2 convergence. Local
 Windows 11 and WSL2 health depends on interactive Windows interop, 1Password

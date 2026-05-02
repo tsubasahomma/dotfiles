@@ -3,8 +3,8 @@
 ## Purpose
 
 Use this routing map to choose the correct local context entry point without
-turning root routers, adapters, or legacy documentation into permanent
-architecture anchors.
+turning root routers, adapters, retired documentation, or generated artifacts
+into architectural anchors.
 
 ## Routing order
 
@@ -16,39 +16,36 @@ For dotfiles repository work, route context in this order:
 3. Use [Core context guidance](../core/README.md) for reusable assistant rules.
 4. Use this local layer for repository-specific identity, behavior boundaries,
    local validation routing, surface routing, and workflow procedures.
-5. Use legacy `docs/llm/**`, `docs/workflows/**`, and `docs/chezmoi/**`
-   documents as migration evidence until later scoped issues replace or remove
-   them.
+5. Use current source-state files and validation evidence for detailed behavior
+   claims.
 
 ## Root and adapter relationship
 
-`AGENTS.md` is the current repository-wide assistant guidance and future root
-context manifest input. Do not convert it into the final root context manifest
-unless a later issue explicitly scopes that work.
+[AGENTS.md](../../../AGENTS.md) is the root context manifest. It should stay
+concise and route detailed rules to `docs/context/**`.
 
-`.github/copilot-instructions.md` is the current GitHub Copilot adapter input.
-Do not thin it or add `.github/instructions/**` unless a later issue explicitly
-scopes adapter work.
+[`.github/copilot-instructions.md`](../../../.github/copilot-instructions.md) is
+the GitHub Copilot adapter. It should stay vendor-specific and secondary to the
+language-model-agnostic context architecture.
 
-Adapters should remain secondary to the language-model-agnostic context
-architecture. Do not make Copilot-specific structure the primary architecture.
+Do not add `.github/instructions/**` unless a later issue explicitly scopes that
+adapter.
 
-## Legacy documentation relationship
+## Current documentation relationship
 
-Legacy documentation surfaces remain useful until their durable guidance is
-migrated or intentionally discarded:
-
-| Legacy surface | Current relationship |
+| Surface | Current relationship |
 | --- | --- |
-| `docs/llm/**` | Migration input for reusable core rules, local repository rules, and later workflow/root-adapter cleanup. |
-| `docs/workflows/**` | Migration input for local workflow procedures now distilled under `docs/context/local/workflows/**`; keep as legacy input until later cleanup. |
-| `docs/chezmoi/**` | Migration evidence for future compact surface capsules and behavior-sensitive local constraints. |
-| `README.md` | Current first-run and operator-facing entry point. |
-| `ARCHITECTURE.md` | Legacy high-level architecture and teardown routing input. |
+| [README.md](../../../README.md) | First-run and operator-facing bootstrap entry point. |
+| [ARCHITECTURE.md](../../../ARCHITECTURE.md) | High-level architecture and teardown overview that routes to current context surfaces. |
+| [Core context guidance](../core/README.md) | Reusable assistant rules. |
+| [Local context guidance](./README.md) | Dotfiles-specific extension layer. |
+| [Local surface capsules](./surfaces/README.md) | Behavior-sensitive surface routing. |
+| [Local workflow guidance](./workflows/README.md) | Issue, PR, validation, merge, closure, Commander, and Worker procedures. |
+| [Repomix context routing](../repomix/README.md) | Tracked Repomix consumption guidance. |
 
-Do not delete, archive, or rewrite these surfaces merely because a local context
-summary exists. Later issues should remove obsolete surfaces only after durable
-requirements have been migrated or intentionally discarded.
+Retired legacy surfaces should not be used as active context anchors. If a
+future issue needs detailed behavior evidence, inspect current source state,
+rendered output, command output, or CI evidence that matches the touched surface.
 
 ## Repomix relationship
 

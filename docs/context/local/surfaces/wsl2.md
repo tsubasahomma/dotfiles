@@ -40,11 +40,11 @@ Treat these as behavior-sensitive unless explicitly scoped:
 - [Local repository profile](../profile.md)
 - [Local behavior boundaries](../boundaries.md)
 - [Local validation map](../validation.md)
-- [WSL2 convergence validation](../../../chezmoi/wsl2-convergence-validation.md)
-- [Bootstrap and identity boundary](../../../chezmoi/bootstrap-identity-boundary.md)
+- [Identity surface capsule](./identity.md)
 - [README](../../../../README.md)
 - [`dot_config/systemd/user/1password-bridge.service.tmpl`](../../../../dot_config/systemd/user/1password-bridge.service.tmpl)
 - [`.chezmoiscripts/run_onchange_after_51-sync-windows-agent.sh.tmpl`](../../../../.chezmoiscripts/run_onchange_after_51-sync-windows-agent.sh.tmpl)
+- [`dot_config/1Password/ssh/private_agent.toml.tmpl`](../../../../dot_config/1Password/ssh/private_agent.toml.tmpl)
 
 ## Validation routing
 

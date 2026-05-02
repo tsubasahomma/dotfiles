@@ -5,8 +5,9 @@
 Use this capsule when work touches or cites chezmoi source state, templates,
 scripts, rendered target state, or phase-sensitive provisioning behavior.
 
-Keep the capsule focused on failure prevention. Use detailed legacy evidence
-instead of copying domain manuals into this file.
+Keep the capsule focused on failure prevention. Inspect current source state and
+rendered output for detailed behavior claims instead of relying on retired
+long-form audit documents.
 
 ## Predictable LLM failure modes
 
@@ -40,16 +41,32 @@ change:
 - `.chezmoiignore.tmpl`, `.chezmoi.toml.tmpl`, externals, hooks, and generated
   target paths.
 
+## Comment and template guidance
+
+Use Go Template comments for source-state-only maintainer notes that must not
+render into target files. Use target-language comments only when the rendered
+file should carry the explanation for someone inspecting the target state.
+
+Preserve functional comments such as trigger hashes, mise task metadata,
+generated-file warnings, Renovate extraction comments, and external references.
+Do not normalize labels, trim markers, or blank lines in templates as incidental
+cleanup.
+
+Before changing comments in `.tmpl` files, decide who should read the note and
+which rendered file, if any, should contain it.
+
 ## Evidence and routing links
 
 - [Local repository profile](../profile.md)
 - [Local behavior boundaries](../boundaries.md)
 - [Local validation map](../validation.md)
-- [Chezmoi action graph](../../../chezmoi/action-graph.md)
-- [Chezmoi script contract inspection](../../../chezmoi/script-contract-inspection.md)
-- [Chezmoi script trigger audit](../../../chezmoi/script-trigger-audit.md)
-- [Thin chezmoi phase gate rules](../../../chezmoi/thin-phase-gate-rules.md)
-- [Chezmoi data contract boundary](../../../chezmoi/data-contract-boundary.md)
+- [Mise surface capsule](./mise.md)
+- [WSL2 surface capsule](./wsl2.md)
+- [Identity surface capsule](./identity.md)
+- [`.chezmoiscripts/`](../../../../.chezmoiscripts/)
+- [`.chezmoidata/`](../../../../.chezmoidata/)
+- [`.chezmoitemplates/`](../../../../.chezmoitemplates/)
+- [`.chezmoiignore.tmpl`](../../../../.chezmoiignore.tmpl)
 
 ## Validation routing
 
@@ -59,7 +76,7 @@ validation from [Local validation map](../validation.md).
 If the change touches source-state templates, scripts, data, or rendered-output
 claims, add rendered-output evidence appropriate to the touched surface, such as
 `chezmoi execute-template`, `chezmoi diff`, source-state inspection, trigger
-audit review, or host-specific rendered branch inspection.
+review, or host-specific rendered branch inspection.
 
 Run `mise run doctor` only when setup, toolchain, rendered config, task behavior,
 health-check behavior, scripts, CI semantics, versions, dependencies, or
@@ -69,4 +86,4 @@ lockfiles change.
 
 This capsule does not authorize script rewrites, trigger normalization, template
 whitespace cleanup, behavior changes, task delegation, generated output edits, or
-legacy documentation deletion.
+legacy documentation restoration.

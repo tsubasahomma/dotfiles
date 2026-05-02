@@ -58,6 +58,27 @@ Closes #<child-issue-number>
 Refs #<parent-issue-number>
 ```
 
+## Commit message guidance
+
+Use Conventional Commits for local commits and squash commit messages:
+
+```text
+<type>(<scope>): <summary>
+```
+
+Use a scope that matches the touched surface, such as `docs(context)`,
+`docs(local)`, `docs(workflows)`, or `chore(repomix)`. Do not invent a scope
+that implies untouched behavior.
+
+Keep the summary imperative, specific, and concise. Use the body to explain why
+the change is needed and any important trade-offs. Include validation only when
+there is command output, CI evidence, inspected state, or explicit maintainer
+confirmation.
+
+Use closing keywords in the PR body when merge should close an issue. Prefer
+`Refs: #<issue-number>` in commit messages unless the maintainer explicitly asks
+for a closing reference there.
+
 ## Validation section
 
 Report validation as evidence.

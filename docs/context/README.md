@@ -7,19 +7,21 @@ repository context.
 
 It defines the organization for reusable context guidance, dotfiles-specific
 extensions, surface capsules, workflow guidance, and Repomix context while
-leaving legacy documentation inputs and repository behavior unchanged.
+keeping repository behavior unchanged.
 
-Use [Context migration map](./migration-map.md) to compare future child issues
-against the current migration plan.
+Use [Context migration map](./migration-map.md) to review how the former legacy
+surfaces were retired and where their durable guidance now lives.
 
 ## Architecture layers
 
 | Target path | Responsibility |
 | --- | --- |
+| `AGENTS.md` | Concise root context manifest for repository identity, evidence hierarchy, safety boundaries, generated artifact discipline, patch discipline, validation discipline, and scope control. |
+| `.github/copilot-instructions.md` | Thin GitHub Copilot adapter that routes to the shared context architecture. |
 | `docs/context/core/**` | Reusable context guidance for principles, evidence, output, review, validation, generated artifacts, drift control, and out-of-scope findings. |
 | `docs/context/local/**` | Dotfiles-specific extension layer that records local repository identity, boundaries, glossary, validation routing, and surface registry. |
-| `docs/context/local/surfaces/**` | Compact local surface capsules that prevent predictable assistant mistakes and route reviewers to the right local evidence. |
-| `docs/context/local/workflows/**` | Local issue, pull request, validation, merge, and closure workflow guidance aligned with this architecture. |
+| `docs/context/local/surfaces/**` | Compact local surface capsules that prevent predictable assistant mistakes and route reviewers to current local evidence. |
+| `docs/context/local/workflows/**` | Local issue, pull request, validation, merge, closure, Commander, and Worker workflow guidance aligned with this architecture. |
 | `docs/context/repomix/**` | Tracked guidance for consuming Repomix context artifacts and keeping generated context separate from source documentation. |
 | `.context/repomix/**` | Generated Repomix output storage. Generated artifacts in this path remain read-only evidence, not editable source. |
 
@@ -30,61 +32,49 @@ workstation-specific, and operator-specific assumptions.
 
 Repository-specific assumptions belong under `docs/context/local/**`.
 Surface-specific constraints belong under `docs/context/local/surfaces/**`.
+Workflow procedures belong under `docs/context/local/workflows/**`.
 Repomix consumption guidance belongs under `docs/context/repomix/**`.
 Generated Repomix output belongs under `.context/repomix/**`.
 
-Root routers such as `AGENTS.md` and `.github/copilot-instructions.md` remain
-current migration inputs until later issues explicitly change them.
+Vendor-specific adapters should route to this shared architecture instead of
+becoming the primary architecture.
 
-## Migration contract
+## Retired legacy surfaces
 
-Current guidance surfaces are migration inputs, not permanent architecture
-anchors:
+The former assistant, workflow, and long-form chezmoi documentation surfaces were
+migration inputs. Their durable guidance has been distilled into the current
+context architecture or intentionally discarded as obsolete duplicate audit
+material.
 
-- `AGENTS.md`
-- `.github/copilot-instructions.md`
-- `docs/llm/**`
-- `docs/workflows/**`
-- `docs/chezmoi/**`
+Use these current entry points instead:
 
-Core reusable guidance now starts at
-[docs/context/core/README.md](./core/README.md). Dotfiles-specific guidance now
-starts at [docs/context/local/README.md](./local/README.md). Compact local
-surface capsules now start at
-[docs/context/local/surfaces/README.md](./local/surfaces/README.md). Local
-workflow guidance now starts at
-[docs/context/local/workflows/README.md](./local/workflows/README.md). The
-Repomix instruction router lives at
-[docs/context/repomix/instructions.md](./repomix/instructions.md).
+- [AGENTS.md](../../AGENTS.md) for the root context manifest.
+- [Core context guidance](./core/README.md) for reusable assistant rules.
+- [Local context guidance](./local/README.md) for repository-specific rules.
+- [Local surface capsules](./local/surfaces/README.md) for behavior-sensitive
+  surface routing.
+- [Local workflow guidance](./local/workflows/README.md) for issue, PR,
+  validation, merge, closure, Commander, and Worker procedures.
+- [Repomix instruction router](./repomix/instructions.md) for packed snapshot
+  consumers.
 
-Future migration issues should distill durable requirements before moving,
-compressing, or deleting any old surface. Prefer preserving constraints,
-decision rules, validation requirements, and failure-prevention guidance over
-copying full prose.
+The issue #185 / PR #186 hardening remains preserved by the current architecture:
+inspect broadly, patch narrowly, avoid invented local state, require validation
+evidence, treat generated artifacts as read-only evidence, and record useful
+out-of-scope findings without expanding the active patch.
 
-The issue #185 / PR #186 hardening is a migration requirement. Future work must
-preserve the discipline to inspect broadly, patch narrowly, avoid invented local
-state, require validation evidence, and record useful out-of-scope findings
-without expanding the active patch.
+## Non-goals for this architecture
 
-## Non-goals for this contract
+This architecture does not authorize:
 
-This contract excludes:
-
-- performing the full documentation migration
-- converting `AGENTS.md` into the final root context manifest
-- adding `.github/instructions/**`
-- preserving obsolete documentation by archiving it
 - changing repository behavior, scripts, tasks, CI semantics, versions,
-  dependencies, or lockfiles
+  dependencies, or lockfiles;
+- hand-editing generated context artifacts;
+- archiving obsolete documentation merely to avoid deletion;
+- making a vendor-specific adapter the primary context architecture.
 
 ## Roadmap use
 
 After each child issue merges, compare the resulting repository state against
-this contract and the migration map before creating the next child issue.
-
-After local workflow guidance is distilled, the expected next step is a
-separately scoped issue for root router and obsolete surface cleanup. That later
-issue should compare current repository state against the parent issue and
-migration map before changing `AGENTS.md`, adapters, or legacy documentation
-surfaces.
+this architecture and the migration map before creating or closing follow-up
+work.

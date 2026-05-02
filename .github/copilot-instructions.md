@@ -1,22 +1,22 @@
-# GitHub Copilot instructions
+# GitHub Copilot adapter
 
-Use [AGENTS.md](../AGENTS.md) as the primary repository-wide guidance for this
-repository.
+This file is the GitHub Copilot adapter for this repository.
 
-Use [docs/llm/README.md](../docs/llm/README.md) and
-[docs/workflows/README.md](../docs/workflows/README.md) for detailed LLM
-collaboration and workflow guidance.
+Use [AGENTS.md](../AGENTS.md) as the root context manifest, then route durable
+repository context through [docs/context/README.md](../docs/context/README.md).
 
-This is a chezmoi-managed dotfiles source-state repository. Keep suggestions
-small, scoped, and behavior-preserving.
+Copilot-specific guidance is secondary to the shared context architecture:
 
-Do not change provisioning, identity routing, SSH signing, SSH agent bridging,
-generated identity files, Neovim, WezTerm, zsh, Git, mise, Homebrew, GitHub
-Actions, runtime versions, tool versions, dependencies, or lockfiles unless the
-assigned issue explicitly requires it.
+- Keep suggestions small, scoped, and behavior-preserving.
+- Prefer repository-relative links only when the target exists in the current
+  repository state.
+- Do not add `.github/instructions/**` unless an assigned issue explicitly
+  scopes that adapter.
+- Do not change workflows, templates, scripts, tasks, versions, dependencies,
+  lockfiles, rendered configuration, or generated artifacts as incidental
+  cleanup.
+- Treat Repomix snapshots and generated output as read-only evidence.
 
-Treat Repomix snapshots as read-only evidence. Do not edit generated
-`repomix-*.xml` files.
-
-Prefer repository-relative links only when the target exists in the current
-repository state.
+For surface-specific constraints, use
+[local surface capsules](../docs/context/local/surfaces/README.md). For workflow
+procedure, use [local workflow guidance](../docs/context/local/workflows/README.md).

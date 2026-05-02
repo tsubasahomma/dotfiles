@@ -1,13 +1,14 @@
 # Architecture documentation routing
 
-`ARCHITECTURE.md` is a routed legacy architecture entry point and high-level
-repository overview. Focused docs under [`docs/chezmoi/`](./docs/chezmoi/) are
-the source of truth for chezmoi orchestration contracts.
+`ARCHITECTURE.md` is a high-level repository overview and teardown routing entry
+point. Detailed assistant context lives under
+[docs/context/](./docs/context/README.md).
 
-This document keeps durable repository context and routes readers to focused
-contract documents. It does not define the detailed chezmoi action graph, script
-trigger contracts, bootstrap and identity boundaries, mise task delegation, data
-ownership, or WSL2 convergence validation by itself.
+This document keeps durable repository context and routes readers to current
+context documents and source-state surfaces. It does not define the detailed
+chezmoi action graph, script trigger contracts, bootstrap and identity
+boundaries, mise task delegation, data ownership, or WSL2 convergence validation
+by itself.
 
 ## Current role
 
@@ -15,24 +16,27 @@ Use this file for:
 
 - a high-level map of repository architecture documentation;
 - operational teardown guidance that existing README links depend on;
-- durable context that is not better owned by a focused contract document;
-- follow-up candidates for future documentation relocation or replacement.
+- durable context that is not better owned by a focused context document;
+- routing readers to current source-state and validation surfaces.
 
 Do not use this file as the detailed source of truth for behavior-sensitive
-chezmoi refactoring. Start from the focused contract document that matches the
-touched surface.
+chezmoi refactoring. Start from the context document or source-state surface that
+matches the touched area.
 
-## Focused chezmoi contract documents
+## Focused context documents
 
-| Surface | Source of truth |
+| Surface | Current routing |
 | :------ | :-------------- |
-| Current chezmoi action graph, script order, script contracts, and validation surfaces | [`docs/chezmoi/action-graph.md`](./docs/chezmoi/action-graph.md) |
-| Read-only commands for collecting script-contract evidence | [`docs/chezmoi/script-contract-inspection.md`](./docs/chezmoi/script-contract-inspection.md) |
-| Audit of current script trigger contracts and trigger follow-up candidates | [`docs/chezmoi/script-trigger-audit.md`](./docs/chezmoi/script-trigger-audit.md) |
-| Bootstrap, 1Password, identity, SSH signing, SSH agent, WSL2 bridge, and CI fallback boundaries | [`docs/chezmoi/bootstrap-identity-boundary.md`](./docs/chezmoi/bootstrap-identity-boundary.md) |
-| Boundary between `.chezmoiscripts/*` and repository-local mise tasks | [`docs/chezmoi/mise-task-boundary.md`](./docs/chezmoi/mise-task-boundary.md) |
-| Static `.chezmoidata/`, dynamic `.chezmoi.toml.tmpl`, reusable template, and data consumer boundaries | [`docs/chezmoi/data-contract-boundary.md`](./docs/chezmoi/data-contract-boundary.md) |
-| Local WSL2 convergence validation expectations and redaction guidance | [`docs/chezmoi/wsl2-convergence-validation.md`](./docs/chezmoi/wsl2-convergence-validation.md) |
+| Context architecture and migration state | [`docs/context/README.md`](./docs/context/README.md) and [`docs/context/migration-map.md`](./docs/context/migration-map.md) |
+| Repository identity, source-state model, and documentation entry points | [`docs/context/local/profile.md`](./docs/context/local/profile.md) |
+| Behavior-sensitive repository boundaries | [`docs/context/local/boundaries.md`](./docs/context/local/boundaries.md) |
+| Validation routing by touched surface | [`docs/context/local/validation.md`](./docs/context/local/validation.md) |
+| Chezmoi source state, templates, scripts, rendered target state, and phase gates | [`docs/context/local/surfaces/chezmoi.md`](./docs/context/local/surfaces/chezmoi.md) |
+| Mise tasks, task metadata, doctor checks, and task ownership evidence | [`docs/context/local/surfaces/mise.md`](./docs/context/local/surfaces/mise.md) |
+| 1Password, identity discovery, SSH signing, and agent routing | [`docs/context/local/surfaces/identity.md`](./docs/context/local/surfaces/identity.md) |
+| WSL2 bridge assumptions and local validation boundaries | [`docs/context/local/surfaces/wsl2.md`](./docs/context/local/surfaces/wsl2.md) |
+| GitHub Actions CI semantics and remote CI evidence | [`docs/context/local/surfaces/github-actions.md`](./docs/context/local/surfaces/github-actions.md) |
+| Issue, PR, validation, merge, closure, Commander, and Worker procedures | [`docs/context/local/workflows/README.md`](./docs/context/local/workflows/README.md) |
 
 ## High-level repository model
 
@@ -49,8 +53,9 @@ level, it combines:
 - local validation and GitHub Actions compliance checks.
 
 This overview is intentionally narrow. Detailed sequencing, rerun behavior,
-hard-fail boundaries, soft-fallback boundaries, and validation expectations live
-in the focused docs listed above.
+hard-fail boundaries, soft-fallback boundaries, and validation expectations
+should be inspected from current source state and routed through the context
+documents listed above.
 
 ## Operational teardown guidance
 
@@ -116,8 +121,7 @@ rm -rf "$HOME/.config" "$HOME/.local" "$HOME/.cache"
 
 ## Follow-up candidates
 
-The current routing keeps `ARCHITECTURE.md` as a thin legacy entry point. Future
-issues may evaluate whether to:
+Future issues may evaluate whether to:
 
 - retire `ARCHITECTURE.md` after all inbound links route elsewhere;
 - move architecture routing under `docs/`;
