@@ -22,4 +22,6 @@ contract:
 
 For surface-specific constraints, start with
 [docs/context/surfaces.md](../docs/context/surfaces.md). For workflow procedure,
-start with [docs/context/workflows.md](../docs/context/workflows.md).
+start with [docs/context/workflows.md](../docs/context/workflows.md). For Repomix
+generation or snapshot consumption, start with
+[docs/context/repomix.md](../docs/context/repomix.md).

@@ -10,7 +10,7 @@
     "fileSummary": true,
     "directoryStructure": true,
     "files": true,
-    "instructionFilePath": "docs/context/repomix/instructions.md",
+    "instructionFilePath": "docs/context/repomix.md",
     "removeComments": false,
     "removeEmptyLines": false,
     "compress": false,

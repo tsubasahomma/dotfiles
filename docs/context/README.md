@@ -36,7 +36,7 @@ when provenance is required for review.
 | Validation planning or validation reporting | [`repo.md`](./repo.md), [`workflows.md`](./workflows.md), [`kernel.md`](./kernel.md) | Surface row in [`surfaces.md`](./surfaces.md), command output, CI evidence. |
 | Behavior-sensitive surface work | [`surfaces.md`](./surfaces.md), [`repo.md`](./repo.md), [`kernel.md`](./kernel.md) | Current source state, rendered output, command output, or CI evidence for the touched surface. |
 | Workflow procedure work | [`workflows.md`](./workflows.md), [`protocols.md`](./protocols.md) | Current issue, PR, validation, merge, or closure evidence. |
-| Repomix generation or snapshot consumption | [`repomix.md`](./repomix.md), [`kernel.md`](./kernel.md) | [`docs/context/repomix/instructions.md`](./repomix/instructions.md), `repomix.config.json`, current snapshot evidence. |
+| Repomix generation or snapshot consumption | [`repomix.md`](./repomix.md), [`kernel.md`](./kernel.md) | [`../../repomix.config.json`](../../repomix.config.json), current snapshot evidence, current files or diffs when snapshot evidence conflicts. |
 | Eval or regression-case work | [`evals.md`](./evals.md), [`kernel.md`](./kernel.md), [`protocols.md`](./protocols.md) | Current failure example, active issue, and changed operating-contract files. |
 
 ## Operating contracts versus deep evidence
@@ -44,16 +44,10 @@ when provenance is required for review.
 The files in the Option A+ map are the active operating contracts. They should be
 short, task-oriented, and directly useful during LLM runtime.
 
-The remaining context path is current deep evidence for later collapse work:
-
-| Deep evidence path | Use it for now |
-| --- | --- |
-| [`repomix/**`](./repomix/README.md) | Tracked Repomix instruction and consumption evidence that later issues may collapse into `repomix.md`. |
-
-Do not treat that directory as the target architecture. It is evidence, not a
-container to preserve for continuity. Behavior-sensitive surface routing belongs
-in [`surfaces.md`](./surfaces.md), and workflow procedure belongs in
-[`workflows.md`](./workflows.md).
+Use repository source files, command output, CI evidence, and generated snapshots
+as deep evidence only when the selected operating contract requires them. Do not
+restore retired context directories or route through removed context paths for
+continuity.
 
 ## Routing rules
 
@@ -61,8 +55,8 @@ in [`surfaces.md`](./surfaces.md), and workflow procedure belongs in
 2. Select only the Option A+ file that owns the task.
 3. Add repository source files, command output, CI evidence, or generated
    snapshots only when the selected contract requires them.
-4. Use remaining context directories only as deep evidence for a scoped
-   collapse, comparison, or surface-specific inspection.
+4. Use generated snapshots and repository source files as evidence only when a
+   scoped task, comparison, or validation check requires them.
 5. Do not change repository behavior, generated artifacts, scripts, tasks,
    templates, CI semantics, versions, dependencies, or lockfiles unless the
    active issue explicitly scopes that behavior change.

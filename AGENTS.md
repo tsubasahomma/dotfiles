@@ -30,12 +30,10 @@ Option A+ operating-contract files:
 - [Workflows](./docs/context/workflows.md) for issue, thread, PR, validation,
   merge, and closure procedure contracts.
 - [Repomix](./docs/context/repomix.md) for Repomix generation, consumption,
-  generated-output, focused snapshot, and stale-snapshot rules.
+  generated-output, focused snapshot, stale-snapshot rules, and tracked
+  instruction routing.
 - [Evals](./docs/context/evals.md) for regression cases covering predictable
   LLM-context failures.
-
-Remaining context paths under `docs/context/repomix/**` are deep evidence for
-later collapse work, not the primary architecture.
 
 ## Source and evidence hierarchy
 
