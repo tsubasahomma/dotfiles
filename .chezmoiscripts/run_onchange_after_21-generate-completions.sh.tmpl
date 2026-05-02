@@ -25,6 +25,8 @@ export PATH="{{ .paths.home }}/.local/bin:$PATH"
 {{- $id_pnpm := index $tool_keys "pnpm" -}}
 {{- $id_zoxide := index $tool_keys "zoxide" -}}
 {{- $id_gcloud := index $tool_keys "gcloud" -}}
+{{- $id_codex := index $tool_keys "codex" -}}
+{{- $id_scc := index $tool_keys "scc" -}}
 
 MISE_BIN="{{ .paths.mise }}"
 COMP_DIR="{{ .paths.xdg_cache }}/zsh/completions"
@@ -62,6 +64,8 @@ generate_comp "{{ $id_helm }}" "helm" completion zsh > "$COMP_DIR/_helm"
 generate_comp "{{ $id_k9s }}" "k9s" completion zsh > "$COMP_DIR/_k9s"
 generate_comp "{{ $id_lazygit }}" "lazygit" completion zsh > "$COMP_DIR/_lazygit"
 generate_comp "{{ $id_pnpm }}" "pnpm" completion zsh > "$COMP_DIR/_pnpm" || true
+generate_comp "{{ $id_codex }}" "codex" completion zsh > "$COMP_DIR/_codex"
+generate_comp "{{ $id_scc }}" "scc" completion --shell zsh > "$COMP_DIR/_scc"
 
 "$MISE_BIN" exec "{{ $id_delta }}" -- delta --generate-completion zsh 2>/dev/null > "$COMP_DIR/_delta" || true
 
