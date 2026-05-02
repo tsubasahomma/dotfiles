@@ -6,19 +6,19 @@ This map shows how future child issues should distill current guidance surfaces
 into the target context architecture.
 
 This map is a planning contract for future child issues. It does not authorize
-broad file moves, deletion, archival, root router rewrites, Repomix routing
-changes, or behavior changes in issue #188.
+broad file moves, deletion, archival, root router rewrites, additional Repomix
+routing changes, or behavior changes beyond the active child issue scope.
 
 ## Current surface classification
 
-| Current surface | Classification | Target treatment | Issue #188 action |
+| Source or legacy surface | Classification | Target treatment | Current status |
 | --- | --- | --- | --- |
-| `AGENTS.md` | Root guidance input. | Distill later into a concise root context manifest that points to `docs/context/README.md`. | No change. |
-| `repomix-instruction.md` | Repomix instruction input. | Distill and relocate later under `docs/context/repomix/**`, then update Repomix routing in the same scoped issue. | No move. |
-| `.github/copilot-instructions.md` | Vendor-specific adapter input. | Thin later into an adapter that points to the language-model-agnostic context architecture. Keep Copilot-specific guidance out of the primary architecture. | No change. |
-| `docs/llm/**` | Reusable assistant guidance and local failure-prevention input. | Distill repository-agnostic rules into `docs/context/core/**` and dotfiles-specific rules into `docs/context/local/**`. | No move or deletion. |
-| `docs/workflows/**` | Local workflow guidance input. | Distill issue, PR, validation, merge, and closure rules into `docs/context/local/workflows/**`. | No move or deletion. |
-| `docs/chezmoi/**` | Local surface evidence input. | Compress durable chezmoi, mise, WSL2, Neovim, identity, and GitHub Actions constraints into `docs/context/local/surfaces/**`. | No move or deletion. |
+| `AGENTS.md` | Root guidance input. | Distill later into a concise root context manifest that points to `docs/context/README.md`. | No change in issue #190. |
+| `repomix-instruction.md` | Former root Repomix instruction input. | Relocated under `docs/context/repomix/**`; keep generated output under `.context/repomix/**`. | Moved to `docs/context/repomix/instructions.md` in issue #190. |
+| `.github/copilot-instructions.md` | Vendor-specific adapter input. | Thin later into an adapter that points to the language-model-agnostic context architecture. Keep Copilot-specific guidance out of the primary architecture. | No change in issue #190. |
+| `docs/llm/**` | Reusable assistant guidance and local failure-prevention input. | Distill repository-agnostic rules into `docs/context/core/**` and dotfiles-specific rules into `docs/context/local/**`. | No move or deletion in issue #190. |
+| `docs/workflows/**` | Local workflow guidance input. | Distill issue, PR, validation, merge, and closure rules into `docs/context/local/workflows/**`. | No move or deletion in issue #190. |
+| `docs/chezmoi/**` | Local surface evidence input. | Compress durable chezmoi, mise, WSL2, Neovim, identity, and GitHub Actions constraints into `docs/context/local/surfaces/**`. | No move or deletion in issue #190. |
 
 ## Target area map
 
@@ -29,7 +29,7 @@ changes, or behavior changes in issue #188.
 | `docs/context/local/surfaces/**` | Compact capsules for behavior-sensitive local surfaces such as chezmoi, mise, WSL2, Neovim, identity, and GitHub Actions. | Full domain manuals or copied legacy docs. |
 | `docs/context/local/workflows/**` | Local workflow rules for issues, pull requests, validation, merge, closure, Commander coordination, and Worker coordination. | Generic assistant guidance that should live in `docs/context/core/**`. |
 | `docs/context/repomix/**` | Tracked guidance for generating, consuming, validating, and routing Repomix context. | Generated Repomix output. |
-| `.context/repomix/**` | Generated Repomix context artifacts after a later routing issue creates this path. | Hand-edited source documentation. |
+| `.context/repomix/**` | Generated Repomix context artifacts. | Hand-edited source documentation. |
 
 ## Migration requirements
 
@@ -85,6 +85,7 @@ After each child issue merges, compare the repository against this map:
 
 ## Next handoff
 
-The next child issue can use this map to scope the `docs/context/**` skeleton and
-Repomix routing work. That later issue should decide the exact file list from the
-post-merge repository state rather than treating this map as a prewritten patch.
+After the skeleton and Repomix routing issue merges, the next child issue can use
+this map to scope reusable guidance distillation into `docs/context/core/**`.
+That later issue should decide the exact file list from the post-merge repository
+state rather than treating this map as a prewritten patch.

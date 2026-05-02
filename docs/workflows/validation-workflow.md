@@ -84,7 +84,7 @@ filename, task name, command name, script phase, documented behavior phrase, and
 operator-facing command. Focus on likely documentation surfaces first:
 
 ```sh
-rg -n "old-name|new-name|task-name|command-name" README.md AGENTS.md .github docs repomix-instruction.md
+rg -n "old-name|new-name|task-name|command-name" README.md AGENTS.md .github docs
 ```
 
 The scan is validation planning, not permission to broaden the patch. Fix stale
@@ -104,7 +104,6 @@ root = Path(".").resolve()
 files = list(Path("docs").rglob("*.md")) + [
     Path("AGENTS.md"),
     Path("README.md"),
-    Path("repomix-instruction.md"),
     Path(".github/copilot-instructions.md"),
     Path(".github/pull_request_template.md"),
 ]
@@ -149,14 +148,14 @@ PY
 Run `repomix` when changes affect:
 
 - `repomix.config.json`
-- `repomix-instruction.md`
+- `docs/context/repomix/instructions.md`
 - LLM routing docs
 - snapshot guidance
 - repository context generation
 
 Check that the command completes and that generated snapshots include the
-expected guidance without including generated `repomix-*.xml` artifacts as
-source.
+expected guidance and writes generated output under `.context/repomix/**` without
+including generated `repomix-*.xml` artifacts as source.
 
 ## Chezmoi template and rendered-output validation
 

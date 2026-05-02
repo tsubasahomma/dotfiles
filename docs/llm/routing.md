@@ -36,8 +36,8 @@ Start with these repository-wide entry points:
 - [LLM collaboration index](./README.md): LLM-specific guidance.
 - [Workflow documentation](../workflows/README.md): issue, PR, validation, merge,
   and closure workflows.
-- [Repomix instruction router](../../repomix-instruction.md): instructions for
-  LLMs consuming Repomix snapshots.
+- [Repomix instruction router](../context/repomix/instructions.md):
+  instructions for LLMs consuming Repomix snapshots.
 - [GitHub Copilot instructions](../../.github/copilot-instructions.md): thin
   router for tools that consume GitHub Copilot repository instructions directly.
 
@@ -104,9 +104,10 @@ If configuration discovery is unclear, use the explicit fallback:
 repomix --config repomix.config.json
 ```
 
-Do not edit generated `repomix-*.xml` files. Do not add alternate repository-owned
-Repomix configs, wrapper tasks, or skeleton snapshots unless a future issue
-explicitly scopes that work.
+Generated Repomix output is routed under `.context/repomix/**`. Do not edit
+generated `repomix-*.xml` files. Do not add alternate repository-owned Repomix
+configs, wrapper tasks, or skeleton snapshots unless a future issue explicitly
+scopes that work.
 
 ## Workflow routing
 
@@ -188,8 +189,9 @@ success from local validation.
 
 ### Repomix routing changes
 
-Keep `repomix.config.json` and `repomix-instruction.md` aligned. Validate with
-`repomix` and inspect whether generated snapshots include the intended guidance.
+Keep `repomix.config.json` and `docs/context/repomix/instructions.md` aligned.
+Validate with `repomix` and inspect whether generated snapshots include the
+intended guidance under `.context/repomix/**`.
 
 ## Uncertainty handling
 

@@ -7,7 +7,7 @@ repository context.
 
 It defines the organization for reusable context guidance, dotfiles-specific
 extensions, surface capsules, workflow guidance, and Repomix context while
-leaving existing documentation, root routers, and repository behavior unchanged.
+leaving legacy documentation inputs and repository behavior unchanged.
 
 Use [Context migration map](./migration-map.md) to compare future child issues
 against the current migration plan.
@@ -21,7 +21,7 @@ against the current migration plan.
 | `docs/context/local/surfaces/**` | Compact local surface capsules that prevent predictable assistant mistakes and route reviewers to the right local evidence. |
 | `docs/context/local/workflows/**` | Local issue, pull request, validation, merge, and closure workflow guidance aligned with this architecture. |
 | `docs/context/repomix/**` | Tracked guidance for consuming Repomix context artifacts and keeping generated context separate from source documentation. |
-| `.context/repomix/**` | Future generated Repomix output storage. Generated artifacts in this path remain read-only evidence, not editable source. |
+| `.context/repomix/**` | Generated Repomix output storage. Generated artifacts in this path remain read-only evidence, not editable source. |
 
 ## Separation contract
 
@@ -33,9 +33,8 @@ Surface-specific constraints belong under `docs/context/local/surfaces/**`.
 Repomix consumption guidance belongs under `docs/context/repomix/**`.
 Generated Repomix output belongs under `.context/repomix/**`.
 
-Root routers such as `AGENTS.md`, `repomix-instruction.md`, and
-`.github/copilot-instructions.md` remain current migration inputs until later
-issues explicitly change them.
+Root routers such as `AGENTS.md` and `.github/copilot-instructions.md` remain
+current migration inputs until later issues explicitly change them.
 
 ## Migration contract
 
@@ -43,11 +42,13 @@ Current guidance surfaces are migration inputs, not permanent architecture
 anchors:
 
 - `AGENTS.md`
-- `repomix-instruction.md`
 - `.github/copilot-instructions.md`
 - `docs/llm/**`
 - `docs/workflows/**`
 - `docs/chezmoi/**`
+
+The Repomix instruction router now lives at
+[docs/context/repomix/instructions.md](./repomix/instructions.md).
 
 Future migration issues should distill durable requirements before moving,
 compressing, or deleting any old surface. Prefer preserving constraints,
@@ -64,9 +65,10 @@ without expanding the active patch.
 This contract excludes:
 
 - performing the full documentation migration
-- relocating `repomix-instruction.md`
-- moving generated Repomix output to `.context/repomix/**`
-- updating `repomix.config.json`
+- distilling full reusable core guidance
+- distilling full repository-specific local guidance
+- creating full local surface capsules
+- migrating workflow guidance
 - converting `AGENTS.md` into the final root context manifest
 - adding `.github/instructions/**`
 - preserving obsolete documentation by archiving it
@@ -78,5 +80,6 @@ This contract excludes:
 After each child issue merges, compare the resulting repository state against
 this contract and the migration map before creating the next child issue.
 
-The expected next step after this contract is a separately scoped issue for the
-`docs/context/**` skeleton and Repomix routing work.
+The expected next step after the skeleton and Repomix routing work is a
+separately scoped issue for distilling reusable guidance into
+`docs/context/core/**`.

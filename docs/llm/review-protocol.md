@@ -95,10 +95,10 @@ behavior are deleted, renamed, or semantically changed, scan documentation for
 stale references before treating the change as complete.
 
 At minimum, review affected references in `README.md`, `AGENTS.md`, `.github/`,
-`docs/`, and `repomix-instruction.md` when those surfaces could describe the
-changed behavior. Keep the resulting patch limited to current-scope stale or
-misleading documentation. Preserve adjacent but non-blocking findings as
-follow-ups instead of expanding the PR.
+`docs/`, and `docs/context/repomix/instructions.md` when those surfaces could
+describe the changed behavior. Keep the resulting patch limited to
+current-scope stale or misleading documentation. Preserve adjacent but
+non-blocking findings as follow-ups instead of expanding the PR.
 
 Durable documentation should not retain transient issue-specific, PR-specific,
 or conversation-specific meta wording unless the document intentionally has a
@@ -133,7 +133,7 @@ Check links to current files, especially:
 - [GitHub Copilot instructions](../../.github/copilot-instructions.md)
 - [Pull request template](../../.github/pull_request_template.md)
 - [Change request issue form](../../.github/ISSUE_TEMPLATE/change-request.yml)
-- [Repomix instruction router](../../repomix-instruction.md)
+- [Repomix instruction router](../context/repomix/instructions.md)
 - [Repomix config](../../repomix.config.json)
 - [Workflow docs](../workflows/README.md)
 - [LLM docs](./README.md)

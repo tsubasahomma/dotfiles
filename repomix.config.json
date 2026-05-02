@@ -4,13 +4,13 @@
     "maxFileSize": 52428800
   },
   "output": {
-    "filePath": "repomix-dotfiles.xml",
+    "filePath": ".context/repomix/repomix-dotfiles.xml",
     "style": "xml",
     "parsableStyle": false,
     "fileSummary": true,
     "directoryStructure": true,
     "files": true,
-    "instructionFilePath": "repomix-instruction.md",
+    "instructionFilePath": "docs/context/repomix/instructions.md",
     "removeComments": false,
     "removeEmptyLines": false,
     "compress": false,
@@ -28,12 +28,11 @@
       "includeLogsCount": 50
     }
   },
-  "include": ["**/*"],
   "ignore": {
     "useGitignore": true,
     "useDotIgnore": false,
     "useDefaultPatterns": true,
-    "customPatterns": [".chezmoistate.json", "repomix-*.xml"]
+    "customPatterns": [".chezmoistate.json", "repomix-*.xml", ".context/repomix/**"]
   },
   "security": {
     "enableSecurityCheck": true

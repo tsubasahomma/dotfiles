@@ -311,7 +311,6 @@ root = Path(".").resolve()
 files = list(Path("docs").rglob("*.md")) + [
     Path("AGENTS.md"),
     Path("README.md"),
-    Path("repomix-instruction.md"),
     Path(".github/copilot-instructions.md"),
     Path(".github/pull_request_template.md"),
 ]

@@ -32,7 +32,7 @@ provisioning behavior.
   validation, merge, and closure workflows.
 - [Repository agent guidance](../../AGENTS.md): repository-wide agent boundaries
   and validation expectations.
-- [Repomix instruction router](../../repomix-instruction.md): Repomix snapshot
+- [Repomix instruction router](../context/repomix/instructions.md): Repomix snapshot
   instruction entry point.
 
 ## Repository posture
