@@ -32,6 +32,21 @@ Do not use stale memory, old prompts, completed planning artifacts, or previous
 assistant output to override the active task, assigned issue, current repository
 state, or current command evidence.
 
+## Scope and evidence split
+
+Instruction scope and evidence state answer different questions:
+
+| Question | Controlling source | Rule |
+| --- | --- | --- |
+| What may change? | Active maintainer request, assigned issue, PR, review, or validation scope. | Patch only authorized files and behavior. Do not expand scope because adjacent evidence is available. |
+| What is true? | Current file contents, diffs, command output, CI evidence, or explicit maintainer confirmation. | State repository facts only from current direct evidence. |
+| What supports review but cannot override direct evidence? | Repository contracts, surface guidance, generated snapshots, packed outputs, and prior planning artifacts. | Use them as context or provenance only when the router or active task requires them. |
+| What loses conflicts? | Stale memory, old prompts, previous assistant output, and stale generated snapshots. | Do not let them override active scope or fresher direct evidence. |
+
+If scope and evidence conflict, do not broaden the patch. State the conflict,
+prefer the fresher direct evidence for factual claims, and obtain or request the
+smallest missing evidence needed for the scoped task.
+
 ## Evidence precedence
 
 Prefer the most specific current evidence available:

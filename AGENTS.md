@@ -35,18 +35,22 @@ Option A+ operating-contract files:
 - [Evals](./docs/context/evals.md) for regression cases covering predictable
   LLM-context failures.
 
-## Source and evidence hierarchy
+## Scope and evidence hierarchy
 
-When sources conflict, prefer the most specific current evidence for the task:
+Use active scope to decide what may change. Use current direct evidence to decide
+what is true. Route detailed precedence rules to
+[docs/context/kernel.md](./docs/context/kernel.md).
 
-1. active user instructions;
-2. assigned issue, pull request, review, or validation scope;
-3. current file contents, diffs, command output, or CI evidence;
-4. the Option A+ operating-contract file that owns the task;
-5. deep evidence under `docs/context/**` when the router calls for it;
-6. repository entry points such as [README.md](./README.md) and
-   [ARCHITECTURE.md](./ARCHITECTURE.md);
-7. official tool documentation when repository evidence requires it.
+At the root manifest level:
+
+- active user instructions and assigned issue, pull request, review, or
+  validation scope authorize the change boundary;
+- current file contents, diffs, command output, CI evidence, and explicit
+  maintainer confirmation establish repository state;
+- selected Option A+ operating contracts define reusable rules for the task;
+- generated snapshots are read-only evidence and lose to fresher direct evidence;
+- prior conversation, memory, old prompts, and previous assistant output never
+  override active scope or current evidence.
 
 Do not invent repository state, command results, validation status, CI status,
 issue state, file paths, tool versions, or generated artifact contents.

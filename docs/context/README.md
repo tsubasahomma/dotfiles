@@ -39,6 +39,17 @@ when provenance is required for review.
 | Repomix generation or snapshot consumption | [`repomix.md`](./repomix.md), [`kernel.md`](./kernel.md) | [`../../repomix.config.json`](../../repomix.config.json), current snapshot evidence, current files or diffs when snapshot evidence conflicts. |
 | Eval or regression-case work | [`evals.md`](./evals.md), [`kernel.md`](./kernel.md), [`protocols.md`](./protocols.md) | Current failure example, active issue, and changed operating-contract files. |
 
+## Negative routing and escalation
+
+| Task pattern | Do not load by default | Stop after | Escalate only if |
+| --- | --- | --- | --- |
+| Issue or scope work | Unrelated surface rows, Repomix snapshots, retired context paths, or old planning threads. | The active issue, parent ledger when named, and issue-named current files answer the scope question. | Scope evidence conflicts, a parent ledger is named, or current file evidence is needed to avoid speculation. |
+| Patch or patch review | Broad context packs, unrelated contracts, completed handoffs, or generated artifacts as targets. | The owning output contract, active scope, and current touched-file contents are sufficient. | Current contents are missing, behavior-sensitive files are touched, or generated evidence conflicts with direct evidence. |
+| PR, commit, branch, or validation output | Behavior surface evidence, Repomix snapshots, or repository-wide history unless the output depends on them. | The output contract, workflow contract, active issue, template evidence, and validation evidence are sufficient. | Linked issue wording, required validation, branch protection, or CI evidence is ambiguous. |
+| Behavior-sensitive surface work | Unrelated surface rows, old per-surface docs, retired local paths, or broad repository manuals. | The matching surface row and touched current source evidence answer the question. | Rendered output, host-specific behavior, task execution, or CI semantics are claimed or changed. |
+| Repomix or snapshot work | Full snapshots for narrow file tasks, generated XML as an edit target, or stale packed evidence over current files. | The focused snapshot, current file, or current diff answers the review question. | Snapshot evidence is stale, conflicts with direct evidence, or the task requires repository-wide routing review. |
+| Eval or context hardening | Historical anecdotes, old issue examples, broad manuals, or new context hierarchy. | The owner contract and compact regression case cover the failure mode. | The rule changes another owner contract or cannot be evaluated without additional current evidence. |
+
 ## Operating contracts versus deep evidence
 
 The files in the Option A+ map are the active operating contracts. They should be
@@ -53,10 +64,14 @@ continuity.
 
 1. Start from the active user request, issue, PR, review, or validation evidence.
 2. Select only the Option A+ file that owns the task.
-3. Add repository source files, command output, CI evidence, or generated
-   snapshots only when the selected contract requires them.
-4. Use generated snapshots and repository source files as evidence only when a
+3. Apply the negative routing table before adding deep evidence.
+4. Stop when the selected contract plus current task evidence is enough to answer
+   or produce the requested artifact safely.
+5. Escalate only when the selected contract, active scope, or current evidence
+   requires deeper repository, surface, workflow, CI, or generated-snapshot
+   evidence.
+6. Use generated snapshots and repository source files as evidence only when a
    scoped task, comparison, or validation check requires them.
-5. Do not change repository behavior, generated artifacts, scripts, tasks,
+7. Do not change repository behavior, generated artifacts, scripts, tasks,
    templates, CI semantics, versions, dependencies, or lockfiles unless the
    active issue explicitly scopes that behavior change.
