@@ -9,11 +9,12 @@ Use this file first to choose the smallest sufficient context for the task. Load
 no more context than the task needs, then inspect current repository evidence for
 the touched files or surfaces.
 
-Completed planning artifacts, old handoff prompts, and merged issue discussions
-are not daily routing inputs. Use them only when the active task names them or
-when provenance is required for review.
+Planning artifacts, implementation-sequence labels, migration labels, roadmap
+labels, issue or PR numbers, and project-local option names are not durable
+operating-contract vocabulary. Keep them in issue, PR, or review records unless
+the active task names them for provenance.
 
-## Option A+ target file map
+## Operating-contract file map
 
 | File | Responsibility |
 | --- | --- |
@@ -52,8 +53,8 @@ when provenance is required for review.
 
 ## Operating contracts versus deep evidence
 
-The files in the Option A+ map are the active operating contracts. They should be
-short, task-oriented, and directly useful during LLM runtime.
+The files in the operating-contract map are the active operating contracts.
+They should be short, task-oriented, and directly useful during LLM runtime.
 
 Use repository source files, command output, CI evidence, and generated snapshots
 as deep evidence only when the selected operating contract requires them. Do not
@@ -63,7 +64,7 @@ continuity.
 ## Routing rules
 
 1. Start from the active user request, issue, PR, review, or validation evidence.
-2. Select only the Option A+ file that owns the task.
+2. Select only the operating-contract file that owns the task.
 3. Apply the negative routing table before adding deep evidence.
 4. Stop when the selected contract plus current task evidence is enough to answer
    or produce the requested artifact safely.

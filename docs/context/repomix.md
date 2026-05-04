@@ -113,7 +113,7 @@ regenerate evidence when validation requires it.
 LLMs consuming a Repomix snapshot of this repository should use:
 
 - [`../../AGENTS.md`](../../AGENTS.md) as the root context manifest;
-- [`README.md`](./README.md) as the Option A+ task-to-context router;
+- [`README.md`](./README.md) as the context task-to-context router;
 - [`kernel.md`](./kernel.md) for instruction precedence, evidence precedence,
   context economy, scope control, unknown-state rules, current-file
   requirements, and generated artifact discipline;

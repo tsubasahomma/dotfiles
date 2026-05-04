@@ -15,7 +15,7 @@ artifacts.
 Use [docs/context/README.md](./docs/context/README.md) as the operating-contract
 entry point and task-to-context router.
 
-Option A+ operating-contract files:
+Context operating-contract files:
 
 - [Kernel](./docs/context/kernel.md) for instruction precedence, evidence
   precedence, context economy, scope control, unknown-state rules, and generated
@@ -47,7 +47,7 @@ At the root manifest level:
   validation scope authorize the change boundary;
 - current file contents, diffs, command output, CI evidence, and explicit
   maintainer confirmation establish repository state;
-- selected Option A+ operating contracts define reusable rules for the task;
+- selected context operating contracts define reusable rules for the task;
 - generated snapshots are read-only evidence and lose to fresher direct evidence;
 - prior conversation, memory, old prompts, and previous assistant output never
   override active scope or current evidence.

@@ -32,10 +32,11 @@ monorepo, Terraform/OpenTofu repository, or service runtime.
 Do not import architecture assumptions from reference repositories unless local
 repository evidence and the active issue explicitly require them.
 
-## Option A+ portability and adoption boundaries
+## Operating-contract portability and adoption boundaries
 
-Option A+ is a compact operating-contract pattern, not a generic framework manual.
-Adopt it by separating reusable contract shape from repository-local replacements.
+The context operating-contract package is a compact pattern, not a generic
+framework manual. Adopt it by separating reusable contract shape from
+repository-local replacements.
 
 | Adoption category | Rule |
 | --- | --- |
@@ -45,7 +46,8 @@ Adopt it by separating reusable contract shape from repository-local replacement
 | Keep local | This repository's chezmoi source-state paths, mise task model, 1Password and WSL2 boundaries, Repomix output location, and behavior-preserving constraints. |
 
 Do not copy repository-local details into another repository as if they were
-portable Option A+ requirements. Do not expand this file into adoption prose; add
+portable operating-contract requirements. Do not expand this file into adoption
+prose; add
 only boundaries that prevent copyable contracts from being confused with local
 replacements.
 

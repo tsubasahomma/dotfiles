@@ -5,7 +5,7 @@ This file is the GitHub Copilot adapter for this repository.
 Use [AGENTS.md](../AGENTS.md) as the root context manifest, then route durable
 repository context through [docs/context/README.md](../docs/context/README.md).
 
-Copilot-specific guidance is secondary to the shared Option A+ operating
+Copilot-specific guidance is secondary to the shared context operating
 contract:
 
 - Keep suggestions small, scoped, and behavior-preserving.
