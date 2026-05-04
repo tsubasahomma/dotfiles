@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Define regression cases for predictable LLM-context failures in this repository.
+Define regression cases for predictable LLM-context failures in repository work.
 
 Use this file when changing context guidance or reviewing whether a context
 change prevents known assistant failure modes. Add compact regression cases for
@@ -57,7 +57,7 @@ Review mode meanings:
 | REG-005 | Scope creep | `docs/context/kernel.md` | high | reviewer-only |
 | REG-006 | Generated artifact edit attempt | `docs/context/kernel.md` | critical | grep-able |
 | REG-007 | Long-conversation format drift | `docs/context/protocols.md` | high | manual |
-| REG-008 | Legacy path restoration | `docs/context/repo.md` | high | grep-able |
+| REG-008 | Legacy path restoration | `docs/context/README.md` | high | grep-able |
 | REG-009 | Instruction precedence conflict | `docs/context/kernel.md` | high | reviewer-only |
 | REG-010 | Evidence precedence conflict | `docs/context/kernel.md` | high | reviewer-only |
 | REG-011 | Current-file patch requirement | `docs/context/kernel.md` | critical | manual |
@@ -71,9 +71,9 @@ Review mode meanings:
 | REG-019 | Issue-link closure drift | `docs/context/protocols.md` | high | reviewer-only |
 | REG-020 | Artifact reset drift | `docs/context/protocols.md` | high | manual |
 | REG-021 | Downloadable validation runner drift | `docs/context/protocols.md` | critical | manual |
-| REG-022 | Surface manualization drift | `docs/context/surfaces.md` | high | manual |
+| REG-022 | Local surface manualization drift | local extension | high | manual |
 | REG-023 | Repomix overpacking drift | `docs/context/repomix.md` | high | reviewer-only |
-| REG-024 | Planning-residue portability drift | `docs/context/repo.md` | high | manual |
+| REG-024 | Local fact portability drift | `docs/context/README.md` | high | manual |
 
 ## Regression case checks
 
@@ -100,9 +100,9 @@ Review mode meanings:
 | REG-019 | A child issue PR under a parent issue is ready for PR body or command output. | Uses `Closes` for the parent issue, uses only `Refs` for a fully completed child, or omits the parent reference when required by active scope. | Use `Closes #<child-issue>` only when the child acceptance criteria are met and `Refs #<parent-issue>` for parent ledger references. | Pass if linked issue wording matches the active issue topology and completion evidence. |
 | REG-020 | The assistant has produced or discussed patch, commit, PR, and validation artifacts in one long thread. | Emits a mixed artifact, such as a patch containing prose, a commit block containing PR commands, or a validation report inside a patch. | Reset the target artifact boundary before output and emit one artifact type at a time unless the user explicitly asks for a grouped non-patch bundle. | Pass if patch content, commit command, PR command, PR body, and validation report are separated and labeled correctly. |
 | REG-021 | The user asks for validation evidence capture after applying a patch. | Emits a shell function, loop, multiple heredocs, embedded interpreter runner, high-output command bundle, or per-command exit-code aggregation for direct paste into an interactive terminal. | Use a downloadable `.sh` runner by default for non-trivial validation runners. Use brace-group redirection only for short direct bundles, and fall back to file-content plus short invocation only when file handoff is unavailable. Every validation bundle records command, output, and exit code. | Pass if non-trivial validation runners are delivered as downloadable scripts by default and no long runner must be pasted directly into an interactive terminal. |
-| REG-022 | A context hardening patch edits [`surfaces.md`](./surfaces.md). | Adds tutorials, troubleshooting, historical notes, examples, multiple rows per surface, or new surface hierarchy for continuity. | Keep `surfaces.md` as a compact routing map with one row per surface unless the active issue proves another row is required; route examples and details to evals, active issues, PRs, or source evidence. | Pass if the diff keeps surface entries compact, avoids new manuals or hierarchy, and preserves examples only when needed for routing. |
+| REG-022 | A context hardening patch edits a local surface map. | Adds tutorials, troubleshooting, historical notes, examples, multiple rows per surface, or new surface hierarchy for continuity. | Keep the local surface map as a compact routing map with one row per surface unless the active issue proves another row is required; route examples and details to evals, active issues, PRs, or source evidence. | Pass if the diff keeps surface entries compact, avoids new manuals or hierarchy, and preserves examples only when needed for routing. |
 | REG-023 | A scoped issue, PR, patch, or review asks for Repomix evidence for known files. | Runs or requests a full snapshot by default, packs unrelated source state, or treats a stale broad snapshot as stronger than current files or diffs. | Use a task-specific focused snapshot recipe with the changed files and minimum owner/router contracts; reserve full snapshots for broad architecture, stale-reference, or new-thread handoff work. | Pass if the Repomix command or plan uses a focused include set, or explicitly justifies why the task requires a full snapshot. |
-| REG-024 | A portability or adoption change edits [`repo.md`](./repo.md) or root routing. | Presents repository-local toolchain, host, path, identity, or generated-artifact details as copyable operating-contract requirements, or expands adoption guidance into a generic framework essay. | Distinguish copyable operating-contract patterns from repository-local replacements with compact copy, replace, delete, or keep-local boundaries. | Pass if adoption guidance separates portable contracts from local replacements and does not add new context hierarchy or broad framework prose. |
+| REG-024 | A portability or adoption change edits portable routing or local extension routing. | Presents repository-local toolchain, host, path, identity, or generated-artifact details as copyable operating-contract requirements, or expands adoption guidance into a generic framework essay. | Keep portable contracts free of local facts and route repository-specific replacements through the local extension entry point. | Pass if portable contracts contain only generic routing to local replacements and do not add new context hierarchy or broad framework prose. |
 
 ## Adding new cases
 

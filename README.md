@@ -89,8 +89,8 @@ metadata and these repository-defined fields:
 | Field    | `dotfiles_git_dirs`  | Comma-separated directory globs for scoped Git identity routing. |
 
 For identity boundaries, use the
-[Surface operating contract](./docs/context/surfaces.md) and the
-[Repository operating contract](./docs/context/repo.md).
+[repository surface map](./docs/repo/surfaces.md) and the
+[repository profile](./docs/repo/profile.md).
 
 ### Prepare your host
 
@@ -144,8 +144,8 @@ Replace `<linux-username>` with the WSL2 Ubuntu user that runs
 `chezmoi init --apply`.
 
 For WSL2 validation boundaries, use the
-[Surface operating contract](./docs/context/surfaces.md) and the
-[Repository operating contract](./docs/context/repo.md).
+[repository surface map](./docs/repo/surfaces.md) and the
+[repository validation contract](./docs/repo/validation.md).
 
 ### Run chezmoi init
 
@@ -205,9 +205,10 @@ Use these focused documents when the README isn't enough:
 
 | Document | Use it for |
 | --- | --- |
-| [Context architecture](./docs/context/README.md) | Repository context architecture and routing. |
-| [Repository operating contract](./docs/context/repo.md) | Source-state boundaries, behavior-sensitive repository boundaries, supported host posture, and validation baseline. |
-| [Surface operating contract](./docs/context/surfaces.md) | Chezmoi, mise, WSL2, identity, Neovim, and GitHub Actions surface routing, evidence, and validation boundaries. |
+| [Context operating contract](./docs/context/README.md) | Portable context architecture and task-to-context routing. |
+| [Repository-local extension](./docs/repo/README.md) | Repository-local profile, surfaces, validation, workflow exceptions, and Repomix routing. |
+| [Repository profile](./docs/repo/profile.md) | Source-state boundaries, supported host posture, generated artifact boundaries, and root document roles. |
+| [Repository surface map](./docs/repo/surfaces.md) | Chezmoi, mise, WSL2, identity, Neovim, and GitHub Actions surface routing, evidence, and validation boundaries. |
 
 External references:
 

@@ -1,10 +1,11 @@
 # Architecture documentation routing
 
 `ARCHITECTURE.md` is a high-level repository overview and teardown routing entry
-point. Detailed assistant context lives under
-[docs/context/](./docs/context/README.md).
+point. Portable assistant context lives under
+[docs/context/](./docs/context/README.md), and repository-local assistant
+context lives under [docs/repo/](./docs/repo/README.md).
 
-This document keeps durable repository context and routes readers to current
+This document keeps high-level repository context and routes readers to current
 context documents and source-state surfaces. It does not define the detailed
 chezmoi action graph, script trigger contracts, bootstrap and identity
 boundaries, mise task delegation, data ownership, or WSL2 convergence validation
@@ -28,8 +29,10 @@ matches the touched area.
 | Surface | Current routing |
 | :------ | :-------------- |
 | Context architecture and active context routing | [`docs/context/README.md`](./docs/context/README.md) |
-| Repository identity, source-state model, behavior boundaries, validation baseline, and documentation entry points | [`docs/context/repo.md`](./docs/context/repo.md) |
-| Behavior-sensitive surface routing for Chezmoi, mise, identity, WSL2, Neovim, and GitHub Actions | [`docs/context/surfaces.md`](./docs/context/surfaces.md) |
+| Repository-local extension entry point | [`docs/repo/README.md`](./docs/repo/README.md) |
+| Repository identity, source-state model, behavior boundaries, supported host posture, and documentation entry points | [`docs/repo/profile.md`](./docs/repo/profile.md) |
+| Behavior-sensitive surface routing for Chezmoi, mise, identity, WSL2, Neovim, and GitHub Actions | [`docs/repo/surfaces.md`](./docs/repo/surfaces.md) |
+| Local validation baseline and routing | [`docs/repo/validation.md`](./docs/repo/validation.md) |
 | Issue, PR, validation, merge, closure, Commander, and Worker procedures | [`docs/context/workflows.md`](./docs/context/workflows.md) |
 
 ## High-level repository model

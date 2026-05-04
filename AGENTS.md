@@ -10,12 +10,17 @@ workspace, deployment monorepo, or Terraform/OpenTofu repository. Make changes t
 repository source state, not rendered target files or generated context
 artifacts.
 
-## Mandatory context entry point
+## Mandatory context entry points
 
-Use [docs/context/README.md](./docs/context/README.md) as the operating-contract
-entry point and task-to-context router.
+Use [docs/context/README.md](./docs/context/README.md) as the portable
+operating-contract entry point and task-to-context router.
 
-Context operating-contract files:
+Use [docs/repo/README.md](./docs/repo/README.md) only when the task needs this
+repository's local identity, source-state model, supported host posture,
+behavior-sensitive surface map, validation baseline, workflow exceptions,
+Repomix paths, or root and adapter roles.
+
+Portable operating-contract files:
 
 - [Kernel](./docs/context/kernel.md) for instruction precedence, evidence
   precedence, context economy, scope control, unknown-state rules, and generated
@@ -23,17 +28,25 @@ Context operating-contract files:
 - [Protocols](./docs/context/protocols.md) for patch, command,
   validation-report, PR, commit, code-fence, heredoc, whitespace, and final
   newline output contracts.
-- [Repo](./docs/context/repo.md) for dotfiles source-state boundaries,
-  behavior-preserving constraints, supported host posture, root document roles,
-  and local validation baseline.
-- [Surfaces](./docs/context/surfaces.md) for behavior-sensitive surface routing.
-- [Workflows](./docs/context/workflows.md) for issue, thread, PR, validation,
-  merge, and closure procedure contracts.
-- [Repomix](./docs/context/repomix.md) for Repomix generation, consumption,
-  generated-output, focused snapshot, stale-snapshot rules, and tracked
-  instruction routing.
+- [Workflows](./docs/context/workflows.md) for reusable issue, thread, PR,
+  validation, merge, and closure procedure contracts.
+- [Repomix](./docs/context/repomix.md) for generic Repomix generation,
+  consumption, generated-output, focused snapshot, and stale-snapshot rules.
 - [Evals](./docs/context/evals.md) for regression cases covering predictable
   LLM-context failures.
+
+Repository-local extension files:
+
+- [Profile](./docs/repo/profile.md) for dotfiles identity, source-state
+  boundaries, behavior-preserving constraints, supported host posture, root
+  document roles, and local terms.
+- [Surfaces](./docs/repo/surfaces.md) for behavior-sensitive surface routing.
+- [Validation](./docs/repo/validation.md) for local validation baseline and
+  touched-source validation routing.
+- [Workflows](./docs/repo/workflows.md) for local workflow exceptions and
+  template routing.
+- [Repomix local routing](./docs/repo/repomix.md) for local Repomix paths,
+  recipes, and confirmation checks.
 
 ## Scope and evidence hierarchy
 
@@ -48,6 +61,8 @@ At the root manifest level:
 - current file contents, diffs, command output, CI evidence, and explicit
   maintainer confirmation establish repository state;
 - selected context operating contracts define reusable rules for the task;
+- repository-local extension files define replaceable local facts for this
+  repository;
 - generated snapshots are read-only evidence and lose to fresher direct evidence;
 - prior conversation, memory, old prompts, and previous assistant output never
   override active scope or current evidence.

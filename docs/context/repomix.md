@@ -2,45 +2,41 @@
 
 ## Purpose
 
-Define the Repomix generation and consumption contract for this repository.
+Define the portable Repomix generation and consumption contract for repository
+maintenance.
 
-This file is also the tracked Repomix instruction file configured by
-[`../../repomix.config.json`](../../repomix.config.json). Repomix snapshots must
-route LLMs through this operating contract without restoring the retired
-`docs/context/repomix/**` subtree.
+This file is suitable as a tracked Repomix instruction file. Local configuration
+paths, output paths, focused recipes, and generated-output confirmation checks
+belong in the repository-local extension layer.
 
 ## Responsibility boundary
 
-This file owns Repomix-specific guidance:
+This file owns generic Repomix-specific guidance:
 
-- tracked instruction file location;
-- generated output location;
 - generated-output read-only rules;
 - full and focused snapshot selection;
 - snapshot consumption rules;
 - stale snapshot conflict handling;
-- Repomix validation triggers and confirmation checks.
+- generic validation triggers.
 
 It does not own generic evidence rules ([`kernel.md`](./kernel.md)), output
-formats ([`protocols.md`](./protocols.md)), repository-wide source-state and
-validation baselines ([`repo.md`](./repo.md)), behavior-sensitive surface routing
-([`surfaces.md`](./surfaces.md)), workflow procedure
-([`workflows.md`](./workflows.md)), or regression cases ([`evals.md`](./evals.md)).
+formats ([`protocols.md`](./protocols.md)), local source-state boundaries, local
+validation baselines, local surface routing, workflow procedure
+([`workflows.md`](./workflows.md)), local Repomix paths or recipes, or
+regression cases ([`evals.md`](./evals.md)).
 
-## Tracked instruction and generated output paths
+Route local Repomix configuration and output facts through
+[`../repo/README.md`](../repo/README.md).
 
-| Item | Path | Rule |
-| --- | --- | --- |
-| Tracked instruction file | `docs/context/repomix.md` | This file is the configured instruction file. Keep Repomix instruction routing here. |
-| Default generated snapshot | `.context/repomix/repomix-dotfiles.xml` | Generated evidence only. Do not edit by hand. |
-| Focused generated snapshots | `.context/repomix/repomix-dotfiles-<scope>.xml` | Generated evidence only. Use descriptive scope names tied to the active issue or review. |
-| Ignored packed outputs | `repomix-*.xml`, `repomix-output.*`, `.context/repomix/**` | Keep generated output out of source documentation; `.context/repomix/.gitkeep` may remain tracked. |
+## Generated-output discipline
 
-Do not change Repomix output style, ignore patterns, security check, token
-counting, compression, file inclusion semantics, or generated output location
-unless the active issue explicitly scopes that change. When the tracked
-instruction file moves, change only `output.instructionFilePath` unless current
-evidence proves another config change is necessary.
+Repomix snapshots and packed outputs are generated evidence. Do not edit them by
+hand. Change source files or generation configuration, then regenerate only when
+validation requires fresh evidence.
+
+Do not change output style, ignore patterns, security checks, token counting,
+compression, file inclusion semantics, instruction-file routing, or generated
+output locations unless the active issue explicitly scopes that change.
 
 ## Generation contract
 
@@ -50,38 +46,19 @@ to answer the review question.
 
 | Review mode | Include set | Full snapshot boundary |
 | --- | --- | --- |
-| Working-tree patch review | Changed files from `git diff --name-only` plus owner contracts named by the active issue. | Do not use a full snapshot. |
-| Staged patch review | Changed files from `git diff --staged --name-only` plus owner contracts named by the active issue. | Do not use a full snapshot. |
-| Branch or PR review | Changed files from `git diff --name-only origin/main...HEAD` plus issue-named router files. | Do not use a full snapshot unless the PR changes repository-wide routing. |
-| Context-contract hardening | Touched `docs/context/**` files plus [`README.md`](./README.md), [`kernel.md`](./kernel.md), and [`evals.md`](./evals.md) when those files own the check. | Use a full snapshot only for broad architecture or stale-reference review. |
-| Behavior-sensitive source review | Touched source-state files plus [`surfaces.md`](./surfaces.md) and the matching repository contract. | Use a full snapshot only when the touched surface spans unknown repository areas. |
+| Working-tree patch review | Changed files plus owner contracts named by the active issue. | Do not use a full snapshot. |
+| Staged patch review | Staged files plus owner contracts named by the active issue. | Do not use a full snapshot. |
+| Branch or PR review | Branch-changed files plus issue-named router files. | Do not use a full snapshot unless the PR changes repository-wide routing. |
+| Context-contract hardening | Touched portable or local context files plus the smallest owner contracts needed for review. | Use a full snapshot only for broad architecture or stale-reference review. |
+| Behavior-sensitive source review | Touched source files plus the matching local surface route. | Use a full snapshot only when the touched surface spans unknown repository areas. |
 | New thread handoff or broad stale-reference scan | Repository-wide evidence. | Full snapshot allowed. |
 
 Use a full snapshot only when the task needs repository-wide structure, routing,
 context architecture review, broad stale-reference scanning, or fresh packed
-input for a new LLM thread:
+input for a new LLM thread.
 
-```zsh
-repomix
-```
-
-Use this focused working-tree recipe when a task is bounded to a known issue,
-PR, diff, or small file set:
-
-```zsh
-scope="issue225"
-changed_files="$(git diff --name-only | paste -sd, -)"
-router_files="AGENTS.md,docs/context/README.md,docs/context/kernel.md"
-include_paths="$(printf '%s,%s' "$changed_files" "$router_files" | tr ',' '\n' | sed '/^$/d' | sort -u | paste -sd, -)"
-repomix \
-  --include-diffs \
-  --include "$include_paths" \
-  -o ".context/repomix/repomix-dotfiles-${scope}.xml"
-```
-
-For staged changes, replace `git diff --name-only` with
-`git diff --staged --name-only`. For branch or PR review, replace it with the
-base comparison that matches the review question.
+Use the local extension layer for repository-specific commands, include paths,
+output paths, and confirmation checks.
 
 Do not use a stale broad snapshot to replace current file contents, command
 output, or the active diff.
@@ -105,62 +82,48 @@ When consuming a snapshot:
    it.
 
 Do not edit generated XML, packed output, rendered target state, or temporary
-snapshot files directly. Change source files or Repomix configuration, then
+snapshot files directly. Change source files or generation configuration, then
 regenerate evidence when validation requires it.
 
 ## Instruction routing for packed snapshots
 
-LLMs consuming a Repomix snapshot of this repository should use:
+LLMs consuming a Repomix snapshot should use:
 
-- [`../../AGENTS.md`](../../AGENTS.md) as the root context manifest;
-- [`README.md`](./README.md) as the context task-to-context router;
+- the repository's root context manifest when one exists;
+- [`README.md`](./README.md) as the portable context task-to-context router;
 - [`kernel.md`](./kernel.md) for instruction precedence, evidence precedence,
   context economy, scope control, unknown-state rules, current-file
   requirements, and generated artifact discipline;
 - [`protocols.md`](./protocols.md) for patch, command, validation-report, PR,
   commit, code-fence, heredoc, whitespace, and final-newline output contracts;
-- [`repo.md`](./repo.md) for dotfiles source-state boundaries,
-  behavior-preserving constraints, supported host posture, root document roles,
-  and local validation baseline;
-- [`surfaces.md`](./surfaces.md) for behavior-sensitive surface routing;
-- [`workflows.md`](./workflows.md) for issue, thread, PR, validation, merge,
-  closure, checkbox, rollback, and parent-child sequencing procedure;
+- [`workflows.md`](./workflows.md) for reusable issue, thread, PR, validation,
+  merge, closure, checkbox, rollback, and parent-child sequencing procedure;
 - this file for Repomix generation, consumption, generated-output, focused
   snapshot, and stale-snapshot rules;
 - [`evals.md`](./evals.md) for regression cases covering predictable LLM-context
-  failures.
+  failures;
+- the repository-local extension route for local identity, surfaces, validation,
+  workflow exceptions, and Repomix paths.
 
-Preserve existing provisioning, identity, editor, shell, Git, mise, Homebrew,
-and GitHub Actions behavior unless the assigned issue explicitly scopes a
-behavior change. Do not import assumptions from reference repositories unless
+Preserve existing repository behavior unless the assigned issue explicitly scopes
+a behavior change. Do not import assumptions from reference repositories unless
 local repository evidence and the assigned issue require them.
 
 ## Validation triggers
 
-Run `repomix` when a change affects any of these surfaces:
+Run Repomix generation when a change affects any of these surfaces:
 
 - assistant guidance or root context routing;
-- `docs/context/**` operating-contract routing;
+- portable or local operating-contract routing;
 - Repomix generation or consumption guidance;
-- `repomix.config.json` instruction path or output routing;
+- instruction path or output routing;
 - generated snapshot routing or stale-reference behavior.
 
 For documentation-only changes that do not change setup, toolchain, rendered
 config, task behavior, health-check behavior, scripts, CI semantics, versions,
-dependencies, or lockfiles, `mise run doctor` is not required. Report it as not
-run for that reason instead of marking it complete.
-
-## Confirmation checks
-
-When Repomix routing changes, validation should confirm:
-
-- `repomix.config.json` points `output.instructionFilePath` at the intended
-  tracked instruction file;
-- generated output remains under `.context/repomix/**`;
-- generated output was regenerated rather than hand-edited;
-- stale references to retired Repomix guidance paths were removed or explicitly
-  justified as legacy examples;
-- Markdown links to removed Repomix guidance files no longer exist.
+dependencies, or lockfiles, local health checks are not required unless the
+local extension states otherwise. Report skipped checks with their reason instead
+of marking them complete.
 
 Report validation as evidence. Do not claim Repomix generation, stale-reference
 scans, Markdown link validation, local checks, or CI passed without command

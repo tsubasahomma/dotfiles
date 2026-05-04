@@ -2,9 +2,8 @@
 
 ## Purpose
 
-Define the compact local procedure contract for issue, thread, PR, validation,
-merge, closure, checkbox, rollback, and parent-child sequencing workflows in
-this repository.
+Define the reusable procedure contract for issue, thread, PR, validation, merge,
+closure, checkbox, rollback, and parent-child sequencing workflows.
 
 Load this file when a task changes or evaluates workflow procedure. Use active
 issue, PR, command, CI, and current repository evidence before making workflow
@@ -12,27 +11,27 @@ completion claims.
 
 ## Responsibility boundary
 
-This file owns repository workflow procedure. It does not own generic evidence
-and scope rules ([`kernel.md`](./kernel.md)), output formats
-([`protocols.md`](./protocols.md)), repository-wide source-state and validation
-baselines ([`repo.md`](./repo.md)), behavior-sensitive surface validation
-routing ([`surfaces.md`](./surfaces.md)), or Repomix procedure
-([`repomix.md`](./repomix.md)).
+This file owns reusable workflow procedure. It does not own generic evidence and
+scope rules ([`kernel.md`](./kernel.md)), output formats
+([`protocols.md`](./protocols.md)), local repository validation baselines, local
+surface routing, local templates, local CI semantics, Repomix procedure
+([`repomix.md`](./repomix.md)), or regression cases ([`evals.md`](./evals.md)).
 
-Do not change GitHub Actions workflows, issue templates, pull request templates,
-repository behavior, generated artifacts, scripts, tasks, versions,
-dependencies, lockfiles, or rendered target state from workflow procedure work
-unless the active issue explicitly scopes that change.
+Repository-local workflow exceptions belong in the local extension layer. Route
+to [`../repo/README.md`](../repo/README.md) when local templates, branch rules,
+validation baselines, surface-specific evidence, or adapter roles affect the
+workflow decision.
+
+Do not change workflow definitions, templates, repository behavior, generated
+artifacts, scripts, tasks, versions, dependencies, lockfiles, or rendered target
+state from workflow procedure work unless the active issue explicitly scopes that
+change.
 
 ## Issue scope and parent-child sequencing
 
 Issues are scope contracts. A scoped issue should define the goal, background,
 in-scope work, out-of-scope work, acceptance criteria, validation requirements,
 constraints, risks, references, and notes.
-
-Use the repository issue template at
-[`../../.github/ISSUE_TEMPLATE/change-request.yml`](../../.github/ISSUE_TEMPLATE/change-request.yml)
-as shape evidence. Do not edit the template from workflow procedure work.
 
 For parent issue programs:
 
@@ -70,9 +69,8 @@ cleanup work, a Worker should:
 1. inspect current issue, PR, repository, and generated-snapshot evidence needed
    for the assigned scope;
 2. classify candidate guidance by target owner: this file, [`kernel.md`](./kernel.md),
-   [`protocols.md`](./protocols.md), [`repo.md`](./repo.md),
-   [`surfaces.md`](./surfaces.md), [`repomix.md`](./repomix.md), or out of
-   scope;
+   [`protocols.md`](./protocols.md), [`repomix.md`](./repomix.md), local
+   extension files, or out of scope;
 3. identify the smallest safe file list;
 4. route shared rules to their owning operating contracts instead of duplicating
    them;
@@ -89,9 +87,9 @@ code-fence, whitespace, and final-newline output contracts.
 A PR should be a reviewable unit of change that explains what changed, why it
 changed, how it was validated, what risks remain, and which issue it advances.
 
-Use the repository PR template at
-[`../../.github/pull_request_template.md`](../../.github/pull_request_template.md)
-as structure evidence. Do not edit the template from workflow procedure work.
+Use the local extension layer for the repository's PR template location and any
+repository-specific issue-linking requirements. Do not edit templates from
+workflow procedure work unless the active issue explicitly scopes that change.
 
 A useful PR body covers Summary, Why, Changes, Validation, Risk and rollback,
 Review notes, Out of scope, and Linked issue. Remove template comments from the
@@ -122,29 +120,27 @@ Keep validation states separate:
 | Failed | The check failed and the output or retry evidence is reported. |
 | Pending | The result is not yet available, such as remote CI after PR creation. |
 
-Use [`repo.md`](./repo.md) for the repository-wide validation baseline and the
-documentation-only `mise run doctor` boundary. Use [`surfaces.md`](./surfaces.md)
-for behavior-sensitive validation routing. Use [`kernel.md`](./kernel.md) for
-generic validation-claim discipline.
+Use [`kernel.md`](./kernel.md) for generic validation-claim discipline. Use the
+local extension layer for repository-wide validation baselines, documentation-only
+health-check boundaries, and behavior-sensitive validation routing.
 
-For documentation-only context or workflow changes, report `mise run doctor` as
+For documentation-only context or workflow changes, report local health checks as
 not run when the PR does not change setup, toolchain, rendered config, task
 behavior, health-check behavior, scripts, CI semantics, versions, dependencies,
-or lockfiles. Do not mark it complete without evidence.
+or lockfiles. Do not mark those checks complete without evidence.
 
-Local validation and remote CI answer different questions. Do not infer GitHub
-Actions success from local checks, and do not infer local WSL2, 1Password, SSH
-agent, Windows interop, user systemd, or workstation convergence from GitHub
-Actions CI.
+Local validation and remote CI answer different questions. Do not infer remote CI
+success from local checks, and do not infer local workstation convergence from
+remote CI.
 
 ## Merge, checkbox, and closure workflow
 
 Before recommending merge, confirm that the PR scope matches the linked issue or
 PR slice, required review is complete or explicitly waived, required local
-validation has evidence, required GitHub Actions checks have passed when CI is
-required, linked issue wording is correct, generated artifacts were not
-hand-edited, out-of-scope findings are captured separately, and acceptance
-criteria are not marked complete without evidence.
+validation has evidence, required remote checks have passed when required, linked
+issue wording is correct, generated artifacts were not hand-edited,
+out-of-scope findings are captured separately, and acceptance criteria are not
+marked complete without evidence.
 
 Do not recommend merge only because a patch applies cleanly.
 
@@ -159,9 +155,9 @@ or applied changes completed the issue, which validation evidence supports
 closure, which work was intentionally excluded, and which follow-up findings
 remain outside the closed issue.
 
-If a PR was closed without GitHub marking it as merged, do not call the PR
-merged. Verify whether the corresponding changes are present in current `main`
-file evidence and state that distinction.
+If a PR was closed without the hosting platform marking it as merged, do not call
+the PR merged. Verify whether the corresponding changes are present in current
+main-branch file evidence and state that distinction.
 
 ## Post-merge comparison and rollback
 
