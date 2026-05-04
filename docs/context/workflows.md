@@ -29,9 +29,19 @@ change.
 
 ## Issue scope and parent-child sequencing
 
-Issues are scope contracts. A scoped issue should define the goal, background,
-in-scope work, out-of-scope work, acceptance criteria, validation requirements,
-constraints, risks, references, and notes.
+Issues are artifact-specific scope records, not interchangeable templates. Use
+[`protocols.md`](./protocols.md) for required artifact-body schemas.
+
+Parent issues are directional ledgers for multi-step programs. They should define
+the durable program contract, child policy, validation policy, and completion
+ledger without becoming prewritten implementation plans.
+
+Child issues are executable scope contracts. They should define the bounded
+Worker or PR goal, current defect, required changes, out-of-scope work,
+acceptance criteria, validation required, deliverables, and references.
+
+Acceptance criteria describe required outcomes. Validation required describes how
+those outcomes must be proven. Do not merge them into one checkbox list.
 
 For parent issue programs:
 
@@ -43,10 +53,9 @@ For parent issue programs:
 - close a child issue only when its own acceptance criteria are complete;
 - close the parent only after parent-level acceptance criteria are complete.
 
-Use `Refs #<issue-number>` for partial progress. Use `Closes #<issue-number>`
-only when merging or applying the change should close that issue. A completing
-child PR should normally use `Closes #<child-issue-number>` and
-`Refs #<parent-issue-number>`.
+Use `Refs #<parent-issue-number>` for parent ledgers, partial progress, or
+related evidence. Use `Closes #<child-issue-number>` only when merging or
+applying the change should close that child issue. A completing child PR should normally include both references.
 
 ## Thread roles
 
@@ -91,9 +100,10 @@ Use the local extension layer for the repository's PR template location and any
 repository-specific issue-linking requirements. Do not edit templates from
 workflow procedure work unless the active issue explicitly scopes that change.
 
-A useful PR body covers Summary, Why, Changes, Validation, Risk and rollback,
-Review notes, Out of scope, and Linked issue. Remove template comments from the
-final body. Tie validation checkboxes to actual evidence, not expected success.
+A useful PR body is an evidence packet that covers Summary, Scope, Changes,
+Validation, Risk, Rollback, Review notes, Out of scope, and Linked issues.
+Remove template comments from the final body. Tie validation checkboxes to actual
+evidence, not expected success.
 
 Use Conventional Commits for local commits and squash messages, with a scope
 that matches the touched surface and does not imply untouched behavior. Keep PR
@@ -110,24 +120,26 @@ artifacts, or manual cleanup are involved.
 
 ## Validation reporting
 
-Keep validation states separate:
+Validation reports are evidence records. Keep validation states separate:
 
 | State | Workflow meaning |
 | --- | --- |
-| Required | The check is expected for the change but has not been evidenced. |
-| Completed | Command output, exit status, CI evidence, inspected state, or explicit maintainer confirmation exists. |
-| Skipped | The check was not run and the reason is stated. |
+| Passed | Command output, exit status, CI evidence, or inspected state proves the check passed. |
 | Failed | The check failed and the output or retry evidence is reported. |
 | Pending | The result is not yet available, such as remote CI after PR creation. |
+| Skipped | The check was not run and the reason is stated. |
+| Not required | The check does not apply to the change and the reason is stated. |
+| Maintainer-confirmed | The maintainer explicitly confirmed the result or applicability. |
 
 Use [`kernel.md`](./kernel.md) for generic validation-claim discipline. Use the
 local extension layer for repository-wide validation baselines, documentation-only
 health-check boundaries, and behavior-sensitive validation routing.
 
 For documentation-only context or workflow changes, report local health checks as
-not run when the PR does not change setup, toolchain, rendered config, task
-behavior, health-check behavior, scripts, CI semantics, versions, dependencies,
-or lockfiles. Do not mark those checks complete without evidence.
+`Not required` when they do not apply, or `Skipped` when they apply but were not
+run. Do not mark setup, toolchain, rendered config, task behavior, health-check
+behavior, scripts, CI semantics, versions, dependencies, or lockfile checks as
+`Passed` without evidence.
 
 Local validation and remote CI answer different questions. Do not infer remote CI
 success from local checks, and do not infer local workstation convergence from

@@ -15,6 +15,30 @@ boundaries, surface-specific validation details, issue topology decisions, merge
 procedure, generated artifact routing, or historical examples that have not been
 converted into reusable rules.
 
+## Artifact schema taxonomy
+
+Treat repository-facing deliverables as distinct artifact types. Do not reuse one
+schema as a substitute for another.
+
+| Artifact | Role | Required schema |
+| --- | --- | --- |
+| Parent issue | Directional ledger for a multi-step program, not an implementation plan. | `Goal`, `Problem`, `Non-goals`, `Adversarial operating stance`, `Design rules`, `Ownership model`, `Artifact schemas`, `Child issue policy`, `Acceptance criteria`, `Validation policy`, `Completion ledger`, and `References`. |
+| Child issue | Executable scope contract for one bounded Worker task or PR. | `Goal`, `Current defect`, `Required changes`, `Out of scope`, `Acceptance criteria`, `Validation required`, `Deliverables`, and `References`. |
+| Pull request body | Evidence packet for review, validation, risk, rollback, scope, and issue-linking state. | `Summary`, `Scope`, `Changes`, `Validation`, `Risk`, `Rollback`, `Review notes`, `Out of scope`, and `Linked issues`. |
+| Commit message | Durable history record for one atomic repository change. | Conventional Commit-compatible subject, optional body for non-trivial rationale, and no `Closes`, `Fixes`, `Resolves`, or `Refs` issue references. |
+| Validation report | Evidence record for checks, states, evidence, and notes. | `Check`, `State`, `Evidence`, and `Notes` fields with the approved validation states. |
+| Command snippet | Executable artifact for copy-paste-safe operator action. | Quadruple-backtick outer fence for reusable multiline commands, zsh-safe command text unless stated otherwise, file-backed multiline bodies, quoted heredocs, durable placeholders, and no explanatory prose inside command blocks. |
+
+Acceptance criteria describe required outcomes. Validation required describes how
+those outcomes must be proven. Do not merge them into one checkbox list.
+
+Portable examples must use durable placeholders such as
+`#<parent-issue-number>`, `#<child-issue-number>`, `<branch-name>`,
+`<label-name>`, and `<artifact-file>`. Do not use concrete repository names,
+issue numbers, PR numbers, labels, branch names, repository-local paths, or
+issue-specific placeholders in portable examples unless the example is explicitly
+repository-local.
+
 ## Output format selection
 
 Choose the smallest safe deliverable:
@@ -235,21 +259,23 @@ Do not use broad repository rewrites for unclear or discretionary changes.
 
 ## Validation report contract
 
-Keep validation states distinct:
+Validation reports are evidence records, not checkbox-only completion claims.
+Keep validation states aligned to this vocabulary:
 
 | State | Meaning |
 | --- | --- |
-| Required | The check is expected for this change but has not yet been evidenced. |
-| Completed | Command output, exit status, CI evidence, inspected state, or maintainer confirmation exists. |
-| Skipped | The check was not run and the reason is stated. |
+| Passed | Command output, exit status, CI evidence, or inspected state proves the check passed. |
 | Failed | The check failed and the output or retry evidence is reported. |
 | Pending | The result is not yet available, such as remote CI after PR creation. |
+| Skipped | The check was not run and the reason is stated. |
+| Not required | The check does not apply to the change and the reason is stated. |
+| Maintainer-confirmed | The maintainer explicitly confirmed the result or applicability. |
 
 Use a compact validation report schema after patch application:
 
 | Check | State | Evidence | Notes |
 | --- | --- | --- | --- |
-| `<command or evidence>` | Required, Completed, Skipped, Failed, or Pending | Exact output, exit code, CI link, inspected state, or maintainer confirmation | Reason for skip, failure, retry, or pending state. |
+| `<command or evidence>` | `Passed`, `Failed`, `Pending`, `Skipped`, `Not required`, or `Maintainer-confirmed` | Exact output, exit code, CI link, inspected state, or maintainer confirmation | Reason for skip, non-applicability, failure, retry, or pending state. |
 
 Separate baseline validation from change-specific validation. Start from the
 repository baseline that matches the touched files, then add checks required by
@@ -300,23 +326,24 @@ only scope does not itself complete validation.
 
 ## Pull request output contract
 
-A pull request body should follow the repository template when relevant and
-include:
+A pull request body is an evidence packet. It should follow the repository
+template when relevant and include:
 
 - Summary;
-- Why;
+- Scope;
 - Changes;
 - Validation;
-- Risk and rollback;
+- Risk;
+- Rollback;
 - Review notes;
 - Out of scope;
-- Linked issue.
+- Linked issues.
 
 Remove template comments from final PR text. Tie validation checkboxes to actual
 evidence. Do not check a PR template validation box unless the command output,
 exit status, CI evidence, inspected state, or explicit maintainer confirmation
-exists. Mark unavailable remote checks as pending, not complete. Mark skipped
-checks with the reason.
+exists. Mark unavailable remote checks as `Pending`, not `Passed`. Mark skipped
+checks as `Skipped` with the reason.
 
 PR bodies own `Closes` and `Refs` issue references. Use
 `Closes #<child-issue-number>` only when merging the PR should close the child
