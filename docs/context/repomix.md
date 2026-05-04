@@ -44,7 +44,20 @@ evidence proves another config change is necessary.
 
 ## Generation contract
 
-Use a full snapshot when the task needs repository-wide structure, routing,
+Use a focused snapshot by default for scoped work. A focused snapshot should
+include the changed files plus the smallest router or owner-contract files needed
+to answer the review question.
+
+| Review mode | Include set | Full snapshot boundary |
+| --- | --- | --- |
+| Working-tree patch review | Changed files from `git diff --name-only` plus owner contracts named by the active issue. | Do not use a full snapshot. |
+| Staged patch review | Changed files from `git diff --staged --name-only` plus owner contracts named by the active issue. | Do not use a full snapshot. |
+| Branch or PR review | Changed files from `git diff --name-only origin/main...HEAD` plus issue-named router files. | Do not use a full snapshot unless the PR changes repository-wide routing. |
+| Context-contract hardening | Touched `docs/context/**` files plus [`README.md`](./README.md), [`kernel.md`](./kernel.md), and [`evals.md`](./evals.md) when those files own the check. | Use a full snapshot only for broad architecture or stale-reference review. |
+| Behavior-sensitive source review | Touched source-state files plus [`surfaces.md`](./surfaces.md) and the matching repository contract. | Use a full snapshot only when the touched surface spans unknown repository areas. |
+| New thread handoff or broad stale-reference scan | Repository-wide evidence. | Full snapshot allowed. |
+
+Use a full snapshot only when the task needs repository-wide structure, routing,
 context architecture review, broad stale-reference scanning, or fresh packed
 input for a new LLM thread:
 
@@ -52,21 +65,26 @@ input for a new LLM thread:
 repomix
 ```
 
-Use a focused snapshot when the task is bounded to a known issue, PR, diff, or
-small file set. Prefer the changed files plus necessary router files over packing
-unrelated source state:
+Use this focused working-tree recipe when a task is bounded to a known issue,
+PR, diff, or small file set:
 
 ```zsh
+scope="issue225"
 changed_files="$(git diff --name-only | paste -sd, -)"
+router_files="AGENTS.md,docs/context/README.md,docs/context/kernel.md"
+include_paths="$(printf '%s,%s' "$changed_files" "$router_files" | tr ',' '\n' | sed '/^$/d' | sort -u | paste -sd, -)"
 repomix \
   --include-diffs \
-  --include "$changed_files" \
-  -o .context/repomix/repomix-dotfiles-<scope>.xml
+  --include "$include_paths" \
+  -o ".context/repomix/repomix-dotfiles-${scope}.xml"
 ```
 
-When generating focused evidence for staged changes, use the staged or branch
-diff that matches the review question. Do not use a stale broad snapshot to
-replace current file contents, command output, or the active diff.
+For staged changes, replace `git diff --name-only` with
+`git diff --staged --name-only`. For branch or PR review, replace it with the
+base comparison that matches the review question.
+
+Do not use a stale broad snapshot to replace current file contents, command
+output, or the active diff.
 
 ## Consumption contract
 

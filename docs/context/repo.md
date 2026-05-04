@@ -32,6 +32,23 @@ monorepo, Terraform/OpenTofu repository, or service runtime.
 Do not import architecture assumptions from reference repositories unless local
 repository evidence and the active issue explicitly require them.
 
+## Option A+ portability and adoption boundaries
+
+Option A+ is a compact operating-contract pattern, not a generic framework manual.
+Adopt it by separating reusable contract shape from repository-local replacements.
+
+| Adoption category | Rule |
+| --- | --- |
+| Copy | The eight-file operating-contract shape, minimum-sufficient-context routing, evidence discipline, output-boundary discipline, and regression-case schema. |
+| Replace | Repository identity, editable source boundaries, behavior-sensitive surface map, supported host posture, validation baseline, and root or adapter document roles. |
+| Delete | Personal workstation assumptions, local path names, host-specific tooling, identity-provider details, generated artifact paths, and examples that do not apply to the adopting repository. |
+| Keep local | This repository's chezmoi source-state paths, mise task model, 1Password and WSL2 boundaries, Repomix output location, and behavior-preserving constraints. |
+
+Do not copy repository-local details into another repository as if they were
+portable Option A+ requirements. Do not expand this file into adoption prose; add
+only boundaries that prevent copyable contracts from being confused with local
+replacements.
+
 ## Source state and editable boundaries
 
 Edit repository source state, not rendered target state.

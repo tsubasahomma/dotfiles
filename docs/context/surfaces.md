@@ -33,6 +33,18 @@ Do not restore retired per-surface local files or registry files for continuity.
 Preserve their durable requirements here, then inspect current source state,
 rendered output, command output, or CI evidence when the task needs more detail.
 
+## Compact surface discipline
+
+Keep this file as a routing map. Do not turn it into surface documentation.
+
+| Rule | Requirement |
+| --- | --- |
+| Row count | Use one row per surface. Add another row only when the active issue proves one row cannot carry a durable routing requirement. |
+| Row content | Limit rows to read triggers, never-do constraints, required evidence categories, validation routing, and deep source links. |
+| Examples | Do not add examples unless they are necessary to disambiguate surface routing. Put recurring failure examples in [`evals.md`](./evals.md) and task-specific examples in active issues or PRs. |
+| Details | Keep durable surface details in current source evidence, active issues, or later scoped changes. Do not encode manuals here. |
+| Expansion | Prefer tightening an existing row over adding sections, subsections, or new surface hierarchy. |
+
 ## Surface map
 
 | Surface | Read when | Never do | Required evidence | Validation routing | Deep source links |
