@@ -98,7 +98,7 @@ when the changes are part of one reviewable unit. Use a predictable lowercase
 filename tied to the active issue and scope, such as:
 
 ```text
-issue223-output-protocols.patch
+<issue-number>-output-protocols.patch
 <issue-number>-<short-scope>.patch
 ```
 
@@ -124,7 +124,7 @@ Use file-backed bodies for GitHub CLI issue and PR creation instead of embedding
 Markdown in shell arguments:
 
 ```zsh
-issue_number="223"
+issue_number="<issue-number>"
 issue_dir="/tmp/issue${issue_number}"
 pr_body_file="$issue_dir/pr_body.md"
 mkdir -p "$issue_dir"
@@ -136,8 +136,8 @@ cat > "$pr_body_file" <<'EOF'
 
 ## Linked issue
 
-Closes #223
-Refs #217
+Closes #<child-issue-number>
+Refs #<parent-issue-number>
 EOF
 
 gh pr create \
@@ -148,7 +148,7 @@ gh pr create \
 Use the same file-backed pattern for issue creation when the body is multiline:
 
 ```zsh
-issue_number="223"
+issue_number="<issue-number>"
 issue_dir="/tmp/issue${issue_number}"
 issue_body_file="$issue_dir/issue_body.md"
 mkdir -p "$issue_dir"
@@ -216,7 +216,7 @@ run a few direct commands and do not include functions, loops, heredocs, embedde
 interpreters, high-output command sets, or complex quoting:
 
 ```zsh
-issue_dir="/tmp/issue223"
+issue_dir="/tmp/issue<issue-number>"
 validation_log="$issue_dir/validation_results.txt"
 validation_failed=0
 mkdir -p "$issue_dir"
@@ -308,7 +308,7 @@ docs(context): harden output protocols
 Define file-backed patch, command, PR, commit, and validation output
 boundaries for repository deliverables.
 
-Refs: #223
+Refs: #<issue-number>
 EOF
 ```
 

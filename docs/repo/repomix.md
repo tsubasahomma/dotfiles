@@ -39,7 +39,7 @@ Use this focused working-tree recipe when a task is bounded to a known issue,
 PR, diff, or small file set:
 
 ```zsh
-scope="issue230"
+scope="issue-or-review-scope"
 changed_files="$(git diff --name-only | paste -sd, -)"
 router_files="AGENTS.md,docs/context/README.md,docs/context/kernel.md,docs/repo/README.md"
 include_paths="$(printf '%s,%s' "$changed_files" "$router_files" | tr ',' '\n' | sed '/^$/d' | sort -u | paste -sd, -)"
