@@ -111,6 +111,10 @@ Reusable command snippets should be complete, copyable, and written in English.
 Use heredocs for multi-line issue bodies, PR bodies, commit messages, validation
 logs, or file creation commands.
 
+Reusable multiline command blocks must use quadruple-backtick outer fences. This
+keeps nested Markdown fences, heredocs, and GitHub body content copy-paste-safe
+across long conversations.
+
 Heredoc rules:
 
 - use single-quoted delimiters to prevent shell interpolation;
@@ -120,59 +124,101 @@ Heredoc rules:
 - avoid direct-paste interactive terminal delivery for long scripts, functions,
   loops, multiple heredocs, mixed shell/Python, or high-output bundles.
 
-Use file-backed bodies for GitHub CLI issue and PR creation instead of embedding
-Markdown in shell arguments:
+Use file-backed bodies for multiline GitHub CLI issue and PR commands instead of
+embedding Markdown in shell arguments. Reusable multiline `gh issue create`,
+`gh issue edit`, and `gh pr create` commands must use `--body-file`. Do not emit
+inline multiline `--body` in reusable GitHub CLI commands.
 
-```zsh
-issue_number="<issue-number>"
-issue_dir="/tmp/issue${issue_number}"
+Use this issue creation pattern for multiline issue bodies:
+
+````zsh
+issue_dir="$(mktemp -d)"
+issue_body_file="$issue_dir/issue_body.md"
+
+cat > "$issue_body_file" <<'EOF'
+## Goal
+
+...
+
+## References
+
+- Parent issue: #<parent-issue-number>
+EOF
+
+gh issue create \
+  --title "[Change]: <short-scope>" \
+  --assignee "@me" \
+  --body-file "$issue_body_file"
+````
+
+Use this issue edit pattern for multiline issue body updates:
+
+````zsh
+issue_number="<child-issue-number>"
+issue_dir="$(mktemp -d)"
+issue_body_file="$issue_dir/issue_body.md"
+
+cat > "$issue_body_file" <<'EOF'
+## Goal
+
+...
+
+## References
+
+- Parent issue: #<parent-issue-number>
+EOF
+
+gh issue edit "$issue_number" \
+  --body-file "$issue_body_file"
+````
+
+Use this PR creation pattern for multiline PR bodies:
+
+````zsh
+branch_name="<branch-name>"
+pr_title="<pr-title>"
+issue_dir="$(mktemp -d)"
 pr_body_file="$issue_dir/pr_body.md"
-mkdir -p "$issue_dir"
 
 cat > "$pr_body_file" <<'EOF'
 ## Summary
 
 ...
 
-## Linked issue
+## Linked issues
 
 Closes #<child-issue-number>
 Refs #<parent-issue-number>
 EOF
 
 gh pr create \
-  --title "docs(context): harden output protocols" \
+  --head "$branch_name" \
+  --title "$pr_title" \
+  --assignee "@me" \
   --body-file "$pr_body_file"
-```
+````
 
-Use the same file-backed pattern for issue creation when the body is multiline:
+Do not use `gh pr create --fill` for schema-governed PRs. A generated PR body is
+a review artifact and must not be replaced by commit-derived autofill text.
 
-```zsh
-issue_number="<issue-number>"
-issue_dir="/tmp/issue${issue_number}"
-issue_body_file="$issue_dir/issue_body.md"
-mkdir -p "$issue_dir"
+Generated issue and PR creation commands must include `--assignee "@me"` by
+default unless the active task explicitly opts out.
 
-cat > "$issue_body_file" <<'EOF'
-## Goal
+Use labels only when the active task provides repository label evidence or the
+command includes a preflight check. Portable examples must use placeholders such
+as `<label-name>` instead of concrete label names:
 
-...
-EOF
-
-gh issue create \
-  --title "[Change]: Harden output protocols for repository deliverables" \
-  --body-file "$issue_body_file"
-```
+````zsh
+label_name="<label-name>"
+gh label list --limit 1000 --json name --jq '.[].name' | \
+  grep -Fx -- "$label_name" >/dev/null
+````
 
 Use names such as `issue_dir`, `issue_body_file`, `pr_body_file`,
 `commit_message_file`, `validation_log`, `validation_failed`, and
 `check_exit_code` for reusable snippets. Avoid shell variable names that are
 special or ambiguous in common operator shells, including `status`, `path`,
 `body`, `commands`, `options`, and `reply`.
-
-For repository-specific GitHub CLI commands, include required assignees and only
-labels supported by current repository evidence. If label evidence is missing,
-say so instead of inventing labels.
 
 ## Guarded script contract
 
@@ -215,8 +261,8 @@ validation bundles may use brace-group redirection to a log file when they only
 run a few direct commands and do not include functions, loops, heredocs, embedded
 interpreters, high-output command sets, or complex quoting:
 
-```zsh
-issue_dir="/tmp/issue<issue-number>"
+````zsh
+issue_dir="$(mktemp -d)"
 validation_log="$issue_dir/validation_results.txt"
 validation_failed=0
 mkdir -p "$issue_dir"
@@ -239,7 +285,7 @@ mkdir -p "$issue_dir"
 
 printf 'Validation log: %s\n' "$validation_log"
 exit "$validation_failed"
-```
+````
 
 For non-trivial validation runners, keep the same evidence model but output a
 downloadable `.sh` runner by default. Use this default for shell functions, loops,
@@ -272,13 +318,15 @@ exit status, CI evidence, inspected state, or explicit maintainer confirmation
 exists. Mark unavailable remote checks as pending, not complete. Mark skipped
 checks with the reason.
 
-Use `Closes #<issue-number>` only when merging the PR should close the issue. Use
-`Refs #<issue-number>` for partial progress, parent issues, or related evidence.
-A completing child PR should normally use `Closes #<child-issue-number>` and
-`Refs #<parent-issue-number>` only after the child acceptance criteria are met.
+PR bodies own `Closes` and `Refs` issue references. Use
+`Closes #<child-issue-number>` only when merging the PR should close the child
+issue. Use `Refs #<parent-issue-number>` for parent ledgers, partial progress, or
+related evidence. A completing child PR should include both only after the child
+acceptance criteria are met.
 
 Output PR body text and `gh pr create` commands as separate reusable artifacts.
-Prefer `gh pr create --body-file` over inline `--body` for multiline Markdown.
+Use `gh pr create --body-file` for multiline Markdown and do not use inline
+multiline `--body`. Do not use `gh pr create --fill` for schema-governed PRs.
 
 Do not claim merge readiness, CI success, review approval, or issue completion
 without evidence.
@@ -298,22 +346,21 @@ behavior. Keep the summary imperative, specific, and concise. Use the body for
 why the change is needed, important trade-offs, and evidence-backed validation
 only when that evidence exists.
 
-For multiline commit messages, prefer `git commit -F` with a single-quoted
+For non-trivial commit messages, use `git commit -F` with a single-quoted
 heredoc and keep the commit command separate from PR commands:
 
-```zsh
+````zsh
 git commit -F - <<'EOF'
-docs(context): harden output protocols
+docs(context): <short-scope>
 
-Define file-backed patch, command, PR, commit, and validation output
-boundaries for repository deliverables.
-
-Refs: #<issue-number>
+Define the durable command-emission contract for the scoped documentation
+change.
 EOF
-```
+````
 
-Prefer issue references such as `Refs: #<issue-number>` in commit messages
-unless the maintainer explicitly asks for closing keywords there.
+Keep commit messages issue-reference-free. Do not include `Closes`, `Fixes`,
+`Resolves`, or `Refs` issue references in commit messages. PR bodies own issue
+closure and non-closing references.
 
 ## Non-patch deliverables
 
