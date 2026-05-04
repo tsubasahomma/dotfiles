@@ -5,29 +5,29 @@ body:
   - type: markdown
     attributes:
       value: |
-        Use this form for scoped dotfiles repository changes. Focus on the
-        desired outcome, boundaries, constraints, and validation evidence.
+        Use this form for scoped repository changes. Keep the issue body as a
+        child issue executable scope contract, not an operating manual.
   - type: textarea
     id: goal
     attributes:
       label: Goal
       description: Describe the desired end state in one or two sentences.
-      placeholder: Establish a repository-wide entry point for...
+      placeholder: Define a durable boundary for...
     validations:
       required: true
   - type: textarea
-    id: background
+    id: current_defect
     attributes:
-      label: Background
-      description: Explain why this change is needed and note prior decisions.
-      placeholder: The current repository needs...
+      label: Current defect
+      description: Describe the current problem, ambiguity, or drift risk.
+      placeholder: The current state still allows...
     validations:
       required: true
   - type: textarea
-    id: in_scope
+    id: required_changes
     attributes:
-      label: In scope
-      description: List what will be done.
+      label: Required changes
+      description: List the required changes for this scope.
       placeholder: |
         - Add...
         - Update...
@@ -37,69 +37,53 @@ body:
     id: out_of_scope
     attributes:
       label: Out of scope
-      description: List what will not be done.
+      description: List work that this issue intentionally excludes.
       placeholder: |
         - Do not change provisioning behavior.
-        - Do not introduce new dependencies.
+        - Do not change GitHub Actions workflow semantics.
     validations:
       required: true
   - type: textarea
     id: acceptance_criteria
     attributes:
       label: Acceptance criteria
-      description: Define objective, observable, and independent conditions.
+      description: Define required outcomes. Do not use checkbox-only completion as validation evidence.
       placeholder: |
-        - [ ] The repository contains...
-        - [ ] Existing behavior is preserved...
+        - The change aligns with the required artifact schema.
+        - The change preserves the documented ownership boundary.
     validations:
       required: true
   - type: textarea
-    id: validation
+    id: validation_required
     attributes:
-      label: Validation
-      description: List executable checks or evidence needed before completion.
+      label: Validation required
+      description: Define how the acceptance criteria must be proven.
       placeholder: |
-        - [ ] `git diff --check`
-        - [ ] `pre-commit run --all-files`
-        - [ ] `repomix`
-        - [ ] GitHub Actions CI passes
+        | Check | Required state | Notes |
+        | --- | --- | --- |
+        | `git diff --check` | Passed | Confirm whitespace safety. |
+        | `pre-commit run --all-files` | Passed | Confirm baseline hooks. |
+        | GitHub Actions CI | Pending or Passed | Report separately from local validation. |
     validations:
       required: true
   - type: textarea
-    id: constraints
+    id: deliverables
     attributes:
-      label: Constraints
-      description: List hard requirements and limitations.
+      label: Deliverables
+      description: List the artifacts that must be produced.
       placeholder: |
-        - Do not change provisioning, identity, shell, editor, or CI behavior.
-        - Do not edit generated `repomix-*.xml` files.
+        - Updated source files.
+        - PR body with state-bearing validation evidence.
+        - Issue-reference-free commit message.
     validations:
       required: true
-  - type: textarea
-    id: risks
-    attributes:
-      label: Risks
-      description: Identify known risks or uncertainties.
-      placeholder: |
-        - Risk 1
-        - Risk 2
-    validations:
-      required: false
   - type: textarea
     id: references
     attributes:
       label: References
-      description: Link authoritative sources, related issues, or prior decisions.
+      description: Link authoritative sources, related issues, prior decisions, or owning docs.
       placeholder: |
-        - https://docs.github.com/...
-        - #123
-    validations:
-      required: false
-  - type: textarea
-    id: notes
-    attributes:
-      label: Notes
-      description: Add clarifications that do not fit the sections above.
-      placeholder: Add optional notes here.
+        - Parent issue: #<parent-issue-number>
+        - Related issue: #<issue-number>
     validations:
       required: false

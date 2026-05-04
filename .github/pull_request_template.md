@@ -2,9 +2,9 @@
 
 <!-- Describe the change in one or two sentences. -->
 
-## Why
+## Scope
 
-<!-- Explain the problem, goal, or decision that led to this change. -->
+<!-- State the bounded scope of this pull request. -->
 
 ## Changes
 
@@ -14,22 +14,24 @@
 
 ## Validation
 
-<!-- Check every item that you completed. Add exact command output or CI links when useful. -->
+<!-- Use only these states: Passed, Failed, Pending, Skipped, Not required, Maintainer-confirmed. Use Passed only with command output, CI evidence, inspected state, or maintainer confirmation. -->
 
-- [ ] `git diff --check`
-- [ ] `pre-commit run --all-files`
-- [ ] Markdown relative links resolve, when Markdown links change
-- [ ] `repomix`, when LLM guidance or snapshot routing changes
-- [ ] `mise run doctor`, when setup, toolchain, rendered config, or task behavior changes
-- [ ] GitHub Actions CI passes
+| Check | State | Evidence | Notes |
+| --- | --- | --- | --- |
+| `git diff --check` | Pending | Not run yet. | Required unless the active issue explicitly scopes it out. |
+| `pre-commit run --all-files` | Pending | Not run yet. | Baseline local validation. |
+| Markdown relative link validation | Not required | No Markdown links changed. | Change to Pending when Markdown links are added, removed, or changed. |
+| `repomix` | Pending | Not run yet. | Required when LLM guidance, context routing, workflow contracts, templates, or snapshot routing change. |
+| `mise run doctor` | Not required | Documentation/template-only change. | Change state if setup, toolchain, rendered config, task behavior, health-check behavior, scripts, CI semantics, versions, dependencies, or lockfiles change. |
+| GitHub Actions CI | Pending | Not available until workflow run evidence exists. | Do not mark Passed without CI evidence or maintainer confirmation. |
 
-## Risk and rollback
+## Risk
 
-<!-- Describe the main risk and the safest rollback path. -->
+<!-- Describe the main risk. -->
 
-**Risk:**
+## Rollback
 
-**Rollback:**
+<!-- Describe the safest rollback path. -->
 
 ## Review notes
 
@@ -41,8 +43,6 @@
 
 -
 
-## Linked issue
+## Linked issues
 
-<!-- Use Refs #<issue-number> for partial progress. Use Closes #<issue-number> only when this pull request should close the issue on merge. -->
-
-Refs #
+<!-- Add Closes #<child-issue-number> only when this pull request completes that child issue. Add Refs #<parent-issue-number> for parent ledgers, partial progress, or related evidence. -->
