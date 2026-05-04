@@ -19,13 +19,29 @@ converted into reusable rules.
 
 Choose the smallest safe deliverable:
 
-| Need | Use | Constraints |
+| Need | Default output | Constraints |
 | --- | --- | --- |
-| Apply an edit with `git apply` | Downloadable `.patch` or inline unified diff | Use strict Git extended unified diff and known current-file context. |
-| Deliver a long or multi-file patch | Downloadable `.patch` | Patch file must contain only apply-ready patch content. |
+| Apply a repository edit with `git apply` | Downloadable `.patch` | Use strict Git extended unified diff and known current-file context. |
+| Deliver any long, multi-file, whitespace-sensitive, or copy-risk patch | Downloadable `.patch` | Patch file must contain only apply-ready patch content. |
+| Deliver an inline patch only because the maintainer requested it or file handoff is unavailable | Inline unified diff | Use a plain code fence, strict Git extended unified diff, and a final newline inside the patch content. |
 | Create a new short text file or replace a known short file | Whole-file heredoc | Use single-quoted delimiters and inspect the resulting diff. |
+| Run one to three simple commands | Inline command block | Keep the block short, direct, and free of shell functions, loops, or embedded interpreters. |
+| Capture a short validation bundle | Brace-group redirected command block | Record each command, output, and exit code in the redirected log. |
+| Run a non-trivial reusable script or validation runner | Downloadable `.sh` | Use for functions, loops, multiple heredocs, embedded interpreters, high-output commands, or per-command exit-code aggregation. |
 | Perform a mechanical edit across known files | Guarded script | Fail when expected text is absent; do not hide unclear changes. |
 | Provide issue, PR, commit, review, validation, or prompt text | Non-patch output | Keep it clearly separate from patch content. |
+
+Default to downloadable `.patch` files for repository patches. Use inline patches
+only when the maintainer explicitly requests inline output, file handoff is
+unavailable, or the response is a non-repository illustrative diff that must not
+be applied.
+
+Default to downloadable `.sh` files for non-trivial reusable scripts, including
+validation runners with shell functions, loops, multiple heredocs, embedded
+interpreters, high-output commands, or per-command exit-code aggregation. Use
+inline command blocks only for short direct invocations. If file handoff is
+unavailable, provide script content as file content and keep the invocation in a
+separate short command block.
 
 Do not use a patch when current target contents are insufficient for reliable
 hunks. Do not use a script to bypass missing file context.
@@ -78,20 +94,81 @@ fence with no language attribute and include a final newline inside the patch
 content.
 
 For downloadable patches, prefer one coherent patch file over several fragments
-when the changes are part of one reviewable unit.
+when the changes are part of one reviewable unit. Use a predictable lowercase
+filename tied to the active issue and scope, such as:
+
+```text
+issue223-output-protocols.patch
+<issue-number>-<short-scope>.patch
+```
+
+Do not put the filename, branch command, validation summary, commit message, PR
+body, or explanatory prose inside the patch file.
 
 ## Command and heredoc contract
 
 Reusable command snippets should be complete, copyable, and written in English.
-Use heredocs for multi-line issue bodies, PR bodies, commit messages, or file
-creation commands.
+Use heredocs for multi-line issue bodies, PR bodies, commit messages, validation
+logs, or file creation commands.
 
 Heredoc rules:
 
 - use single-quoted delimiters to prevent shell interpolation;
 - choose delimiters that cannot appear in the body;
 - keep command text separate from explanatory prose;
-- include the final newline expected by the target file or Git object.
+- include the final newline expected by the target file or Git object;
+- avoid direct-paste interactive terminal delivery for long scripts, functions,
+  loops, multiple heredocs, mixed shell/Python, or high-output bundles.
+
+Use file-backed bodies for GitHub CLI issue and PR creation instead of embedding
+Markdown in shell arguments:
+
+```zsh
+issue_number="223"
+issue_dir="/tmp/issue${issue_number}"
+pr_body_file="$issue_dir/pr_body.md"
+mkdir -p "$issue_dir"
+
+cat > "$pr_body_file" <<'EOF'
+## Summary
+
+...
+
+## Linked issue
+
+Closes #223
+Refs #217
+EOF
+
+gh pr create \
+  --title "docs(context): harden output protocols" \
+  --body-file "$pr_body_file"
+```
+
+Use the same file-backed pattern for issue creation when the body is multiline:
+
+```zsh
+issue_number="223"
+issue_dir="/tmp/issue${issue_number}"
+issue_body_file="$issue_dir/issue_body.md"
+mkdir -p "$issue_dir"
+
+cat > "$issue_body_file" <<'EOF'
+## Goal
+
+...
+EOF
+
+gh issue create \
+  --title "[Change]: Harden output protocols for repository deliverables" \
+  --body-file "$issue_body_file"
+```
+
+Use names such as `issue_dir`, `issue_body_file`, `pr_body_file`,
+`commit_message_file`, `validation_log`, `validation_failed`, and
+`check_exit_code` for reusable snippets. Avoid shell variable names that are
+special or ambiguous in common operator shells, including `status`, `path`,
+`body`, `commands`, `options`, and `reply`.
 
 For repository-specific GitHub CLI commands, include required assignees and only
 labels supported by current repository evidence. If label evidence is missing,
@@ -122,8 +199,58 @@ Keep validation states distinct:
 | Failed | The check failed and the output or retry evidence is reported. |
 | Pending | The result is not yet available, such as remote CI after PR creation. |
 
+Use a compact validation report schema after patch application:
+
+| Check | State | Evidence | Notes |
+| --- | --- | --- | --- |
+| `<command or evidence>` | Required, Completed, Skipped, Failed, or Pending | Exact output, exit code, CI link, inspected state, or maintainer confirmation | Reason for skip, failure, retry, or pending state. |
+
+Separate baseline validation from change-specific validation. Start from the
+repository baseline that matches the touched files, then add checks required by
+changed links, generated context routing, behavior-sensitive surfaces, active
+issue acceptance criteria, or reviewer requests.
+
+Every validation bundle must record each command, output, and exit code. Short
+validation bundles may use brace-group redirection to a log file when they only
+run a few direct commands and do not include functions, loops, heredocs, embedded
+interpreters, high-output command sets, or complex quoting:
+
+```zsh
+issue_dir="/tmp/issue223"
+validation_log="$issue_dir/validation_results.txt"
+validation_failed=0
+mkdir -p "$issue_dir"
+
+{
+  printf '## git diff --check\n\n'
+  printf '$ git diff --check\n\n'
+  git diff --check
+  check_exit_code=$?
+  printf '\nExit code: %s\n\n' "$check_exit_code"
+  [ "$check_exit_code" -eq 0 ] || validation_failed=1
+
+  printf '## pre-commit run --all-files\n\n'
+  printf '$ pre-commit run --all-files\n\n'
+  pre-commit run --all-files
+  check_exit_code=$?
+  printf '\nExit code: %s\n' "$check_exit_code"
+  [ "$check_exit_code" -eq 0 ] || validation_failed=1
+} > "$validation_log" 2>&1
+
+printf 'Validation log: %s\n' "$validation_log"
+exit "$validation_failed"
+```
+
+For non-trivial validation runners, keep the same evidence model but output a
+downloadable `.sh` runner by default. Use this default for shell functions, loops,
+multiple heredocs, embedded interpreters, high-output commands, or per-command
+exit-code aggregation. If file handoff is unavailable, provide the runner as file
+content and keep the invocation in a separate short command block. Do not present
+non-trivial runners as direct terminal-paste commands.
+
 Do not infer one validation result from another. Local checks do not prove remote
-CI. Clean patch application does not prove semantic correctness. Documentation-only scope does not itself complete validation.
+CI. Clean patch application does not prove semantic correctness. Documentation-
+only scope does not itself complete validation.
 
 ## Pull request output contract
 
@@ -140,8 +267,18 @@ include:
 - Linked issue.
 
 Remove template comments from final PR text. Tie validation checkboxes to actual
-evidence. Use `Closes #<issue-number>` only when merging the PR should close the
-issue; use `Refs #<issue-number>` for partial progress or parent references.
+evidence. Do not check a PR template validation box unless the command output,
+exit status, CI evidence, inspected state, or explicit maintainer confirmation
+exists. Mark unavailable remote checks as pending, not complete. Mark skipped
+checks with the reason.
+
+Use `Closes #<issue-number>` only when merging the PR should close the issue. Use
+`Refs #<issue-number>` for partial progress, parent issues, or related evidence.
+A completing child PR should normally use `Closes #<child-issue-number>` and
+`Refs #<parent-issue-number>` only after the child acceptance criteria are met.
+
+Output PR body text and `gh pr create` commands as separate reusable artifacts.
+Prefer `gh pr create --body-file` over inline `--body` for multiline Markdown.
 
 Do not claim merge readiness, CI success, review approval, or issue completion
 without evidence.
@@ -160,6 +297,20 @@ Use a scope that matches the touched surface and does not imply untouched
 behavior. Keep the summary imperative, specific, and concise. Use the body for
 why the change is needed, important trade-offs, and evidence-backed validation
 only when that evidence exists.
+
+For multiline commit messages, prefer `git commit -F` with a single-quoted
+heredoc and keep the commit command separate from PR commands:
+
+```zsh
+git commit -F - <<'EOF'
+docs(context): harden output protocols
+
+Define file-backed patch, command, PR, commit, and validation output
+boundaries for repository deliverables.
+
+Refs: #223
+EOF
+```
 
 Prefer issue references such as `Refs: #<issue-number>` in commit messages
 unless the maintainer explicitly asks for closing keywords there.
@@ -188,6 +339,21 @@ Preserve whitespace precisely:
 - do not change rendered-output-sensitive whitespace as incidental cleanup.
 
 Whitespace-only changes should be explicitly scoped or avoided.
+
+## Long-conversation artifact reset
+
+Before emitting a repository artifact after a long thread, reset the artifact
+boundary explicitly:
+
+| Artifact | Reset check |
+| --- | --- |
+| Patch | Confirm current file evidence, strict diff format, downloadable default, filename, and patch-only content. |
+| Commit command | Confirm staged intent, Conventional Commit scope, `git commit -F` heredoc, and no PR command mixed into the block. |
+| PR command | Confirm branch evidence, PR body-file path, linked issue wording, and no commit command mixed into the block. |
+| Validation output | Confirm baseline checks, change-specific checks, downloadable script default for non-trivial runners, evidence-backed states, skipped reasons, and pending CI status. |
+
+If artifact boundaries are uncertain, stop and restate the target artifact instead
+of emitting a mixed patch, command, PR body, or validation report.
 
 ## Post-output discipline
 
