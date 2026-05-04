@@ -8,7 +8,8 @@ repository.
 Use [`../context/README.md`](../context/README.md) for portable operating
 contracts. Load this directory only when a task needs local identity,
 source-state boundaries, behavior-sensitive surfaces, validation baselines,
-workflow exceptions, Repomix paths, or root and adapter roles.
+workflow exceptions, Repomix paths, teardown guidance, or root and
+adapter roles.
 
 ## Local extension map
 
@@ -19,6 +20,7 @@ workflow exceptions, Repomix paths, or root and adapter roles.
 | [`validation.md`](./validation.md) | Local validation baseline, documentation-only doctor boundary, and validation routing by touched source. |
 | [`workflows.md`](./workflows.md) | Repository-local workflow exceptions and template routing. |
 | [`repomix.md`](./repomix.md) | Local Repomix instruction path, generated output paths, focused recipes, and confirmation checks. |
+| [`teardown.md`](./teardown.md) | Destructive local teardown guidance for managed workstation state. |
 
 ## Routing rules
 
@@ -34,5 +36,5 @@ workflow exceptions, Repomix paths, or root and adapter roles.
 - Route regression cases to [`../context/evals.md`](../context/evals.md).
 
 Do not duplicate portable rules here. Add local rules only when this repository's
-source state, host posture, validation, workflow, or generated artifacts need a
-replaceable local extension.
+source state, host posture, validation, workflow, generated artifacts, or
+teardown procedure need a replaceable local extension.

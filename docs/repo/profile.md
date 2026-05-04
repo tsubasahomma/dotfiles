@@ -15,8 +15,9 @@ instruction or evidence precedence ([`../context/kernel.md`](../context/kernel.m
 output formatting ([`../context/protocols.md`](../context/protocols.md)),
 reusable workflow procedure ([`../context/workflows.md`](../context/workflows.md)),
 local surface routing ([`surfaces.md`](./surfaces.md)), local validation routing
-([`validation.md`](./validation.md)), or local Repomix paths
-([`repomix.md`](./repomix.md)).
+([`validation.md`](./validation.md)), local Repomix paths
+([`repomix.md`](./repomix.md)), or local teardown guidance
+([`teardown.md`](./teardown.md)).
 
 ## Repository identity
 
@@ -114,7 +115,6 @@ convergence.
 | Entry point | Role |
 | --- | --- |
 | [`../../README.md`](../../README.md) | First-run and operator-facing bootstrap entry point. |
-| [`../../ARCHITECTURE.md`](../../ARCHITECTURE.md) | High-level architecture overview and operational teardown routing until a later scoped issue retires it. |
 | [`../../AGENTS.md`](../../AGENTS.md) | Root context manifest and concise assistant entry point. |
 | [`../../.github/copilot-instructions.md`](../../.github/copilot-instructions.md) | GitHub Copilot adapter; secondary to the shared operating contract. |
 | [`../context/README.md`](../context/README.md) | Portable context architecture entry point and task-to-context router. |
@@ -123,6 +123,7 @@ convergence.
 | [`validation.md`](./validation.md) | Local validation baseline and validation routing. |
 | [`workflows.md`](./workflows.md) | Local workflow exceptions and template routing. |
 | [`repomix.md`](./repomix.md) | Local Repomix paths, recipes, and confirmation checks. |
+| [`teardown.md`](./teardown.md) | Destructive local teardown guidance for managed workstation state. |
 
 Root and adapter documents should route through the portable context contracts
 and this local extension without turning vendor-specific guidance into the

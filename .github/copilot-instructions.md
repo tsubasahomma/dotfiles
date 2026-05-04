@@ -14,7 +14,8 @@ Copilot-specific guidance is secondary to the shared context operating contract:
 - Use [docs/context/README.md](../docs/context/README.md) to select the smallest
   sufficient portable context before relying on deeper evidence.
 - Use [docs/repo/README.md](../docs/repo/README.md) for local source-state,
-  surface, validation, workflow, Repomix, host, identity, or adapter facts.
+  surface, validation, workflow, Repomix, teardown, host, identity, or adapter
+  facts.
 - Prefer repository-relative links only when the target exists in the current
   repository state.
 - Do not add `.github/instructions/**` unless an assigned issue explicitly
@@ -31,3 +32,5 @@ with [docs/context/workflows.md](../docs/context/workflows.md) and add
 templates matter. For Repomix generation or snapshot consumption, start with
 [docs/context/repomix.md](../docs/context/repomix.md) and add
 [docs/repo/repomix.md](../docs/repo/repomix.md) only for local paths and checks.
+For destructive local teardown guidance, use
+[docs/repo/teardown.md](../docs/repo/teardown.md).

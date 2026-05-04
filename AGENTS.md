@@ -18,7 +18,7 @@ operating-contract entry point and task-to-context router.
 Use [docs/repo/README.md](./docs/repo/README.md) only when the task needs this
 repository's local identity, source-state model, supported host posture,
 behavior-sensitive surface map, validation baseline, workflow exceptions,
-Repomix paths, or root and adapter roles.
+Repomix paths, teardown guidance, or root and adapter roles.
 
 Portable operating-contract files:
 
@@ -47,6 +47,8 @@ Repository-local extension files:
   template routing.
 - [Repomix local routing](./docs/repo/repomix.md) for local Repomix paths,
   recipes, and confirmation checks.
+- [Teardown](./docs/repo/teardown.md) for destructive local teardown guidance
+  for managed workstation state.
 
 ## Scope and evidence hierarchy
 
