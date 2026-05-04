@@ -26,7 +26,8 @@ assistant-guidance, validation-default, or routing changes, use evidence from:
   artifact schemas, template routing, Repomix guidance, or generated snapshot
   routing changes
 - GitHub Actions CI after PR creation, when required by branch protection or
-  reviewer request, reported separately from local validation
+  reviewer request, checked in GitHub Checks or status checks instead of a
+  manually maintained PR body validation row
 
 Do not mark any check complete without command output, CI evidence, inspected
 state, or explicit maintainer confirmation. Report unrun applicable checks as
@@ -65,9 +66,9 @@ GitHub Actions success from local checks, and do not infer local WSL2,
 1Password, SSH agent, Windows interop, user systemd, or workstation convergence
 from GitHub Actions CI.
 
-Report GitHub Actions CI as `Pending` until a workflow run, status check, or
-explicit maintainer confirmation proves the result. Do not mark CI as `Passed`
-from local command output, expected branch protection behavior, or PR creation
-alone.
+Use GitHub Checks or status checks as the source of truth for GitHub Actions CI
+after PR creation. Do not mirror dynamic CI status in PR body validation tables,
+and do not claim CI passed from local command output, expected branch protection
+behavior, or PR creation alone.
 
 Use [`surfaces.md`](./surfaces.md) for behavior-sensitive validation routing.

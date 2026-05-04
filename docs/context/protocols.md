@@ -324,6 +324,11 @@ Do not infer one validation result from another. Local checks do not prove remot
 CI. Clean patch application does not prove semantic correctness. Documentation-
 only scope does not itself complete validation.
 
+Validation reports may reference remote CI evidence when it exists, but PR body
+validation tables must not manually mirror dynamic GitHub Actions CI result rows.
+After PR creation, GitHub Checks and status checks are the source of truth for
+GitHub Actions CI.
+
 ## Pull request output contract
 
 A pull request body is an evidence packet. It should follow the repository
@@ -339,11 +344,13 @@ template when relevant and include:
 - Out of scope;
 - Linked issues.
 
-Remove template comments from final PR text. Tie validation checkboxes to actual
-evidence. Do not check a PR template validation box unless the command output,
-exit status, CI evidence, inspected state, or explicit maintainer confirmation
-exists. Mark unavailable remote checks as `Pending`, not `Passed`. Mark skipped
-checks as `Skipped` with the reason.
+Remove template comments from final PR text. Tie validation rows to actual
+evidence and do not use checkbox-only completion claims. PR body validation
+tables must not include manually maintained dynamic GitHub Actions CI result rows.
+After PR creation, GitHub Checks and status checks are the source of truth for
+GitHub Actions CI. Mention remote CI in Review notes only when a workflow run,
+status check, or explicit maintainer confirmation needs reviewer attention. Mark
+skipped checks as `Skipped` with the reason.
 
 PR bodies own `Closes` and `Refs` issue references. Use
 `Closes #<child-issue-number>` only when merging the PR should close the child

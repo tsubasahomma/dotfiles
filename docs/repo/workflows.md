@@ -47,7 +47,7 @@ schemas.
 | Template | Local path | Rule |
 | --- | --- | --- |
 | Issue template | [`../../.github/ISSUE_TEMPLATE/change-request.yml`](../../.github/ISSUE_TEMPLATE/change-request.yml) | Use as local UI scaffold evidence for scoped repository changes. Do not edit from workflow-default or procedure work unless the active issue explicitly scopes template changes. |
-| Pull request template | [`../../.github/pull_request_template.md`](../../.github/pull_request_template.md) | Use as local UI scaffold evidence for PR body structure. Remove template comments from final PR text and use state-bearing validation evidence instead of checkbox-only claims. |
+| Pull request template | [`../../.github/pull_request_template.md`](../../.github/pull_request_template.md) | Use as local UI scaffold evidence for PR body structure. Remove template comments from final PR text, use state-bearing validation evidence instead of checkbox-only claims, and do not manually mirror dynamic GitHub Actions CI results. |
 
 ## Local validation routing
 
@@ -67,11 +67,12 @@ convergence evidence.
 
 ## Local GitHub Actions CI boundary
 
-GitHub Actions CI is remote evidence and must be reported separately from local
-validation. Mark CI as `Pending` until a workflow run, status check, or explicit
-maintainer confirmation proves the result. Do not mark CI as `Passed` because
-local checks passed, because a PR was created, or because the change is
-documentation-only.
+GitHub Actions CI is remote evidence and must be checked in GitHub Checks or
+status checks after PR creation. Do not add or maintain dynamic CI result rows in
+PR body validation tables. If remote CI needs reviewer attention, cite a workflow
+run, status check, or explicit maintainer confirmation in Review notes. Do not
+claim CI passed because local checks passed, because a PR was created, or because
+the change is documentation-only.
 
 Do not change `.github/workflows/**` semantics from GitHub workflow-default
 work. If a future issue scopes workflow behavior changes, use
