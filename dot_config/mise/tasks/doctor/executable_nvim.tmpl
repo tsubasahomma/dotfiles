@@ -41,7 +41,7 @@ if command -v nvim >/dev/null 2>&1; then
     log_ok "Python Provider is natively recognized and functional in Neovim."
   else
     log_err "Python Provider is dysfunctional or not recognized by Neovim."
-    log_guide "Ensure 'pipx:neovim/pynvim' is in tools.yaml and run 'mise install'."
+    log_guide "Ensure 'pipx:neovim/pynvim' is declared in dot_config/mise/conf.d/10-tools.toml and run 'mise install'."
     HAS_ERROR=1
   fi
 
@@ -51,7 +51,7 @@ if command -v nvim >/dev/null 2>&1; then
     log_ok "Node.js Provider host executable resolved via mise ($NODE_HOST)."
   else
     log_err "Node.js Provider host executable could not be resolved via mise."
-    log_guide "Ensure 'npm:neovim' is in tools.yaml and run 'mise install'."
+    log_guide "Ensure 'npm:neovim' is declared in dot_config/mise/conf.d/10-tools.toml and run 'mise install'."
     HAS_ERROR=1
   fi
 

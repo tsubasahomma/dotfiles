@@ -12,20 +12,7 @@
   "commitMessageAction": "Update",
   "commitMessageTopic": "{{depName}}",
   "commitMessageExtra": "to v{{newVersion}}",
-  "packageRules": [
-    {
-      "matchManagers": ["custom.regex"],
-      "groupName": "Infrastructure Core & Runtime Ecosystem"
-    }
-  ],
-  "customManagers": [
-    {
-      "customType": "regex",
-      "description": "Parse .chezmoidata/tools.yaml for versions with renovate comments",
-      "managerFilePatterns": ["/^\\.chezmoidata/tools\\.yaml$/"],
-      "matchStrings": [
-        "\"?(?<depName>[a-zA-Z0-9\\-_:/@\\.]+)\"?:\\s*\"(?<currentValue>[a-zA-Z0-9\\-\\.]+)\"\\s*#\\s*renovate:\\s*datasource=(?<datasource>[a-zA-Z0-9-]+)(?:\\s+packageName=(?<packageName>[^\\s#]+))?"
-      ]
-    }
-  ]
+  "mise": {
+    "managerFilePatterns": ["/^dot_config/mise/conf\\.d/.*\\.toml$/"]
+  }
 }

@@ -1,6 +1,6 @@
 {{- /* [Reference]: https://mise.jdx.dev/configuration.html */ -}}
-# Repository tool versions are generated from the central tool data.
-# Fully qualified tool identifiers are expanded from tools.yaml.
+# Dynamic mise configuration rendered from chezmoi host/user data.
+# Static tool versions live in dot_config/mise/conf.d/10-tools.toml.
 
 [env]
 # Skip Python GitHub attestation verification to reduce mise install latency and noise.
@@ -8,27 +8,12 @@
 MISE_PYTHON_GITHUB_ATTESTATIONS = "false"
 PNPM_HOME = "{{ .paths.xdg_data }}/pnpm"
 
-[tools]
-# Core runtimes are declared before tools that depend on runtime backends.
-# This keeps npm: and cargo: tool resolution behind their runtime declarations.
-"node" = "{{ index .mise_tools "node" }}"
-"python" = "{{ index .mise_tools "python" }}"
-"go" = "{{ index .mise_tools "go" }}"
-"rust" = "{{ index .mise_tools "rust" }}"
-
-# --- Toolchain Expansion ---
-{{- range $tool, $version := .mise_tools }}
-{{- if not (or (eq $tool "node") (eq $tool "python") (eq $tool "go") (eq $tool "rust")) }}
-"{{ $tool }}" = "{{ $version }}"
-{{- end }}
-{{- end }}
 
 [settings]
 not_found_auto_install = true
 yes = true
 experimental = true
 asdf_compat = false
-npm.package_manager = "pnpm"
 
 [settings.github]
 credential_command = "{{ .paths.op }} read 'op://Development/mise-cli-token/credential'"

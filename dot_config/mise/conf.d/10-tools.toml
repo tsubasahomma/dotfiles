@@ -1,0 +1,84 @@
+# Static mise tool inventory managed as source state.
+# Core runtimes remain explicit before tools that depend on runtime backends.
+# [Reference]: https://mise.jdx.dev/configuration.html
+
+[tools]
+# --- 1. Infrastructure Core & Runtimes ---
+"aqua:twpayne/chezmoi" = "2.70.2"
+"aqua:jdx/usage" = "3.2.1"
+node = "24.15.0"
+python = "3.14.4"
+pnpm = "10.33.2"
+"core:deno" = "2.7.14"
+rust = "1.95.0"
+go = "1.26.2"
+"aqua:astral-sh/uv" = "0.11.8"
+
+# --- 2. Identity and VCS ---
+"aqua:cli/cli" = "2.92.0"
+"aqua:jesseduffield/lazygit" = "0.61.1"
+"cargo:git-absorb" = "0.9.0"
+"github:dandavison/delta" = "0.19.2"
+
+# --- 3. Neovim Ecosystem ---
+"aqua:neovim/neovim" = "0.12.2"
+"pipx:neovim/pynvim" = "0.6.0"
+"npm:neovim" = "5.4.0"
+
+# --- 4. Development Tooling ---
+"aqua:tree-sitter/tree-sitter" = "0.26.8"
+"aqua:pre-commit/pre-commit" = "4.6.0"
+"pipx:pytest" = "9.0.3"
+
+# --- 5. Engineering Utilities ---
+"aqua:casey/just" = "1.50.0"
+"aqua:atuinsh/atuin" = "18.16.0"
+"aqua:duckdb/duckdb" = "1.5.2"
+"aqua:ajeetdsouza/zoxide" = "0.9.9"
+"aqua:sharkdp/bat" = "0.26.1"
+"aqua:BurntSushi/ripgrep" = "15.1.0"
+"aqua:sharkdp/fd" = "10.4.2"
+"aqua:starship/starship" = "1.25.1"
+"aqua:junegunn/fzf" = "v0.72.0"
+"aqua:sharkdp/hyperfine" = "1.20.0"
+"go:github.com/boyter/scc/v3" = "3.7.0"
+
+# --- 6. Data & GTM Operations ---
+"aqua:noahgorstein/jqp" = "0.8.0"
+"go:github.com/mikefarah/yq/v4" = "4.53.2"
+"npm:@hubspot/cli" = "8.5.0"
+
+# --- 7. Documentation & Prose ---
+"aqua:errata-ai/vale" = "3.14.1"
+"npm:prettier" = "3.8.3"
+"npm:@mermaid-js/mermaid-cli" = "11.14.0"
+"aqua:JohnnyMorganz/StyLua" = "2.4.1"
+"aqua:mvdan/sh" = "3.13.1"
+"aqua:koalaman/shellcheck" = "0.11.0"
+
+# --- 8. Cloud & Platform Orchestration ---
+docker-cli = "26.0.0"
+"go:github.com/jesseduffield/lazydocker" = "0.25.2"
+kubectl = "1.36.0"
+helm = "4.1.4"
+"aqua:derailed/k9s" = "0.50.18"
+opentofu = "1.11.6"
+terraform = "1.15.1"
+tflint = "0.62.0"
+terragrunt = "1.0.3"
+"aqua:aws/aws-cli" = "2.34.34"
+
+# gcloud follows a proprietary release channel and still requires manual review.
+gcloud = "565.0.0"
+
+# --- 9. SRE Observability & Diagnostics ---
+"aqua:ClementTsang/bottom" = "0.12.3"
+"cargo:du-dust" = "1.0.0"
+"aqua:mr-karan/doggo" = "1.1.5"
+"aqua:sachaos/viddy" = "1.3.0"
+
+# --- 10. AI Coding & Context Engineering ---
+"npm:repomix" = "1.14.0"
+"npm:@openai/codex" = "0.128.0"
+"npm:@anthropic-ai/claude-code" = "2.1.126"
+"npm:@google/gemini-cli" = "0.40.1"

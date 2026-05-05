@@ -1,7 +1,8 @@
 #!/bin/zsh
 # Generate static Zsh completions and init assets during convergence.
 # Prebuilt assets keep interactive shell startup fast.
-# [Trigger]: Ecosystem Schema: {{ include ".chezmoidata/tools.yaml" | sha256sum }}
+# [Trigger]: completion alias data: {{ include ".chezmoidata/completions.yaml" | sha256sum }}
+# [Trigger]: static tool manifest hash: {{ include "dot_config/mise/conf.d/10-tools.toml" | sha256sum }}
 
 set -euo pipefail
 setopt extended_glob

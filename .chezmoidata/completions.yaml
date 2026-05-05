@@ -1,6 +1,6 @@
 # =============================================================================
 # Completion generation tool-key inventory.
-# Values are mise tool keys defined in .chezmoidata/tools.yaml.
+# Values are mise tool IDs consumed by completion generation scripts.
 # =============================================================================
 
 completions:

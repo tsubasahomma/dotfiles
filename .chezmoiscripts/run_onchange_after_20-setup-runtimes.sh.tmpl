@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 {{/* [Reference]: https://www.chezmoi.io/user-guide/use-scripts-to-perform-actions/ */}}{{ "" -}}
 # Runtime convergence is delegated to mise after chezmoi applies source state.
-# [Trigger]: config.toml.tmpl hash: {{ include "dot_config/mise/config.toml.tmpl" | sha256sum }}
-# [Trigger]: tools.yaml hash: {{ include ".chezmoidata/tools.yaml" | sha256sum }}
+# [Trigger]: dynamic mise config hash: {{ include "dot_config/mise/config.toml.tmpl" | sha256sum }}
+# [Trigger]: static tool manifest hash: {{ include "dot_config/mise/conf.d/10-tools.toml" | sha256sum }}
 
 set -euo pipefail
 
