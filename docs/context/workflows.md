@@ -85,11 +85,13 @@ cleanup work, a Worker should:
    them;
 5. report ambiguity, stale material, and useful out-of-scope findings without
    implementing adjacent cleanup;
-6. produce a strict patch only after the file plan is accepted or the maintainer
-   explicitly requests a patch.
+6. produce repository patch or validation-runner artifacts only after the file
+   plan is accepted or the maintainer explicitly requests them, using the output
+   selection defaults in [`protocols.md`](./protocols.md).
 
-Use [`protocols.md`](./protocols.md) for patch, command, heredoc, PR, commit,
-code-fence, whitespace, and final-newline output contracts.
+Use [`protocols.md`](./protocols.md) for downloadable `.patch` and `.sh` handoff
+defaults, patch content boundaries, command, heredoc, PR, commit, code-fence,
+whitespace, and final-newline output contracts.
 
 ## Pull request workflow
 
