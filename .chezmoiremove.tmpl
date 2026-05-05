@@ -35,3 +35,7 @@ Those dumps increase compaudit overhead.
 
 {{/* Remove the previous 1Password agent config path after scoped path correction. */}}
 Library/Group Containers/2BUA8C4S2C.com.1password/Library/Application Support/1Password/ssh/agent.toml
+
+{{/* Remove stale mise-managed Docker CLI artifacts after Docker ownership moved to platform packages. */}}
+.local/share/mise/installs/docker-cli
+.local/share/mise/shims/docker

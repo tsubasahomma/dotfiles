@@ -84,7 +84,6 @@
       "description": "Keep mise registry short-name CLI tools out of npm and aqua backend groups.",
       "matchManagers": ["mise"],
       "matchDepNames": [
-        "docker-cli",
         "kubectl",
         "helm",
         "opentofu",

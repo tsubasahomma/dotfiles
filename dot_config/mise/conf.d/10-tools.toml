@@ -57,7 +57,6 @@ go = "1.26.2"
 "aqua:koalaman/shellcheck" = "0.11.0"
 
 # --- 8. Cloud & Platform Orchestration ---
-docker-cli = "26.0.0"
 "go:github.com/jesseduffield/lazydocker" = "0.25.2"
 kubectl = "1.36.0"
 helm = "4.1.4"

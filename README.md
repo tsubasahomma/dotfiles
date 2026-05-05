@@ -106,10 +106,24 @@ Prepare only the supported path that applies to the host you are bootstrapping.
 Grant Full Disk Access to the terminal emulator when the host needs to provision
 or inspect protected directories.
 
+Desktop provisioning installs Docker Desktop through the Homebrew
+`docker-desktop` cask outside CI. Start Docker Desktop and accept Docker's
+subscription terms before expecting the Docker daemon, socket, CLI, or Desktop
+integrations to be usable.
+
 #### Windows 11 with WSL2 Ubuntu 24.04+
 
 Prepare Windows 11 with WSL2 Ubuntu 24.04+ as a WSL-to-Windows bridge path,
 not as generic Linux.
+
+Windows-side GUI provisioning installs Docker Desktop through the WinGet
+`Docker.DockerDesktop` package outside CI. Start Docker Desktop, accept Docker's
+subscription terms, and enable WSL 2 integration for the target Ubuntu
+distribution when Docker commands are required from WSL2.
+
+The WSL2 Ubuntu path does not install Docker Engine or Docker CLI packages
+inside Linux. Docker daemon, socket, Desktop, and WSL integration behavior is
+owned by the Windows-side Docker Desktop installation.
 
 WSL2 convergence requires:
 
