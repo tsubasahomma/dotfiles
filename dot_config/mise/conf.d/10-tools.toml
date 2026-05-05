@@ -65,7 +65,7 @@ opentofu = "1.11.6"
 terraform = "1.15.1"
 tflint = "0.62.0"
 terragrunt = "1.0.3"
-"aqua:aws/aws-cli" = "2.34.42"
+"aqua:aws/aws-cli" = "2.34.43"
 
 # gcloud follows a proprietary release channel and still requires manual review.
 gcloud = "565.0.0"
