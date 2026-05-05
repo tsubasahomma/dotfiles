@@ -69,6 +69,9 @@ LLMs consuming a Repomix snapshot of this repository should use:
 - [`../context/workflows.md`](../context/workflows.md) for reusable issue,
   thread, PR, validation, merge, closure, checkbox, rollback, and parent-child
   sequencing procedure;
+- [`../context/dependency-governance.md`](../context/dependency-governance.md)
+  for dependency-governance validator parity, runtime evidence, and
+  repository/global config boundaries;
 - [`../context/repomix.md`](../context/repomix.md) for generic Repomix rules;
 - [`../context/evals.md`](../context/evals.md) for regression cases covering
   predictable LLM-context failures;
@@ -76,9 +79,9 @@ LLMs consuming a Repomix snapshot of this repository should use:
   validation, workflow exceptions, and Repomix paths.
 
 Preserve existing provisioning, identity, editor, shell, Git, mise, Homebrew,
-and GitHub Actions behavior unless the assigned issue explicitly scopes a
-behavior change. Do not import assumptions from reference repositories unless
-local repository evidence and the assigned issue require them.
+Renovate, and GitHub Actions behavior unless the assigned issue explicitly
+scopes a behavior change. Do not import assumptions from reference repositories
+unless local repository evidence and the assigned issue require them.
 
 ## Local confirmation checks
 

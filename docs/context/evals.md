@@ -87,6 +87,7 @@ Review mode meanings:
 | REG-035 | PR issue-link ownership drift | `docs/context/protocols.md` | high | reviewer-only |
 | REG-036 | Placeholder leakage drift | `docs/context/protocols.md` | high | manual |
 | REG-037 | GitHub template scaffold manualization drift | `docs/repo/workflows.md` | high | manual |
+| REG-038 | Dependency validator environment drift | `docs/context/dependency-governance.md` | critical | CI-adjacent |
 
 ## Regression case checks
 
@@ -129,6 +130,7 @@ Review mode meanings:
 | REG-035 | A PR body links a child issue and a parent issue. | Uses `Closes` for the parent, omits `Closes` for a completed child, or uses closing keywords when completion evidence is incomplete. | Use `Closes #<child-issue-number>` only for completed child scope and `Refs #<parent-issue-number>` for parent ledger references. | Pass if issue-link wording matches the active topology and completion evidence. |
 | REG-036 | A portable example, placeholder, issue body, PR body, or command snippet is generated from repository-specific context. | Leaks concrete repository names, issue numbers, PR numbers, labels, branch names, local paths, or issue-specific placeholders into portable examples. | Use durable placeholders such as `#<parent-issue-number>`, `#<child-issue-number>`, `<branch-name>`, `<label-name>`, and `<artifact-file>`. | Pass if portable examples contain durable placeholders and no repo-specific values unless explicitly repository-local. |
 | REG-037 | A GitHub issue or PR template is edited to prevent deliverable-format drift. | Turns the template into an operating manual, duplicates portable contracts, or adds long procedural guidance. | Keep `.github` templates as thin local UI scaffolds and route durable rules to `docs/context/**` or `docs/repo/**`. | Pass if the template remains concise and no durable operating contract is duplicated in `.github/**`. |
+| REG-038 | A dependency-governance config validator fails or warns after a validator, schema, runtime, package-resolution, or CI runner change. | Deletes valid governance settings, changes review-domain grouping, or treats unchanged command text as parity evidence. | Preserve governance settings until current evidence proves the intended config mode is invalid; report validator version, config mode, shell runtime, package-resolution context, and matching local/CI evidence when parity is claimed. | Pass if the patch does not weaken governance merely to satisfy a stale or mismatched validator and the validation report includes the required environment evidence. |
 
 ## Adding new cases
 

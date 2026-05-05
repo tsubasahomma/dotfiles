@@ -36,9 +36,27 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Resolve Renovate Shell Node Runtime
+        id: renovate-node
+        run: |
+          node_version="$(sed -n 's/^node = "\([^"]*\)"$/\1/p' dot_config/mise/conf.d/10-tools.toml)"
+          case "$node_version" in
+            ""|*$'\n'*) exit 1 ;;
+          esac
+          printf 'Resolved shell Node version: %s\n' "$node_version"
+          printf 'node-version=%s\n' "$node_version" >> "$GITHUB_OUTPUT"
+
+      - name: Setup Renovate Shell Node Runtime
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
+        with:
+          node-version: ${{ steps.renovate-node.outputs.node-version }}
+          package-manager-cache: false
+
       - name: Validate Renovate Repository Config
         run: |
           test -f renovate.json5
+          node --version
+          npx --version
           npx --yes --package "renovate@${RENOVATE_VERSION}" -- renovate-config-validator --version
           npx --yes --package "renovate@${RENOVATE_VERSION}" -- renovate-config-validator --strict
 

@@ -22,8 +22,9 @@ This file owns generic Repomix-specific guidance:
 It does not own generic evidence rules ([`kernel.md`](./kernel.md)), output
 formats ([`protocols.md`](./protocols.md)), local source-state boundaries, local
 validation baselines, local surface routing, workflow procedure
-([`workflows.md`](./workflows.md)), local Repomix paths or recipes, or
-regression cases ([`evals.md`](./evals.md)).
+([`workflows.md`](./workflows.md)), dependency-governance validator parity
+([`dependency-governance.md`](./dependency-governance.md)), local Repomix paths
+or recipes, or regression cases ([`evals.md`](./evals.md)).
 
 Route local Repomix configuration and output facts through
 [`../repo/README.md`](../repo/README.md).
@@ -98,6 +99,9 @@ LLMs consuming a Repomix snapshot should use:
   commit, code-fence, heredoc, whitespace, and final-newline output contracts;
 - [`workflows.md`](./workflows.md) for reusable issue, thread, PR, validation,
   merge, closure, checkbox, rollback, and parent-child sequencing procedure;
+- [`dependency-governance.md`](./dependency-governance.md) for dependency
+  governance validator parity, runtime evidence, and repository/global config
+  boundaries;
 - this file for Repomix generation, consumption, generated-output, focused
   snapshot, and stale-snapshot rules;
 - [`evals.md`](./evals.md) for regression cases covering predictable LLM-context

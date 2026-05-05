@@ -222,7 +222,7 @@ Use these focused documents when the README isn't enough:
 | [Context operating contract](./docs/context/README.md) | Portable context architecture and task-to-context routing. |
 | [Repository-local extension](./docs/repo/README.md) | Repository-local profile, surfaces, validation, workflow exceptions, and Repomix routing. |
 | [Repository profile](./docs/repo/profile.md) | Source-state boundaries, supported host posture, generated artifact boundaries, and root document roles. |
-| [Repository surface map](./docs/repo/surfaces.md) | Chezmoi, mise, WSL2, identity, Neovim, and GitHub Actions surface routing, evidence, and validation boundaries. |
+| [Repository surface map](./docs/repo/surfaces.md) | Chezmoi, mise, WSL2, identity, Neovim, Renovate, and GitHub Actions surface routing, evidence, and validation boundaries. |
 
 External references:
 

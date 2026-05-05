@@ -30,6 +30,9 @@ Portable operating-contract files:
   newline output contracts.
 - [Workflows](./docs/context/workflows.md) for reusable issue, thread, PR,
   validation, merge, and closure procedure contracts.
+- [Dependency governance](./docs/context/dependency-governance.md) for
+  dependency-governance validator parity, runtime evidence, repository/global
+  config boundaries, and governance-preserving failure response.
 - [Repomix](./docs/context/repomix.md) for generic Repomix generation,
   consumption, generated-output, focused snapshot, and stale-snapshot rules.
 - [Evals](./docs/context/evals.md) for regression cases covering predictable
