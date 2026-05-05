@@ -20,6 +20,28 @@ permissions:
   contents: read
 
 jobs:
+  renovate-config:
+    name: Renovate Config Validation
+    runs-on: ubuntu-24.04
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+      # Pin the validator distribution so CI and local checks use the same Renovate schema.
+      # [Reference]: https://docs.renovatebot.com/config-validation/
+      RENOVATE_VERSION: "43.150.0"
+
+    steps:
+      - name: Checkout Repository
+        # Checkout runs on Node.js 24 through FORCE_JAVASCRIPT_ACTIONS_TO_NODE24; Renovate pins the action hash.
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          fetch-depth: 0
+
+      - name: Validate Renovate Repository Config
+        run: |
+          test -f renovate.json5
+          npx --yes --package "renovate@${RENOVATE_VERSION}" -- renovate-config-validator --version
+          npx --yes --package "renovate@${RENOVATE_VERSION}" -- renovate-config-validator --strict
+
   convergence:
     name: Convergence & Idempotency Proof
     strategy:

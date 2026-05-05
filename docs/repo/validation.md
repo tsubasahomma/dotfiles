@@ -20,6 +20,10 @@ assistant-guidance, validation-default, or routing changes, use evidence from:
 - `git diff --stat`
 - `git diff --check`
 - `pre-commit run --all-files`
+- `test -f renovate.json5`
+- `npx --yes --package "renovate@43.150.0" -- renovate-config-validator --version`
+- `npx --yes --package "renovate@43.150.0" -- renovate-config-validator --strict`,
+  when Renovate governance or Renovate CI validation changes
 - Markdown relative link validation, when repository-relative Markdown links are
   added, removed, or changed
 - `repomix`, when context routing, assistant guidance, workflow contracts,
@@ -34,6 +38,26 @@ state, or explicit maintainer confirmation. Report unrun applicable checks as
 `Pending` or `Skipped`, and report inapplicable checks as `Not required` with the
 reason.
 
+## Renovate config validation
+
+When Renovate governance or Renovate CI validation changes, run the same
+repository-config validation command from the repository root:
+
+```zsh
+test -f renovate.json5
+npx --yes --package "renovate@43.150.0" -- renovate-config-validator --version
+npx --yes --package "renovate@43.150.0" -- renovate-config-validator --strict
+```
+
+The validator checks Renovate's default repository config locations when no file
+argument is provided. `renovate.json5` is one of those default locations, so the
+explicit `test -f renovate.json5` guard makes the target file check visible while
+avoiding positional filename parsing as global self-hosted configuration.
+
+Keep the Renovate package version exact in CI and local reproduction commands so
+both paths validate against the same Renovate schema. Update that version only
+with matching local validation and GitHub Actions evidence.
+
 ## Validation routing by touched source
 
 | Touched source | Validation routing |
@@ -45,6 +69,7 @@ reason.
 | `.chezmoiignore.tmpl`, `.chezmoi.toml.tmpl`, `.chezmoiscripts/**`, `.chezmoitemplates/**`, or rendered configuration templates | Use rendered-output inspection such as `chezmoi diff` or `chezmoi execute-template` in addition to baseline checks. Consider `mise run doctor` only when setup, toolchain, rendered config, task behavior, or health-check behavior changes. |
 | `.chezmoidata/**` | Review every template, script, package, completion, or tool consumer affected by the data. Add rendered-output and task validation that matches the changed consumer. |
 | `dot_config/mise/tasks/**`, `.mise.toml`, tool declarations, versions, dependencies, or lockfiles | Validate mise task visibility, task behavior, tool resolution, and health checks appropriate to the change. `mise run doctor` is usually relevant when health-check behavior or setup/toolchain behavior changes. |
+| `renovate.json5` | Run `test -f renovate.json5`, `npx --yes --package "renovate@43.150.0" -- renovate-config-validator --version`, and `npx --yes --package "renovate@43.150.0" -- renovate-config-validator --strict`. Add package-rule or extraction evidence only when Renovate governance behavior changes, and keep GitHub Actions CI status in Checks or status checks after PR creation. |
 | `.github/workflows/**` | Use workflow-focused review plus GitHub Actions CI evidence after PR creation. Local checks do not prove remote CI status. |
 | `.github/ISSUE_TEMPLATE/**` or `.github/pull_request_template.md` | Use template-focused review and baseline documentation validation. Do not change these templates from context cleanup or workflow-default work unless explicitly scoped. |
 | `.context/repomix/**` generated XML | Do not edit generated output directly. Regenerate with `repomix` when validation requires fresh evidence. |
