@@ -55,11 +55,12 @@ Editing rules:
     */ -}}
     pager = delta
 
-    {{/* [Performance]
-    Built-in fsmonitor + untracked cache + split index + commit-graph is the modern fast path
-    for repeated status/add/checkout operations in medium-to-large working trees.
+    {{/* [Evidence + Performance]
+    Keep fsmonitor disabled globally so status and diff evidence does not depend on a
+    long-lived filesystem monitor in sandboxed, nonstandard, or LLM-assisted sessions.
+    Untracked cache + split index + commit-graph keep the conservative fast path.
     */ -}}
-    fsmonitor = true
+    fsmonitor = false
     untrackedCache = true
     splitIndex = true
     commitGraph = true
@@ -129,11 +130,12 @@ Editing rules:
     directoryRenames = conflict
 
 [rerere]
-    {{/* [Automation]
-    Reuse recorded conflict resolutions. Extremely high leverage for rebase-heavy workflows.
+    {{/* [Automation + Evidence]
+    Reuse recorded conflict resolutions, but do not copy them into the index automatically.
+    The index should remain explicit evidence of reviewed staging intent.
     */ -}}
     enabled = true
-    autoupdate = true
+    autoupdate = false
 
 [diff]
     colorMoved = default
@@ -173,7 +175,11 @@ Editing rules:
     useForceIfIncludes = true
 
 [rebase]
-    autoStash = true
+    {{/* [Evidence]
+    Do not auto-stash dirty state during rebase; hidden save/restore steps make
+    working-tree evidence harder to track in mixed human/LLM workflows.
+    */ -}}
+    autoStash = false
     updateRefs = true
     autoSquash = true
     {{/* [Safety]
@@ -203,7 +209,7 @@ Editing rules:
 
 [status]
     {{/* [UX]
-    Surface stash count in status output; surprisingly useful when autoStash is common.
+    Surface stash count in status output; useful when context switches leave local work parked.
     */ -}}
     showStash = true
 
