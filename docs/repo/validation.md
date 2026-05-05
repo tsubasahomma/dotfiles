@@ -21,6 +21,8 @@ assistant-guidance, validation-default, or routing changes, use evidence from:
 - `git diff --check`
 - `pre-commit run --all-files`
 - `test -f renovate.json5`
+- `node --version`, when Renovate governance or Renovate CI validation changes
+- `npx --version`, when Renovate governance or Renovate CI validation changes
 - `npx --yes --package "renovate@43.150.0" -- renovate-config-validator --version`
 - `npx --yes --package "renovate@43.150.0" -- renovate-config-validator --strict`,
   when Renovate governance or Renovate CI validation changes
@@ -45,6 +47,8 @@ repository-config validation command from the repository root:
 
 ```zsh
 test -f renovate.json5
+node --version
+npx --version
 npx --yes --package "renovate@43.150.0" -- renovate-config-validator --version
 npx --yes --package "renovate@43.150.0" -- renovate-config-validator --strict
 ```
@@ -55,8 +59,21 @@ explicit `test -f renovate.json5` guard makes the target file check visible whil
 avoiding positional filename parsing as global self-hosted configuration.
 
 Keep the Renovate package version exact in CI and local reproduction commands so
-both paths validate against the same Renovate schema. Update that version only
-with matching local validation and GitHub Actions evidence.
+both paths validate against the same Renovate schema. Command text alone does
+not prove parity; record shell `node`, `npx`, validator version, strict
+validation, package-resolution context, and GitHub Actions evidence when CI
+parity is claimed.
+
+When updating the Renovate validator version, validator command, package source,
+or CI shell runtime:
+
+1. keep repository-config validation in default discovery mode unless the active
+   task explicitly scopes a different config mode;
+2. prove the target file exists separately with `test -f renovate.json5`;
+3. record exact local `node`, `npx`, and validator version output;
+4. require matching GitHub Actions evidence after PR creation;
+5. do not remove native mise extraction or review-domain governance to satisfy a
+   stale, floating, or mismatched validator.
 
 ## Validation routing by touched source
 
@@ -69,8 +86,8 @@ with matching local validation and GitHub Actions evidence.
 | `.chezmoiignore.tmpl`, `.chezmoi.toml.tmpl`, `.chezmoiscripts/**`, `.chezmoitemplates/**`, or rendered configuration templates | Use rendered-output inspection such as `chezmoi diff` or `chezmoi execute-template` in addition to baseline checks. Consider `mise run doctor` only when setup, toolchain, rendered config, task behavior, or health-check behavior changes. |
 | `.chezmoidata/**` | Review every template, script, package, completion, or tool consumer affected by the data. Add rendered-output and task validation that matches the changed consumer. |
 | `dot_config/mise/tasks/**`, `.mise.toml`, tool declarations, versions, dependencies, or lockfiles | Validate mise task visibility, task behavior, tool resolution, and health checks appropriate to the change. `mise run doctor` is usually relevant when health-check behavior or setup/toolchain behavior changes. |
-| `renovate.json5` | Run `test -f renovate.json5`, `npx --yes --package "renovate@43.150.0" -- renovate-config-validator --version`, and `npx --yes --package "renovate@43.150.0" -- renovate-config-validator --strict`. Add package-rule or extraction evidence only when Renovate governance behavior changes, and keep GitHub Actions CI status in Checks or status checks after PR creation. |
-| `.github/workflows/**` | Use workflow-focused review plus GitHub Actions CI evidence after PR creation. Local checks do not prove remote CI status. |
+| `renovate.json5` | Run `test -f renovate.json5`, `node --version`, `npx --version`, `npx --yes --package "renovate@43.150.0" -- renovate-config-validator --version`, and `npx --yes --package "renovate@43.150.0" -- renovate-config-validator --strict`. Add package-rule or extraction evidence only when Renovate governance behavior changes, and keep GitHub Actions CI status in Checks or status checks after PR creation. |
+| `.github/workflows/**` | Use workflow-focused review plus GitHub Actions CI evidence after PR creation. Local checks do not prove remote CI status, and JavaScript Action runtime controls do not prove shell `node` or `npx` runtime used by `run:` steps. |
 | `.github/ISSUE_TEMPLATE/**` or `.github/pull_request_template.md` | Use template-focused review and baseline documentation validation. Do not change these templates from context cleanup or workflow-default work unless explicitly scoped. |
 | `.context/repomix/**` generated XML | Do not edit generated output directly. Regenerate with `repomix` when validation requires fresh evidence. |
 

@@ -16,7 +16,7 @@ adapter roles.
 | File | Responsibility |
 | --- | --- |
 | [`profile.md`](./profile.md) | Repository identity, source-state model, editable boundaries, generated artifact boundaries, supported host posture, and root or adapter roles. |
-| [`surfaces.md`](./surfaces.md) | Behavior-sensitive surface routing for Chezmoi, mise, WSL2, identity, Neovim, and GitHub Actions. |
+| [`surfaces.md`](./surfaces.md) | Behavior-sensitive surface routing for Chezmoi, mise, WSL2, identity, Neovim, Renovate, and GitHub Actions. |
 | [`validation.md`](./validation.md) | Local validation baseline, documentation-only doctor boundary, and validation routing by touched source. |
 | [`workflows.md`](./workflows.md) | Repository-local workflow exceptions and template routing. |
 | [`repomix.md`](./repomix.md) | Local Repomix instruction path, generated output paths, focused recipes, and confirmation checks. |

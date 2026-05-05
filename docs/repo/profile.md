@@ -92,6 +92,7 @@ Treat these repository surfaces as behavior-sensitive:
 | WSL2 bridge | Windows interop, `npiperelay.exe`, `op.exe`, user systemd services, and Windows-side sync paths. |
 | Rendered configuration | Shell startup, zsh, WezTerm, Starship, Git, SSH, Homebrew, mise, Vale, Neovim, and related rendered files. |
 | Mise | `dot_config/mise/tasks/**`, `.mise.toml`, tool declarations, runtime versions, tool versions, dependencies, and lockfiles. |
+| Renovate | `renovate.json5`, repository update governance, native manager extraction, review-domain categorization, validator commands, and validator runtime evidence. |
 | GitHub Actions | `.github/workflows/**`, `compliance.yml` semantics, action pins, and remote CI evidence. |
 | Generated artifacts | Repomix output under `.context/repomix/**` and any rendered or packed evidence. |
 
