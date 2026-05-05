@@ -1,11 +1,13 @@
-// Renovate keeps GitHub Actions digests pinned for dependency governance.
-// Immutable action digests reduce supply-chain drift in workflow updates.
-// [Reference]: https://docs.renovatebot.com/presets-helpers/#helperspingithubactiondigests
+// Renovate governance is intentionally official-manager-first.
+// config:best-practices provides config:recommended, GitHub Actions digest pinning,
+// npm release-age protection, config migration, and other maintainer-recommended defaults.
+// Package rules below document review domains without grouping unrelated failures.
+// [Reference]: https://docs.renovatebot.com/presets-config/#configbest-practices
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
-    "config:recommended",
-    "helpers:pinGitHubActionDigests",
+    "config:best-practices",
+    ":approveMajorUpdates",
     ":dependencyDashboard"
   ],
   "labels": ["dependencies", "renovate"],
@@ -14,5 +16,85 @@
   "commitMessageExtra": "to v{{newVersion}}",
   "mise": {
     "managerFilePatterns": ["/^dot_config/mise/conf\\.d/.*\\.toml$/"]
-  }
+  },
+  "packageRules": [
+    {
+      "description": "Keep GitHub Actions updates separate from mise-managed tool updates.",
+      "matchManagers": ["github-actions"],
+      "dependencyDashboardCategory": "GitHub Actions",
+      "groupName": null
+    },
+    {
+      "description": "Keep core runtimes independent from CLI tool backends.",
+      "matchManagers": ["mise"],
+      "matchDepNames": ["node", "python", "go", "rust", "core:deno", "deno"],
+      "dependencyDashboardCategory": "mise core runtimes",
+      "groupName": null
+    },
+    {
+      "description": "Keep pnpm as a standalone CLI update, not an npm backend umbrella.",
+      "matchManagers": ["mise"],
+      "matchDepNames": ["pnpm"],
+      "dependencyDashboardCategory": "mise pnpm CLI",
+      "groupName": null
+    },
+    {
+      "description": "Keep npm-backed CLI tools separate from pnpm and core runtimes.",
+      "matchManagers": ["mise"],
+      "matchDepNames": ["/^npm:/"],
+      "dependencyDashboardCategory": "mise npm CLI tools",
+      "groupName": null
+    },
+    {
+      "description": "Keep aqua-backed CLI tools separate from npm, pnpm, and core runtimes.",
+      "matchManagers": ["mise"],
+      "matchDepNames": ["/^aqua:/"],
+      "dependencyDashboardCategory": "mise aqua-backed tools",
+      "groupName": null
+    },
+    {
+      "description": "Keep cargo-backed tools separate from npm and aqua backends.",
+      "matchManagers": ["mise"],
+      "matchDepNames": ["/^cargo:/"],
+      "dependencyDashboardCategory": "mise cargo-backed tools",
+      "groupName": null
+    },
+    {
+      "description": "Keep go-backed tools separate from npm and aqua backends.",
+      "matchManagers": ["mise"],
+      "matchDepNames": ["/^go:/"],
+      "dependencyDashboardCategory": "mise go-backed tools",
+      "groupName": null
+    },
+    {
+      "description": "Keep pipx-backed tools separate from npm and aqua backends.",
+      "matchManagers": ["mise"],
+      "matchDepNames": ["/^pipx:/"],
+      "dependencyDashboardCategory": "mise pipx-backed tools",
+      "groupName": null
+    },
+    {
+      "description": "Keep GitHub-backed mise tools separate from aqua-backed tools.",
+      "matchManagers": ["mise"],
+      "matchDepNames": ["/^github:/"],
+      "dependencyDashboardCategory": "mise GitHub-backed tools",
+      "groupName": null
+    },
+    {
+      "description": "Keep mise registry short-name CLI tools out of npm and aqua backend groups.",
+      "matchManagers": ["mise"],
+      "matchDepNames": [
+        "docker-cli",
+        "kubectl",
+        "helm",
+        "opentofu",
+        "terraform",
+        "tflint",
+        "terragrunt",
+        "gcloud"
+      ],
+      "dependencyDashboardCategory": "mise registry short-name tools",
+      "groupName": null
+    }
+  ]
 }
