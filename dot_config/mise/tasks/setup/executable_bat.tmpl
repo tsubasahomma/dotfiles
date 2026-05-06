@@ -1,12 +1,8 @@
 #!/usr/bin/env bash
-# [MISE] description="Rebuild bat syntax cache for Catppuccin Mocha"
-{{/* [Reference]: https://github.com/sharkdp/bat#customization */}}{{ "" -}}
+# [MISE] description="Compatibility wrapper for converge:bat"
+# [MISE] depends=["converge:bat"]
+{{/* [Reference]: https://mise.jdx.dev/tasks/file-tasks.html */}}{{ "" -}}
 
 set -euo pipefail
 
-MISE_BIN="{{ .paths.mise }}"
-
-echo "📦 [bat] Rebuilding theme cache..."
-"$MISE_BIN" exec bat -- bat cache --build
-
-echo "✅ [bat] Theme cache converged."
+:

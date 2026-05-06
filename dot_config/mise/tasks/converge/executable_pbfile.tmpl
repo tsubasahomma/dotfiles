@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# [MISE] description="Compile the native pbfile clipboard bridge"
+{{/* [Reference]: https://mise.jdx.dev/tasks/file-tasks.html */}}{{ "" -}}
+
+set -euo pipefail
+
+{{ if eq .osid "darwin" -}}
+SOURCE="{{ .paths.xdg_data }}/pbcopy/pbfile.swift"
+TARGET="{{ .paths.home }}/.local/bin/pbfile"
+
+if [[ -f "$SOURCE" ]]; then
+  echo "🔨 [Swift] Compiling native clipboard bridge..."
+  # [Optimization]: Use whole-module-optimization for sub-millisecond execution.
+  xcrun -sdk macosx swiftc -O -whole-module-optimization "$SOURCE" -o "$TARGET"
+  echo "✅ [Swift] pbfile converged."
+fi
+{{ else -}}
+echo "⏭️  [Swift] Skipping pbfile compilation on non-macOS host."
+{{ end -}}

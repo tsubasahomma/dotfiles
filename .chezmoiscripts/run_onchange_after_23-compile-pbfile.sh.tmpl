@@ -1,16 +1,11 @@
 #!/bin/zsh
-# Compile the native clipboard bridge for the local architecture.
-# Ahead-of-time compilation keeps pbfile available as a local executable.
+# Delegate native clipboard bridge compilation to mise-managed tooling.
 # [Trigger]: pbfile.swift Hash: {{ include "dot_local/share/pbcopy/pbfile.swift" | sha256sum }}
+{{/* [Reference]: https://www.chezmoi.io/user-guide/use-scripts-to-perform-actions/ */}}{{ "" -}}
 
 {{ if eq .osid "darwin" -}}
-SOURCE="{{ .paths.xdg_data }}/pbcopy/pbfile.swift"
-TARGET="{{ .paths.home }}/.local/bin/pbfile"
+set -euo pipefail
 
-if [[ -f "$SOURCE" ]]; then
-  echo "🔨 [Swift] Compiling native clipboard bridge..."
-  # [Optimization]: Use whole-module-optimization for sub-millisecond execution.
-  xcrun -sdk macosx swiftc -O -whole-module-optimization "$SOURCE" -o "$TARGET"
-  echo "✅ [Swift] pbfile converged."
-fi
+echo "⚡ [Delegate] Invoking mise task: converge:pbfile"
+exec "{{ .paths.mise }}" run converge:pbfile
 {{ end -}}
