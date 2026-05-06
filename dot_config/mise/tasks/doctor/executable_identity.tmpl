@@ -61,20 +61,15 @@ else
   if [[ "$IS_CI" == "true" ]]; then
     log_warn "SSH Agent unresponsive (expected in CI environment)."
   else
-    log_warn "SSH Agent unresponsive. Attempting bridge recovery..."
+    log_err "SSH Agent is unresponsive."
     {{ if .is_wsl }}
-    if command -v systemctl >/dev/null 2>&1; then
-      systemctl --user restart 1password-bridge.service || true
-    fi
+    log_guide "Restart the WSL2 1Password bridge explicitly: systemctl --user restart 1password-bridge.service"
+    log_guide "Then rerun 'mise run doctor:identity'."
+    {{ else }}
+    log_guide "Verify the 'SSH Agent' setting in 1Password Desktop App."
+    log_guide "Then rerun 'mise run doctor:identity'."
     {{ end }}
-    sleep 1
-    if ssh-add -l > /dev/null 2>&1; then
-      log_ok "Authentication bridge recovered successfully."
-    else
-      log_err "Authentication bridge failed to initialize."
-      log_guide "Verify the 'SSH Agent' setting in 1Password Desktop App."
-      HAS_ERROR=1
-    fi
+    HAS_ERROR=1
   fi
 fi
 

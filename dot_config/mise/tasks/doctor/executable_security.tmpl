@@ -5,18 +5,51 @@
 set -euo pipefail
 
 GREEN='\033[0;32m'
+RED='\033[0;31m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
 NC='\033[0m'
 
 log_ok() { printf "  ${GREEN}✅ %s${NC}\n" "$1"; }
+log_warn() { printf "  ${YELLOW}⚠️  %s${NC}\n" "$1"; }
+log_err() { printf "  ${RED}❌ %s${NC}\n" "$1"; }
+log_guide() { printf "  ${BLUE}👉 %s${NC}\n" "$1"; }
 
 HOME_DIR="{{ .paths.home }}"
+HAS_ERROR=0
+
+dir_mode() {
+  local dir="$1"
+  local mode=""
+
+  if mode="$(stat -c '%a' "$dir" 2>/dev/null)"; then
+    printf "%s" "$mode"
+  elif mode="$(stat -f '%Lp' "$dir" 2>/dev/null)"; then
+    printf "%s" "$mode"
+  else
+    return 1
+  fi
+}
 
 echo "--- 1. Infrastructure Security & Permissions ---"
 for dir in "$HOME_DIR/.ssh" "{{ .paths.xdg_state }}/ssh"; do
   if [[ -d "$dir" ]]; then
-    chmod 700 "$dir"
-    log_ok "Permissions secured for $dir (0700)."
+    if mode="$(dir_mode "$dir")"; then
+      if [[ "$mode" == "700" ]]; then
+        log_ok "Permissions verified for $dir (0700)."
+      else
+        log_err "Permission drift detected for $dir (mode $mode, expected 700)."
+        log_guide "Run 'chmod 700 \"$dir\"' after confirming ownership."
+        HAS_ERROR=1
+      fi
+    else
+      log_err "Permission mode could not be inspected for $dir."
+      log_guide "Inspect the directory permissions manually, then rerun 'mise run doctor:security'."
+      HAS_ERROR=1
+    fi
+  else
+    log_warn "Directory not present; skipping permission check for $dir."
   fi
 done
 
-exit 0
+exit "$HAS_ERROR"
