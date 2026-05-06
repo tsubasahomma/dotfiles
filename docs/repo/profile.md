@@ -91,7 +91,7 @@ Treat these repository surfaces as behavior-sensitive:
 | Identity and SSH | 1Password identity discovery, identity metadata, SSH signing, SSH agent routing, and generated identity files. |
 | WSL2 bridge | Windows interop, `npiperelay.exe`, `op.exe`, user systemd services, and Windows-side sync paths. |
 | Rendered configuration | Shell startup, zsh, WezTerm, Starship, Git, SSH, Homebrew, mise, Vale, Neovim, and related rendered files. |
-| Mise | `dot_config/mise/tasks/**`, `.mise.toml`, tool declarations, runtime versions, tool versions, dependencies, and lockfiles. |
+| Mise | `dot_config/mise/repo-tasks/**`, `.mise.toml`, tool declarations, runtime versions, tool versions, dependencies, and lockfiles. |
 | Renovate | `renovate.json5`, repository update governance, native manager extraction, review-domain categorization, validator commands, and validator runtime evidence. |
 | GitHub Actions | `.github/workflows/**`, `compliance.yml` semantics, action pins, and remote CI evidence. |
 | Generated artifacts | Repomix output under `.context/repomix/**` and any rendered or packed evidence. |
@@ -146,5 +146,5 @@ explicitly scopes that adapter.
 | adapter | Vendor-specific assistant entry point such as `.github/copilot-instructions.md`; adapters should route to the LLM-agnostic context architecture. |
 | 1Password identity | Repository-discovered identity metadata from prepared 1Password SSH Key items used for Git authoring, SSH signing, and SSH routing. |
 | WSL2 bridge | The Windows-to-WSL2 identity and SSH agent path involving Windows 11, WSL2 Ubuntu, Windows 1Password Desktop, `op.exe`, `npiperelay.exe`, and user systemd. |
-| doctor task | A repository-local mise validation or readiness check under `dot_config/mise/tasks/doctor/**`. |
+| doctor task | A repository-local mise validation or readiness check under `dot_config/mise/repo-tasks/doctor/**`. |
 | repair candidate | A current behavior that may be mutation-oriented and may need a future explicit `repair:*` decision; it is not authorization to change current tasks. |
