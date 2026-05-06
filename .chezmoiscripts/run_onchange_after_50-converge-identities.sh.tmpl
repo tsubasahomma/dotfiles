@@ -1,64 +1,12 @@
 #!/bin/zsh
 {{ "" -}}
 # =============================================================================
-# Phase 50 converges generated identity files atomically.
-# Public keys are read from chezmoi template data and never from generated files.
-# The pass provisions downstream Git and SSH configuration idempotently.
-# Logic is strictly encapsulated in .chezmoitemplates.
-# [Reference]: https://www.chezmoi.io/reference/special-directories/chezmoitemplates/
+# Phase 50 delegates generated identity convergence to mise-managed tooling.
 # [Trigger]: {{ .ssh_keys_hash }}
+{{/* [Reference]: https://www.chezmoi.io/user-guide/use-scripts-to-perform-actions/ */}}{{ "" -}}
 # =============================================================================
 
 set -euo pipefail
 
-SSH_DIR="{{ .paths.home }}/.ssh"
-GIT_CONFIG_DIR="{{ .paths.xdg_config }}/git/identities"
-ALLOWED_SIGNERS="{{ .paths.xdg_config }}/git/allowed_signers"
-
-# Chezmoi source state owns stable SSH and Git parent topology before
-# run_onchange_after scripts write generated identity files.
-
-# Remove stale generated Git identity includes before writing the new set.
-rm -rf "$GIT_CONFIG_DIR"
-mkdir -p "$GIT_CONFIG_DIR"
-TEMP_SIGNERS=$(mktemp)
-
-echo "🔐 [Identity] Converging Content-Addressable Sovereign Identities..."
-
-{{ $home := .paths.home -}}
-{{ range .identities -}}
-# --- Provisioning Identity: {{ .name }} ({{ .email }}) ---
-# Generated public key paths include identity hash material.
-PUBKEY_FILE="$SSH_DIR/id_{{ .key_type }}_{{ .email }}_{{ .key_hash }}.pub"
-echo {{ .public_key | quote }} > "$PUBKEY_FILE"
-chmod 600 "$PUBKEY_FILE"
-
-CONFIG_FILE="$GIT_CONFIG_DIR/config_{{ .email }}_{{ .key_hash }}"
-# Delegate generated Git config content to the shared identity template.
-cat << 'EOF' > "$CONFIG_FILE"
-{{ includeTemplate "git_identity_config.tmpl" (dict "name" .name "email" .email "public_key" .public_key "key_type" .key_type "key_hash" .key_hash "home" $home) }}
-EOF
-
-# [Reference]: https://man.openbsd.org/ssh-keygen#ALLOWED_SIGNERS
-echo "{{ .email }} namespaces=\"git\" {{ trim .public_key }}" >> "$TEMP_SIGNERS"
-
-echo "  ✅ Synced context routing: {{ .email }} [Hash: {{ .key_hash }}]"
-{{ end -}}
-
-{{ if not .identities -}}
-# CI can verify file generation even when no user identities are mapped.
-echo "ci-bot@example.com namespaces=\"git\" ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAI_CI_FALLBACK_KEY_STUB" >> "$TEMP_SIGNERS"
-echo "⚠️  [Identity] No sovereign identities mapped. CI fallback stub generated."
-{{ end -}}
-
-# [Idempotency]: Atomic write with unique sorting to prevent duplicate accumulation.
-if [[ -s "$TEMP_SIGNERS" ]]; then
-  sort -u "$TEMP_SIGNERS" > "$ALLOWED_SIGNERS"
-else
-  : > "$ALLOWED_SIGNERS"
-fi
-
-rm -f "$TEMP_SIGNERS"
-chmod 644 "$ALLOWED_SIGNERS"
-
-echo "✅ [Identity] O(1) Convergence complete. All local keyfiles and context scopes provisioned."
+echo "⚡ [Delegate] Invoking mise task: converge:identity"
+exec "{{ .paths.mise }}" run converge:identity
