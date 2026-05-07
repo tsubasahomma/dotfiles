@@ -2,6 +2,15 @@
 # Core runtimes remain explicit before tools that depend on runtime backends.
 # [Reference]: https://mise.jdx.dev/configuration.html
 
+[task_config]
+# Each global mise config file owns its own task discovery scope.
+# Keep this aligned with config.toml.tmpl so conf.d never falls back to
+# unmanaged local/private tasks in default discovery paths.
+includes = [
+    ".config/mise/repo-tasks",
+]
+
+
 [tools]
 # --- 1. Infrastructure Core & Runtimes ---
 "aqua:twpayne/chezmoi" = "2.70.2"

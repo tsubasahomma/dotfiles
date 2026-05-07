@@ -39,3 +39,31 @@ Library/Group Containers/2BUA8C4S2C.com.1password/Library/Application Support/1P
 {{/* Remove stale mise-managed Docker CLI artifacts after Docker ownership moved to platform packages. */}}
 .local/share/mise/installs/docker-cli
 .local/share/mise/shims/docker
+
+{{/*
+Remove previous repository-owned mise file-task targets after discovery moved to
+the dedicated repo-owned .config/mise/repo-tasks tree. Do not exact-own
+.config/mise/tasks; unmanaged local/private tasks may remain there.
+*/}}
+.config/mise/tasks/converge/bat
+.config/mise/tasks/converge/completions
+.config/mise/tasks/converge/identity
+.config/mise/tasks/converge/pbfile
+.config/mise/tasks/doctor/_default
+.config/mise/tasks/doctor/completion
+.config/mise/tasks/doctor/hubspot
+.config/mise/tasks/doctor/identity
+.config/mise/tasks/doctor/npm-backend
+.config/mise/tasks/doctor/nvim
+.config/mise/tasks/doctor/security
+.config/mise/tasks/doctor/toolchain
+.config/mise/tasks/doctor/vale
+.config/mise/tasks/integrate/nvim
+.config/mise/tasks/setup/_default
+.config/mise/tasks/setup/bat
+.config/mise/tasks/setup/pnpm
+.config/mise/tasks/setup/security
+.config/mise/tasks/setup/vale
+.config/mise/tasks/sync/vale
+.config/mise/tasks/sync/wezterm
+.config/mise/tasks/update/lazy-lock

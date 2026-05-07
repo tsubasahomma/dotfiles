@@ -9,11 +9,27 @@ MISE_PYTHON_GITHUB_ATTESTATIONS = "false"
 PNPM_HOME = "{{ .paths.xdg_data }}/pnpm"
 
 
+[task_config]
+# Discover only repository-owned file tasks rendered by chezmoi.
+# Local/private tasks in default discovery paths are intentionally unmanaged by
+# this repository; run them by path or opt into them from local config instead.
+includes = [
+    ".config/mise/repo-tasks",
+]
+
+
 [settings]
 not_found_auto_install = true
 yes = true
 experimental = true
 asdf_compat = false
+
+[settings.task]
+# Do not load unmanaged local/private file tasks from the old default drift
+# surface, even when another config scope causes global task fallback loading.
+disable_paths = [
+    "{{ .paths.xdg_config }}/mise/tasks",
+]
 
 [settings.github]
 credential_command = "{{ .paths.op }} read 'op://Development/mise-cli-token/credential'"
