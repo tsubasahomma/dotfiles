@@ -18,13 +18,16 @@ if [[ ! -x "$MISE_BIN" ]]; then
   exit 1
 fi
 
-echo "📦 [Phase 20] Executing Runtime Convergence via Mise..."
+echo "📦 [Runtime] Executing runtime convergence via mise..."
 
-# Phase 1 installs declared tools idempotently.
+# Install declared tools idempotently.
 "$MISE_BIN" install
 
-# Phase 2 runs idempotent runtime owner tasks.
+# Run idempotent runtime owner tasks.
 "$MISE_BIN" run repair:security
+{{ if eq .osid "linux" -}}
+"$MISE_BIN" run provision:linux-shell
+{{ end -}}
 "$MISE_BIN" run provision:pnpm
 
-echo "✅ [Phase 20] Runtime convergence complete."
+echo "✅ [Runtime] Runtime convergence complete."

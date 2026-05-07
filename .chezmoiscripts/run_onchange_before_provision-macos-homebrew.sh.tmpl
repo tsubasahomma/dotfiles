@@ -1,0 +1,41 @@
+{{ if eq .osid "darwin" -}}
+#!/bin/zsh
+# macOS Homebrew provisioning runs before target updates because rendered mise
+# file tasks do not exist yet during first-run apply.
+# dot_config/homebrew/Brewfile.tmpl hash: {{ include "dot_config/homebrew/Brewfile.tmpl" | sha256sum }}
+
+set -euo pipefail
+
+# Resolve bootstrap binaries through chezmoi before invoking installers.
+CURL_BIN="{{ lookPath "curl" }}"
+BASH_BIN="{{ lookPath "bash" }}"
+
+if [ -z "$CURL_BIN" ] || [ -z "$BASH_BIN" ]; then
+  echo "❌ [Fatal] Essential commodity binaries (curl, bash) not found in PATH."
+  exit 1
+fi
+
+if ! command -v brew &> /dev/null; then
+  echo "📦 [Homebrew Packages] Installing Homebrew..."
+  "$BASH_BIN" -c "$("$CURL_BIN" -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+fi
+
+if [[ -x "/opt/homebrew/bin/brew" ]]; then
+  eval "$(/opt/homebrew/bin/brew shellenv)"
+elif [[ -x "/usr/local/bin/brew" ]]; then
+  eval "$(/usr/local/bin/brew shellenv)"
+fi
+
+brew update
+TEMP_BREWFILE=$(mktemp)
+trap 'rm -f "$TEMP_BREWFILE"' EXIT
+cat << 'EOF' > "$TEMP_BREWFILE"
+{{ includeTemplate "dot_config/homebrew/Brewfile.tmpl" . }}
+EOF
+
+echo "📦 [Homebrew Packages] Installing Brewfile bundle: $TEMP_BREWFILE"
+export HOMEBREW_BUNDLE_NO_LOCK=1
+brew bundle install --file="$TEMP_BREWFILE"
+
+echo "✅ [Homebrew Packages] Homebrew package provisioning complete."
+{{ end -}}
