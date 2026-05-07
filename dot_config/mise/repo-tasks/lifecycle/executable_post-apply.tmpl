@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# [MISE] description="Run post-apply generated, cache, build, and sync graph"
+# [MISE] hide=true
+{{- if eq .osid "linux" }}
+# [MISE] depends=["repair:security", "provision:linux-shell", "provision:pnpm", "generate:completions", "cache:bat", "sync:vale", "generate:identity"]
+{{- else if eq .osid "darwin" }}
+# [MISE] depends=["repair:security", "provision:pnpm", "generate:completions", "cache:bat", "sync:vale", "build:pbfile", "generate:identity"]
+{{- else }}
+# [MISE] depends=["repair:security", "provision:pnpm", "generate:completions", "cache:bat", "sync:vale", "generate:identity"]
+{{- end }}
+{{/* [Reference]: https://mise.jdx.dev/tasks/file-tasks.html */}}{{ "" -}}
+
+set -euo pipefail
+
+echo "Post-apply mise graph complete."
