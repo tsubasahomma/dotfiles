@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+{{/* [Reference]: https://www.chezmoi.io/user-guide/use-scripts-to-perform-actions/ */}}{{ "" -}}
+# Platform-neutral post-apply convergence is delegated to the repo-owned mise graph.
+# The 20 prefix keeps this graph before WSL/Windows-specific 51/52/90 adapters.
+# [Trigger]: dynamic mise config hash: {{ include "dot_config/mise/config.toml.tmpl" | sha256sum }}
+# [Trigger]: static tool manifest hash: {{ include "dot_config/mise/conf.d/10-tools.toml" | sha256sum }}
+# [Trigger]: external asset manifest hash: {{ include ".chezmoiexternal.toml.tmpl" | sha256sum }}
+# [Trigger]: post-apply lifecycle task hash: {{ include "dot_config/mise/repo-tasks/lifecycle/executable_post-apply.tmpl" | sha256sum }}
+# [Trigger]: completion data hash: {{ include ".chezmoidata/completions.yaml" | sha256sum }}
+# [Trigger]: completion task hash: {{ include "dot_config/mise/repo-tasks/generate/executable_completions.tmpl" | sha256sum }}
+# [Trigger]: bat cache task hash: {{ include "dot_config/mise/repo-tasks/cache/executable_bat.tmpl" | sha256sum }}
+# [Trigger]: Vale config hash: {{ include "dot_config/vale/vale.ini.tmpl" | sha256sum }}
+# [Trigger]: Vale sync task hash: {{ include "dot_config/mise/repo-tasks/sync/executable_vale.tmpl" | sha256sum }}
+# [Trigger]: pbfile source hash: {{ include "dot_local/share/pbcopy/pbfile.swift" | sha256sum }}
+# [Trigger]: pbfile build task hash: {{ include "dot_config/mise/repo-tasks/build/executable_pbfile.tmpl" | sha256sum }}
+# [Trigger]: generated identity input hash: {{ .ssh_keys_hash }}
+# [Trigger]: generated identity task hash: {{ include "dot_config/mise/repo-tasks/generate/executable_identity.tmpl" | sha256sum }}
+# [Trigger]: security repair task hash: {{ include "dot_config/mise/repo-tasks/repair/executable_security.tmpl" | sha256sum }}
+# [Trigger]: Linux shell provision task hash: {{ include "dot_config/mise/repo-tasks/provision/executable_linux-shell.tmpl" | sha256sum }}
+# [Trigger]: pnpm provision task hash: {{ include "dot_config/mise/repo-tasks/provision/executable_pnpm.tmpl" | sha256sum }}
+
+set -euo pipefail
+
+# This script runs before the new Zsh environment is fully initialized.
+# PATH injection is required because this subshell executes before Zsh bootstrap completes.
+export PNPM_HOME="{{ .paths.xdg_data }}/pnpm"
+export PATH="$PNPM_HOME:{{ .paths.home }}/.local/bin:$PATH"
+
+MISE_BIN="{{ .paths.mise }}"
+
+if [[ ! -x "$MISE_BIN" ]]; then
+  echo "❌ [Fatal] Hermetic mise binary not found at $MISE_BIN." >&2
+  exit 1
+fi
+
+echo "📦 [Post-apply] Executing repo-owned mise graph..."
+
+# Install declared tools idempotently.
+"$MISE_BIN" install
+
+"$MISE_BIN" run lifecycle:post-apply
+
+echo "✅ [Post-apply] Mise graph complete."
