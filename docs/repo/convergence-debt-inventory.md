@@ -1,267 +1,70 @@
-# Chezmoi/Mise convergence debt inventory
+# Chezmoi/Mise convergence debt archive
 
-## Scope
+## Purpose
 
-This is the inventory and classification packet for child issue #288 under
-parent issue #287. It is a historical evidence artifact, not current
-repository-local routing guidance. It does not change script behavior, hook
-wiring, task discovery, task names, task metadata, removal policy, README
-commands, generated artifacts, rendered targets, package lists, tool versions,
-runtime versions, lockfiles, or CI semantics.
+This file is a durable archive summary of the Chezmoi/Mise convergence debt
+inventory. It is not current repository-local routing guidance and does not
+change script behavior, hook wiring, task discovery, task names, task metadata,
+removal policy, README commands, generated artifacts, rendered targets, package
+lists, tool versions, runtime versions, lockfiles, or CI semantics.
 
-Use [`README.md`](../../README.md) for the current operator entry point and use
+Use [`README.md`](../../README.md) for the current operator entry point. Use
 [`surfaces.md`](./surfaces.md), [`validation.md`](./validation.md),
 [`workflows.md`](./workflows.md), [`repomix.md`](./repomix.md), and
-[`teardown.md`](./teardown.md) for current repository-local routing. The tables
-below preserve #288 baseline evidence and child-candidate language as
-provenance only; do not treat old paths, task names, or follow-up notes as
-active instructions without fresh source-state evidence.
+[`teardown.md`](./teardown.md) for current repository-local routing.
 
-The original inspected baseline is `main` at
-`3eebcada23ab2cd3c0783d065758ee89e3c6d7c2`. Local `HEAD` and
-`git ls-remote origin refs/heads/main` both resolved to that commit during this
-inventory.
+The previous row-level inventory table was removed from long-term docs because
+it preserved old task paths, obsolete hook names, staging notes, and
+time-bound audit wording that no longer helped maintain the current source
+state. Use git history when the original evidence packet is needed for
+forensics.
 
-Current source-state evidence after children #288 through #308 is:
+## Current source-state summary
 
-- `.chezmoiscripts/**` contains five lifecycle scripts:
+- The pre-source-state hook is `.bootstrap-mise.sh`; no identity-named
+  bootstrap hook is retained.
+- `.chezmoiscripts/**` contains five lifecycle adapters:
   `.chezmoiscripts/run_onchange_before_00-provision-linux-packages.sh.tmpl`,
   `.chezmoiscripts/run_onchange_before_provision-macos-homebrew.sh.tmpl`,
   `.chezmoiscripts/run_onchange_before_provision-windows-packages.sh.tmpl`,
   `.chezmoiscripts/run_onchange_after_20-mise-post-apply-graph.sh.tmpl`, and
   `.chezmoiscripts/run_onchange_after_wsl-sync-services.sh.tmpl`.
-- The active `hooks.read-source-state.pre` command in `.chezmoi.toml.tmpl`
-  points to `.bootstrap-mise.sh`; `.bootstrap-identity.sh` remains only as a
-  migration shim for already-rendered configs.
 - Repo-owned mise task source state lives under
-  `dot_config/mise/repo-tasks/**`; `dot_config/mise/tasks/**` is absent in
+  `dot_config/mise/repo-tasks/**`; `dot_config/mise/tasks/**` is absent from
   source state.
 - `dot_config/mise/config.toml.tmpl` sets `task_config.includes` to
-  `.config/mise/repo-tasks` and disables the old default
-  `.config/mise/tasks` drift path for this repository-owned config scope.
-- Current repo-owned task families include `build:*`, `cache:*`,
-  hidden `check:*`, public `doctor`, `generate:*`, hidden `lifecycle:*`,
+  `.config/mise/repo-tasks`, so the repo-owned config scope does not use the
+  default `.config/mise/tasks` discovery path.
+- Current repo-owned task families include `build:*`, `cache:*`, hidden
+  `check:*`, public `doctor`, `generate:*`, hidden `lifecycle:*`,
   `provision:*`, `repair:*`, `service:*`, `sync:*`, and `update:*`.
 - Local rendered `mise tasks` visibility is host and target-state evidence, not
-  source-state truth; it can omit WSL-only rendered tasks or reflect local drift.
+  source-state truth. It can omit WSL-only rendered tasks or reflect local
+  drift.
+- `.chezmoiremove.tmpl` is narrow target-relative migration policy. It should
+  remove only evidence-backed target paths, not broad directories, app-owned
+  host paths, or unmanaged local/private files.
 
-## Radical refactoring stance
+## Durable decisions
 
-Do not preserve the current structure by default. Existing paths, phase
-numbers, task groups, wrappers, compatibility aliases, and public-looking task
-names are debt unless current repository evidence and official Chezmoi or mise
-documentation justify keeping them.
-
-Keeping an existing script, task name, wrapper, automatic side effect, discovery
-path, phase number, or public-looking command requires evidence-backed
-justification. Prefer deletion, consolidation, renaming, movement,
-manualization, or explicit opt-in behavior when that better matches official
-Chezmoi/Mise semantics and parent issue #287. These decisions are child-issue
-candidates only; each later child must re-inspect current evidence before
-changing behavior.
-
-Decision vocabulary:
-
-| Decision | Meaning for this packet |
-| --- | --- |
-| `keep` | Keep the current item or current name only when current evidence and official docs justify it. |
-| `consolidate` | Preserve the necessary behavior, but collapse it into a smaller lifecycle, task graph, or owner boundary. |
-| `rename` | The current name, namespace, phase, or public-looking surface is inaccurate or transitional. |
-| `delete` | No current evidence justifies preserving the item as repository-owned behavior. |
-| `manualize` | Remove automatic execution or public-command status and make the action explicit/local/private. |
-
-## Original #288 evidence summary
-
-| Evidence | Result |
-| --- | --- |
-| `git status --short` before work | Clean output, exit 0. |
-| `git rev-parse HEAD` | `3eebcada23ab2cd3c0783d065758ee89e3c6d7c2`, exit 0. |
-| `git ls-remote origin refs/heads/main` | `3eebcada23ab2cd3c0783d065758ee89e3c6d7c2 refs/heads/main`, exit 0. |
-| `.chezmoiscripts/**` inventory | `rg --files .chezmoiscripts` returned 13 files, exit 0. |
-| `dot_config/mise/tasks/**` inventory | `rg --files dot_config/mise/tasks` returned 22 source-state file tasks, exit 0. |
-| `mise tasks validate` | `All 25 task(s) validated successfully`, exit 0. |
-| `mise tasks ls --extended` | 25 visible tasks from `~/.config/mise/tasks/**`, exit 0. |
-| `chezmoi source-path` for visible task paths | 22 visible tasks mapped to source state; 3 visible tasks were `not managed`. |
-| Direct file inspection | Inspected `.bootstrap-identity.sh`, `.chezmoi.toml.tmpl`, `dot_config/mise/config.toml.tmpl`, `.chezmoiremove.tmpl`, `README.md`, and `docs/repo/**`. |
-
-## Official documentation evidence
-
-| Area | Evidence used | Classification implication |
+| Area | Archived decision | Current evidence boundary |
 | --- | --- | --- |
-| Chezmoi scripts | https://www.chezmoi.io/user-guide/use-scripts-to-perform-actions/ says scripts run during `chezmoi apply`, `run_`, `run_onchange_`, and `run_once_` have different trigger semantics, scripts break the declarative approach, and scripts should be sparse and idempotent. | Many single-purpose lifecycle scripts are debt unless they protect a necessary lifecycle boundary. |
-| Chezmoi package provisioning | https://www.chezmoi.io/user-guide/advanced/install-packages-declaratively/ describes package convergence with `.chezmoidata` plus a `run_onchange_` script. | Automatic package provisioning can stay as an explicit host-provisioning exception, but broad provisioning should be isolated and auditable. |
-| Chezmoi hooks | https://www.chezmoi.io/reference/configuration-file/hooks/ says hooks always run, including dry-run, and should be fast and idempotent; `read-source-state.pre` runs before source-state reads. | The pre-source-state hook boundary is legitimate only if it stays fast, idempotent, and accurately named. |
-| Chezmoi application order | https://www.chezmoi.io/reference/application-order/ places `run_before_` before target updates and `run_after_` after target updates, and says modifying source or destination state while chezmoi executes violates assumptions. | Scripts that mutate target-visible state need careful lifecycle ownership; generated/cache/sync work fits better in a small post-apply adapter plus mise graph. |
-| `.chezmoiremove` | https://www.chezmoi.io/reference/special-files/chezmoiremove/ says `.chezmoiremove{,.tmpl}` is a source-state list of targets to remove. | Removal entries are destructive migration policy, not incidental documentation. |
-| Mise tasks | https://mise.jdx.dev/tasks/ says tasks can be TOML tasks or standalone shell scripts and run inside the mise environment. | Task ownership belongs in mise when behavior is a repeatable graph step rather than a Chezmoi lifecycle boundary. |
-| Mise file tasks | https://mise.jdx.dev/tasks/file-tasks.html says file tasks must be executable, can use `#MISE` or `# [MISE]` metadata, and subdirectories apply task-name prefixes. | Current task names are mostly path-derived and are not durable API by default. |
-| Mise task metadata and hiding | https://mise.jdx.dev/tasks/task-configuration.html documents `depends`, `sources`, `outputs`, and `hide`. | Wrappers and public-looking internal tasks need justification; internal checks can become hidden `check:*` tasks. |
-| Mise task includes | https://mise.jdx.dev/tasks/task-configuration.html says `task_config.includes` replaces default file-task directories for the config scope; defaults include `.config/mise/tasks`. | Leaving `task_config.includes` unset keeps repo-owned tasks and unmanaged drift in the same visible discovery tree. |
+| Chezmoi lifecycle scripts | Keep only sparse lifecycle adapters when Chezmoi ordering is required for first-run apply or host provisioning. | Inspect `.chezmoiscripts/**`, trigger comments, rendered script output, and source-state consumers before changing script behavior. |
+| Pre-source-state bootstrap | Keep a non-template POSIX hook that ensures `mise` exists before source-state reads. The hook name must describe mise/tool bootstrap ownership, not identity ownership. | Inspect `.bootstrap-mise.sh`, `.chezmoi.toml.tmpl`, rendered hook stanzas, and Chezmoi hook semantics. |
+| Mise task discovery | Keep repo-owned tasks outside the default `.config/mise/tasks` drift surface. | Inspect `dot_config/mise/config.toml.tmpl`, `dot_config/mise/repo-tasks/**`, and rendered task visibility. |
+| Task taxonomy | Keep source-owned tasks in explicit owner families: provisioning, generation, caches, builds, sync, services, checks, repairs, updates, and public `doctor`. | Use `mise tasks validate`, `mise tasks ls --extended --hidden`, and task-level metadata evidence. |
+| Workspace directories | Do not create identity-routed workspace directories automatically during apply. | Treat identity directory metadata as Git include routing unless a managed target-state requirement is proven. |
+| WSL2 sync and services | Keep WSL2 sync/service behavior behind host-specific tasks and adapters, with no GitHub Actions claim for local Windows or user-systemd behavior. | Require maintainer-local host evidence for Windows interop, 1Password Desktop, SSH agent bridge, user systemd, and WezTerm Windows sync claims. |
+| Remove targets | Keep removal policy file-specific, target-relative, and evidence-backed. | Validate `.chezmoiremove.tmpl` with rendered output and dry-run or verbose evidence when it changes. |
+| Public commands | Keep `chezmoi init --apply` as the first-run convergence path and `mise run doctor` as the stable public health-check command. | Treat repair, update, verification, teardown, and troubleshooting commands as scoped maintainer workflows unless README and source evidence prove otherwise. |
 
-## Historical decision tables
+## Current routing
 
-The remaining tables preserve the #288 inventory and later child notes. They are
-useful provenance for why children #291 through #308 changed the repository, but
-they are not current routing guidance.
-
-## Chezmoi lifecycle scripts
-
-| Source path | Lifecycle type/order | Trigger evidence | Direct side effects | Delegated task or command | Official Chezmoi constraint | Current public or host-specific contract | Decision | Evidence for the decision | Follow-up child candidate |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| `.chezmoiscripts/run_onchange_before_provision-windows-packages.sh.tmpl` | `run_onchange_before`; WSL-only before target updates | Hash of `.chezmoidata/packages.yaml` | Updates WinGet sources and installs Windows packages from package data | `winget.exe source update`; `winget.exe install` | Package provisioning can be `.chezmoidata` plus `run_onchange_`, but scripts are imperative and should be sparse | WSL2 Windows-side package provisioning for one-command bootstrap | `keep` | Automatic Windows package provisioning is now an explicitly named Chezmoi host-provisioning adapter because rendered mise file tasks are unavailable before target updates on first-run apply. | Child 8 can re-evaluate non-package WSL2 side effects with host-specific evidence. |
-| `.chezmoiscripts/run_onchange_before_00-validate-session.sh.tmpl` | `run_onchange_before_00`; before target updates | Content-driven only; checks `.op_status` branch | Fails when 1Password is locked outside CI; no target mutation | None | Scripts should be sparse and idempotent; hooks/source-state reads already evaluate template prerequisites | Identity availability gate | `delete` | `.chezmoi.toml.tmpl` already fails for missing or locked `op` outside CI before data aggregation, so this lifecycle script duplicates a precondition without owning convergence. | Child 4 candidate; re-inspect hook/template assertions. |
-| `.chezmoiscripts/run_onchange_before_provision-macos-homebrew.sh.tmpl` | `run_onchange_before`; macOS-only before target updates | Brewfile hash | Installs Homebrew when missing, updates Homebrew, and installs the generated Brewfile | `curl`, `bash`, `brew update`, `brew bundle install` | Package provisioning can be isolated with data plus `run_onchange_`; `run_before_` happens before target updates | macOS Homebrew package provisioning for one-command bootstrap | `keep` | Automatic Homebrew package provisioning is now an explicitly named Chezmoi host-provisioning adapter because rendered mise file tasks are unavailable before target updates on first-run apply. | Parent closure audit can revisit whether a future Chezmoi release or bootstrap path changes first-run task availability. |
-| `.chezmoiscripts/run_onchange_before_00-provision-linux-packages.sh.tmpl` | `run_onchange_before_00`; Linux-only before target updates | Linux package list hash | Installs distro packages from the generated package list | `apt-get`, `dnf`, or `pacman` | Package provisioning can be isolated with data plus `run_onchange_`; `run_before_` happens before target updates | Linux package-manager provisioning for one-command bootstrap | `keep` | Linux package-manager convergence is split from shell registration and remains an explicitly named Chezmoi host-provisioning adapter because rendered mise file tasks are unavailable before target updates on first-run apply; the `00` order prefix keeps package-manager provisioning early in the before-script phase. | Parent closure audit can revisit whether a future Chezmoi release or bootstrap path changes first-run task availability. |
-| `dot_config/mise/repo-tasks/provision/executable_linux-shell.tmpl` | `provision:linux-shell`; after target updates through the post-apply graph | Task file content plus mise `sources`/auto-output metadata | Registers `zsh` in `/etc/shells` and changes the user's login shell when needed | `sudo tee`; `chsh`; `getent` | File tasks can own grouped `provision:*` behavior after rendered target updates make them available | Linux shell registration for one-command bootstrap | `keep` | Shell registration is no longer an incidental tail of package installation; it has explicit `provision:*` ownership and is reachable from the hidden post-apply lifecycle graph on Linux. | Parent closure audit can verify final post-apply behavior after later children. |
-| `.chezmoiscripts/run_once_before_10-setup-workspace.sh.tmpl` | `run_once_before_10`; before target updates | `run_once_` rendered content from identity metadata | Created workspace directories from identity directory globs | `mkdir -p` | Scripts break declarative state and `run_once_` tracks content hashes, not ongoing desired target state | Identity-routed workspace convenience | `delete` | Child 7 current evidence found no managed target topology or first-run convergence requirement for automatic workspace directory creation; `.identities[*].dirs` remains identity-routing metadata for Git include routing. | Child 7 implementation deletes the automatic script; parent closure audit can verify the script remains absent and no workspace task was introduced. |
-| `.chezmoiscripts/run_onchange_after_20-mise-post-apply-graph.sh.tmpl` | `run_onchange_after_20`; after target updates | Narrow Chezmoi trigger hashes for the graph inputs; mise task metadata owns per-task freshness | Injects PATH/PNPM_HOME, verifies the hermetic mise binary, installs declared tools, and runs the hidden graph | `mise install`; `mise run lifecycle:post-apply` | `run_onchange_after_` can depend on updated targets without leaving a persistent `chezmoi verify` run marker after successful apply | Platform-neutral post-apply mise graph adapter | `keep` | A single post-apply adapter is justified for `chezmoi init --apply` because rendered mise config and repo tasks are only available after target updates; the `20` prefix keeps it before the WSL/Windows-specific sync/service adapter, and `run_onchange_` preserves CI idempotency proof. | Parent closure audit can verify final post-apply behavior. |
-| `.chezmoiscripts/run_onchange_after_wsl-sync-services.sh.tmpl` | `run_onchange_after`; WSL-only after target updates | Hashes the WSL lifecycle task, rendered 1Password agent config, sync task files, WezTerm config, bridge unit, and service task file | None directly beyond delegated task graph | `mise run lifecycle:wsl-post-apply` | Host sync/service work after target updates is allowed only with host-specific evidence; scripts should be sparse and delegate repeatable behavior | WSL2 Windows sync and user service lifecycle | `keep` | Child 8 consolidates the previous `51`/`52`/`90` phase scripts into one WSL-only adapter while moving direct side effects into explicit `sync:*` and `service:*` tasks. | Parent closure audit can verify final WSL post-apply behavior with maintainer WSL2 evidence. |
-
-## Pre-source-state hook
-
-Historical note: the current hook now points to `.bootstrap-mise.sh`; the
-`.bootstrap-identity.sh` rows below describe the #288 baseline and should not be
-used as current hook routing.
-
-| Current name | Actual behavior | Dry-run/read-source-state implication | Mise bootstrap implication | Official Chezmoi hook constraint | Decision | Evidence | Follow-up child candidate |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| `.bootstrap-identity.sh` | Discovers or installs `mise`, mutates `PATH`, trusts the source dir, creates a temporary mise config, and runs `mise install`; it exits in CI. | Because it is run by `hooks.read-source-state.pre`, it runs before source-state reads and even during dry-run. | It is really a mise/tool bootstrap hook, not an identity bootstrap hook. | Hooks always run and should be fast and idempotent. | `rename` | Direct inspection shows lines 2 and 37 describe Tier -1/Tier 0 mise bootstrap; no identity metadata is generated by this script. | Child 4 candidate; rename and narrow the hook. |
-| `.chezmoi.toml.tmpl` hook wiring | `[hooks.read-source-state.pre] command = "{{ .chezmoi.sourceDir }}/.bootstrap-identity.sh"` | The hook fires before `.chezmoi.toml.tmpl` source-state reads complete and also on dry-run. | It couples source-state reads to `mise install`, which can be slower than a pure prerequisite assertion. | `read-source-state.pre` is valid only for fast, idempotent prerequisites. | `rename` | Direct inspection shows the hook target name is identity-oriented while the target behavior bootstraps mise. | Child 4 candidate; keep only an evidence-backed pre-source-state prerequisite. |
-
-## Historical mise discovery configuration finding
-
-Current source state now defines `task_config.includes` in
-`dot_config/mise/config.toml.tmpl`. The finding below is retained to explain why
-the task-discovery redesign child moved repo-owned tasks away from the default
-`.config/mise/tasks` drift surface.
-
-At the original #288 baseline, `dot_config/mise/config.toml.tmpl` contained
-`[env]`, `[settings]`, and `[settings.github]`, but no `[task_config]` or
-`task_config.includes`. Official mise documentation says
-`task_config.includes` replaces the default file-task directories for the config
-scope. Because the default directories included `.config/mise/tasks`,
-source-owned rendered tasks and unmanaged local drift were visible through the
-same target tree.
-
-Decision: `consolidate`. Later work should move repo-owned tasks to a dedicated
-task directory and explicitly choose the local/private task discovery policy.
-
-## Mise task source state
-
-Historical note: rows that cite `dot_config/mise/tasks/**`, `setup:*`,
-`doctor:*`, or `integrate:*` describe old source state or migration targets.
-Current repo-owned task source state is under `dot_config/mise/repo-tasks/**`.
-
-| Source path | Rendered visible task name | Metadata (`description`, `depends`, `sources`, `outputs`, `hide`) | Callers or script adapters | Public/semi-public/internal status | Official mise constraint | Decision | Evidence | Follow-up child candidate |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| `dot_config/mise/repo-tasks/cache/executable_bat.tmpl` | `cache:bat` | `description`, `sources`, and `outputs` | Hidden `lifecycle:post-apply` graph | Internal cache task | File task metadata is path/comment derived; `sources`/`outputs` can express freshness | `keep` | It rebuilds `bat cache --build`; the task now owns the Catppuccin theme and tool-manifest inputs without a dedicated Chezmoi delegate. | Parent closure audit can verify final task metadata. |
-| `dot_config/mise/repo-tasks/generate/executable_completions.tmpl` | `generate:completions` | `description`, `depends`, `sources`, and `outputs` | Hidden `lifecycle:post-apply` graph | Internal generated asset task | File tasks support metadata and grouping; outputs can model generated assets | `keep` | It creates completion/init assets, depends on `provision:pnpm`, and tracks rendered task, tool-manifest, and external completion inputs. | Parent closure audit can verify final task metadata. |
-| `dot_config/mise/repo-tasks/generate/executable_identity.tmpl` | `generate:identity` | `description`, `depends`, `sources`, and `outputs` | Hidden `lifecycle:post-apply` graph; `check:identity` checks its outputs | Internal generated identity task | File tasks can own executable generation logic | `keep` | It removes and regenerates Git identity includes, public key stubs, and allowed signers; rendered task-file freshness avoids exposing secret-adjacent identity hashes in Chezmoi triggers. | Parent closure audit can verify final identity validation evidence. |
-| `dot_config/mise/repo-tasks/build/executable_pbfile.tmpl` | `build:pbfile` | `description`, `sources`, and `outputs` | Hidden `lifecycle:post-apply` graph on macOS | Internal build task | File tasks can run shell scripts with tools/env | `keep` | It compiles Swift with `xcrun swiftc`; `build:*` is the accurate taxonomy and the task now owns its source/output freshness. | Parent closure audit can verify final task metadata. |
-| `dot_config/mise/repo-tasks/sync/executable_vale.tmpl` | `sync:vale` | `description`, `sources`, and `outputs` | Hidden `lifecycle:post-apply` graph; `check:vale` checks result | Internal sync task | File tasks in subdirectories produce prefixed task names; metadata is supported | `keep` | Current source-owned name matches parent `sync:*` taxonomy for external style-package sync, and the task now owns Vale config/style output freshness. | Parent closure audit can verify final task metadata. |
-| `dot_config/mise/repo-tasks/lifecycle/executable_wsl-post-apply.tmpl` | `lifecycle:wsl-post-apply` | `description`, `depends`, `depends_post`, and `hide` | WSL-only Chezmoi post-apply adapter | Internal WSL lifecycle graph | File task dependencies can express grouped task ownership without direct Chezmoi side effects | `keep` | Child 8 uses this hidden graph to preserve automatic first-run WSL sync/service convergence while keeping direct copy and service enablement logic in explicit tasks; `depends_post` keeps service enablement after Windows-side sync tasks. | Parent closure audit can verify final WSL post-apply behavior. |
-| `dot_config/mise/repo-tasks/sync/executable_1password-agent.tmpl` | `sync:1password-agent` | `description` | Hidden `lifecycle:wsl-post-apply` graph; explicit operator task | Host-specific sync task | Subdirectory grouping supports `sync:*` task names | `keep` | Child 8 moves Windows-side 1Password SSH agent config copying out of a phase-numbered Chezmoi script and into explicit `sync:*` ownership. | Parent closure audit can verify final task metadata and WSL2 behavior evidence. |
-| `dot_config/mise/repo-tasks/sync/executable_wezterm.tmpl` | `sync:wezterm` | `description` | Hidden `lifecycle:wsl-post-apply` graph; explicit operator task | Host-specific sync task | Subdirectory grouping supports `sync:*` task names | `keep` | Current source-owned name matches parent `sync:*`, and Child 8 removes the dedicated Chezmoi delegate script while preserving this explicit sync owner. | Parent closure audit can verify final task metadata and WSL2 behavior evidence. |
-| `dot_config/mise/repo-tasks/service/executable_1password-bridge.tmpl` | `service:1password-bridge` | `description` | Hidden `lifecycle:wsl-post-apply` graph; explicit operator task | Host-specific user service task | Subdirectory grouping supports `service:*` task names for service enablement ownership | `keep` | Child 8 moves `1password-bridge.service` daemon reload and enable/start behavior out of a phase-numbered Chezmoi script and into explicit `service:*` ownership. | Parent closure audit can verify final task metadata and WSL2 behavior evidence. |
-| `dot_config/mise/tasks/setup/executable__default.tmpl` | `setup` | `description`; `depends=["setup:security", "setup:pnpm"]`; no `sources`, `outputs`, or `hide` | Removed before the post-apply graph consolidation | Transitional internal orchestrator | `depends` is official metadata; task names are path-derived | `delete` | `setup` was too broad and is no longer a current repo-owned graph entrypoint; post-apply now calls hidden `lifecycle:post-apply`. | No current follow-up for `setup`; later children should not restore it without evidence. |
-| `dot_config/mise/tasks/setup/executable_bat.tmpl` | `setup:bat` | Legacy compatibility dependency metadata; no current repo-owned task | Removed before the post-apply graph consolidation | Compatibility wrapper | `depends` can express graph edges without wrapper compatibility names | `delete` | Description says compatibility wrapper; parent stance rejects wrappers without evidence. | No current follow-up for `setup:bat`; later children should not restore it without evidence. |
-| `dot_config/mise/tasks/setup/executable_pnpm.tmpl` | `setup:pnpm` | `description`; no `depends`, `sources`, `outputs`, or `hide` | `setup` | Internal provisioning/config task | File task grouping makes `setup:*` visible | `rename` | It configures pnpm global bin state; future owner should be `provision:*` or explicit repair, not broad `setup:*`. | Child 3 or 5 candidate. |
-| `dot_config/mise/tasks/setup/executable_security.tmpl` | `setup:security` | `description`; no `depends`, `sources`, `outputs`, or `hide` | `setup`; related to `doctor:security` | Internal mutating repair/provision task | File tasks can run mutating scripts, but `hide` exists for internal tasks | `rename` | It chmods generated identity assets; future owner is likely `repair:*` or `provision:*` and should not look like generic setup. | Child 3 candidate. |
-| `dot_config/mise/tasks/setup/executable_vale.tmpl` | `setup:vale` | `description`; `depends=["sync:vale"]`; no `sources`, `outputs`, or `hide` | Compatibility wrapper | Compatibility wrapper | `depends` makes a no-op wrapper unnecessary unless compatibility is documented | `delete` | Description says compatibility wrapper and current README does not claim `setup:vale`. | Child 3 candidate. |
-| `dot_config/mise/tasks/doctor/executable__default.tmpl` | `doctor` | `description`; no metadata comments for `depends`, `sources`, `outputs`, or `hide`; runtime shell array calls doctor subtasks | README and parent #287 public health command | Public durable health-check wrapper | `_default` grouping maps to the group task; file tasks are supported | `keep` | `mise run doctor` is the explicit durable public contract in README and parent #287, and official file-task grouping supports `_default` group tasks. | Child 3 candidate; keep wrapper while internals move to `check:*`. |
-| `dot_config/mise/tasks/doctor/executable_completion.tmpl` | `doctor:completion` | `description`; no `depends`, `sources`, `outputs`, or `hide` | Called by `doctor` outside CI | Internal check | `hide` exists for internal/deprecated tasks | `rename` | Parent #287 treats long-term `doctor:*` as transitional; this is a read-only check and likely `check:completion`. | Child 3 candidate. |
-| `dot_config/mise/tasks/doctor/executable_hubspot.tmpl` | `doctor:hubspot` | `description`; no `depends`, `sources`, `outputs`, or `hide` | Called by `doctor` outside CI | Internal check | `hide` exists for internal tasks | `rename` | This verifies npm-managed HubSpot CLI artifacts; future taxonomy is `check:*`. | Child 3 candidate. |
-| `dot_config/mise/tasks/doctor/executable_identity.tmpl` | `doctor:identity` | `description`; no `depends`, `sources`, `outputs`, or `hide` | Historical `doctor` check for generated identity outputs | Internal check | File tasks support internal metadata and hiding | `rename` | It is a read-only identity/agent check, not a durable public namespace; current source state uses hidden `check:identity`. | No current follow-up for `doctor:identity`; later children should not restore it without evidence. |
-| `dot_config/mise/tasks/doctor/executable_npm-backend.tmpl` | `doctor:npm-backend` | `description`; no `depends`, `sources`, `outputs`, or `hide` | Called by `doctor` outside CI | Internal check | `hide` can remove internal checks from public task listings | `rename` | It checks npm backend artifacts; future owner is `check:npm-backend`. | Child 3 candidate. |
-| `dot_config/mise/tasks/doctor/executable_nvim.tmpl` | `doctor:nvim` | `description`; no `depends`, `sources`, `outputs`, or `hide` | Called by `doctor`; README references related `integrate:nvim` and `update:lazy-lock` | Internal check | File tasks can be hidden or regrouped | `rename` | It verifies lockfile/provider health; future owner is `check:nvim`. | Child 3 candidate. |
-| `dot_config/mise/tasks/doctor/executable_security.tmpl` | `doctor:security` | `description`; no `depends`, `sources`, `outputs`, or `hide` | Called by `doctor` | Internal check | File tasks can be hidden or regrouped | `rename` | It checks permissions only; future owner is `check:security`. | Child 3 candidate. |
-| `dot_config/mise/tasks/doctor/executable_toolchain.tmpl` | `doctor:toolchain` | `description`; no `depends`, `sources`, `outputs`, or `hide` | Called by `doctor` | Internal check | File tasks can be hidden or regrouped | `rename` | It verifies mise and PATH precedence; future owner is `check:toolchain`. | Child 3 candidate. |
-| `dot_config/mise/tasks/doctor/executable_vale.tmpl` | `doctor:vale` | `description`; no `depends`, `sources`, `outputs`, or `hide` | Called by `doctor`; checks `sync:vale` result | Internal check | File tasks can be hidden or regrouped | `rename` | It is a read-only Vale check; future owner is `check:vale`. | Child 3 candidate. |
-| `dot_config/mise/tasks/integrate/executable_nvim.tmpl` | `integrate:nvim` | `description`; no `depends`, `sources`, `outputs`, or `hide` | README maintenance command | Semi-public mutating Neovim integration | File task grouping makes namespace public-looking | `rename` | `integrate:*` is not in the target taxonomy; behavior is closer to explicit `repair:nvim` or a maintainer workflow. | Child 3 candidate. |
-| `dot_config/mise/tasks/update/executable_lazy-lock.tmpl` | `update:lazy-lock` | `description`; no `depends`, `sources`, `outputs`, or `hide` | README maintenance command | Semi-public maintainer update workflow | File tasks support complex shell workflows; `update:*` is in parent taxonomy | `keep` | Current name matches parent `update:*` taxonomy, the task owns a maintainer lockfile update/PR workflow, and official file-task docs justify script-backed tasks. | Child 3 or later Neovim update audit candidate. |
-
-## Visible task discovery and drift
-
-Historical note: this table records #288 target-visible task evidence from the
-maintainer workstation at that time. It is not current source ownership.
-
-| Visible name | Visible target path | `chezmoi source-path` result | Source-owned or unmanaged status | Content summary for unmanaged tasks | Discovery path policy implication | Decision | Evidence | Follow-up child candidate |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| `cache:bat` | `~/.config/mise/repo-tasks/cache/bat` | `dot_config/mise/repo-tasks/cache/executable_bat.tmpl` | Source-owned | N/A | Source-owned task is visible only through repo-owned task discovery. | `keep` | Same classification as source table. | Parent closure audit can verify final task visibility. |
-| `generate:completions` | `~/.config/mise/repo-tasks/generate/completions` | `dot_config/mise/repo-tasks/generate/executable_completions.tmpl` | Source-owned | N/A | Source-owned task is visible only through repo-owned task discovery. | `keep` | Same classification as source table. | Parent closure audit can verify final task visibility. |
-| `generate:identity` | `~/.config/mise/repo-tasks/generate/identity` | `dot_config/mise/repo-tasks/generate/executable_identity.tmpl` | Source-owned | N/A | Source-owned task is visible only through repo-owned task discovery. | `keep` | Same classification as source table. | Parent closure audit can verify final task visibility. |
-| `build:pbfile` | `~/.config/mise/repo-tasks/build/pbfile` | `dot_config/mise/repo-tasks/build/executable_pbfile.tmpl` | Source-owned | N/A | Source-owned task is visible only through repo-owned task discovery. | `keep` | Same classification as source table. | Parent closure audit can verify final task visibility. |
-| `doctor` | `~/.config/mise/tasks/doctor/_default` | `dot_config/mise/tasks/doctor/executable__default.tmpl` | Source-owned | N/A | Public wrapper is visible through default discovery. | `keep` | `mise run doctor` is a durable public contract; `_default` group mapping is official mise file-task behavior. | Child 2 or 3 candidate. |
-| `doctor:completion` | `~/.config/mise/tasks/doctor/completion` | `dot_config/mise/tasks/doctor/executable_completion.tmpl` | Source-owned | N/A | Internal checks are visible as public-looking tasks because no `hide` metadata is set. | `rename` | Same classification as source table. | Child 2 or 3 candidate. |
-| `doctor:hubspot` | `~/.config/mise/tasks/doctor/hubspot` | `dot_config/mise/tasks/doctor/executable_hubspot.tmpl` | Source-owned | N/A | Internal checks are visible as public-looking tasks. | `rename` | Same classification as source table. | Child 2 or 3 candidate. |
-| `doctor:identity` | `~/.config/mise/tasks/doctor/identity` | `dot_config/mise/tasks/doctor/executable_identity.tmpl` | Source-owned | N/A | Internal checks are visible as public-looking tasks. | `rename` | Same classification as source table. | Child 2 or 3 candidate. |
-| `doctor:npm-backend` | `~/.config/mise/tasks/doctor/npm-backend` | `dot_config/mise/tasks/doctor/executable_npm-backend.tmpl` | Source-owned | N/A | Internal checks are visible as public-looking tasks. | `rename` | Same classification as source table. | Child 2 or 3 candidate. |
-| `doctor:nvim` | `~/.config/mise/tasks/doctor/nvim` | `dot_config/mise/tasks/doctor/executable_nvim.tmpl` | Source-owned | N/A | Internal checks are visible as public-looking tasks. | `rename` | Same classification as source table. | Child 2 or 3 candidate. |
-| `doctor:security` | `~/.config/mise/tasks/doctor/security` | `dot_config/mise/tasks/doctor/executable_security.tmpl` | Source-owned | N/A | Internal checks are visible as public-looking tasks. | `rename` | Same classification as source table. | Child 2 or 3 candidate. |
-| `doctor:toolchain` | `~/.config/mise/tasks/doctor/toolchain` | `dot_config/mise/tasks/doctor/executable_toolchain.tmpl` | Source-owned | N/A | Internal checks are visible as public-looking tasks. | `rename` | Same classification as source table. | Child 2 or 3 candidate. |
-| `doctor:vale` | `~/.config/mise/tasks/doctor/vale` | `dot_config/mise/tasks/doctor/executable_vale.tmpl` | Source-owned | N/A | Internal checks are visible as public-looking tasks. | `rename` | Same classification as source table. | Child 2 or 3 candidate. |
-| `integrate:nvim` | `~/.config/mise/tasks/integrate/nvim` | `dot_config/mise/tasks/integrate/executable_nvim.tmpl` | Source-owned | N/A | Semi-public task is visible through default discovery. | `rename` | Same classification as source table. | Child 2 or 3 candidate. |
-| `setup` | `~/.config/mise/tasks/setup/_default` | `dot_config/mise/tasks/setup/executable__default.tmpl` | Source-owned | N/A | Transitional `setup` group is visible through default discovery. | `rename` | Same classification as source table. | Child 2 or 3 candidate. |
-| `setup:bat` | `~/.config/mise/tasks/setup/bat` | `dot_config/mise/tasks/setup/executable_bat.tmpl` | Source-owned | N/A | Compatibility wrapper remains publicly discoverable. | `delete` | Same classification as source table. | Child 2 or 3 candidate. |
-| `setup:nvim-provider` | `~/.config/mise/tasks/setup/nvim-provider` | `not managed` | Unmanaged drift | Executable file creates or repairs `/Users/thomma/.local/share/nvim/venv` with `uv` and installs `pynvim`. | Default discovery exposes private target files as if they were repo tasks. | `manualize` | Direct target inspection plus `chezmoi source-path` prove it is not repository source state. | Child 2 candidate; choose local/private policy or manual cleanup outside repo behavior. |
-| `setup:pnpm` | `~/.config/mise/tasks/setup/pnpm` | `dot_config/mise/tasks/setup/executable_pnpm.tmpl` | Source-owned | N/A | Source-owned task is visible through default discovery. | `rename` | Same classification as source table. | Child 2 or 3 candidate. |
-| `setup:python-provider` | `~/.config/mise/tasks/setup/python-provider` | `not managed` | Unmanaged drift | Executable file creates `/Users/thomma/.local/share/nvim/venv` with `uv`, installs/upgrades `pynvim`, and logs provider convergence. | Default discovery exposes private target files as if they were repo tasks. | `manualize` | Direct target inspection plus `chezmoi source-path` prove it is not repository source state. | Child 2 candidate; choose local/private policy or manual cleanup outside repo behavior. |
-| `setup:security` | `~/.config/mise/tasks/setup/security` | `dot_config/mise/tasks/setup/executable_security.tmpl` | Source-owned | N/A | Source-owned task is visible through default discovery. | `rename` | Same classification as source table. | Child 2 or 3 candidate. |
-| `setup:vale` | `~/.config/mise/tasks/setup/vale` | `dot_config/mise/tasks/setup/executable_vale.tmpl` | Source-owned | N/A | Compatibility wrapper remains publicly discoverable. | `delete` | Same classification as source table. | Child 2 or 3 candidate. |
-| `sync-wezterm` | `~/.config/mise/tasks/sync-wezterm` | `not managed` | Unmanaged drift | Executable file only has shebang, description, and `set -euo pipefail`; no effective sync body. | Default discovery exposes an empty legacy alias next to source-owned `sync:wezterm`. | `delete` | Direct target inspection plus `chezmoi source-path` prove it is unmanaged and redundant. | Child 2 candidate; manual cleanup or local-private policy only. |
-| `sync:vale` | `~/.config/mise/tasks/sync/vale` | `dot_config/mise/tasks/sync/executable_vale.tmpl` | Source-owned | N/A | Source-owned task is visible through default discovery. | `keep` | Same classification as source table; name matches target `sync:*`, and official file-task grouping supports the namespace. | Child 2, 3, or 6 candidate. |
-| `sync:wezterm` | `~/.config/mise/tasks/sync/wezterm` | `dot_config/mise/tasks/sync/executable_wezterm.tmpl` | Source-owned | N/A | Source-owned task is visible through default discovery. | `keep` | Same classification as source table; name matches target `sync:*`, and official file-task grouping supports the namespace. | Child 2, 3, or 8 candidate. |
-| `update:lazy-lock` | `~/.config/mise/tasks/update/lazy-lock` | `dot_config/mise/tasks/update/executable_lazy-lock.tmpl` | Source-owned | N/A | Semi-public maintainer task is visible through default discovery. | `keep` | Same classification as source table; `update:*` is target taxonomy, and official file-task docs justify script-backed tasks. | Child 2 or 3 candidate. |
-
-## `.chezmoiremove.tmpl` removal policy
-
-| Pattern or group | Target-relative scope | Existing comment/rationale | Destructive risk | Current migration owner | Decision | Evidence | Follow-up child candidate |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| `.gitconfig`, `.vale.ini`, `.zshrc`, `.bashrc`, `.bash_profile`, `.profile`, `.zshrc2`, `.gitconfig.local` | Root dotfile targets | Broad XDG or identity cleanup rationale | Could remove user-maintained unmanaged root dotfiles | Manual cleanup only unless later evidence proves repository ownership | `manualize` | Child 9 audit found no current source path or history evidence that these were source-owned repository targets. | No active follow-up; manual target cleanup remains maintainer-owned. |
-| `.zcompdump*` | Root completion dumps | Completion-cache cleanup rationale | Wildcard cleanup is broader than a narrow migration target | Generated completion task cache invalidation | `delete` | Child 9 audit found the current `generate:completions` task invalidates root and XDG `zcompdump*` caches, so recurring cache cleanup does not belong in `.chezmoiremove.tmpl`. | No active follow-up. |
-| `.cache/zsh/completions/_hyperfine` | XDG cache completion target | Legacy generated completion cleanup | Removes one generated cache file | Zsh completion graph migration policy | `keep` | Pattern is narrow, target-relative, and scoped to a generated artifact no longer produced by the current completion graph. | Parent closure audit can verify no broader cache cleanup returns. |
-| `.config/nvim/lua/plugins/fzf.lua` | Legacy Neovim plugin target | Previous editor configuration path | Removes a specific old plugin file | Neovim migration policy | `keep` | Git history shows this target was previously source-owned, and current source state no longer contains it. | Parent closure audit can verify final remove policy. |
-| `.config/git/config_personal` | Legacy Git identity include | Superseded by generated Git identity includes | Removes one legacy Git config include | Identity migration policy | `keep` | Git history shows this target was previously source-owned, and current source state now renders `.config/git/config` plus generated identity includes. | Parent closure audit can verify final remove policy. |
-| `--request` | Root target named `--request` | Legacy unidentified artifact cleanup | Odd leading-dash target with no owner evidence | Manual cleanup only | `delete` | Child 9 audit found no current source path, target presence, or owner evidence justifying a destructive remove target. | No active follow-up. |
-| `.config/vale/.vale.ini` | Legacy XDG Vale config target | Previous Vale XDG filename | Removes an old Vale config file | Vale XDG migration policy | `keep` | Git history shows this target was previously source-owned; current source state renders `.config/vale/vale.ini`. | Parent closure audit can verify final remove policy. |
-| `Library/Group Containers/2BUA8C4S2C.com.1password/Library/Application Support/1Password/ssh/agent.toml` | macOS 1Password agent config target | Previous note described scoped path correction | Could remove a sensitive app-owned config file | Manual cleanup only unless maintainer confirms a stale target | `manualize` | Git history recorded the path as hallucinated, and Child 9 found no current target-state evidence justifying destructive policy. | No active follow-up. |
-| `.local/share/mise/installs/docker-cli`, `.local/share/mise/shims/docker` | Mise install and shim targets | Docker ownership moved to platform packages | Removes specific stale mise Docker CLI artifacts | Docker package ownership migration policy | `keep` | PR history and current source state show `docker-cli` was removed from managed mise tools and Docker Desktop moved to platform package ownership. | Parent closure audit can verify final remove policy. |
-| Previous `.config/mise/tasks/**` file targets | Old default-discovery task file targets | Repo-owned tasks moved away from `.config/mise/tasks` | Directory cleanup could remove local/private tasks | Task discovery migration policy | `keep` | Child 9 kept only specific old file targets; current local evidence still shows unmanaged files under `.config/mise/tasks`, so directories remain manualized. | Parent closure audit can verify final remove policy. |
-| Previous `.config/mise/repo-tasks/{converge,doctor,integrate,setup}/**` file targets | Old repo-task taxonomy file targets | Taxonomy rewrite moved or deleted source-owned repo-task entries | Directory cleanup could remove local/private files recursively | Task taxonomy migration policy | `keep` | Child 9 kept only specific old file targets; current local empty old directories are not targeted because `.chezmoiremove.tmpl` has no empty-only directory removal. | Parent closure audit can verify final remove policy. |
-
-## README and docs command claims
-
-Historical note: current README guidance keeps only `chezmoi init --apply` as
-the first-run path and `mise run doctor` as the stable public health check.
-Other commands below are maintainer validation, repair, update, or
-troubleshooting evidence when a scoped issue requires them.
-
-| Command or claim | Audience | Current source/caller | Compatibility status | Future taxonomy implication | Decision | Evidence | Follow-up child candidate |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| `GITHUB_TOKEN=<token> sh -c "$(curl -fsLS https://get.chezmoi.io)" -- init --apply <github-username>` | Public first-run operator | `README.md` bootstrap command | Durable public first-run path | Chezmoi remains source-state bootstrap owner | `keep` | Parent #287 explicitly preserves one-command `chezmoi init --apply`; official Chezmoi scripts/docs support apply lifecycle. | Parent closure audit candidate after children complete. |
-| `mise run doctor` | Public operator health check | `README.md`; `dot_config/mise/tasks/doctor/executable__default.tmpl`; docs/repo validation boundary | Durable public health command | Public wrapper remains while internals may become hidden `check:*` | `keep` | Parent #287 explicitly preserves this command; source-owned `doctor` exists, and official mise docs support standalone file tasks plus grouped `_default` tasks. | Child 3 candidate. |
-| `chezmoi verify` | Semi-public maintainer/source-state verification | `README.md` maintenance command; `doctor:nvim` uses `chezmoi verify "$LOCK_FILE"` | Valid Chezmoi command, but not parent durable public API | Keep as validation command, not root public convergence API | `manualize` | Parent #287 says public commands should converge toward first-run apply and doctor; docs/repo validation can own this as evidence routing. | Child 10 candidate after behavior settles. |
-| `mise run integrate:nvim` | Semi-public maintainer Neovim restoration | `README.md`; source task `integrate:nvim` | Current task exists but namespace is transitional | Likely `repair:nvim` or focused Neovim maintenance workflow | `rename` | `integrate:*` is outside target taxonomy and the task mutates Neovim plugin state. | Child 3 or 10 candidate. |
-| `mise run update:lazy-lock` | Semi-public maintainer update workflow | `README.md`; source task `update:lazy-lock` | Current task exists and matches `update:*` | Keep task name as maintainer workflow; README placement can be revisited | `manualize` | The source task name is justified, but parent public command model should not require this as a general operator command. | Child 3 or 10 candidate. |
-| `chezmoi apply` rerun after WSL2 package provisioning failure | Operator troubleshooting | `README.md` troubleshoot section | Existing Chezmoi apply behavior | Keep as troubleshooting command, not new API | `keep` | `chezmoi apply` is the official lifecycle that runs scripts; README uses it only as rerun guidance. | Child 10 candidate. |
-| `sudo -n true` | WSL2 prerequisite operator check | `README.md`; infrastructure script enforces it | Host prerequisite, not repo task | Host provisioning boundary | `manualize` | Current WSL2 script requires non-interactive sudo before Linux package install; keep it as explicit prerequisite evidence, not a public convergence command. | Child 5 or 10 candidate. |
-| `sudo visudo` | WSL2 prerequisite setup | `README.md` | Manual host configuration command | Host provisioning prerequisite outside repo automation | `manualize` | README already frames it as a manual prerequisite outside repo-owned automation. | Child 5 or 10 candidate. |
-| `winget.exe install albertony.npiperelay` | WSL2 prerequisite setup | `README.md` | Manual Windows-side prerequisite command | Host prerequisite outside dotfile target state | `manualize` | WSL2 surface requires `npiperelay.exe`; keep it as a manual Windows-side prerequisite, not repo-owned convergence behavior. | Child 8 or 10 candidate. |
-| `mise tasks info`, `mise tasks deps`, `mise run <task>`, `mise run doctor` validation routing | Maintainer/Worker validation | `docs/repo/surfaces.md` and `docs/repo/validation.md` | Internal evidence commands, not public API | Continue as validation routing while taxonomy is rewritten | `keep` | Official mise task commands exist; docs/repo uses them as evidence categories, not public task names. | Child-specific validation candidates. |
-| `chezmoi diff`, `chezmoi execute-template`, `chezmoi verify`, `chezmoi apply --dry-run --verbose` validation routing | Maintainer/Worker validation | `docs/repo/surfaces.md` and `docs/repo/validation.md` | Internal evidence commands, not public API | Continue as Chezmoi validation routing | `keep` | Official Chezmoi lifecycle and application-order docs require rendered/template/remove evidence for behavior-sensitive changes. | Child-specific validation candidates. |
-| `repomix` | Maintainer/Worker generated evidence | `docs/repo/repomix.md` and validation routing | Context evidence command, not convergence command | Not part of Chezmoi/Mise runtime taxonomy | `manualize` | Existing docs/repo route this as explicit generated LLM evidence validation only, outside the public Chezmoi/Mise convergence command model. | Not part of #287 behavior redesign unless context routing changes. |
-
-## Out-of-scope findings
-
-Historical note: these findings were out of scope for #288. Later child issues
-resolved several of them; use the current source-state summary above and current
-repository-local docs before treating any row as still open.
-
-| Finding | Why out of scope now | Why it may matter later | Evidence needed later |
-| --- | --- | --- | --- |
-| `task_config.includes` is absent, so default `.config/mise/tasks` discovery exposes unmanaged drift. | #288 is inventory only and must not change discovery. | Child 2 likely needs a dedicated repo-owned task directory and explicit local/private task policy. | Current rendered config, `mise tasks ls --extended`, source-path mapping, and local-private policy choice. |
-| Unmanaged `setup:nvim-provider` and `setup:python-provider` both create or update the same Neovim provider venv under an absolute local path. | They are target-visible but not source-owned; editing/removing them is explicitly out of scope. | They can collide with future Neovim provider ownership and mislead task discovery. | Maintainer decision to remove, migrate, or isolate local-private tasks. |
-| Unmanaged `sync-wezterm` is an empty visible alias beside source-owned `sync:wezterm`. | Target edits are out of scope. | It is a concrete default-discovery drift hazard and likely deletion candidate. | Child 2 drift policy plus manual target cleanup evidence if authorized. |
-| Some source-owned file tasks outside the post-apply graph still use only minimal metadata. | #302 changed only platform-neutral post-apply tasks and must not broaden into unrelated task families. | Freshness, internal visibility, and wrapper deletion may still matter for later scoped task families. | `mise tasks info`, graph review, and task behavior validation for the later touched task family. |
-| `.chezmoiremove.tmpl` included a generic `--request` removal target. | #288 could not edit removal policy. | Child 9 resolved this by removing the target after finding no current source, target, or owner evidence. | No remaining follow-up for `--request`; future cleanup needs fresh target-state evidence. |
-| `.bootstrap-identity.sh` installs mise tools from a hook that always runs, including dry-run. | #288 cannot change hooks or bootstrap behavior. | Hook speed/idempotence and name accuracy are central to Child 4. | Hook execution evidence, dry-run behavior, and mise bootstrap minimum needed before source-state reads. |
+| Need | Current source |
+| --- | --- |
+| Operator bootstrap and maintenance commands | [`../../README.md`](../../README.md) |
+| Behavior-sensitive source routing | [`surfaces.md`](./surfaces.md) |
+| Local validation baseline | [`validation.md`](./validation.md) |
+| Repository-local workflow exceptions | [`workflows.md`](./workflows.md) |
+| Repomix local paths and recipes | [`repomix.md`](./repomix.md) |
+| Destructive local teardown guidance | [`teardown.md`](./teardown.md) |
