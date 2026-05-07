@@ -67,3 +67,27 @@ the dedicated repo-owned .config/mise/repo-tasks tree. Do not exact-own
 .config/mise/tasks/sync/vale
 .config/mise/tasks/sync/wezterm
 .config/mise/tasks/update/lazy-lock
+
+{{/*
+Remove previous repository-owned mise file-task targets after the task taxonomy
+rewrite moved or deleted source-owned repo-tasks entries. Keep the cleanup
+narrow; do not remove unmanaged local/private tasks.
+*/}}
+.config/mise/repo-tasks/converge/bat
+.config/mise/repo-tasks/converge/completions
+.config/mise/repo-tasks/converge/identity
+.config/mise/repo-tasks/converge/pbfile
+.config/mise/repo-tasks/doctor/completion
+.config/mise/repo-tasks/doctor/hubspot
+.config/mise/repo-tasks/doctor/identity
+.config/mise/repo-tasks/doctor/npm-backend
+.config/mise/repo-tasks/doctor/nvim
+.config/mise/repo-tasks/doctor/security
+.config/mise/repo-tasks/doctor/toolchain
+.config/mise/repo-tasks/doctor/vale
+.config/mise/repo-tasks/integrate/nvim
+.config/mise/repo-tasks/setup/_default
+.config/mise/repo-tasks/setup/bat
+.config/mise/repo-tasks/setup/pnpm
+.config/mise/repo-tasks/setup/security
+.config/mise/repo-tasks/setup/vale

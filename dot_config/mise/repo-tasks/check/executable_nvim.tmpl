@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # [MISE] description="Verify Neovim lockfile and provider health"
+# [MISE] hide=true
 {{/* [Reference]: https://mise.jdx.dev/tasks/file-tasks.html */}}{{ "" -}}
 {{/* [Reference]: https://neovim.io/doc/user/provider.html#provider-python */}}{{ "" -}}
 {{/* [Reference]: https://neovim.io/doc/user/provider.html#provider-nodejs */}}{{ "" -}}
@@ -32,7 +33,7 @@ if [[ -f "$LOCK_FILE" ]]; then
   fi
 else
   log_err "Neovim lockfile is missing."
-  log_guide "mise run integrate:nvim && chezmoi add $LOCK_FILE"
+  log_guide "mise run repair:nvim && chezmoi add $LOCK_FILE"
   HAS_ERROR=1
 fi
 

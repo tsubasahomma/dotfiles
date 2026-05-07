@@ -13,18 +13,18 @@ MISE_BIN="{{ .paths.mise }}"
 HAS_ERROR=0
 
 tasks=(
-  "doctor:security"
-  "doctor:identity"
-  "doctor:nvim"
-  "doctor:vale"
-  "doctor:toolchain"
+  "check:security"
+  "check:identity"
+  "check:nvim"
+  "check:vale"
+  "check:toolchain"
 )
 
 if [[ "$IS_CI" != "true" ]]; then
   tasks+=(
-    "doctor:npm-backend"
-    "doctor:hubspot"
-    "doctor:completion"
+    "check:npm-backend"
+    "check:hubspot"
+    "check:completion"
   )
 else
   printf "⚠️  Skipping workstation-only HubSpot CLI diagnostics in CI.\n"
