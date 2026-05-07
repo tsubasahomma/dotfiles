@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+# [MISE] description="Provision Linux login shell registration"
+{{/* [Reference]: https://mise.jdx.dev/tasks/file-tasks.html */}}{{ "" -}}
+
+set -euo pipefail
+
+HOST_OS="{{ .osid }}"
+
+if [[ "$HOST_OS" != "linux" ]]; then
+  echo "Skipping Linux shell provisioning on $HOST_OS."
+  exit 0
+fi
+
+if ! sudo -n true 2>/dev/null; then
+  echo "Non-interactive sudo is required for Linux shell provisioning." >&2
+  echo "Run 'sudo visudo' and configure passwordless sudo for this user." >&2
+  exit 1
+fi
+
+TARGET_USER="${USER:-$(id -un)}"
+ZSH_PATH=$(command -v zsh || true)
+
+if [[ -z "$ZSH_PATH" ]]; then
+  echo "zsh was not found after Linux package provisioning." >&2
+  exit 1
+fi
+
+if ! grep -qxF "$ZSH_PATH" /etc/shells; then
+  echo "Registering $ZSH_PATH in /etc/shells..."
+  echo "$ZSH_PATH" | sudo tee -a /etc/shells >/dev/null
+fi
+
+CURRENT_USER_SHELL=$(getent passwd "$TARGET_USER" | cut -d: -f7)
+if [[ "$CURRENT_USER_SHELL" != "$ZSH_PATH" ]]; then
+  echo "Changing default shell for $TARGET_USER to $ZSH_PATH..."
+  sudo chsh -s "$ZSH_PATH" "$TARGET_USER"
+else
+  echo "Default shell is already $ZSH_PATH."
+fi
+
+echo "Linux shell provisioning complete."

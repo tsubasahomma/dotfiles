@@ -1,17 +1,18 @@
 {{ if .is_wsl -}}
 #!/bin/sh
-# [chezmoi-script]: L0 (POSIX Shell) Tiering
+# WSL/Windows host package provisioning runs before target updates because
+# rendered mise file tasks do not exist yet during first-run apply.
 # [Trigger]: Schema Hash: {{ include ".chezmoidata/packages.yaml" | sha256sum }}
 
 set -eu
 
-echo "🔄 [Infrastructure] Updating WinGet package sources..."
+echo "🔄 [Windows Packages] Updating WinGet package sources..."
 winget.exe source update > /dev/null 2>&1 || true
 
 install_winget_app() {
   app_id=$1
   if ! winget.exe list --id "$app_id" > /dev/null 2>&1; then
-    echo "📦 [Infrastructure] Installing $app_id on Windows..."
+    echo "📦 [Windows Packages] Installing $app_id on Windows..."
 
     # Nightly packages can have volatile WinGet manifests.
     # Hash verification is bypassed only for nightly package IDs.
@@ -28,13 +29,13 @@ install_winget_app() {
       --accept-source-agreements \
       $extra_flags
   else
-    echo "✅ [Infrastructure] $app_id is already installed on Windows."
+    echo "✅ [Windows Packages] $app_id is already installed on Windows."
   fi
 }
 
-echo "📦 [Infrastructure] Provisioning Windows dependencies..."
+echo "📦 [Windows Packages] Provisioning Windows host packages..."
 
-# --- Headless Infrastructure ---
+# --- Headless Packages ---
 {{ range .packages.headless.windows -}}
 install_winget_app {{ . | quote }}
 {{ end -}}
@@ -47,5 +48,5 @@ install_winget_app {{ . | quote }}
 
 {{- end }}
 
-echo "✅ [Infrastructure] Windows dependency provisioning complete."
+echo "✅ [Windows Packages] Windows package provisioning complete."
 {{ end -}}

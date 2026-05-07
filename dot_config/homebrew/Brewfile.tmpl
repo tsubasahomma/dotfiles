@@ -1,7 +1,7 @@
 # Declarative package list for the macOS workstation.
 # [Reference]: https://www.chezmoi.io/user-guide/advanced/install-packages-declaratively/
 
-# --- Headless Infrastructure (Always Provisioned) ---
+# --- Headless Packages (Always Provisioned) ---
 {{ range .packages.headless.common -}}
 brew {{ . | quote }}
 {{ end -}}
