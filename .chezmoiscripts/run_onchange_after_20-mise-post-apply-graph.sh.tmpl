@@ -5,6 +5,7 @@
 # [Trigger]: dynamic mise config hash: {{ include "dot_config/mise/config.toml.tmpl" | sha256sum }}
 # [Trigger]: static tool manifest hash: {{ include "dot_config/mise/conf.d/10-tools.toml" | sha256sum }}
 # [Trigger]: external asset manifest hash: {{ include ".chezmoiexternal.toml.tmpl" | sha256sum }}
+# [Trigger]: bat theme target hash: {{ if stat (joinPath .paths.home ".config/bat/themes/Catppuccin Mocha.tmTheme") }}{{ include (joinPath .paths.home ".config/bat/themes/Catppuccin Mocha.tmTheme") | sha256sum }}{{ else }}missing{{ end }}
 # [Trigger]: post-apply lifecycle task hash: {{ include "dot_config/mise/repo-tasks/lifecycle/executable_post-apply.tmpl" | sha256sum }}
 # [Trigger]: completion data hash: {{ include ".chezmoidata/completions.yaml" | sha256sum }}
 # [Trigger]: completion task hash: {{ include "dot_config/mise/repo-tasks/generate/executable_completions.tmpl" | sha256sum }}
