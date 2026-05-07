@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # [MISE] description="Verify infrastructure security permissions"
+# [MISE] hide=true
 {{/* [Reference]: https://mise.jdx.dev/tasks/file-tasks.html */}}{{ "" -}}
 
 set -euo pipefail
@@ -44,7 +45,7 @@ for dir in "$HOME_DIR/.ssh" "{{ .paths.xdg_state }}/ssh"; do
       fi
     else
       log_err "Permission mode could not be inspected for $dir."
-      log_guide "Inspect the directory permissions manually, then rerun 'mise run doctor:security'."
+      log_guide "Inspect the directory permissions manually, then rerun 'mise run doctor'."
       HAS_ERROR=1
     fi
   else

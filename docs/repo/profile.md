@@ -146,5 +146,5 @@ explicitly scopes that adapter.
 | adapter | Vendor-specific assistant entry point such as `.github/copilot-instructions.md`; adapters should route to the LLM-agnostic context architecture. |
 | 1Password identity | Repository-discovered identity metadata from prepared 1Password SSH Key items used for Git authoring, SSH signing, and SSH routing. |
 | WSL2 bridge | The Windows-to-WSL2 identity and SSH agent path involving Windows 11, WSL2 Ubuntu, Windows 1Password Desktop, `op.exe`, `npiperelay.exe`, and user systemd. |
-| doctor task | A repository-local mise validation or readiness check under `dot_config/mise/repo-tasks/doctor/**`. |
+| doctor task | The public repository-local `mise run doctor` health-check wrapper; internal read-only checks live under `dot_config/mise/repo-tasks/check/**`. |
 | repair candidate | A current behavior that may be mutation-oriented and may need a future explicit `repair:*` decision; it is not authorization to change current tasks. |

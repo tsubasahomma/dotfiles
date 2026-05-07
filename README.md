@@ -190,7 +190,7 @@ After bootstrap completes, use these commands:
 ```zsh
 mise run doctor
 chezmoi verify
-mise run integrate:nvim
+mise run repair:nvim
 mise run update:lazy-lock
 ```
 

@@ -23,7 +23,8 @@ echo "📦 [Phase 20] Executing Runtime Convergence via Mise..."
 # Phase 1 installs declared tools idempotently.
 "$MISE_BIN" install
 
-# Phase 2 runs the idempotent setup task graph.
-"$MISE_BIN" run setup
+# Phase 2 runs idempotent runtime owner tasks.
+"$MISE_BIN" run repair:security
+"$MISE_BIN" run provision:pnpm
 
 echo "✅ [Phase 20] Runtime convergence complete."

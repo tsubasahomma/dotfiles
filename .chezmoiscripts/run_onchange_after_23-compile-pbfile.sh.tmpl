@@ -6,6 +6,6 @@
 {{ if eq .osid "darwin" -}}
 set -euo pipefail
 
-echo "⚡ [Delegate] Invoking mise task: converge:pbfile"
-exec "{{ .paths.mise }}" run converge:pbfile
+echo "⚡ [Delegate] Invoking mise task: build:pbfile"
+exec "{{ .paths.mise }}" run build:pbfile
 {{ end -}}

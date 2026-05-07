@@ -101,7 +101,7 @@ jobs:
 
       - name: Phase 3 - Application Integration (Dynamic Convergence)
         run: |
-          mise run integrate:nvim
+          mise run repair:nvim
 
       - name: Phase 4 - Final Health Check (Doctor)
         if: always()

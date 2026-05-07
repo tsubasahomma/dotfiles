@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # [MISE] description="Verify identity routing and SSH agent health"
+# [MISE] hide=true
 {{/* [Reference]: https://mise.jdx.dev/tasks/file-tasks.html */}}{{ "" -}}
 {{/* [Reference]: https://www.chezmoi.io/user-guide/password-managers/1password/ */}}{{ "" -}}
 
@@ -64,10 +65,10 @@ else
     log_err "SSH Agent is unresponsive."
     {{ if .is_wsl }}
     log_guide "Restart the WSL2 1Password bridge explicitly: systemctl --user restart 1password-bridge.service"
-    log_guide "Then rerun 'mise run doctor:identity'."
+    log_guide "Then rerun 'mise run doctor'."
     {{ else }}
     log_guide "Verify the 'SSH Agent' setting in 1Password Desktop App."
-    log_guide "Then rerun 'mise run doctor:identity'."
+    log_guide "Then rerun 'mise run doctor'."
     {{ end }}
     HAS_ERROR=1
   fi
