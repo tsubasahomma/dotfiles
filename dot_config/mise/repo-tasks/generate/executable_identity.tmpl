@@ -1,5 +1,8 @@
 #!/bin/zsh
 # [MISE] description="Generate Git and SSH identity files"
+# [MISE] depends=["repair:security"]
+# [MISE] sources=[".config/mise/repo-tasks/generate/identity"]
+# [MISE] outputs=[".config/git/identities", ".config/git/allowed_signers", ".ssh/id_*.pub"]
 {{/* [Reference]: https://mise.jdx.dev/tasks/file-tasks.html */}}{{ "" -}}
 {{/* [Reference]: https://www.chezmoi.io/reference/special-directories/chezmoitemplates/ */}}{{ "" -}}
 

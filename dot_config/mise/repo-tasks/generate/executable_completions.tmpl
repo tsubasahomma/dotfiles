@@ -1,5 +1,8 @@
 #!/bin/zsh
 # [MISE] description="Generate static Zsh completions and init assets"
+# [MISE] depends=["provision:pnpm"]
+# [MISE] sources=[".config/mise/repo-tasks/generate/completions", ".config/mise/conf.d/10-tools.toml", ".config/zsh/completions/_*", ".config/zsh/completions/git-completion.bash"]
+# [MISE] outputs=[".cache/zsh/completions", ".cache/zsh/init"]
 {{/* [Reference]: https://mise.jdx.dev/tasks/file-tasks.html */}}{{ "" -}}
 
 set -euo pipefail
