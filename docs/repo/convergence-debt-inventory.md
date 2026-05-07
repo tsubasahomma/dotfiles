@@ -3,15 +3,47 @@
 ## Scope
 
 This is the inventory and classification packet for child issue #288 under
-parent issue #287. It is evidence-only. It does not change script behavior,
-hook wiring, task discovery, task names, task metadata, removal policy, README
+parent issue #287. It is a historical evidence artifact, not current
+repository-local routing guidance. It does not change script behavior, hook
+wiring, task discovery, task names, task metadata, removal policy, README
 commands, generated artifacts, rendered targets, package lists, tool versions,
 runtime versions, lockfiles, or CI semantics.
 
-The inspected baseline is `main` at
+Use [`README.md`](../../README.md) for the current operator entry point and use
+[`surfaces.md`](./surfaces.md), [`validation.md`](./validation.md),
+[`workflows.md`](./workflows.md), [`repomix.md`](./repomix.md), and
+[`teardown.md`](./teardown.md) for current repository-local routing. The tables
+below preserve #288 baseline evidence and child-candidate language as
+provenance only; do not treat old paths, task names, or follow-up notes as
+active instructions without fresh source-state evidence.
+
+The original inspected baseline is `main` at
 `3eebcada23ab2cd3c0783d065758ee89e3c6d7c2`. Local `HEAD` and
 `git ls-remote origin refs/heads/main` both resolved to that commit during this
 inventory.
+
+Current source-state evidence after children #288 through #308 is:
+
+- `.chezmoiscripts/**` contains five lifecycle scripts:
+  `.chezmoiscripts/run_onchange_before_00-provision-linux-packages.sh.tmpl`,
+  `.chezmoiscripts/run_onchange_before_provision-macos-homebrew.sh.tmpl`,
+  `.chezmoiscripts/run_onchange_before_provision-windows-packages.sh.tmpl`,
+  `.chezmoiscripts/run_onchange_after_20-mise-post-apply-graph.sh.tmpl`, and
+  `.chezmoiscripts/run_onchange_after_wsl-sync-services.sh.tmpl`.
+- The active `hooks.read-source-state.pre` command in `.chezmoi.toml.tmpl`
+  points to `.bootstrap-mise.sh`; `.bootstrap-identity.sh` remains only as a
+  migration shim for already-rendered configs.
+- Repo-owned mise task source state lives under
+  `dot_config/mise/repo-tasks/**`; `dot_config/mise/tasks/**` is absent in
+  source state.
+- `dot_config/mise/config.toml.tmpl` sets `task_config.includes` to
+  `.config/mise/repo-tasks` and disables the old default
+  `.config/mise/tasks` drift path for this repository-owned config scope.
+- Current repo-owned task families include `build:*`, `cache:*`,
+  hidden `check:*`, public `doctor`, `generate:*`, hidden `lifecycle:*`,
+  `provision:*`, `repair:*`, `service:*`, `sync:*`, and `update:*`.
+- Local rendered `mise tasks` visibility is host and target-state evidence, not
+  source-state truth; it can omit WSL-only rendered tasks or reflect local drift.
 
 ## Radical refactoring stance
 
@@ -38,7 +70,7 @@ Decision vocabulary:
 | `delete` | No current evidence justifies preserving the item as repository-owned behavior. |
 | `manualize` | Remove automatic execution or public-command status and make the action explicit/local/private. |
 
-## Evidence summary
+## Original #288 evidence summary
 
 | Evidence | Result |
 | --- | --- |
@@ -66,6 +98,12 @@ Decision vocabulary:
 | Mise task metadata and hiding | https://mise.jdx.dev/tasks/task-configuration.html documents `depends`, `sources`, `outputs`, and `hide`. | Wrappers and public-looking internal tasks need justification; internal checks can become hidden `check:*` tasks. |
 | Mise task includes | https://mise.jdx.dev/tasks/task-configuration.html says `task_config.includes` replaces default file-task directories for the config scope; defaults include `.config/mise/tasks`. | Leaving `task_config.includes` unset keeps repo-owned tasks and unmanaged drift in the same visible discovery tree. |
 
+## Historical decision tables
+
+The remaining tables preserve the #288 inventory and later child notes. They are
+useful provenance for why children #291 through #308 changed the repository, but
+they are not current routing guidance.
+
 ## Chezmoi lifecycle scripts
 
 | Source path | Lifecycle type/order | Trigger evidence | Direct side effects | Delegated task or command | Official Chezmoi constraint | Current public or host-specific contract | Decision | Evidence for the decision | Follow-up child candidate |
@@ -81,24 +119,38 @@ Decision vocabulary:
 
 ## Pre-source-state hook
 
+Historical note: the current hook now points to `.bootstrap-mise.sh`; the
+`.bootstrap-identity.sh` rows below describe the #288 baseline and should not be
+used as current hook routing.
+
 | Current name | Actual behavior | Dry-run/read-source-state implication | Mise bootstrap implication | Official Chezmoi hook constraint | Decision | Evidence | Follow-up child candidate |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | `.bootstrap-identity.sh` | Discovers or installs `mise`, mutates `PATH`, trusts the source dir, creates a temporary mise config, and runs `mise install`; it exits in CI. | Because it is run by `hooks.read-source-state.pre`, it runs before source-state reads and even during dry-run. | It is really a mise/tool bootstrap hook, not an identity bootstrap hook. | Hooks always run and should be fast and idempotent. | `rename` | Direct inspection shows lines 2 and 37 describe Tier -1/Tier 0 mise bootstrap; no identity metadata is generated by this script. | Child 4 candidate; rename and narrow the hook. |
 | `.chezmoi.toml.tmpl` hook wiring | `[hooks.read-source-state.pre] command = "{{ .chezmoi.sourceDir }}/.bootstrap-identity.sh"` | The hook fires before `.chezmoi.toml.tmpl` source-state reads complete and also on dry-run. | It couples source-state reads to `mise install`, which can be slower than a pure prerequisite assertion. | `read-source-state.pre` is valid only for fast, idempotent prerequisites. | `rename` | Direct inspection shows the hook target name is identity-oriented while the target behavior bootstraps mise. | Child 4 candidate; keep only an evidence-backed pre-source-state prerequisite. |
 
-## Mise discovery configuration finding
+## Historical mise discovery configuration finding
 
-`dot_config/mise/config.toml.tmpl` currently contains `[env]`, `[settings]`,
-and `[settings.github]`, but no `[task_config]` or `task_config.includes`.
-Official mise documentation says `task_config.includes` replaces the default
-file-task directories for the config scope. Because the default directories
-include `.config/mise/tasks`, source-owned rendered tasks and unmanaged local
-drift are currently visible through the same target tree.
+Current source state now defines `task_config.includes` in
+`dot_config/mise/config.toml.tmpl`. The finding below is retained to explain why
+the task-discovery redesign child moved repo-owned tasks away from the default
+`.config/mise/tasks` drift surface.
+
+At the original #288 baseline, `dot_config/mise/config.toml.tmpl` contained
+`[env]`, `[settings]`, and `[settings.github]`, but no `[task_config]` or
+`task_config.includes`. Official mise documentation says
+`task_config.includes` replaces the default file-task directories for the config
+scope. Because the default directories included `.config/mise/tasks`,
+source-owned rendered tasks and unmanaged local drift were visible through the
+same target tree.
 
 Decision: `consolidate`. Later work should move repo-owned tasks to a dedicated
 task directory and explicitly choose the local/private task discovery policy.
 
 ## Mise task source state
+
+Historical note: rows that cite `dot_config/mise/tasks/**`, `setup:*`,
+`doctor:*`, or `integrate:*` describe old source state or migration targets.
+Current repo-owned task source state is under `dot_config/mise/repo-tasks/**`.
 
 | Source path | Rendered visible task name | Metadata (`description`, `depends`, `sources`, `outputs`, `hide`) | Callers or script adapters | Public/semi-public/internal status | Official mise constraint | Decision | Evidence | Follow-up child candidate |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -129,6 +181,9 @@ task directory and explicitly choose the local/private task discovery policy.
 | `dot_config/mise/tasks/update/executable_lazy-lock.tmpl` | `update:lazy-lock` | `description`; no `depends`, `sources`, `outputs`, or `hide` | README maintenance command | Semi-public maintainer update workflow | File tasks support complex shell workflows; `update:*` is in parent taxonomy | `keep` | Current name matches parent `update:*` taxonomy, the task owns a maintainer lockfile update/PR workflow, and official file-task docs justify script-backed tasks. | Child 3 or later Neovim update audit candidate. |
 
 ## Visible task discovery and drift
+
+Historical note: this table records #288 target-visible task evidence from the
+maintainer workstation at that time. It is not current source ownership.
 
 | Visible name | Visible target path | `chezmoi source-path` result | Source-owned or unmanaged status | Content summary for unmanaged tasks | Discovery path policy implication | Decision | Evidence | Follow-up child candidate |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -176,6 +231,11 @@ task directory and explicitly choose the local/private task discovery policy.
 
 ## README and docs command claims
 
+Historical note: current README guidance keeps only `chezmoi init --apply` as
+the first-run path and `mise run doctor` as the stable public health check.
+Other commands below are maintainer validation, repair, update, or
+troubleshooting evidence when a scoped issue requires them.
+
 | Command or claim | Audience | Current source/caller | Compatibility status | Future taxonomy implication | Decision | Evidence | Follow-up child candidate |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | `GITHUB_TOKEN=<token> sh -c "$(curl -fsLS https://get.chezmoi.io)" -- init --apply <github-username>` | Public first-run operator | `README.md` bootstrap command | Durable public first-run path | Chezmoi remains source-state bootstrap owner | `keep` | Parent #287 explicitly preserves one-command `chezmoi init --apply`; official Chezmoi scripts/docs support apply lifecycle. | Parent closure audit candidate after children complete. |
@@ -192,6 +252,10 @@ task directory and explicitly choose the local/private task discovery policy.
 | `repomix` | Maintainer/Worker generated evidence | `docs/repo/repomix.md` and validation routing | Context evidence command, not convergence command | Not part of Chezmoi/Mise runtime taxonomy | `manualize` | Existing docs/repo route this as explicit generated LLM evidence validation only, outside the public Chezmoi/Mise convergence command model. | Not part of #287 behavior redesign unless context routing changes. |
 
 ## Out-of-scope findings
+
+Historical note: these findings were out of scope for #288. Later child issues
+resolved several of them; use the current source-state summary above and current
+repository-local docs before treating any row as still open.
 
 | Finding | Why out of scope now | Why it may matter later | Evidence needed later |
 | --- | --- | --- | --- |

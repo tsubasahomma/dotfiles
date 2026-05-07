@@ -17,7 +17,7 @@ Use this repository to bootstrap and maintain a converged workstation on macOS
 or Windows 11 with Windows Subsystem for Linux 2 (WSL2) Ubuntu 24.04+.
 
 The README is the first-run entry point. It explains the supported bootstrap
-path and links to focused contract documents for behavior details.
+path and links to focused repository-local docs for behavior details.
 
 ## Bootstrap model
 
@@ -125,7 +125,7 @@ The WSL2 Ubuntu path does not install Docker Engine or Docker CLI packages
 inside Linux. Docker daemon, socket, Desktop, and WSL integration behavior is
 owned by the Windows-side Docker Desktop installation.
 
-WSL2 convergence requires:
+The WSL2 first-run path requires:
 
 - Windows 11 as the host operating system.
 - Ubuntu 24.04 or later as the WSL2 distribution.
@@ -172,7 +172,7 @@ GITHUB_TOKEN=<token> sh -c "$(curl -fsLS https://get.chezmoi.io)" -- init --appl
 Replace `<token>` with the GitHub token value and `<github-username>` with the
 GitHub account that owns this dotfiles repository.
 
-### Verify convergence
+### Run the health check
 
 After bootstrap completes, run the repository health check:
 
@@ -180,22 +180,26 @@ After bootstrap completes, run the repository health check:
 mise run doctor
 ```
 
-If the check fails, follow the task output and the focused contract documents
-linked below.
+This is the stable public health-check command. If it fails, follow the task
+output and the focused repository-local docs linked below.
 
 ## Maintain this repository
 
-After bootstrap completes, use these commands:
+After bootstrap completes, the stable public operator command remains:
 
 ```zsh
 mise run doctor
-chezmoi verify
-mise run repair:nvim
-mise run update:lazy-lock
 ```
 
-Use focused issues and pull requests for behavior changes. Keep documentation
-changes scoped to the issue that authorizes them.
+Use focused issues and pull requests for repository changes, and keep
+documentation changes scoped to the issue that authorizes them. Commands such as
+`chezmoi verify`, `mise run repair:nvim`, and `mise run update:lazy-lock` are
+validation, repair, or update workflows for scoped maintainer work; they are not
+the durable public operator command model.
+
+When auditing task behavior, treat source state under
+`dot_config/mise/repo-tasks/**` as the repository-owned task inventory. Local
+`mise tasks` output can reflect host rendering or local target drift.
 
 ## Troubleshoot first-run failures
 
@@ -207,11 +211,12 @@ Use the failing surface to choose the next check:
   1Password CLI integration, and confirm the required SSH Key item metadata
   exists.
 - WSL2 Ubuntu package provisioning failures: confirm non-interactive `sudo`
-  with `sudo -n true`, then rerun `chezmoi apply`.
+  with `sudo -n true`, fix the host prerequisite, then rerun `chezmoi apply`.
 - WSL2 bridge failures: review Windows interop, `op.exe`, `npiperelay.exe`, user
-  systemd, and SSH agent bridge state with the WSL2 contract document.
-- Post-bootstrap drift: run `mise run doctor` and use the focused contract
-  documents to route the failure.
+  systemd, and SSH agent bridge state with the repository surface map and
+  validation contract. Local WSL2 host evidence is required for those claims.
+- Post-bootstrap drift: run `mise run doctor` and use the focused
+  repository-local docs to route the failure.
 
 ## Reference documentation
 
