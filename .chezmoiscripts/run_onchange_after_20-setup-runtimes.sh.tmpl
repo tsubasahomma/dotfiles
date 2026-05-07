@@ -24,7 +24,7 @@ echo "📦 [Phase 20] Executing Runtime Convergence via Mise..."
 "$MISE_BIN" install
 
 # Phase 2 runs idempotent runtime owner tasks.
-"$MISE_BIN" run provision:pnpm
 "$MISE_BIN" run repair:security
+"$MISE_BIN" run provision:pnpm
 
 echo "✅ [Phase 20] Runtime convergence complete."
