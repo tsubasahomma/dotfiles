@@ -12,9 +12,39 @@ sourceDir = {{ .chezmoi.sourceDir | quote }}
 {{-   if contains "microsoft" (.chezmoi.kernel.osrelease | lower)}}{{$is_wsl = true}}{{end -}}
 {{- end -}}
 
+{{- $wsl_command_failed := "__DOTFILES_WSL_COMMAND_FAILED__" -}}
+{{- $wslpath_failed := "__DOTFILES_WSLPATH_FAILED__" -}}
+
+{{- if $is_wsl -}}
+{{-   $wsl_interop := output "sh" "-c" "if [ -e /proc/sys/fs/binfmt_misc/WSLInterop ]; then if grep -qxF enabled /proc/sys/fs/binfmt_misc/WSLInterop; then printf ready; else printf disabled; fi; elif (command -v cmd.exe >/dev/null 2>&1 && cmd.exe /c ver >/dev/null 2>&1) || (command -v powershell.exe >/dev/null 2>&1 && powershell.exe -NoProfile -NonInteractive -Command '[Console]::Write(\"ready\")' >/dev/null 2>&1); then printf ready; else printf missing; fi" | trim -}}
+{{-   if eq $wsl_interop "disabled" -}}
+{{-     fail "[FATAL] WSL Windows interop is disabled. Set [interop] enabled=true in /etc/wsl.conf or re-enable /proc/sys/fs/binfmt_misc/WSLInterop, restart WSL, and rerun chezmoi." -}}
+{{-   else if eq $wsl_interop "missing" -}}
+{{-     fail "[FATAL] WSL Windows interop is unavailable. Enable WSL interop so Win32 commands can run from WSL, restart WSL, and rerun chezmoi." -}}
+{{-   end -}}
+
+{{-   $cmd_probe := output "sh" "-c" "command -v cmd.exe >/dev/null 2>&1 && cmd.exe /c ver >/dev/null 2>&1 && printf ready || printf missing" | trim -}}
+{{-   if ne $cmd_probe "ready" -}}
+{{-     fail "[FATAL] WSL prerequisite 'cmd.exe' is unavailable or cannot run. Ensure Windows System32 is on the WSL PATH and WSL interop is enabled, then rerun chezmoi." -}}
+{{-   end -}}
+
+{{-   $powershell_probe := output "sh" "-c" "command -v powershell.exe >/dev/null 2>&1 && powershell.exe -NoProfile -NonInteractive -Command '[Console]::Write(\"ready\")' >/dev/null 2>&1 && printf ready || printf missing" | trim -}}
+{{-   if ne $powershell_probe "ready" -}}
+{{-     fail "[FATAL] WSL prerequisite 'powershell.exe' is unavailable or cannot run. Ensure Windows PowerShell is on the WSL PATH and WSL interop is enabled, then rerun chezmoi." -}}
+{{-   end -}}
+
+{{-   $wslpath_probe := output "sh" "-c" "command -v wslpath >/dev/null 2>&1 && wslpath -u 'C:\\Windows' >/dev/null 2>&1 && printf ready || printf missing" | trim -}}
+{{-   if ne $wslpath_probe "ready" -}}
+{{-     fail "[FATAL] WSL prerequisite 'wslpath' is unavailable or cannot convert Windows paths. Repair the WSL installation and Windows drive mounts, then rerun chezmoi." -}}
+{{-   end -}}
+{{- end -}}
+
 {{- $windows_user := "unknown" -}}
 {{- if $is_wsl -}}
-{{-   $windows_user = env "WINDOWS_USER" | default (output "sh" "-c" "cmd.exe /c 'echo %USERNAME%' 2>/dev/null || echo 'unknown'" | trim) -}}
+{{-   $windows_user = env "WINDOWS_USER" | default (output "sh" "-c" "cmd.exe /c \"echo %USERNAME%\" 2>/dev/null | tr -d '\\r' || true" | trim) -}}
+{{-   if eq $windows_user "" -}}
+{{-     fail "[FATAL] Windows username discovery returned empty. Confirm 'cmd.exe /c echo %USERNAME%' returns a value from WSL or set WINDOWS_USER before running chezmoi." -}}
+{{-   end -}}
 {{- end -}}
 
 {{- $brew_prefix := "/usr/local" -}}
@@ -31,8 +61,19 @@ sourceDir = {{ .chezmoi.sourceDir | quote }}
 {{- /* Resolve op binary path from the current platform without guessing. */}}
 {{- $op_bin := "" -}}
 {{- if $is_wsl -}}
-{{-   $win_op := output "powershell.exe" "-NoProfile" "-NonInteractive" "-Command" "(Get-Command op.exe -ErrorAction SilentlyContinue).Source | Write-Host -NoNewline" -}}
-{{-   if ne $win_op ""}}{{$op_bin = output "wslpath" "-u" $win_op | trim}}{{end -}}
+{{-   $win_op := output "sh" "-c" (printf "powershell.exe -NoProfile -NonInteractive -Command '$cmd = Get-Command \"op.exe\" -ErrorAction SilentlyContinue; if ($cmd) { [Console]::Write($cmd.Source) }' 2>/dev/null || printf '%s'" $wsl_command_failed) | trim -}}
+{{-   if eq $win_op $wsl_command_failed -}}
+{{-     fail "[FATAL] Windows PowerShell failed while discovering required 1Password CLI 'op.exe'. Confirm powershell.exe runs from WSL and 1Password CLI integration is enabled on Windows." -}}
+{{-   else if eq $win_op "" -}}
+{{-     fail "[FATAL] Windows 1Password CLI ('op.exe') not found from WSL. Install 1Password for Windows, enable CLI integration, ensure op.exe is on the Windows PATH visible to WSL, then rerun chezmoi." -}}
+{{-   else -}}
+{{-     $op_bin = output "sh" "-c" (printf "wslpath -u \"$1\" 2>/dev/null || printf '%s'" $wslpath_failed) "dotfiles-wslpath" $win_op | trim -}}
+{{-     if eq $op_bin $wslpath_failed -}}
+{{-       fail "[FATAL] wslpath could not convert the Windows 1Password CLI path. Confirm wslpath works from WSL and Windows drives are mounted, then rerun chezmoi." -}}
+{{-     else if eq $op_bin "" -}}
+{{-       fail "[FATAL] wslpath returned empty while converting the Windows 1Password CLI path. Repair WSL path conversion and rerun chezmoi." -}}
+{{-     end -}}
+{{-   end -}}
 {{- else -}}
 {{-   $op_bin = lookPath "op" -}}
 {{- end -}}
@@ -110,8 +151,19 @@ sourceDir = {{ .chezmoi.sourceDir | quote }}
 {{- if eq $osid "darwin" -}}
 {{-   $op_sign = "/Applications/1Password.app/Contents/MacOS/op-ssh-sign" -}}
 {{- else if $is_wsl -}}
-{{-   $win_op_sign := output "powershell.exe" "-NoProfile" "-NonInteractive" "-Command" "foreach ($cmd in 'op-ssh-sign-wsl.exe', 'op-ssh-sign.exe') { $p = (Get-Command $cmd -ErrorAction SilentlyContinue).Source; if ($p) { Write-Host -NoNewline $p; break } }" -}}
-{{-   if ne $win_op_sign ""}}{{$op_sign = output "wslpath" "-u" $win_op_sign | trim}}{{end -}}
+{{-   $win_op_sign := output "sh" "-c" (printf "powershell.exe -NoProfile -NonInteractive -Command 'foreach ($cmd in \"op-ssh-sign-wsl.exe\", \"op-ssh-sign.exe\") { $p = (Get-Command $cmd -ErrorAction SilentlyContinue).Source; if ($p) { [Console]::Write($p); break } }' 2>/dev/null || printf '%s'" $wsl_command_failed) | trim -}}
+{{-   if eq $win_op_sign $wsl_command_failed -}}
+{{-     fail "[FATAL] Windows PowerShell failed while discovering the 1Password SSH signing helper. Confirm powershell.exe runs from WSL and 1Password for Windows is installed." -}}
+{{-   else if eq $win_op_sign "" -}}
+{{-     fail "[FATAL] Windows 1Password SSH signing helper ('op-ssh-sign-wsl.exe' or 'op-ssh-sign.exe') not found from WSL. Reinstall or update 1Password for Windows and reconfigure WSL SSH signing, then rerun chezmoi." -}}
+{{-   else -}}
+{{-     $op_sign = output "sh" "-c" (printf "wslpath -u \"$1\" 2>/dev/null || printf '%s'" $wslpath_failed) "dotfiles-wslpath" $win_op_sign | trim -}}
+{{-     if eq $op_sign $wslpath_failed -}}
+{{-       fail "[FATAL] wslpath could not convert the Windows 1Password SSH signing helper path. Confirm wslpath works from WSL and Windows drives are mounted, then rerun chezmoi." -}}
+{{-     else if eq $op_sign "" -}}
+{{-       fail "[FATAL] wslpath returned empty while converting the Windows 1Password SSH signing helper path. Repair WSL path conversion and rerun chezmoi." -}}
+{{-     end -}}
+{{-   end -}}
 {{- else -}}
 {{-   $op_sign = lookPath "op-ssh-sign" | default "" -}}
 {{- end -}}
