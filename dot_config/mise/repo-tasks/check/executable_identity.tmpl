@@ -20,6 +20,11 @@ log_guide() { printf "  ${BLUE}👉 %s${NC}\n" "$1"; }
 IS_CI="${CI:-false}"
 OP_BIN="{{ .paths.op }}"
 HAS_ERROR=0
+{{ if .is_wsl -}}
+SSH_ADD_BIN="ssh-add.exe"
+{{ else -}}
+SSH_ADD_BIN="ssh-add"
+{{ end }}
 
 echo "--- 2. Identity & Auth Bridge Analysis ---"
 if "$OP_BIN" account get > /dev/null 2>&1; then
@@ -55,8 +60,29 @@ else
   fi
 fi
 
+{{ if .is_wsl }}
+echo "--- 3. WSL Win32 Auth Environment ---"
+WIN32_OP_BIOMETRIC_UNLOCK_ENABLED=$(powershell.exe -NoProfile -NonInteractive -Command '[Console]::Write($env:OP_BIOMETRIC_UNLOCK_ENABLED)' 2>/dev/null || true)
+if [[ "$WIN32_OP_BIOMETRIC_UNLOCK_ENABLED" == "true" ]]; then
+  log_ok "Win32 1Password biometric unlock flag propagated from WSL."
+else
+  log_err "Win32 1Password biometric unlock flag was not propagated from WSL."
+  HAS_ERROR=1
+fi
+
+WIN32_SSH_AUTH_SOCK=$(powershell.exe -NoProfile -NonInteractive -Command '[Console]::Write($env:SSH_AUTH_SOCK)' 2>/dev/null || true)
+if [[ "$WIN32_SSH_AUTH_SOCK" == '\\.\pipe\openssh-ssh-agent' ]]; then
+  log_ok "Win32 SSH_AUTH_SOCK targets the Windows OpenSSH agent pipe."
+else
+  log_err "Win32 SSH_AUTH_SOCK is not the Windows OpenSSH agent pipe."
+  HAS_ERROR=1
+fi
+
+echo "--- 4. SSH Agent & Cryptographic Trust ---"
+{{ else }}
 echo "--- 3. SSH Agent & Cryptographic Trust ---"
-if ssh-add -l > /dev/null 2>&1; then
+{{ end }}
+if "$SSH_ADD_BIN" -l > /dev/null 2>&1; then
   log_ok "SSH Agent is responsive and active."
 else
   if [[ "$IS_CI" == "true" ]]; then
@@ -64,7 +90,7 @@ else
   else
     log_err "SSH Agent is unresponsive."
     {{ if .is_wsl }}
-    log_guide "Restart the WSL2 1Password bridge explicitly: systemctl --user restart 1password-bridge.service"
+    log_guide "Verify Windows 1Password SSH agent, WSL interop, and ssh-add.exe -l."
     log_guide "Then rerun 'mise run doctor'."
     {{ else }}
     log_guide "Verify the 'SSH Agent' setting in 1Password Desktop App."
