@@ -113,7 +113,7 @@ integrations to be usable.
 
 #### Windows 11 with WSL2 Ubuntu 24.04+
 
-Prepare Windows 11 with WSL2 Ubuntu 24.04+ as a WSL-to-Windows bridge path,
+Prepare Windows 11 with WSL2 Ubuntu 24.04+ as a WSL-to-Windows interop path,
 not as generic Linux.
 
 Windows-side GUI provisioning installs Docker Desktop through the WinGet
@@ -125,6 +125,11 @@ The WSL2 Ubuntu path does not install Docker Engine or Docker CLI packages
 inside Linux. Docker daemon, socket, Desktop, and WSL integration behavior is
 owned by the Windows-side Docker Desktop installation.
 
+The WSL2 SSH authentication path follows the official
+[1Password WSL integration](https://developer.1password.com/docs/ssh/integrations/wsl/):
+WSL invokes Windows OpenSSH with `ssh.exe` and `ssh-add.exe`, and Windows
+OpenSSH talks to the Windows-host 1Password SSH agent.
+
 The WSL2 first-run path requires:
 
 - Windows 11 as the host operating system.
@@ -134,15 +139,9 @@ The WSL2 first-run path requires:
 - Windows-side 1Password Desktop installed and signed in.
 - 1Password CLI integration enabled on the Windows side.
 - `op.exe` discoverable from WSL2.
-- `npiperelay.exe` installed and discoverable from WSL2.
-- User-level systemd available for the 1Password bridge service path.
+- Windows OpenSSH clients `ssh.exe` and `ssh-add.exe` available from WSL2.
+- The Windows-side 1Password SSH agent enabled and running.
 - Non-interactive `sudo` configured in WSL2 for Ubuntu package provisioning.
-
-Install `npiperelay.exe` on the Windows side when it isn't already available:
-
-```zsh
-winget.exe install albertony.npiperelay
-```
 
 Configure non-interactive `sudo` before first-run package provisioning. The
 WSL2 Ubuntu provisioning path checks `sudo -n true` before installing system
@@ -212,8 +211,9 @@ Use the failing surface to choose the next check:
   exists.
 - WSL2 Ubuntu package provisioning failures: confirm non-interactive `sudo`
   with `sudo -n true`, fix the host prerequisite, then rerun `chezmoi apply`.
-- WSL2 bridge failures: review Windows interop, `op.exe`, `npiperelay.exe`, user
-  systemd, and SSH agent bridge state with the repository surface map and
+- WSL2 SSH authentication failures: review Windows interop, `op.exe`, Windows
+  OpenSSH clients, the Windows-side 1Password SSH agent, and the
+  `ssh-add.exe -l` / `ssh.exe -T` checks with the repository surface map and
   validation contract. Local WSL2 host evidence is required for those claims.
 - Post-bootstrap drift: run `mise run doctor` and use the focused
   repository-local docs to route the failure.
@@ -249,5 +249,5 @@ Don't edit generated `repomix-*.xml` files or Repomix output under
 
 Don't treat GitHub Actions CI as proof of local WSL2 convergence. Local
 Windows 11 and WSL2 health depends on interactive Windows interop, 1Password
-Desktop state, SSH agent bridge state, user systemd behavior, and host runtime
+Desktop state, Windows OpenSSH and 1Password SSH agent state, and host runtime
 state.

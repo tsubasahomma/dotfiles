@@ -72,3 +72,14 @@ files are not removed recursively.
 .config/mise/repo-tasks/setup/pnpm
 .config/mise/repo-tasks/setup/security
 .config/mise/repo-tasks/setup/vale
+
+{{ if .is_wsl }}
+{{/*
+Remove retired WSL SSH-agent bridge targets. The WSL primary authentication
+path now uses Windows OpenSSH and the Windows-host 1Password SSH agent.
+*/}}
+.config/systemd/user/1password-bridge.service
+.config/systemd/user/default.target.wants/1password-bridge.service
+.config/mise/repo-tasks/service/1password-bridge
+.1password/agent.sock
+{{ end }}

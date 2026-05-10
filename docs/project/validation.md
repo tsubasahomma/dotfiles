@@ -107,8 +107,8 @@ that reason rather than marking it complete.
 
 Local validation and GitHub Actions CI answer different questions. Do not infer
 GitHub Actions success from local checks, and do not infer local WSL2,
-1Password, SSH agent, Windows interop, user systemd, or workstation convergence
-from GitHub Actions CI.
+1Password, Windows OpenSSH, SSH agent, Windows interop, or workstation
+convergence from GitHub Actions CI.
 
 Use GitHub Checks or status checks as the source of truth for GitHub Actions CI
 after PR creation. Do not mirror dynamic CI status in PR body validation tables,

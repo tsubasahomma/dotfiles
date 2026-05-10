@@ -62,7 +62,7 @@ or `Not required` with a reason instead of implying completion.
 
 Use [`surfaces.md`](./surfaces.md) when workflow decisions depend on
 behavior-sensitive local surfaces. Remote CI cannot substitute for local WSL2,
-1Password, SSH agent bridge, Windows interop, user systemd, or workstation
+1Password, Windows OpenSSH, SSH agent, Windows interop, or workstation
 convergence evidence.
 
 ## Local GitHub Actions CI boundary

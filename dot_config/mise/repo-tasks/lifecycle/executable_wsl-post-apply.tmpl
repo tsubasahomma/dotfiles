@@ -1,10 +1,9 @@
 #!/usr/bin/env bash
-# [MISE] description="Run WSL2 Windows sync and service graph"
+# [MISE] description="Run WSL2 Windows sync graph"
 # [MISE] hide=true
 # [MISE] depends=["sync:1password-agent", "sync:wezterm"]
-# [MISE] depends_post=["service:1password-bridge"]
 {{/* [Reference]: https://mise.jdx.dev/tasks/file-tasks.html */}}{{ "" -}}
 
 set -euo pipefail
 
-echo "WSL2 Windows sync tasks complete; enabling services next."
+echo "WSL2 Windows sync tasks complete."

@@ -31,7 +31,7 @@ tracked and reviewable:
 | 1Password identity metadata | Do not print account IDs, item IDs, vault identifiers, local profile paths, private keys, or generated identity output. Use redacted structural evidence. |
 | SSH signing and agent routing | Do not print private keys, unnecessary public key material, raw agent output, or socket details unless a scoped task requires redacted structural evidence. |
 | Generated identity files | Treat generated Git identity and SSH routing outputs as sensitive evidence. Inspect locally and summarize safely instead of copying full contents into shared output. |
-| WSL2 bridge state | Avoid exposing host-private Windows paths, local usernames, socket paths, and service output unless redacted evidence is required for the scoped task. |
+| WSL2 authentication state | Avoid exposing host-private Windows paths, local usernames, socket paths, SSH key material, and agent output unless redacted evidence is required for the scoped task. |
 | Generated Repomix output | Treat packed snapshots as generated evidence that may contain sensitive local context. Do not hand-edit them; regenerate only when validation requires fresh evidence. |
 
 ## Secrets Memory Rules
