@@ -158,6 +158,46 @@ jobs:
 
           printf 'Hermetic mise ready: %s (%s)\n' "$hermetic_mise" "$hermetic_version"
 
+      - name: Resolve Post-Apply Mise Install Cache Scope
+        id: post_apply_mise_cache_scope
+        shell: bash
+        run: |
+          mise_data_dir="${MISE_DATA_DIR:-$HOME/.local/share/mise}"
+          mise_installs_dir="$mise_data_dir/installs"
+          mkdir -p "$mise_installs_dir"
+
+          printf 'MISE_DATA_DIR: %s\n' "$mise_data_dir"
+          printf 'Mise installs cache path: %s\n' "$mise_installs_dir"
+          printf 'Runner OS/arch/image: %s/%s/%s\n' "$RUNNER_OS" "$RUNNER_ARCH" "${{ matrix.os }}"
+
+          printf 'installs-dir=%s\n' "$mise_installs_dir" >> "$GITHUB_OUTPUT"
+
+      - name: Restore Post-Apply Mise Installs Cache
+        id: post_apply_mise_installs_cache
+        # Cache only the supported installs surface; downloads, internal cache,
+        # state, and credential paths stay outside the cache.
+        # [Reference]: https://mise.jdx.dev/directories.html
+        uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+        with:
+          path: ${{ steps.post_apply_mise_cache_scope.outputs.installs-dir }}
+          key: mise-post-apply-installs-v1-${{ runner.os }}-${{ runner.arch }}-${{ matrix.os }}-mise-${{ steps.mise_version.outputs.version }}-${{ hashFiles('.mise-version', '.mise.toml', 'dot_config/mise/conf.d/10-tools.toml', 'dot_config/mise/config.toml.tmpl') }}
+          restore-keys: |
+            mise-post-apply-installs-v1-${{ runner.os }}-${{ runner.arch }}-${{ matrix.os }}-mise-${{ steps.mise_version.outputs.version }}-
+
+      - name: Report Post-Apply Mise Cache Restore
+        shell: bash
+        env:
+          CACHE_HIT: ${{ steps.post_apply_mise_installs_cache.outputs.cache-hit }}
+          CACHE_MATCHED_KEY: ${{ steps.post_apply_mise_installs_cache.outputs.cache-matched-key }}
+          CACHE_PATH: ${{ steps.post_apply_mise_cache_scope.outputs.installs-dir }}
+          CACHE_PRIMARY_KEY: ${{ steps.post_apply_mise_installs_cache.outputs.cache-primary-key }}
+        run: |
+          printf 'Post-apply mise installs cache primary key: %s\n' "$CACHE_PRIMARY_KEY"
+          printf 'Post-apply mise installs cache matched key: %s\n' "${CACHE_MATCHED_KEY:-none}"
+          printf 'Post-apply mise installs cache hit: %s\n' "${CACHE_HIT:-false}"
+          tool_count="$(find "$CACHE_PATH" -mindepth 1 -maxdepth 1 -type d 2> /dev/null | wc -l | tr -d '[:space:]')"
+          printf 'Post-apply mise installs cache path top-level entries: %s\n' "${tool_count:-0}"
+
       - name: Phase 1 - Provisioning (Static Apply)
         run: |
           chezmoi init --source="$GITHUB_WORKSPACE" --apply
@@ -211,3 +251,10 @@ jobs:
         if: always()
         run: |
           "$HOME/.local/bin/mise" run doctor
+
+      - name: Save Post-Apply Mise Installs Cache
+        if: ${{ success() && steps.post_apply_mise_installs_cache.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+        with:
+          path: ${{ steps.post_apply_mise_cache_scope.outputs.installs-dir }}
+          key: ${{ steps.post_apply_mise_installs_cache.outputs.cache-primary-key }}
