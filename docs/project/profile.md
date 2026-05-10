@@ -78,7 +78,8 @@ Follow these local rules unless the active issue says otherwise:
   without comparing source state, managed target paths, and local visibility
   evidence.
 - Do not treat GitHub Actions CI as proof of local WSL2, Windows interop,
-  1Password Desktop, SSH agent bridge, user systemd, or workstation convergence.
+  1Password Desktop, Windows OpenSSH, 1Password SSH agent, or workstation
+  convergence.
 - Do not change runtime versions, tool versions, package lists, dependencies, or
   lockfiles from a context-documentation issue.
 
@@ -93,7 +94,7 @@ Treat these repository surfaces as behavior-sensitive:
 | Repository data | `.chezmoidata/**` data consumed by templates, scripts, mise, completions, or package generation. |
 | Template fragments | `.chezmoitemplates/**` reusable template fragments and generated output assumptions. |
 | Identity and SSH | 1Password identity discovery, identity metadata, SSH signing, SSH agent routing, and generated identity files. |
-| WSL2 bridge | Windows interop, `npiperelay.exe`, `op.exe`, user systemd services, and Windows-side sync paths. |
+| WSL2 interop | Windows interop, `op.exe`, Windows OpenSSH clients, 1Password SSH agent routing, and Windows-side sync paths. |
 | Rendered configuration | Shell startup, zsh, WezTerm, Starship, Git, SSH, Homebrew, mise, Vale, Neovim, and related rendered files. |
 | Mise | `dot_config/mise/repo-tasks/**`, `.mise.toml`, tool declarations, runtime versions, tool versions, dependencies, and lockfiles. |
 | Renovate | `renovate.json5`, repository update governance, native manager extraction, review-domain categorization, validator commands, and validator runtime evidence. |
@@ -112,7 +113,7 @@ Other Linux distributions may appear in source-state logic or package data, but
 they are not currently documented as supported first-run targets.
 
 Do not treat GitHub Actions Ubuntu as proof of local WSL2, Windows interop,
-1Password Desktop, SSH agent bridge, user systemd, or workstation runtime
+1Password Desktop, Windows OpenSSH, 1Password SSH agent, or workstation runtime
 convergence.
 
 ## Root document and adapter roles
@@ -151,6 +152,6 @@ explicitly scopes that adapter.
 | root context manifest | `AGENTS.md`, the source-owned concise repository-wide assistant entry point. |
 | adapter | Vendor-specific assistant entry point such as `.github/copilot-instructions.md`; adapters should route to the LLM-agnostic context architecture. |
 | 1Password identity | Repository-discovered identity metadata from prepared 1Password SSH Key items used for Git authoring, SSH signing, and SSH routing. |
-| WSL2 bridge | The Windows-to-WSL2 identity and SSH agent path involving Windows 11, WSL2 Ubuntu, Windows 1Password Desktop, `op.exe`, `npiperelay.exe`, and user systemd. |
+| WSL2 interop path | The Windows-to-WSL2 identity and authentication path involving Windows 11, WSL2 Ubuntu, Windows 1Password Desktop, `op.exe`, Windows OpenSSH, and Windows-side sync. |
 | doctor task | The public repository-local `mise run doctor` health-check wrapper; internal read-only checks live under `dot_config/mise/repo-tasks/check/**`. |
 | repair candidate | A current behavior that may be mutation-oriented and may need a future explicit `repair:*` decision; it is not authorization to change current tasks. |

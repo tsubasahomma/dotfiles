@@ -13,13 +13,8 @@ sourceDir = {{ .chezmoi.sourceDir | quote }}
 {{- end -}}
 
 {{- $windows_user := "unknown" -}}
-{{- $npiperelay_wsl := "" -}}
 {{- if $is_wsl -}}
 {{-   $windows_user = env "WINDOWS_USER" | default (output "sh" "-c" "cmd.exe /c 'echo %USERNAME%' 2>/dev/null || echo 'unknown'" | trim) -}}
-{{-   $win_npiperelay := output "powershell.exe" "-NoProfile" "-NonInteractive" "-Command" "(Get-Command npiperelay.exe -ErrorAction SilentlyContinue).Source | Write-Host -NoNewline" -}}
-{{-   if ne $win_npiperelay "" -}}
-{{-     $npiperelay_wsl = output "wslpath" "-u" $win_npiperelay | trim -}}
-{{-   end -}}
 {{- end -}}
 
 {{- $brew_prefix := "/usr/local" -}}
@@ -127,7 +122,6 @@ sourceDir = {{ .chezmoi.sourceDir | quote }}
     osid = {{ $osid | quote }}
     arch = {{ $arch | quote }}
     is_wsl = {{ $is_wsl }}
-    npiperelay_wsl = {{ $npiperelay_wsl | quote }}
     brew_prefix = {{ $brew_prefix | quote }}
     windows_user = {{ $windows_user | quote }}
     ssh_auth_sock = {{ $ssh_auth_sock | quote }}

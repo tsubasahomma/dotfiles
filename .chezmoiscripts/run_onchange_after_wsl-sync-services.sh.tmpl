@@ -2,20 +2,18 @@
 #!/usr/bin/env bash
 {{/* [Reference]: https://www.chezmoi.io/user-guide/use-scripts-to-perform-actions/ */}}{{ "" -}}
 {{/* [Reference]: https://www.chezmoi.io/reference/application-order/ */}}{{ "" -}}
-# WSL post-apply sync and service convergence delegates host side effects to
-# explicit repo-owned mise tasks after rendered target files are available.
+# WSL post-apply sync convergence delegates Windows host side effects to
+# explicit repo-owned mise sync tasks after rendered target files are available.
 # [Trigger]: WSL lifecycle task hash: {{ include "dot_config/mise/repo-tasks/lifecycle/executable_wsl-post-apply.tmpl" | sha256sum }}
 # [Trigger]: 1Password agent config hash: {{ includeTemplate "dot_config/1Password/ssh/private_agent.toml.tmpl" . | sha256sum }}
 # [Trigger]: 1Password agent sync task hash: {{ include "dot_config/mise/repo-tasks/sync/executable_1password-agent.tmpl" | sha256sum }}
 # [Trigger]: WezTerm config hash: {{ include "dot_config/wezterm/wezterm.lua.tmpl" | sha256sum }}
 # [Trigger]: WezTerm sync task hash: {{ include "dot_config/mise/repo-tasks/sync/executable_wezterm.tmpl" | sha256sum }}
-# [Trigger]: 1Password bridge service hash: {{ include "dot_config/systemd/user/1password-bridge.service.tmpl" | sha256sum }}
-# [Trigger]: 1Password bridge service task hash: {{ include "dot_config/mise/repo-tasks/service/executable_1password-bridge.tmpl" | sha256sum }}
 
 set -euo pipefail
 
 if [[ "${CI:-false}" == "true" ]]; then
-  echo "Skipping WSL sync/service lifecycle in CI."
+  echo "Skipping WSL sync lifecycle in CI."
   exit 0
 fi
 
@@ -29,7 +27,7 @@ if [[ ! -x "$MISE_BIN" ]]; then
   exit 1
 fi
 
-echo "Running WSL sync and service lifecycle..."
+echo "Running WSL sync lifecycle..."
 "$MISE_BIN" run lifecycle:wsl-post-apply
-echo "WSL sync and service lifecycle complete."
+echo "WSL sync lifecycle complete."
 {{- end }}

@@ -23,11 +23,12 @@ forensics.
 
 - The pre-source-state hook is `.bootstrap-mise.sh`; no identity-named
   bootstrap hook is retained.
-- `.chezmoiscripts/**` contains five lifecycle adapters:
+- `.chezmoiscripts/**` contains six lifecycle adapters:
   `.chezmoiscripts/run_onchange_before_00-provision-linux-packages.sh.tmpl`,
   `.chezmoiscripts/run_onchange_before_provision-macos-homebrew.sh.tmpl`,
   `.chezmoiscripts/run_onchange_before_provision-windows-packages.sh.tmpl`,
-  `.chezmoiscripts/run_onchange_after_20-mise-post-apply-graph.sh.tmpl`, and
+  `.chezmoiscripts/run_onchange_after_20-mise-post-apply-graph.sh.tmpl`,
+  `.chezmoiscripts/run_onchange_after_wsl-retire-1password-bridge.sh.tmpl`, and
   `.chezmoiscripts/run_onchange_after_wsl-sync-services.sh.tmpl`.
 - Repo-owned mise task source state lives under
   `dot_config/mise/repo-tasks/**`; `dot_config/mise/tasks/**` is absent from
@@ -37,7 +38,7 @@ forensics.
   default `.config/mise/tasks` discovery path.
 - Current repo-owned task families include `build:*`, `cache:*`, hidden
   `check:*`, public `doctor`, `generate:*`, hidden `lifecycle:*`,
-  `provision:*`, `repair:*`, `service:*`, `sync:*`, and `update:*`.
+  `provision:*`, `repair:*`, `sync:*`, and `update:*`.
 - Local rendered `mise tasks` visibility is host and target-state evidence, not
   source-state truth. It can omit WSL-only rendered tasks or reflect local
   drift.
@@ -52,9 +53,9 @@ forensics.
 | Chezmoi lifecycle scripts | Keep only sparse lifecycle adapters when Chezmoi ordering is required for first-run apply or host provisioning. | Inspect `.chezmoiscripts/**`, trigger comments, rendered script output, and source-state consumers before changing script behavior. |
 | Pre-source-state bootstrap | Keep a non-template POSIX hook that ensures `mise` exists before source-state reads. The hook name must describe mise/tool bootstrap ownership, not identity ownership. | Inspect `.bootstrap-mise.sh`, `.chezmoi.toml.tmpl`, rendered hook stanzas, and Chezmoi hook semantics. |
 | Mise task discovery | Keep repo-owned tasks outside the default `.config/mise/tasks` drift surface. | Inspect `dot_config/mise/config.toml.tmpl`, `dot_config/mise/repo-tasks/**`, and rendered task visibility. |
-| Task taxonomy | Keep source-owned tasks in explicit owner families: provisioning, generation, caches, builds, sync, services, checks, repairs, updates, and public `doctor`. | Use `mise tasks validate`, `mise tasks ls --extended --hidden`, and task-level metadata evidence. |
+| Task taxonomy | Keep source-owned tasks in explicit owner families: provisioning, generation, caches, builds, sync, checks, repairs, updates, and public `doctor`. | Use `mise tasks validate`, `mise tasks ls --extended --hidden`, and task-level metadata evidence. |
 | Workspace directories | Do not create identity-routed workspace directories automatically during apply. | Treat identity directory metadata as Git include routing unless a managed target-state requirement is proven. |
-| WSL2 sync and services | Keep WSL2 sync/service behavior behind host-specific tasks and adapters, with no GitHub Actions claim for local Windows or user-systemd behavior. | Require maintainer-local host evidence for Windows interop, 1Password Desktop, SSH agent bridge, user systemd, and WezTerm Windows sync claims. |
+| WSL2 sync and authentication | Keep WSL2 sync and authentication behavior behind host-specific tasks and adapters, with no GitHub Actions claim for local Windows OpenSSH or 1Password behavior. | Require maintainer-local host evidence for Windows interop, Windows OpenSSH, 1Password Desktop, 1Password SSH agent, and WezTerm Windows sync claims. |
 | Remove targets | Keep removal policy file-specific, target-relative, and evidence-backed. | Validate `.chezmoiremove.tmpl` with rendered output and dry-run or verbose evidence when it changes. |
 | Public commands | Keep `chezmoi init --apply` as the first-run convergence path and `mise run doctor` as the stable public health-check command. | Treat repair, update, verification, teardown, and troubleshooting commands as scoped maintainer workflows unless README and source evidence prove otherwise. |
 

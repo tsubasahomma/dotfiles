@@ -62,13 +62,12 @@ sudo rm -rf /opt/homebrew
 Manually revoke terminal Full Disk Access in System Settings when the reset must
 also remove prior local privacy grants.
 
-### WSL2 identity bridge reset
+### WSL2 authentication state reset
 
-When a full WSL2 reset is intended, stop the user-level 1Password SSH agent
-bridge and remove the bridge socket:
+When a full WSL2 reset is intended, remove stale local authentication socket
+state left by previous WSL authentication designs:
 
 ```zsh
-systemctl --user disable --now 1password-bridge.service
 rm -f "$HOME/.1password/agent.sock"
 ```
 
