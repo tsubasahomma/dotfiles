@@ -22,15 +22,33 @@ export PYTHON_HISTORY="$XDG_STATE_HOME/python/history"
 
 # =============================================================================
 
-# WSL exports the 1Password biometric unlock flag to the Windows host.
-# WSLENV carries the authentication context across the WSL/Windows boundary.
+# WSL exports Win32 authentication context with WSL-to-Win32 WSLENV flags.
 {{ if .is_wsl -}}
-export OP_BIOMETRIC_UNLOCK_ENABLED="true"
-export WSLENV="OP_BIOMETRIC_UNLOCK_ENABLED/u:$WSLENV"
-{{ end -}}
+_dotfiles_wsl_env_prepend() {
+  emulate -L zsh
+  local entry="$1" name="${1%%/*}" existing="${WSLENV:-}" next="" part
 
-# SSH_AUTH_SOCK points Git and SSH clients at the managed agent bridge.
+  # Remove stale managed entries first so old directions such as /u do not survive.
+  for part in ${(s.:.)existing}; do
+    [[ -z "$part" || "${part%%/*}" == "$name" ]] && continue
+    next="${next:+$next:}$part"
+  done
+
+  export WSLENV="${entry}${next:+:$next}"
+}
+
+export OP_BIOMETRIC_UNLOCK_ENABLED="true"
+_dotfiles_wsl_env_prepend "OP_BIOMETRIC_UNLOCK_ENABLED/w"
+
+# Win32 OpenSSH should use the Windows 1Password agent pipe, not a WSL bridge socket.
+export SSH_AUTH_SOCK='{{ .ssh_auth_sock }}'
+_dotfiles_wsl_env_prepend "SSH_AUTH_SOCK/w"
+
+unset -f _dotfiles_wsl_env_prepend
+{{ else -}}
+# SSH_AUTH_SOCK points Git and SSH clients at the managed agent socket.
 export SSH_AUTH_SOCK="{{ .ssh_auth_sock }}"
+{{ end -}}
 
 # PNPM_HOME follows the XDG data directory used by the managed Node.js toolchain.
 export PNPM_HOME="{{ .paths.xdg_data }}/pnpm"
