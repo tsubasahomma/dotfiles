@@ -7,9 +7,11 @@ repository.
 
 Use this file when a task needs repository-specific validation commands,
 documentation-only boundaries, surface-specific validation routing, or local CI
-interpretation. Use [`../context/kernel.md`](../context/kernel.md) for generic
-validation-claim discipline and [`../context/protocols.md`](../context/protocols.md)
-for validation report formatting.
+interpretation. Use
+[`../agent-context/validation.md`](../agent-context/validation.md) for generic
+validation-claim discipline and
+[`../agent-context/outputs.md`](../agent-context/outputs.md) for validation
+report formatting.
 
 ## Local validation baseline
 
@@ -29,8 +31,8 @@ assistant-guidance, validation-default, or routing changes, use evidence from:
 - Markdown relative link validation, when repository-relative Markdown links are
   added, removed, or changed
 - `repomix`, when context routing, assistant guidance, workflow contracts,
-  artifact schemas, template routing, Repomix guidance, or generated snapshot
-  routing changes
+  artifact or evidence-packing guidance, template routing, Repomix guidance, or
+  generated snapshot routing changes
 - GitHub Actions CI after PR creation, when required by branch protection or
   reviewer request, checked in GitHub Checks or status checks instead of a
   manually maintained PR body validation row
@@ -79,9 +81,9 @@ or CI shell runtime:
 
 | Touched source | Validation routing |
 | --- | --- |
-| `docs/context/**` | Use baseline documentation validation. Run Markdown link validation when links change. Run `repomix` because context routing affects generated LLM evidence. |
-| `docs/repo/**` | Use baseline documentation validation. Run Markdown link validation when links change. Run `repomix` because repository-local extension routing affects generated LLM evidence. |
-| `AGENTS.md` or `.github/copilot-instructions.md` | Use baseline documentation validation, Markdown link validation, and `repomix`; these files affect assistant routing. |
+| `docs/agent-context/**` | Use baseline documentation validation. Run Markdown link validation when links change. Run `repomix` because portable context routing affects generated LLM evidence. |
+| `docs/project/**` | Use baseline documentation validation. Run Markdown link validation when links change. Run `repomix` because repository-local extension routing affects generated LLM evidence. |
+| `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, or `.github/copilot-instructions.md` | Use baseline documentation validation, Markdown link validation, and `repomix`; these files affect assistant routing. |
 | `README.md` | Use baseline documentation validation, Markdown link validation when links change, and `repomix` when assistant or context routing changes. Add behavior validation only if the edit changes documented operator commands or behavior claims. |
 | `.chezmoiignore.tmpl`, `.chezmoi.toml.tmpl`, `.chezmoiscripts/**`, `.chezmoitemplates/**`, or rendered configuration templates | Use rendered-output inspection such as `chezmoi diff` or `chezmoi execute-template` in addition to baseline checks. Consider `mise run doctor` only when setup, toolchain, rendered config, task behavior, or health-check behavior changes. |
 | `.chezmoidata/**` | Review every template, script, package, completion, or tool consumer affected by the data. Add rendered-output and task validation that matches the changed consumer. |

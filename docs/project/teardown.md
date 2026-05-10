@@ -12,9 +12,9 @@ change procedure.
 ## Responsibility boundary
 
 This file owns destructive local teardown guidance for managed workstation state.
-It does not own generic evidence precedence ([`../context/kernel.md`](../context/kernel.md)),
-output formatting ([`../context/protocols.md`](../context/protocols.md)), reusable
-workflow procedure ([`../context/workflows.md`](../context/workflows.md)), local
+It does not own generic evidence precedence ([`../agent-context/sources.md`](../agent-context/sources.md)),
+output formatting ([`../agent-context/outputs.md`](../agent-context/outputs.md)), reusable
+workflow procedure ([`../agent-context/workflows.md`](../agent-context/workflows.md)), local
 surface routing ([`surfaces.md`](./surfaces.md)), or local validation routing
 ([`validation.md`](./validation.md)).
 

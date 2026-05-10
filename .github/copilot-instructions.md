@@ -4,16 +4,16 @@ This file is the GitHub Copilot adapter for this repository.
 
 Use [AGENTS.md](../AGENTS.md) as the root context manifest. Route portable
 operating-contract guidance through
-[docs/context/README.md](../docs/context/README.md), and route repository-local
-facts through [docs/repo/README.md](../docs/repo/README.md) only when the task
+[docs/agent-context/README.md](../docs/agent-context/README.md), and route repository-local
+facts through [docs/project/README.md](../docs/project/README.md) only when the task
 needs them.
 
 Copilot-specific guidance is secondary to the shared context operating contract:
 
 - Keep suggestions small, scoped, and behavior-preserving.
-- Use [docs/context/README.md](../docs/context/README.md) to select the smallest
+- Use [docs/agent-context/README.md](../docs/agent-context/README.md) to select the smallest
   sufficient portable context before relying on deeper evidence.
-- Use [docs/repo/README.md](../docs/repo/README.md) for local source-state,
+- Use [docs/project/README.md](../docs/project/README.md) for local source-state,
   surface, validation, workflow, Repomix, teardown, host, identity, or adapter
   facts.
 - Prefer repository-relative links only when the target exists in the current
@@ -26,11 +26,11 @@ Copilot-specific guidance is secondary to the shared context operating contract:
 - Treat Repomix snapshots and generated output as read-only evidence.
 
 For surface-specific constraints, start with
-[docs/repo/surfaces.md](../docs/repo/surfaces.md). For workflow procedure, start
-with [docs/context/workflows.md](../docs/context/workflows.md) and add
-[docs/repo/workflows.md](../docs/repo/workflows.md) only when local exceptions or
+[docs/project/surfaces.md](../docs/project/surfaces.md). For workflow procedure, start
+with [docs/agent-context/workflows.md](../docs/agent-context/workflows.md) and add
+[docs/project/workflows.md](../docs/project/workflows.md) only when local exceptions or
 templates matter. For Repomix generation or snapshot consumption, start with
-[docs/context/repomix.md](../docs/context/repomix.md) and add
-[docs/repo/repomix.md](../docs/repo/repomix.md) only for local paths and checks.
+[docs/agent-context/evidence-packing.md](../docs/agent-context/evidence-packing.md) and add
+[docs/project/repomix.md](../docs/project/repomix.md) only for local paths and checks.
 For destructive local teardown guidance, use
-[docs/repo/teardown.md](../docs/repo/teardown.md).
+[docs/project/teardown.md](../docs/project/teardown.md).

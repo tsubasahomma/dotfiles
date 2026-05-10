@@ -10,7 +10,7 @@
     "fileSummary": true,
     "directoryStructure": true,
     "files": true,
-    "instructionFilePath": "docs/context/repomix.md",
+    "instructionFilePath": "docs/agent-context/evidence-packing.md",
     "removeComments": false,
     "removeEmptyLines": false,
     "compress": false,

@@ -89,8 +89,8 @@ metadata and these repository-defined fields:
 | Field    | `dotfiles_git_dirs`  | Comma-separated directory globs for scoped Git identity routing. |
 
 For identity boundaries, use the
-[repository surface map](./docs/repo/surfaces.md) and the
-[repository profile](./docs/repo/profile.md).
+[repository surface map](./docs/project/surfaces.md) and the
+[repository profile](./docs/project/profile.md).
 
 ### Prepare your host
 
@@ -158,8 +158,8 @@ Replace `<linux-username>` with the WSL2 Ubuntu user that runs
 `chezmoi init --apply`.
 
 For WSL2 validation boundaries, use the
-[repository surface map](./docs/repo/surfaces.md) and the
-[repository validation contract](./docs/repo/validation.md).
+[repository surface map](./docs/project/surfaces.md) and the
+[repository validation contract](./docs/project/validation.md).
 
 ### Run chezmoi init
 
@@ -224,10 +224,12 @@ Use these focused documents when the README isn't enough:
 
 | Document | Use it for |
 | --- | --- |
-| [Context operating contract](./docs/context/README.md) | Portable context architecture and task-to-context routing. |
-| [Repository-local extension](./docs/repo/README.md) | Repository-local profile, surfaces, validation, workflow exceptions, and Repomix routing. |
-| [Repository profile](./docs/repo/profile.md) | Source-state boundaries, supported host posture, generated artifact boundaries, and root document roles. |
-| [Repository surface map](./docs/repo/surfaces.md) | Chezmoi, mise, WSL2, identity, Neovim, Renovate, and GitHub Actions surface routing, evidence, and validation boundaries. |
+| [Agent context contracts](./docs/agent-context/README.md) | Source-owned portable context architecture and task-to-context routing. |
+| [Project-local extension](./docs/project/README.md) | Consumer-owned dotfiles-local profile, surfaces, validation, workflow exceptions, sensitive-data boundaries, and Repomix routing. |
+| [Repository profile](./docs/project/profile.md) | Source-state boundaries, supported host posture, generated artifact boundaries, and root document roles. |
+| [Repository surface map](./docs/project/surfaces.md) | Chezmoi, mise, WSL2, identity, rendered configuration, package provisioning, Neovim, Renovate, and GitHub Actions surface routing, evidence, and validation boundaries. |
+| [Repository validation](./docs/project/validation.md) | Local validation baseline, documentation-only `mise run doctor` boundary, and touched-source validation routing. |
+| [Repository Repomix routing](./docs/project/repomix.md) | Local Repomix paths, recipes, generated-output handling, and confirmation checks. |
 
 External references:
 

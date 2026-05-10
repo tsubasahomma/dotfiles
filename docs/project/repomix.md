@@ -5,16 +5,16 @@
 Define local Repomix paths, repository-specific recipes, and generated-output
 confirmation checks for this dotfiles repository.
 
-Use [`../context/repomix.md`](../context/repomix.md) for generic Repomix
-generation, consumption, generated-output, focused snapshot, and stale-snapshot
-rules. Use this file only for local paths, commands, and confirmation checks.
+Use [`../agent-context/evidence-packing.md`](../agent-context/evidence-packing.md)
+for tool-neutral evidence-pack boundaries. Use this file only for local
+Repomix paths, commands, generated-output locations, and confirmation checks.
 
 ## Local tracked instruction and generated output paths
 
 | Item | Path | Rule |
 | --- | --- | --- |
-| Tracked instruction file | `docs/context/repomix.md` | This remains the configured instruction file for portable Repomix routing. |
-| Local Repomix extension | `docs/repo/repomix.md` | This file owns local paths, recipes, and generated-output checks. |
+| Tracked instruction file | `docs/agent-context/evidence-packing.md` | This remains the configured instruction file for portable Repomix routing. |
+| Local Repomix extension | `docs/project/repomix.md` | This file owns local paths, recipes, and generated-output checks. |
 | Default generated snapshot | `.context/repomix/repomix-dotfiles.xml` | Generated evidence only. Do not edit by hand. |
 | Focused generated snapshots | `.context/repomix/repomix-dotfiles-<scope>.xml` | Generated evidence only. Use descriptive scope names tied to the active issue or review. |
 | Ignored packed outputs | `repomix-*.xml`, `repomix-output.*`, `.context/repomix/**` | Keep generated output out of source documentation; `.context/repomix/.gitkeep` may remain tracked. |
@@ -41,7 +41,7 @@ PR, diff, or small file set:
 ```zsh
 scope="issue-or-review-scope"
 changed_files="$(git diff --name-only | paste -sd, -)"
-router_files="AGENTS.md,docs/context/README.md,docs/context/kernel.md,docs/repo/README.md"
+router_files="AGENTS.md,docs/agent-context/README.md,docs/agent-context/sources.md,docs/project/README.md"
 include_paths="$(printf '%s,%s' "$changed_files" "$router_files" | tr ',' '\n' | sed '/^$/d' | sort -u | paste -sd, -)"
 repomix \
   --include-diffs \
@@ -58,25 +58,29 @@ base comparison that matches the review question.
 LLMs consuming a Repomix snapshot of this repository should use:
 
 - [`../../AGENTS.md`](../../AGENTS.md) as the root context manifest;
-- [`../context/README.md`](../context/README.md) as the portable context
+- [`../agent-context/README.md`](../agent-context/README.md) as the portable context
   task-to-context router;
-- [`../context/kernel.md`](../context/kernel.md) for instruction precedence,
-  evidence precedence, context economy, scope control, unknown-state rules,
-  current-file requirements, and generated artifact discipline;
-- [`../context/protocols.md`](../context/protocols.md) for patch, command,
-  validation-report, PR, commit, code-fence, heredoc, whitespace, and
-  final-newline output contracts;
-- [`../context/workflows.md`](../context/workflows.md) for reusable issue,
+- [`../agent-context/sources.md`](../agent-context/sources.md) for source
+  precedence, trust boundaries, and claim-type conflict handling;
+- [`../agent-context/outputs.md`](../agent-context/outputs.md) for durable text
+  output roles, issue body defaults, change-proposal and change-message
+  defaults, validation and readiness output boundaries, review findings, prompt
+  outputs, generated evidence-pack summaries, and safe structured-body handling;
+- [`output-policy.md`](./output-policy.md) for concrete local output mechanics
+  such as strict patch handoff, heredoc conventions, command snippet
+  formatting, whitespace or final-newline requirements, and local platform
+  command-body mechanics;
+- [`../agent-context/workflows.md`](../agent-context/workflows.md) for reusable issue,
   thread, PR, validation, merge, closure, checkbox, rollback, and parent-child
   sequencing procedure;
-- [`../context/dependency-governance.md`](../context/dependency-governance.md)
-  for dependency-governance validator parity, runtime evidence, and
-  repository/global config boundaries;
-- [`../context/repomix.md`](../context/repomix.md) for generic Repomix rules;
-- [`../context/evals.md`](../context/evals.md) for regression cases covering
+- [`../agent-context/validation.md`](../agent-context/validation.md) for the
+  portable validation claim model;
+- [`../agent-context/evidence-packing.md`](../agent-context/evidence-packing.md)
+  for tool-neutral evidence-pack boundaries;
+- [`../agent-context/evaluations.md`](../agent-context/evaluations.md) for regression cases covering
   predictable LLM-context failures;
 - [`README.md`](./README.md) for this repository's local identity, surfaces,
-  validation, workflow exceptions, and Repomix paths.
+  validation, workflow exceptions, sensitive-data boundaries, and Repomix paths.
 
 Preserve existing provisioning, identity, editor, shell, Git, mise, Homebrew,
 Renovate, and GitHub Actions behavior unless the assigned issue explicitly

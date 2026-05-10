@@ -5,7 +5,7 @@
 Define repository-local workflow exceptions, GitHub deliverable defaults, and
 template routing.
 
-Use [`../context/workflows.md`](../context/workflows.md) for reusable issue,
+Use [`../agent-context/workflows.md`](../agent-context/workflows.md) for reusable issue,
 thread, PR, validation, merge, closure, checkbox, rollback, and parent-child
 procedure. Use this file only when the reusable workflow needs this repository's
 local branch naming, labels, templates, validation baseline, CI boundary,
@@ -92,6 +92,6 @@ schema, template-routing, assistant-guidance, or repository-local workflow
 defaults change, run the local Repomix checks in [`repomix.md`](./repomix.md) and
 report generated evidence as validation, not source documentation.
 
-Use [`../context/repomix.md`](../context/repomix.md) for generic Repomix
-procedure. Use [`repomix.md`](./repomix.md) only for local paths, recipes, and
-confirmation checks.
+Use [`../agent-context/evidence-packing.md`](../agent-context/evidence-packing.md)
+for tool-neutral evidence-pack boundaries. Use [`repomix.md`](./repomix.md) only
+for local Repomix paths, recipes, and confirmation checks.

@@ -11,9 +11,9 @@ roles, generated artifact boundaries, or behavior-preserving local constraints.
 ## Responsibility boundary
 
 This file owns repository-specific profile facts. It does not own generic
-instruction or evidence precedence ([`../context/kernel.md`](../context/kernel.md)),
-output formatting ([`../context/protocols.md`](../context/protocols.md)),
-reusable workflow procedure ([`../context/workflows.md`](../context/workflows.md)),
+instruction or evidence precedence ([`../agent-context/sources.md`](../agent-context/sources.md)),
+output formatting ([`../agent-context/outputs.md`](../agent-context/outputs.md)),
+reusable workflow procedure ([`../agent-context/workflows.md`](../agent-context/workflows.md)),
 local surface routing ([`surfaces.md`](./surfaces.md)), local validation routing
 ([`validation.md`](./validation.md)), local Repomix paths
 ([`repomix.md`](./repomix.md)), or local teardown guidance
@@ -44,6 +44,10 @@ Repository source state includes paths such as:
 - `docs/**`
 - `AGENTS.md`
 - `.github/**`, only when the active issue scopes those files
+
+Within `docs/**`, `docs/agent-context/**` is source-owned portable payload from
+`tsubasahomma/agent-context-contracts`; keep repository-local dotfiles facts in
+consumer-owned `docs/project/**`.
 
 Rendered target state is produced by chezmoi from source-state files, templates,
 attributes, and host data. A valid source-state edit can still render invalid
@@ -116,9 +120,11 @@ convergence.
 | Entry point | Role |
 | --- | --- |
 | [`../../README.md`](../../README.md) | First-run and operator-facing bootstrap entry point. |
-| [`../../AGENTS.md`](../../AGENTS.md) | Root context manifest and concise assistant entry point. |
+| [`../../AGENTS.md`](../../AGENTS.md) | Source-owned root routing shim and concise assistant entry point. |
 | [`../../.github/copilot-instructions.md`](../../.github/copilot-instructions.md) | GitHub Copilot adapter; secondary to the shared operating contract. |
-| [`../context/README.md`](../context/README.md) | Portable context architecture entry point and task-to-context router. |
+| [`../../CLAUDE.md`](../../CLAUDE.md) | Missing-only Claude routing shim when present; routes back to the shared contracts. |
+| [`../../GEMINI.md`](../../GEMINI.md) | Missing-only Gemini routing shim when present; routes back to the shared contracts. |
+| [`../agent-context/README.md`](../agent-context/README.md) | Portable context architecture entry point and task-to-context router. |
 | [`README.md`](./README.md) | Repository-local extension entry point. |
 | [`surfaces.md`](./surfaces.md) | Local behavior-sensitive surface routing. |
 | [`validation.md`](./validation.md) | Local validation baseline and validation routing. |
@@ -140,9 +146,9 @@ explicitly scopes that adapter.
 | source-state path | A repository path using chezmoi source-state naming, such as `dot_config/**`, `private_dot_ssh/**`, or `.chezmoiscripts/**`. |
 | target path | The rendered path managed or affected by chezmoi after source-state attributes and templates are evaluated. |
 | generated context artifact | A generated Repomix artifact under `.context/repomix/**`; it is read-only evidence, not tracked source documentation. |
-| local surface map | `docs/repo/surfaces.md`, the compact map for behavior-sensitive surface routing, failure prevention, required evidence, validation routing, and deep source links. |
-| workflow contract | Reusable issue, pull request, validation, merge, closure, Commander, and Worker procedures in [`../context/workflows.md`](../context/workflows.md). |
-| root context manifest | `AGENTS.md`, the concise repository-wide assistant entry point. |
+| local surface map | `docs/project/surfaces.md`, the compact map for behavior-sensitive surface routing, failure prevention, required evidence, validation routing, and deep source links. |
+| workflow contract | Reusable issue, pull request, validation, merge, closure, Commander, and Worker procedures in [`../agent-context/workflows.md`](../agent-context/workflows.md). |
+| root context manifest | `AGENTS.md`, the source-owned concise repository-wide assistant entry point. |
 | adapter | Vendor-specific assistant entry point such as `.github/copilot-instructions.md`; adapters should route to the LLM-agnostic context architecture. |
 | 1Password identity | Repository-discovered identity metadata from prepared 1Password SSH Key items used for Git authoring, SSH signing, and SSH routing. |
 | WSL2 bridge | The Windows-to-WSL2 identity and SSH agent path involving Windows 11, WSL2 Ubuntu, Windows 1Password Desktop, `op.exe`, `npiperelay.exe`, and user systemd. |
