@@ -41,6 +41,18 @@ if "$OP_BIN" account get > /dev/null 2>&1; then
       log_err "Identity binding mismatch for {{ .name }} (Expected: {{ .email }}, Found: $AUTH_EMAIL)."
       HAS_ERROR=1
     fi
+    {{- if $.is_wsl }}
+    CORE_SSH_COMMAND=$(git config -f "$ID_CONF" core.sshCommand 2>/dev/null || echo "")
+    case "$CORE_SSH_COMMAND" in
+      ssh.exe\ -i\ \'[A-Za-z]:\\*\'\ -o\ IdentitiesOnly=yes|ssh.exe\ -i\ \'\\\\*\'\ -o\ IdentitiesOnly=yes)
+        log_ok "WSL Git SSH command uses Windows OpenSSH with deterministic identity selection."
+        ;;
+      *)
+        log_err "WSL Git SSH command does not use Windows OpenSSH with a Windows-readable identity path."
+        HAS_ERROR=1
+        ;;
+    esac
+    {{- end }}
   else
     log_err "Scoped Git configuration missing at $ID_CONF."
     log_guide "chezmoi apply"
