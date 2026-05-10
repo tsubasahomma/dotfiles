@@ -20,13 +20,26 @@ SCRIPT_DIR=$(
 VERSION_FILE="$SCRIPT_DIR/.mise-version"
 
 [ -r "$VERSION_FILE" ] || fatal "mise version pin not readable: $VERSION_FILE"
-IFS= read -r MISE_VERSION < "$VERSION_FILE" || MISE_VERSION=""
-
-case "$MISE_VERSION" in
-  "" | *[!0123456789.]*)
-    fatal "Invalid mise version pin in $VERSION_FILE."
-    ;;
-esac
+MISE_VERSION=$(
+  awk '
+    /^[0-9]+[.][0-9]+[.][0-9]+$/ {
+      version = $0
+      count += 1
+      next
+    }
+    {
+      count += 1
+      invalid = 1
+    }
+    END {
+      if (count == 1 && invalid != 1) {
+        print version
+      } else {
+        exit 1
+      }
+    }
+  ' "$VERSION_FILE"
+) || fatal ".mise-version must contain exactly one plain mise version like 2026.5.4."
 
 LOCAL_BIN="$HOME/.local/bin"
 MISE_BIN="$LOCAL_BIN/mise"

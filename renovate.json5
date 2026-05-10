@@ -15,9 +15,32 @@
   "commitMessageTopic": "{{depName}}",
   "commitMessageExtra": "to v{{newVersion}}",
   "mise": {
-    "managerFilePatterns": ["/^dot_config/mise/conf\\.d/.*\\.toml$/"]
+    "managerFilePatterns": [
+      "/^\\.mise\\.toml$/",
+      "/^dot_config/mise/conf\\.d/.*\\.toml$/"
+    ]
   },
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "Govern the plain mise bootstrap pin without replacing native mise TOML extraction.",
+      "managerFilePatterns": ["/^\\.mise-version$/"],
+      "matchStrings": ["^(?<currentValue>\\d+\\.\\d+\\.\\d+)(?:\\r?\\n)?$"],
+      "depNameTemplate": "jdx/mise",
+      "packageNameTemplate": "jdx/mise",
+      "datasourceTemplate": "github-releases",
+      "extractVersionTemplate": "^v?(?<version>.+)$",
+      "versioningTemplate": "semver-coerced"
+    }
+  ],
   "packageRules": [
+    {
+      "description": "Keep the bootstrap mise CLI pin separate from mise-managed runtime and tool updates.",
+      "matchManagers": ["custom.regex"],
+      "matchDepNames": ["jdx/mise"],
+      "dependencyDashboardCategory": "mise bootstrap CLI",
+      "groupName": null
+    },
     {
       "description": "Keep GitHub Actions updates separate from mise-managed tool updates.",
       "matchManagers": ["github-actions"],
@@ -51,6 +74,13 @@
       "matchDepNames": ["/^aqua:/"],
       "dependencyDashboardCategory": "mise aqua-backed tools",
       "groupName": null
+    },
+    {
+      "description": "Update the bootstrap-tier and rendered global chezmoi declarations together.",
+      "matchManagers": ["mise"],
+      "matchDepNames": ["aqua:twpayne/chezmoi"],
+      "dependencyDashboardCategory": "mise aqua-backed tools",
+      "groupName": "chezmoi mise tool"
     },
     {
       "description": "Keep cargo-backed tools separate from npm and aqua backends.",
