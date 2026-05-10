@@ -1,5 +1,9 @@
 {{- /* Generated Git identity config fragment. */ -}}
 {{- /* [Security]: Decoupled template to prevent script pollution. */ -}}
+{{- $ssh_command := printf "ssh -i %s/.ssh/id_%s_%s_%s.pub -o IdentitiesOnly=yes" .home .key_type .email .key_hash -}}
+{{- if hasKey . "ssh_command" -}}
+{{-   $ssh_command = .ssh_command -}}
+{{- end -}}
 # Auto-generated identity config for {{ .name }}
 
 [user]
@@ -10,4 +14,4 @@
 
 [core]
     # [Security]: Physical file path remains required for sshCommand authentication routing.
-    sshCommand = "ssh -i {{ .home }}/.ssh/id_{{ .key_type }}_{{ .email }}_{{ .key_hash }}.pub -o IdentitiesOnly=yes"
+    sshCommand = {{ $ssh_command | quote }}

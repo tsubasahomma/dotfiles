@@ -31,10 +31,22 @@ echo {{ .public_key | quote }} > "$PUBKEY_FILE"
 chmod 600 "$PUBKEY_FILE"
 
 CONFIG_FILE="$GIT_CONFIG_DIR/config_{{ .email }}_{{ .key_hash }}"
+{{ if $.is_wsl -}}
+PUBKEY_FILE_WIN="$(wslpath -w "$PUBKEY_FILE")"
+PUBKEY_FILE_WIN_SQ="'${PUBKEY_FILE_WIN//\'/\'\\\'\'}'"
+CORE_SSH_COMMAND="ssh.exe -i $PUBKEY_FILE_WIN_SQ -o IdentitiesOnly=yes"
+{{ end -}}
 # Delegate generated Git config content to the shared identity template.
 cat << 'EOF' > "$CONFIG_FILE"
+{{ if $.is_wsl -}}
+{{ includeTemplate "git_identity_config.tmpl" (dict "name" .name "email" .email "public_key" .public_key "key_type" .key_type "key_hash" .key_hash "home" $home "ssh_command" "__DOTFILES_CORE_SSH_COMMAND__") }}
+{{ else -}}
 {{ includeTemplate "git_identity_config.tmpl" (dict "name" .name "email" .email "public_key" .public_key "key_type" .key_type "key_hash" .key_hash "home" $home) }}
+{{ end -}}
 EOF
+{{ if $.is_wsl -}}
+git config --file "$CONFIG_FILE" core.sshCommand "$CORE_SSH_COMMAND"
+{{ end }}
 
 # [Reference]: https://man.openbsd.org/ssh-keygen#ALLOWED_SIGNERS
 echo "{{ .email }} namespaces=\"git\" {{ trim .public_key }}" >> "$TEMP_SIGNERS"
