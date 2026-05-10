@@ -4,6 +4,8 @@
 - https://wezterm.org/config/lua/wezterm/font_with_fallback.html
 - https://wezterm.org/config/lua/config/window_decorations.html
 - https://wezterm.org/config/lua/window-events/user-var-changed.html
+- https://wezterm.org/config/lua/config/mux_enable_ssh_agent.html
+- https://wezterm.org/config/lua/config/mux_env_remove.html
 */ -}}
 
 local wezterm = require("wezterm")
@@ -73,6 +75,14 @@ if wezterm.target_triple:find("windows") then
 {{- $wsl_distro_name := env "WSL_DISTRO_NAME" | trim -}}
 {{- if eq $wsl_distro_name "" }}{{ fail "[FATAL] WSL_DISTRO_NAME is empty; cannot render WezTerm default_domain for Windows." }}{{ end -}}
   config.default_domain = {{ printf "WSL:%s" $wsl_distro_name | quote }}
+
+  -- Keep WSL-launched Win32 OpenSSH on the Windows 1Password agent path.
+  config.mux_enable_ssh_agent = false
+  config.mux_env_remove = {
+    "SSH_AUTH_SOCK",
+    "SSH_CLIENT",
+    "SSH_CONNECTION",
+  }
 {{- end }}
 else
   config.unix_domains = { { name = "unix" } }
