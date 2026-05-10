@@ -40,7 +40,7 @@ go = "1.26.3"
 "pipx:pytest" = "9.0.3"
 
 # --- 5. Engineering Utilities ---
-"aqua:casey/just" = "1.50.0"
+"aqua:casey/just" = "1.51.0"
 "aqua:atuinsh/atuin" = "18.16.0"
 "aqua:duckdb/duckdb" = "1.5.2"
 "aqua:ajeetdsouza/zoxide" = "0.9.9"
