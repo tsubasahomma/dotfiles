@@ -32,9 +32,6 @@ sourceDir = {{ .chezmoi.sourceDir | quote }}
 {{- /* --- 2. Identity prerequisite checks (Tier -2 assertion) --- */}}
 {{- $local_bin := joinPath $home ".local/bin" -}}
 {{- $mise_bin := joinPath $local_bin "mise" -}}
-{{- if not (stat $mise_bin) -}}
-{{-   $mise_bin = lookPath "mise" | default $mise_bin -}}
-{{- end -}}
 
 {{- /* Resolve op binary path from the current platform without guessing. */}}
 {{- $op_bin := "" -}}

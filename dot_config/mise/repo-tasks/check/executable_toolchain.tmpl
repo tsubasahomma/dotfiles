@@ -18,15 +18,83 @@ log_guide() { printf "  ${BLUE}👉 %s${NC}\n" "$1"; }
 
 IS_CI="${CI:-false}"
 HOME_DIR="{{ .paths.home }}"
-MISE_BIN="{{ .paths.mise }}"
+SOURCE_DIR="{{ .chezmoi.sourceDir }}"
+RENDERED_MISE_BIN="{{ .paths.mise }}"
+MISE_CONFIG_FILE="$HOME_DIR/.config/mise/config.toml"
+MISE_VERSION_FILE="$SOURCE_DIR/.mise-version"
+EXPECTED_MISE_BIN="$HOME_DIR/.local/bin/mise"
+EXPECTED_MISE_VERSION=""
 HAS_ERROR=0
 
+read_expected_mise_version() {
+  if [[ ! -f "$MISE_VERSION_FILE" ]]; then
+    log_err "mise version contract missing at $MISE_VERSION_FILE."
+    log_guide "Add a single-line .mise-version file containing the required mise release."
+    HAS_ERROR=1
+    return
+  fi
+
+  local line_count
+  line_count="$(awk 'END { print NR }' "$MISE_VERSION_FILE")"
+  EXPECTED_MISE_VERSION="$(sed -n '1p' "$MISE_VERSION_FILE")"
+  if [[ "$line_count" -ne 1 || ! "$EXPECTED_MISE_VERSION" =~ ^[0-9]+[.][0-9]+[.][0-9]+$ ]]; then
+    log_err ".mise-version must contain exactly one plain version such as 2026.5.4."
+    log_guide "Remove comments, prefixes, blank lines, and extra whitespace from $MISE_VERSION_FILE."
+    EXPECTED_MISE_VERSION=""
+    HAS_ERROR=1
+  fi
+}
+
 echo "--- 6. Toolchain Drift Analysis ---"
-if [[ -x "$MISE_BIN" ]]; then
-  log_ok "Hermetic mise binary verified."
+read_expected_mise_version
+
+printf "  Expected hermetic mise path: %s\n" "$EXPECTED_MISE_BIN"
+printf "  Expected hermetic mise version: %s\n" "${EXPECTED_MISE_VERSION:-<unresolved>}"
+printf "  Rendered mise path: %s\n" "$RENDERED_MISE_BIN"
+printf "  Rendered mise config: %s\n" "$MISE_CONFIG_FILE"
+
+if [[ "$RENDERED_MISE_BIN" == "$EXPECTED_MISE_BIN" ]]; then
+  log_ok "Rendered mise path uses the hermetic binary."
 else
-  log_err "mise executable missing."
-  log_guide "curl https://mise.run | sh"
+  log_err "Rendered mise path is $RENDERED_MISE_BIN, expected $EXPECTED_MISE_BIN."
+  log_guide "Ensure chezmoi data.paths.mise resolves to the repo-managed hermetic binary."
+  HAS_ERROR=1
+fi
+
+if [[ -f "$MISE_CONFIG_FILE" ]]; then
+  if grep -Eq '^[[:space:]]*credential_command[[:space:]]*=' "$MISE_CONFIG_FILE"; then
+    log_err "Global mise config defines a GitHub credential command."
+    log_guide "Keep promptful GitHub auth scoped to post-apply install via MISE_GITHUB_CREDENTIAL_COMMAND."
+    HAS_ERROR=1
+  else
+    log_ok "Global mise config does not define a promptful GitHub credential command."
+  fi
+else
+  log_warn "Rendered mise config is missing; run chezmoi apply before relying on shell activation behavior."
+fi
+
+if [[ -n "${MISE_GITHUB_CREDENTIAL_COMMAND:-}" ]]; then
+  log_warn "MISE_GITHUB_CREDENTIAL_COMMAND is set in the current environment."
+  log_guide "Avoid exporting it globally; the dotfiles apply graph scopes it to post-apply install."
+fi
+
+if [[ -x "$EXPECTED_MISE_BIN" ]]; then
+  actual_mise_output="$("$EXPECTED_MISE_BIN" --version 2>&1 || true)"
+  actual_mise_version="$(printf '%s\n' "$actual_mise_output" | awk 'NR == 1 { print $1 }')"
+  printf "  Actual hermetic mise path: %s\n" "$EXPECTED_MISE_BIN"
+  printf "  Actual hermetic mise version: %s\n" "${actual_mise_version:-<unavailable>}"
+
+  if [[ -n "$EXPECTED_MISE_VERSION" && "$actual_mise_version" == "$EXPECTED_MISE_VERSION" ]]; then
+    log_ok "Hermetic mise binary matches the declared version."
+  else
+    log_err "Hermetic mise version mismatch."
+    log_guide "Run chezmoi apply so .bootstrap-mise.sh repairs $EXPECTED_MISE_BIN."
+    HAS_ERROR=1
+  fi
+else
+  printf "  Actual hermetic mise version: <missing>\n"
+  log_err "Hermetic mise executable missing at $EXPECTED_MISE_BIN."
+  log_guide "Run chezmoi apply so .bootstrap-mise.sh installs $EXPECTED_MISE_BIN."
   HAS_ERROR=1
 fi
 
@@ -36,7 +104,7 @@ if [[ "$IS_CI" != "true" ]]; then
   # Static index-0 checks are avoided to support dynamic mise activation.
   SYS_PATH="/usr/bin"
   LOCAL_BIN="$HOME_DIR/.local/bin"
-  if [[ "$PATH" == *"$LOCAL_BIN"* ]] && [[ "${PATH%%$LOCAL_BIN*}" != *"$SYS_PATH"* ]]; then
+  if [[ "$PATH" == *"$LOCAL_BIN"* ]] && [[ "${PATH%%"$LOCAL_BIN"*}" != *"$SYS_PATH"* ]]; then
     log_ok "PATH precedence correctly prioritized (Infrastructure over System)."
   else
     log_warn "PATH precedence violation detected. Infrastructure paths might be shadowed."

@@ -79,15 +79,119 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Resolve Mise Bootstrap Version
+        id: mise_version
+        shell: bash
+        run: |
+          if [[ ! -f .mise-version ]]; then
+            echo "::error file=.mise-version::.mise-version is required for the mise bootstrap contract."
+            exit 1
+          fi
+
+          line_count="$(awk 'END { print NR }' .mise-version)"
+          mise_version="$(sed -n '1p' .mise-version)"
+          if [[ "$line_count" -ne 1 || ! "$mise_version" =~ ^[0-9]+[.][0-9]+[.][0-9]+$ ]]; then
+            echo "::error file=.mise-version::.mise-version must contain exactly one plain mise version like 2026.5.4."
+            exit 1
+          fi
+
+          printf 'Resolved mise bootstrap version: %s\n' "$mise_version"
+          printf 'version=%s\n' "$mise_version" >> "$GITHUB_OUTPUT"
+
+      - name: Prove Bootstrap Repairs Stale Mise
+        shell: bash
+        env:
+          MISE_VERSION: ${{ steps.mise_version.outputs.version }}
+        run: |
+          tmp_home="$(mktemp -d)"
+          trap 'rm -rf "$tmp_home"' EXIT
+
+          mkdir -p "$tmp_home/.local/bin"
+          cat > "$tmp_home/.local/bin/mise" <<'STALE_MISE'
+          #!/bin/sh
+          echo "0.0.0 stale"
+          STALE_MISE
+          chmod +x "$tmp_home/.local/bin/mise"
+
+          before_version="$("$tmp_home/.local/bin/mise" --version | awk 'NR == 1 { print $1 }')"
+          if [[ "$before_version" == "$MISE_VERSION" ]]; then
+            echo "::error::Stale mise fixture unexpectedly matches the desired version."
+            exit 1
+          fi
+
+          HOME="$tmp_home" ./.bootstrap-mise.sh
+
+          repaired_version="$("$tmp_home/.local/bin/mise" --version | awk 'NR == 1 { print $1 }')"
+          if [[ "$repaired_version" != "$MISE_VERSION" ]]; then
+            echo "::error::Bootstrap did not repair stale hermetic mise: expected $MISE_VERSION, got ${repaired_version:-unavailable}."
+            "$tmp_home/.local/bin/mise" --version || true
+            exit 1
+          fi
+
       - name: Bootstrap Tier 0 Tools (mise)
         uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151 # v4
         with:
+          version: ${{ steps.mise_version.outputs.version }}
           install: true
           cache: true
+
+      - name: Bootstrap Hermetic Mise
+        shell: bash
+        env:
+          MISE_VERSION: ${{ steps.mise_version.outputs.version }}
+        run: |
+          ./.bootstrap-mise.sh
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+          hermetic_mise="$HOME/.local/bin/mise"
+          if [[ ! -x "$hermetic_mise" ]]; then
+            echo "::error::$hermetic_mise is required after bootstrap."
+            exit 1
+          fi
+
+          hermetic_version="$("$hermetic_mise" --version | awk 'NR == 1 { print $1 }')"
+          if [[ "$hermetic_version" != "$MISE_VERSION" ]]; then
+            echo "::error::Hermetic mise version mismatch: expected $MISE_VERSION, got ${hermetic_version:-unavailable}."
+            "$hermetic_mise" --version || true
+            exit 1
+          fi
+
+          printf 'Hermetic mise ready: %s (%s)\n' "$hermetic_mise" "$hermetic_version"
 
       - name: Phase 1 - Provisioning (Static Apply)
         run: |
           chezmoi init --source="$GITHUB_WORKSPACE" --apply
+
+      - name: Prove Mise Activation Is Prompt-Free
+        shell: bash
+        run: |
+          mise_config="$HOME/.config/mise/config.toml"
+          if [[ ! -f "$mise_config" ]]; then
+            echo "::error::$mise_config is required after chezmoi apply."
+            exit 1
+          fi
+
+          if grep -Eq '^[[:space:]]*credential_command[[:space:]]*=' "$mise_config"; then
+            echo "::error file=dot_config/mise/config.toml.tmpl::Global mise config must not define a promptful credential_command."
+            exit 1
+          fi
+
+          tmp_bin="$(mktemp -d)"
+          trap 'rm -rf "$tmp_bin"' EXIT
+          cat > "$tmp_bin/op" <<'FAKE_OP'
+          #!/bin/sh
+          echo "op was invoked during mise activation" > "$OP_CALLED"
+          exit 1
+          FAKE_OP
+          chmod +x "$tmp_bin/op"
+          op_called="$tmp_bin/op-called"
+          rm -f "$op_called"
+
+          OP_CALLED="$op_called" PATH="$tmp_bin:$PATH" "$HOME/.local/bin/mise" activate zsh >/dev/null
+          if [[ -e "$op_called" ]]; then
+            echo "::error::mise activation invoked op; GitHub credential lookup is on the shell startup path."
+            exit 1
+          fi
 
       - name: Phase 2 - Idempotency Proof (Static Convergence)
         run: |
@@ -101,9 +205,9 @@ jobs:
 
       - name: Phase 3 - Application Integration (Dynamic Convergence)
         run: |
-          mise run repair:nvim
+          "$HOME/.local/bin/mise" run repair:nvim
 
       - name: Phase 4 - Final Health Check (Doctor)
         if: always()
         run: |
-          mise run doctor
+          "$HOME/.local/bin/mise" run doctor

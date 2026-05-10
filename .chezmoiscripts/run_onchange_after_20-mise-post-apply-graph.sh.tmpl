@@ -28,6 +28,22 @@ export PNPM_HOME="{{ .paths.xdg_data }}/pnpm"
 export PATH="$PNPM_HOME:{{ .paths.home }}/.local/bin:$PATH"
 
 MISE_BIN="{{ .paths.mise }}"
+OP_BIN="{{ .paths.op }}"
+MISE_GITHUB_CREDENTIAL_COMMAND_VALUE=""
+
+configure_mise_github_auth() {
+  if [[ -n "${MISE_GITHUB_TOKEN:-}" || -n "${GITHUB_API_TOKEN:-}" || -n "${GITHUB_TOKEN:-}" ]]; then
+    return
+  fi
+
+  if [[ -z "$OP_BIN" ]]; then
+    return
+  fi
+
+  local credential_command
+  printf -v credential_command "%q read %q" "$OP_BIN" "op://Development/mise-cli-token/credential"
+  MISE_GITHUB_CREDENTIAL_COMMAND_VALUE="$credential_command"
+}
 
 if [[ ! -x "$MISE_BIN" ]]; then
   echo "❌ [Fatal] Hermetic mise binary not found at $MISE_BIN." >&2
@@ -35,9 +51,14 @@ if [[ ! -x "$MISE_BIN" ]]; then
 fi
 
 echo "📦 [Post-apply] Executing repo-owned mise graph..."
+configure_mise_github_auth
 
 # Install declared tools idempotently.
-"$MISE_BIN" install
+if [[ -n "$MISE_GITHUB_CREDENTIAL_COMMAND_VALUE" ]]; then
+  MISE_GITHUB_CREDENTIAL_COMMAND="$MISE_GITHUB_CREDENTIAL_COMMAND_VALUE" "$MISE_BIN" install
+else
+  "$MISE_BIN" install
+fi
 
 "$MISE_BIN" run lifecycle:post-apply
 
