@@ -160,6 +160,39 @@ For WSL2 validation boundaries, use the
 [repository surface map](./docs/project/surfaces.md) and the
 [repository validation contract](./docs/project/validation.md).
 
+#### WSL2 Windows OpenSSH preflight
+
+After bootstrap or after changing WSL/1Password/WezTerm identity behavior, run
+the focused local preflight from WSL2:
+
+```zsh
+mise tasks info check:wsl-openssh
+mise run check:wsl-openssh
+```
+
+The task checks WSL interop, Windows OpenSSH client availability, the Windows
+OpenSSH agent pipe, Win32 and WSL `SSH_AUTH_SOCK` routing, WezTerm
+`SSH_AUTH_SOCK` interference, `ssh-add.exe -l`, `ssh.exe -T git@github.com`,
+generated Git identity state, rendered `core.sshCommand` authentication, and Git
+SSH signing in a temporary repository.
+
+Safe shareable evidence should summarize only status categories and counts.
+Before sharing output, redact SSH public keys, full local usernames, Windows
+profile paths, 1Password account IDs, item IDs, generated identity file paths,
+private repository names, and raw socket paths.
+
+Useful focused smoke checks are:
+
+```zsh
+powershell.exe -NoProfile -NonInteractive -Command '[Console]::Write("powershell_ok")'
+powershell.exe -NoProfile -NonInteractive -Command '$v=$env:SSH_AUTH_SOCK; if ($v -eq "\\.\pipe\openssh-ssh-agent") { [Console]::Write("ssh_auth_sock=openssh_pipe") } elseif ($v -like "*wezterm*") { [Console]::Write("ssh_auth_sock=wezterm_interference") } elseif ([string]::IsNullOrWhiteSpace($v)) { [Console]::Write("ssh_auth_sock=unset") } else { [Console]::Write("ssh_auth_sock=other_redacted") }'
+tmp=$(mktemp); if ssh-add.exe -l >"$tmp" 2>&1; then awk 'END { printf "ssh_add_key_count=%d\n", NR }' "$tmp"; else echo "ssh_add=failed"; fi; rm -f "$tmp"
+tmp=$(mktemp); if ssh.exe -T git@github.com >"$tmp" 2>&1 || grep -qi 'successfully authenticated' "$tmp"; then echo "ssh_github=authenticated"; else echo "ssh_github=failed"; fi; rm -f "$tmp"
+```
+
+Share `ssh-add.exe -l` as a key count, not key lines. Share `ssh.exe -T` as
+success or failure with the GitHub account name redacted.
+
 ### Run chezmoi init
 
 Run the supported first-run bootstrap command:
@@ -213,8 +246,9 @@ Use the failing surface to choose the next check:
   with `sudo -n true`, fix the host prerequisite, then rerun `chezmoi apply`.
 - WSL2 SSH authentication failures: review Windows interop, `op.exe`, Windows
   OpenSSH clients, the Windows-side 1Password SSH agent, and the
-  `ssh-add.exe -l` / `ssh.exe -T` checks with the repository surface map and
-  validation contract. Local WSL2 host evidence is required for those claims.
+  focused `mise run check:wsl-openssh` preflight with the repository surface map
+  and validation contract. Local WSL2 host evidence is required for those
+  claims.
 - Post-bootstrap drift: run `mise run doctor` and use the focused
   repository-local docs to route the failure.
 

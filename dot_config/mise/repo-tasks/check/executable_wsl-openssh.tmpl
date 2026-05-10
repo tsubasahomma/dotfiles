@@ -1,0 +1,347 @@
+#!/usr/bin/env bash
+# [MISE] description="Preflight WSL Windows OpenSSH and 1Password auth"
+# [MISE] hide=true
+{{/* [Reference]: https://mise.jdx.dev/tasks/file-tasks.html */}}{{ "" -}}
+{{/* [Reference]: https://developer.1password.com/docs/ssh/integrations/wsl/ */}}{{ "" -}}
+{{/* [Reference]: https://learn.microsoft.com/en-us/windows/wsl/filesystems */}}{{ "" -}}
+{{/* [Reference]: https://wezterm.org/config/lua/config/mux_enable_ssh_agent.html */}}{{ "" -}}
+{{/* [Reference]: https://wezterm.org/config/lua/config/mux_env_remove.html */}}{{ "" -}}
+
+set -euo pipefail
+
+IS_WSL="{{ .is_wsl }}"
+GIT_IDENTITIES_DIR="{{ .paths.xdg_config }}/git/identities"
+ALLOWED_SIGNERS="{{ .paths.xdg_config }}/git/allowed_signers"
+EXPECTED_WIN32_SSH_AUTH_SOCK='\\.\pipe\openssh-ssh-agent'
+AUTH_TARGET="${DOTFILES_WSL_OPENSSH_AUTH_TARGET:-git@github.com:tsubasahomma/dotfiles.git}"
+HAS_ERROR=0
+TMP_DIR=""
+
+log_ok() { printf "  [OK] %s\n" "$1"; }
+log_warn() { printf "  [WARN] %s\n" "$1"; }
+log_err() { printf "  [FAIL] %s\n" "$1"; }
+log_guide() { printf "  [GUIDE] %s\n" "$1"; }
+
+record_error() {
+  log_err "$1"
+  HAS_ERROR=1
+}
+
+cleanup() {
+  if [[ -n "$TMP_DIR" && -d "$TMP_DIR" ]]; then
+    rm -rf "$TMP_DIR"
+  fi
+}
+trap cleanup EXIT
+
+run_with_timeout() {
+  local seconds="$1"
+  shift
+  if command -v timeout >/dev/null 2>&1; then
+    timeout "$seconds" "$@"
+  else
+    "$@"
+  fi
+}
+
+classify_sock() {
+  local value="$1"
+  case "$value" in
+  "")
+    printf "unset"
+    ;;
+  "$EXPECTED_WIN32_SSH_AUTH_SOCK")
+    printf "openssh_pipe"
+    ;;
+  *[Ww][Ee][Zz][Tt][Ee][Rr][Mm]*)
+    printf "wezterm_interference"
+    ;;
+  \\\\.\\pipe\\*)
+    printf "other_windows_pipe"
+    ;;
+  /*)
+    printf "posix_socket_redacted"
+    ;;
+  *)
+    printf "other_redacted"
+    ;;
+  esac
+}
+
+first_identity_config() {
+  if [[ ! -d "$GIT_IDENTITIES_DIR" ]]; then
+    return 1
+  fi
+  find "$GIT_IDENTITIES_DIR" -maxdepth 1 -type f -name 'config_*' -print 2>/dev/null | LC_ALL=C sort | head -n 1
+}
+
+identity_config_count() {
+  if [[ ! -d "$GIT_IDENTITIES_DIR" ]]; then
+    printf "0"
+    return
+  fi
+  find "$GIT_IDENTITIES_DIR" -maxdepth 1 -type f -name 'config_*' -print 2>/dev/null | wc -l | tr -d ' '
+}
+
+check_wsl_interop() {
+  echo "--- WSL interop ---"
+
+  if [[ -e /proc/sys/fs/binfmt_misc/WSLInterop ]]; then
+    if grep -qxF enabled /proc/sys/fs/binfmt_misc/WSLInterop; then
+      log_ok "WSL interop marker is enabled."
+    else
+      record_error "WSL interop unavailable: WSLInterop is disabled."
+      log_guide "Set [interop] enabled=true or re-enable WSLInterop, restart WSL, then rerun this task."
+    fi
+  else
+    log_warn "WSLInterop marker was not present; using Win32 command smoke test."
+  fi
+
+  if run_with_timeout 20s powershell.exe -NoProfile -NonInteractive -Command '[Console]::Write("powershell_ok")' >/dev/null 2>&1; then
+    log_ok "powershell.exe runs from WSL."
+  else
+    record_error "WSL interop unavailable: powershell.exe cannot run from WSL."
+    log_guide "Confirm Windows interop is enabled and Windows PowerShell is visible on the WSL PATH."
+  fi
+}
+
+check_windows_openssh() {
+  echo "--- Windows OpenSSH ---"
+
+  local missing=0
+  for bin in ssh.exe ssh-add.exe; do
+    if command -v "$bin" >/dev/null 2>&1; then
+      log_ok "$bin is available from WSL."
+    else
+      record_error "Windows OpenSSH unavailable: $bin is not available from WSL."
+      missing=1
+    fi
+  done
+
+  if [[ "$missing" -ne 0 ]]; then
+    log_guide "Install or repair Windows OpenSSH Client and confirm System32/OpenSSH is visible to WSL."
+  fi
+}
+
+check_win32_auth_environment() {
+  echo "--- Win32 SSH_AUTH_SOCK ---"
+
+  local win32_sock sock_class pipe_state
+  win32_sock="$(run_with_timeout 20s powershell.exe -NoProfile -NonInteractive -Command '[Console]::Write($env:SSH_AUTH_SOCK)' 2>/dev/null | tr -d '\r' || true)"
+  sock_class="$(classify_sock "$win32_sock")"
+
+  if [[ "$win32_sock" == "$EXPECTED_WIN32_SSH_AUTH_SOCK" ]]; then
+    log_ok "Win32 SSH_AUTH_SOCK targets the Windows OpenSSH agent pipe."
+  elif [[ "$sock_class" == "wezterm_interference" ]]; then
+    record_error "WezTerm SSH_AUTH_SOCK interference detected in the Win32 environment."
+    log_guide "Sync the WSL-rendered WezTerm config and restart WezTerm so mux SSH agent state is removed."
+  else
+    record_error "Win32 SSH_AUTH_SOCK is not the Windows OpenSSH agent pipe (class=$sock_class)."
+    log_guide "Confirm WSL exports SSH_AUTH_SOCK with the WSL-to-Win32 /w flag and rerun this task."
+  fi
+
+  local wsl_sock wsl_sock_class
+  wsl_sock="${SSH_AUTH_SOCK:-}"
+  wsl_sock_class="$(classify_sock "$wsl_sock")"
+  if [[ "$wsl_sock" == "$EXPECTED_WIN32_SSH_AUTH_SOCK" ]]; then
+    log_ok "WSL SSH_AUTH_SOCK is the Windows OpenSSH agent pipe value."
+  elif [[ "$wsl_sock_class" == "wezterm_interference" ]]; then
+    record_error "WezTerm SSH_AUTH_SOCK interference detected in the WSL environment."
+    log_guide "Start a fresh WezTerm/WSL session after syncing the rendered WezTerm config."
+  else
+    record_error "WSL SSH_AUTH_SOCK is not the Windows OpenSSH agent pipe value (class=$wsl_sock_class)."
+    log_guide "Start a fresh login shell after chezmoi renders dot_zshenv."
+  fi
+
+  pipe_state="$(run_with_timeout 20s powershell.exe -NoProfile -NonInteractive -Command 'if (Test-Path -LiteralPath "\\.\pipe\openssh-ssh-agent") { [Console]::Write("present") } else { [Console]::Write("missing") }' 2>/dev/null | tr -d '\r' || true)"
+  if [[ "$pipe_state" == "present" ]]; then
+    log_ok "Windows OpenSSH agent pipe is present."
+  else
+    record_error "Windows OpenSSH agent pipe is unavailable."
+    log_guide "Enable the 1Password SSH agent on Windows and confirm Windows OpenSSH uses the OpenSSH pipe."
+  fi
+}
+
+check_1password_agent() {
+  echo "--- Windows 1Password SSH agent ---"
+
+  local output_file key_count
+  output_file="$(mktemp)"
+  if run_with_timeout 45s ssh-add.exe -l >"$output_file" 2>&1; then
+    key_count="$(sed '/^[[:space:]]*$/d' "$output_file" | wc -l | tr -d ' ')"
+    log_ok "ssh-add.exe -l reached the Windows 1Password SSH agent (key_count=$key_count)."
+  else
+    record_error "Windows 1Password SSH agent unavailable or unresponsive through ssh-add.exe -l."
+    log_guide "Unlock 1Password for Windows, enable the SSH agent, and rerun ssh-add.exe -l from WSL."
+  fi
+  rm -f "$output_file"
+}
+
+check_raw_github_auth() {
+  echo "--- Raw Windows OpenSSH GitHub auth ---"
+
+  local output_file
+  output_file="$(mktemp)"
+  if run_with_timeout 60s ssh.exe -T git@github.com >"$output_file" 2>&1; then
+    log_ok "ssh.exe -T git@github.com authenticated through Windows OpenSSH."
+  elif grep -qi "successfully authenticated" "$output_file"; then
+    log_ok "ssh.exe -T git@github.com authenticated through Windows OpenSSH."
+  else
+    record_error "ssh.exe -T git@github.com failed through Windows OpenSSH."
+    log_guide "Approve the 1Password SSH prompt if shown, then verify the Windows 1Password SSH agent and GitHub key registration."
+  fi
+  rm -f "$output_file"
+}
+
+check_generated_identity_state() {
+  echo "--- Generated Git identity state ---"
+
+  local identity_config config_count core_ssh_command
+  config_count="$(identity_config_count)"
+  identity_config="$(first_identity_config || true)"
+
+  if [[ -z "$identity_config" ]]; then
+    record_error "Generated Git identity state is missing."
+    log_guide "Run mise run generate:identity after 1Password identity metadata is ready."
+    return 1
+  fi
+
+  log_ok "Generated Git identity configs are present (count=$config_count)."
+
+  if [[ -s "$ALLOWED_SIGNERS" ]]; then
+    log_ok "Generated Git allowed signers state is present."
+  else
+    record_error "Generated Git allowed signers state is missing or empty."
+    log_guide "Run mise run generate:identity and keep generated identity output redacted."
+  fi
+
+  core_ssh_command="$(git config -f "$identity_config" core.sshCommand 2>/dev/null || true)"
+  case "$core_ssh_command" in
+  ssh.exe\ -i\ \'[A-Za-z]:\\*\'\ -o\ IdentitiesOnly=yes | ssh.exe\ -i\ \'\\\\*\'\ -o\ IdentitiesOnly=yes)
+    log_ok "Generated core.sshCommand uses Windows OpenSSH and deterministic identity selection."
+    ;;
+  "")
+    record_error "Generated core.sshCommand is missing."
+    log_guide "Run mise run generate:identity from WSL."
+    ;;
+  *)
+    record_error "Generated core.sshCommand is not the expected Windows OpenSSH shape."
+    log_guide "Regenerate identity state and verify the WSL Git identity routing child remains applied."
+    ;;
+  esac
+}
+
+check_rendered_git_auth() {
+  echo "--- Rendered Git core.sshCommand auth ---"
+
+  local identity_config core_ssh_command output_file
+  identity_config="$(first_identity_config || true)"
+  if [[ -z "$identity_config" ]]; then
+    log_warn "Skipping rendered Git auth check because generated identity state is missing."
+    return 0
+  fi
+
+  core_ssh_command="$(git config -f "$identity_config" core.sshCommand 2>/dev/null || true)"
+  if [[ -z "$core_ssh_command" ]]; then
+    log_warn "Skipping rendered Git auth check because core.sshCommand is missing."
+    return 0
+  fi
+
+  output_file="$(mktemp)"
+  if run_with_timeout 90s git -c "core.sshCommand=$core_ssh_command" ls-remote --exit-code "$AUTH_TARGET" HEAD >"$output_file" 2>&1; then
+    log_ok "Rendered core.sshCommand authenticated with git ls-remote."
+  else
+    record_error "Rendered core.sshCommand auth failed with git ls-remote."
+    log_guide "Regenerate identity state, verify the selected public key is registered with the remote host, and keep command output redacted."
+  fi
+  rm -f "$output_file"
+}
+
+check_git_signing() {
+  echo "--- Git SSH signing ---"
+
+  local identity_config name email signing_key signer allowed_signers output_file
+  identity_config="$(first_identity_config || true)"
+  if [[ -z "$identity_config" ]]; then
+    log_warn "Skipping Git signing check because generated identity state is missing."
+    return 0
+  fi
+
+  name="$(git config -f "$identity_config" user.name 2>/dev/null || true)"
+  email="$(git config -f "$identity_config" user.email 2>/dev/null || true)"
+  signing_key="$(git config -f "$identity_config" user.signingkey 2>/dev/null || true)"
+  signer="$(git config --global --get gpg.ssh.program 2>/dev/null || true)"
+  allowed_signers="$(git config --global --get gpg.ssh.allowedSignersFile 2>/dev/null || true)"
+
+  if [[ -z "$name" || -z "$email" || -z "$signing_key" ]]; then
+    record_error "Generated Git signing identity fields are incomplete."
+    log_guide "Run mise run generate:identity and keep generated identity output redacted."
+    return 0
+  fi
+
+  if [[ -z "$signer" ]]; then
+    record_error "Git SSH signing helper is not configured."
+    log_guide "Rerun chezmoi apply so gpg.ssh.program points at the 1Password WSL signing helper."
+    return 0
+  fi
+
+  if [[ -z "$allowed_signers" || ! -s "$allowed_signers" ]]; then
+    record_error "Git allowedSignersFile is missing or empty."
+    log_guide "Run mise run generate:identity and rerun this task."
+    return 0
+  fi
+
+  TMP_DIR="$(mktemp -d)"
+  output_file="$(mktemp)"
+
+  git -C "$TMP_DIR" init -q
+  git -C "$TMP_DIR" config user.name "$name"
+  git -C "$TMP_DIR" config user.email "$email"
+  git -C "$TMP_DIR" config user.signingkey "$signing_key"
+  git -C "$TMP_DIR" config gpg.format ssh
+  git -C "$TMP_DIR" config gpg.ssh.program "$signer"
+  git -C "$TMP_DIR" config gpg.ssh.allowedSignersFile "$allowed_signers"
+
+  printf "wsl-openssh-preflight\n" >"$TMP_DIR/probe.txt"
+  git -C "$TMP_DIR" add probe.txt
+
+  if run_with_timeout 90s git -C "$TMP_DIR" commit -S -m "wsl openssh preflight signing probe" >"$output_file" 2>&1; then
+    log_ok "git commit -S succeeded in a temporary repository."
+  else
+    record_error "Git signing failed during git commit -S."
+    log_guide "Approve the 1Password signing prompt if shown and verify the WSL signing helper path."
+    rm -f "$output_file"
+    return 0
+  fi
+
+  if git -C "$TMP_DIR" log --show-signature -1 >"$output_file" 2>&1 && grep -q 'Good "git" signature' "$output_file"; then
+    log_ok "git log --show-signature -1 verified the temporary signed commit."
+  else
+    record_error "Git signing verification failed for the temporary signed commit."
+    log_guide "Verify allowed signers generation and keep signature output redacted."
+  fi
+
+  rm -f "$output_file"
+}
+
+echo "--- WSL Windows OpenSSH / 1Password preflight ---"
+
+if [[ "$IS_WSL" != "true" ]]; then
+  log_warn "check:wsl-openssh is WSL-only; skipped on this host."
+  exit 0
+fi
+
+check_wsl_interop
+check_windows_openssh
+check_win32_auth_environment
+check_1password_agent
+check_raw_github_auth
+check_generated_identity_state || true
+check_rendered_git_auth
+check_git_signing
+
+if [[ "$HAS_ERROR" -eq 0 ]]; then
+  log_ok "WSL Windows OpenSSH preflight completed without detected failures."
+fi
+
+exit "$HAS_ERROR"

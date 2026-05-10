@@ -93,6 +93,24 @@ or CI shell runtime:
 | `.github/ISSUE_TEMPLATE/**` or `.github/pull_request_template.md` | Use template-focused review and baseline documentation validation. Do not change these templates from context cleanup or workflow-default work unless explicitly scoped. |
 | `.context/repomix/**` generated XML | Do not edit generated output directly. Regenerate with `repomix` when validation requires fresh evidence. |
 
+## WSL Windows OpenSSH preflight evidence
+
+When a change touches WSL Windows OpenSSH, 1Password SSH agent, WezTerm
+`SSH_AUTH_SOCK`, generated Git identity authentication, or Git SSH signing
+preflight behavior, use the focused `check:wsl-openssh` task for local WSL2
+evidence:
+
+```zsh
+mise tasks info check:wsl-openssh
+mise run check:wsl-openssh
+```
+
+The task output is intended to be shared only after redaction review. Report
+status categories, key counts, and pass/fail outcomes; do not publish SSH public
+keys, full local usernames, Windows profile paths, 1Password account IDs, item
+IDs, generated identity file paths, private repository names, raw socket paths,
+or full generated Git command values.
+
 ## Documentation-only doctor boundary
 
 Do not require `mise run doctor` for a PR that changes only Markdown context or

@@ -26,8 +26,8 @@ SSH_ADD_BIN="ssh-add.exe"
 SSH_ADD_BIN="ssh-add"
 {{ end }}
 
-echo "--- 2. Identity & Auth Bridge Analysis ---"
-if "$OP_BIN" account get > /dev/null 2>&1; then
+echo "--- 2. Identity & Auth Analysis ---"
+if "$OP_BIN" account get >/dev/null 2>&1; then
   log_ok "1Password session authenticated."
 
   {{- if .identities }}
@@ -36,26 +36,27 @@ if "$OP_BIN" account get > /dev/null 2>&1; then
   if [[ -f "$ID_CONF" ]]; then
     AUTH_EMAIL=$(git config -f "$ID_CONF" user.email 2>/dev/null || echo "")
     if [[ "$AUTH_EMAIL" == "{{ .email }}" ]]; then
-      log_ok "Identity binding verified: {{ .name }} ($AUTH_EMAIL)"
+      log_ok "Generated identity binding verified."
     else
-      log_err "Identity binding mismatch for {{ .name }} (Expected: {{ .email }}, Found: $AUTH_EMAIL)."
+      log_err "Generated identity binding mismatch."
+      log_guide "mise run generate:identity"
       HAS_ERROR=1
     fi
     {{- if $.is_wsl }}
     CORE_SSH_COMMAND=$(git config -f "$ID_CONF" core.sshCommand 2>/dev/null || echo "")
     case "$CORE_SSH_COMMAND" in
-      ssh.exe\ -i\ \'[A-Za-z]:\\*\'\ -o\ IdentitiesOnly=yes|ssh.exe\ -i\ \'\\\\*\'\ -o\ IdentitiesOnly=yes)
-        log_ok "WSL Git SSH command uses Windows OpenSSH with deterministic identity selection."
-        ;;
-      *)
-        log_err "WSL Git SSH command does not use Windows OpenSSH with a Windows-readable identity path."
-        HAS_ERROR=1
-        ;;
+    ssh.exe\ -i\ \'[A-Za-z]:\\*\'\ -o\ IdentitiesOnly=yes | ssh.exe\ -i\ \'\\\\*\'\ -o\ IdentitiesOnly=yes)
+      log_ok "WSL Git SSH command uses Windows OpenSSH with deterministic identity selection."
+      ;;
+    *)
+      log_err "WSL Git SSH command does not use Windows OpenSSH with a Windows-readable identity path."
+      HAS_ERROR=1
+      ;;
     esac
     {{- end }}
   else
-    log_err "Scoped Git configuration missing at $ID_CONF."
-    log_guide "chezmoi apply"
+    log_err "Generated scoped Git configuration is missing."
+    log_guide "mise run generate:identity"
     HAS_ERROR=1
   fi
   {{- end }}
@@ -67,7 +68,7 @@ else
     log_ok "Automation Mode: Sovereign Identity verification bypassed."
   else
     log_err "Sovereign Identity is locked or unreachable."
-    log_guide "$OP_BIN signin"
+    log_guide "Sign in to 1Password CLI, then rerun this check."
     HAS_ERROR=1
   fi
 fi
@@ -94,7 +95,7 @@ echo "--- 4. SSH Agent & Cryptographic Trust ---"
 {{ else }}
 echo "--- 3. SSH Agent & Cryptographic Trust ---"
 {{ end }}
-if "$SSH_ADD_BIN" -l > /dev/null 2>&1; then
+if "$SSH_ADD_BIN" -l >/dev/null 2>&1; then
   log_ok "SSH Agent is responsive and active."
 else
   if [[ "$IS_CI" == "true" ]]; then
@@ -102,7 +103,7 @@ else
   else
     log_err "SSH Agent is unresponsive."
     {{ if .is_wsl }}
-    log_guide "Verify Windows 1Password SSH agent, WSL interop, and ssh-add.exe -l."
+    log_guide "Run 'mise run check:wsl-openssh' for the focused Windows OpenSSH preflight."
     log_guide "Then rerun 'mise run doctor'."
     {{ else }}
     log_guide "Verify the 'SSH Agent' setting in 1Password Desktop App."
