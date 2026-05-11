@@ -67,7 +67,6 @@ packages:
       - Flow-Launcher.Flow-Launcher
       - Microsoft.PowerToys
       - Microsoft.VisualStudioCode
-      - Docker.DockerDesktop
       - AgileBits.1Password
       - AgileBits.1Password.CLI
 

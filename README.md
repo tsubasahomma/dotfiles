@@ -116,14 +116,14 @@ integrations to be usable.
 Prepare Windows 11 with WSL2 Ubuntu 24.04+ as a WSL-to-Windows interop path,
 not as generic Linux.
 
-Windows-side GUI provisioning installs Docker Desktop through the WinGet
-`Docker.DockerDesktop` package outside CI. Start Docker Desktop, accept Docker's
-subscription terms, and enable WSL 2 integration for the target Ubuntu
-distribution when Docker commands are required from WSL2.
+Windows-side GUI provisioning does not install Docker Desktop. Install Docker
+Desktop manually and enable WSL 2 integration for the target Ubuntu distribution
+only when Docker commands are required from WSL2.
 
 The WSL2 Ubuntu path does not install Docker Engine or Docker CLI packages
-inside Linux. Docker daemon, socket, Desktop, and WSL integration behavior is
-owned by the Windows-side Docker Desktop installation.
+inside Linux. When Docker Desktop is installed manually, Docker daemon, socket,
+Desktop, and WSL integration behavior is owned by that Windows-side
+installation.
 
 The WSL2 SSH authentication path follows the official
 [1Password WSL integration](https://developer.1password.com/docs/ssh/integrations/wsl/):
