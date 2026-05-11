@@ -23,12 +23,11 @@ forensics.
 
 - The pre-source-state hook is `.bootstrap-mise.sh`; no identity-named
   bootstrap hook is retained.
-- `.chezmoiscripts/**` contains six lifecycle adapters:
+- `.chezmoiscripts/**` contains five lifecycle adapters:
   `.chezmoiscripts/run_onchange_before_00-provision-linux-packages.sh.tmpl`,
   `.chezmoiscripts/run_onchange_before_provision-macos-homebrew.sh.tmpl`,
   `.chezmoiscripts/run_onchange_before_provision-windows-packages.sh.tmpl`,
   `.chezmoiscripts/run_onchange_after_20-mise-post-apply-graph.sh.tmpl`,
-  `.chezmoiscripts/run_onchange_after_wsl-retire-1password-bridge.sh.tmpl`, and
   `.chezmoiscripts/run_onchange_after_wsl-sync-services.sh.tmpl`.
 - Repo-owned mise task source state lives under
   `dot_config/mise/repo-tasks/**`; `dot_config/mise/tasks/**` is absent from
