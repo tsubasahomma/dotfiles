@@ -58,7 +58,7 @@ go = "1.26.3"
 "npm:@hubspot/cli" = "8.6.0"
 
 # --- 7. Documentation & Prose ---
-"aqua:errata-ai/vale" = "3.14.1"
+"aqua:errata-ai/vale" = "3.14.2"
 "npm:prettier" = "3.8.3"
 "npm:@mermaid-js/mermaid-cli" = "11.15.0"
 "aqua:JohnnyMorganz/StyLua" = "2.5.2"
