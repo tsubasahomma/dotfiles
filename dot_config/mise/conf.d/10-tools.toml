@@ -35,7 +35,7 @@ go = "1.26.3"
 "npm:neovim" = "5.4.0"
 
 # --- 4. Development Tooling ---
-"aqua:tree-sitter/tree-sitter" = "0.26.8"
+"aqua:tree-sitter/tree-sitter" = "0.26.9"
 "aqua:pre-commit/pre-commit" = "4.6.0"
 "pipx:pytest" = "9.0.3"
 
