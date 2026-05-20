@@ -82,7 +82,7 @@ gcloud = "565.0.0"
 # --- 9. SRE Observability & Diagnostics ---
 "aqua:ClementTsang/bottom" = "0.12.3"
 "cargo:du-dust" = "1.0.0"
-"aqua:mr-karan/doggo" = "1.1.5"
+"aqua:mr-karan/doggo" = "1.1.6"
 "aqua:sachaos/viddy" = "1.3.0"
 
 # --- 10. AI Coding & Context Engineering ---
