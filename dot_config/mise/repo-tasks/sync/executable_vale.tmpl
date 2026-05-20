@@ -15,6 +15,6 @@ if [[ ! -f "$VALE_CONFIG" ]]; then
 fi
 
 echo "📦 [Vale] Synchronizing style packages..."
-"$MISE_BIN" exec vale -- vale --config="$VALE_CONFIG" sync
+"$MISE_BIN" exec -- vale --config="$VALE_CONFIG" sync
 
 echo "✅ [Vale] Styles converged."

@@ -20,7 +20,7 @@ HAS_ERROR=0
 
 echo "--- 5. Prose Linting Engine (Vale) ---"
 if [[ -f "$VALE_CONFIG" ]]; then
-  if "$MISE_BIN" exec vale -- vale --config="$VALE_CONFIG" ls-config > /dev/null 2>&1; then
+  if "$MISE_BIN" exec -- vale --config="$VALE_CONFIG" ls-config > /dev/null; then
     log_ok "Vale configuration loaded successfully."
 
     STYLE_DIR="{{ .paths.xdg_data }}/vale/styles/Google"
@@ -28,7 +28,7 @@ if [[ -f "$VALE_CONFIG" ]]; then
       log_ok "External style packages (Google) provisioned."
     else
       log_err "External style packages missing at $STYLE_DIR."
-      log_guide "chezmoi apply (or manual: vale --config=\"$VALE_CONFIG\" sync)"
+      log_guide "chezmoi apply (or manual: \"$MISE_BIN\" exec -- vale --config=\"$VALE_CONFIG\" sync)"
       HAS_ERROR=1
     fi
   else
