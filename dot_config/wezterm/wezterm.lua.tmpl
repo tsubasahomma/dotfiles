@@ -14,7 +14,7 @@ local font_fallback = { "JetBrains Mono" }
 
 if wezterm.target_triple:find("darwin") then
   table.insert(font_fallback, "Apple Color Emoji")
-  table.insert(font_fallback, { family = "BIZ UDGothic", weight = "Bold" })
+  table.insert(font_fallback, "BIZ UDGothic")
   table.insert(font_fallback, "Hiragino Sans")
 else
   table.insert(font_fallback, "Segoe UI Emoji")
