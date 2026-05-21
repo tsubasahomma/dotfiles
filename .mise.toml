@@ -1,4 +1,4 @@
 # Bootstrap toolchain used before repository-level mise config is available.
 # [Reference]: https://mise.jdx.dev/continuous-integration.html
 [tools]
-"aqua:twpayne/chezmoi" = "2.70.3"
+"aqua:twpayne/chezmoi" = "2.70.4"
