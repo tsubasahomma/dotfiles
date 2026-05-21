@@ -61,7 +61,7 @@ go = "1.26.3"
 "aqua:errata-ai/vale" = "3.14.1"
 "npm:prettier" = "3.8.3"
 "npm:@mermaid-js/mermaid-cli" = "11.14.0"
-"aqua:JohnnyMorganz/StyLua" = "2.4.1"
+"aqua:JohnnyMorganz/StyLua" = "2.5.2"
 "aqua:mvdan/sh" = "3.13.1"
 "aqua:koalaman/shellcheck" = "0.11.0"
 
