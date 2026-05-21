@@ -23,6 +23,12 @@
 set -euo pipefail
 
 # This script runs before the new Zsh environment is fully initialized.
+# Export the rendered XDG contract before mise or tool subprocesses derive paths.
+export XDG_CONFIG_HOME="{{ .paths.xdg_config }}"
+export XDG_DATA_HOME="{{ .paths.xdg_data }}"
+export XDG_STATE_HOME="{{ .paths.xdg_state }}"
+export XDG_CACHE_HOME="{{ .paths.xdg_cache }}"
+
 # PATH injection is required because this subshell executes before Zsh bootstrap completes.
 export PNPM_HOME="{{ .paths.xdg_data }}/pnpm"
 export PATH="$PNPM_HOME:{{ .paths.home }}/.local/bin:$PATH"
