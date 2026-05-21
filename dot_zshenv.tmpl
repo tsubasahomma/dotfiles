@@ -40,6 +40,9 @@ _dotfiles_wsl_env_prepend() {
 export OP_BIOMETRIC_UNLOCK_ENABLED="true"
 _dotfiles_wsl_env_prepend "OP_BIOMETRIC_UNLOCK_ENABLED/w"
 
+# Browser-opening CLI flows should dispatch URLs through the Windows default app.
+export BROWSER="{{ .paths.home }}/.local/bin/wsl-open-url"
+
 # Win32 OpenSSH should use the Windows 1Password agent pipe, not a WSL bridge socket.
 export SSH_AUTH_SOCK='{{ .ssh_auth_sock }}'
 _dotfiles_wsl_env_prepend "SSH_AUTH_SOCK/w"

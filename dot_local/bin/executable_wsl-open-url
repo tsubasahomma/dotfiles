@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+die() {
+  printf '%s: %s\n' "${0##*/}" "$*" >&2
+  exit 1
+}
+
+usage() {
+  printf 'Usage: %s URL\n' "${0##*/}" >&2
+}
+
+if [[ $# -ne 1 || -z "${1:-}" ]]; then
+  usage
+  exit 64
+fi
+
+url="$1"
+case "$url" in
+  http://* | https://*) ;;
+  *)
+    printf '%s: only http:// and https:// URLs are supported: %s\n' "${0##*/}" "$url" >&2
+    exit 64
+    ;;
+esac
+
+if ! grep -qi microsoft /proc/sys/kernel/osrelease 2> /dev/null; then
+  die "this opener is WSL-only"
+fi
+
+if [[ -e /proc/sys/fs/binfmt_misc/WSLInterop ]] &&
+  ! grep -qxF enabled /proc/sys/fs/binfmt_misc/WSLInterop; then
+  die "WSL Win32 interoperability is disabled"
+fi
+
+if ! command -v powershell.exe > /dev/null 2>&1; then
+  die "powershell.exe is unavailable; ensure WSL interop is enabled and Windows System32 is on PATH"
+fi
+
+managed_wsl_env="DOTFILES_WSL_BROWSER_URL/w"
+wsl_env="$managed_wsl_env"
+if [[ -n "${WSLENV:-}" ]]; then
+  IFS=':' read -r -a wsl_env_parts <<< "$WSLENV"
+  for part in "${wsl_env_parts[@]}"; do
+    [[ -z "$part" || "${part%%/*}" == "DOTFILES_WSL_BROWSER_URL" ]] && continue
+    wsl_env+=":$part"
+  done
+fi
+
+# shellcheck disable=SC2016
+ps_command='$target = [Environment]::GetEnvironmentVariable("DOTFILES_WSL_BROWSER_URL"); if ([string]::IsNullOrWhiteSpace($target)) { Write-Error "DOTFILES_WSL_BROWSER_URL is empty."; exit 64 }; Start-Process -FilePath $target'
+
+DOTFILES_WSL_BROWSER_URL="$url" \
+  WSLENV="$wsl_env" \
+  powershell.exe -NoProfile -NonInteractive -Command "$ps_command"

@@ -69,6 +69,13 @@ renovate.json5
 .mise.toml
 
 # --- 5. OS-Specific Overrides ---
+{{ if not .is_wsl -}}
+{{/*
+The WSL browser opener is only valid where Win32 interoperability is available.
+*/}}
+.local/bin/wsl-open-url
+{{ end -}}
+
 {{ if ne .osid "darwin" -}}
 {{- if not .is_wsl }}
 {{/*
