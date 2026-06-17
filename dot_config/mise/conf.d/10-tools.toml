@@ -42,7 +42,7 @@ go = "1.26.3"
 # --- 5. Engineering Utilities ---
 "aqua:casey/just" = "1.51.0"
 "aqua:atuinsh/atuin" = "18.16.1"
-"aqua:duckdb/duckdb" = "1.5.3"
+"aqua:duckdb/duckdb" = "1.5.4"
 "aqua:ajeetdsouza/zoxide" = "0.9.9"
 "aqua:sharkdp/bat" = "0.26.1"
 "aqua:BurntSushi/ripgrep" = "15.1.0"
