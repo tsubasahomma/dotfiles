@@ -30,7 +30,7 @@ go = "1.26.3"
 "github:dandavison/delta" = "0.19.2"
 
 # --- 3. Neovim Ecosystem ---
-"aqua:neovim/neovim" = "0.12.2"
+"aqua:neovim/neovim" = "0.12.3"
 "pipx:neovim/pynvim" = "0.6.0"
 "npm:neovim" = "5.4.0"
 
