@@ -83,7 +83,7 @@ gcloud = "565.0.0"
 "aqua:ClementTsang/bottom" = "0.12.3"
 "cargo:du-dust" = "1.0.0"
 "aqua:mr-karan/doggo" = "1.1.7"
-"aqua:sachaos/viddy" = "1.3.0"
+"aqua:sachaos/viddy" = "1.3.1"
 
 # --- 10. AI Coding & Context Engineering ---
 "npm:repomix" = "1.14.0"
