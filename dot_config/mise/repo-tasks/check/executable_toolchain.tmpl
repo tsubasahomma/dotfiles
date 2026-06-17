@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# [MISE] description="Verify mise availability and PATH precedence"
+# [MISE] description="Verify mise availability, usage completions, and PATH precedence"
 # [MISE] hide=true
 {{/* [Reference]: https://mise.jdx.dev/tasks/file-tasks.html */}}{{ "" -}}
 
@@ -25,6 +25,15 @@ MISE_VERSION_FILE="$SOURCE_DIR/.mise-version"
 EXPECTED_MISE_BIN="$HOME_DIR/.local/bin/mise"
 EXPECTED_MISE_VERSION=""
 HAS_ERROR=0
+TMP_FILES=()
+
+# shellcheck disable=SC2329
+cleanup_tmp_files() {
+  if [[ "${#TMP_FILES[@]}" -gt 0 ]]; then
+    rm -f "${TMP_FILES[@]}"
+  fi
+}
+trap cleanup_tmp_files EXIT
 
 read_expected_mise_version() {
   if [[ ! -f "$MISE_VERSION_FILE" ]]; then
@@ -43,6 +52,65 @@ read_expected_mise_version() {
     EXPECTED_MISE_VERSION=""
     HAS_ERROR=1
   fi
+}
+
+check_mise_usage_completion_contract() {
+  local usage_bin usage_install_dir usage_spec_file usage_stdout_file usage_stderr_file completion_rc spec_min_usage usage_version_output
+
+  if ! usage_install_dir="$("$EXPECTED_MISE_BIN" where aqua:jdx/usage 2>&1)"; then
+    log_err "Managed usage CLI is unavailable."
+    log_guide "Run chezmoi apply so mise installs the aqua:jdx/usage tool declared in 10-tools.toml."
+    printf "    %s\n" "$usage_install_dir"
+    HAS_ERROR=1
+    return
+  fi
+
+  usage_bin="$usage_install_dir/usage"
+  if [[ ! -x "$usage_bin" ]]; then
+    log_err "Managed usage executable is missing at $usage_bin."
+    log_guide "Run chezmoi apply so mise installs the aqua:jdx/usage tool declared in 10-tools.toml."
+    HAS_ERROR=1
+    return
+  fi
+
+  usage_version_output="$("$usage_bin" --version 2>&1)"
+  printf "  Managed usage version: %s\n" "$usage_version_output"
+
+  usage_spec_file="$(mktemp)"
+  usage_stdout_file="$(mktemp)"
+  usage_stderr_file="$(mktemp)"
+  TMP_FILES+=("$usage_spec_file" "$usage_stdout_file" "$usage_stderr_file")
+
+  if ! "$EXPECTED_MISE_BIN" usage >"$usage_spec_file" 2>"$usage_stderr_file"; then
+    log_err "Hermetic mise could not emit its usage spec."
+    sed 's/^/    /' "$usage_stderr_file"
+    HAS_ERROR=1
+    return
+  fi
+
+  spec_min_usage="$(awk '/^min_usage_version / { gsub(/"/, "", $2); print $2; exit }' "$usage_spec_file")"
+  printf "  Mise usage spec minimum usage version: %s\n" "${spec_min_usage:-<unspecified>}"
+
+  completion_rc=0
+  "$usage_bin" complete-word --shell zsh -f "$usage_spec_file" -- mise run \
+    >"$usage_stdout_file" 2>"$usage_stderr_file" || completion_rc=$?
+
+  if [[ "$completion_rc" -ne 0 ]]; then
+    log_err "Managed usage could not complete the mise usage spec."
+    sed 's/^/    /' "$usage_stderr_file"
+    HAS_ERROR=1
+    return
+  fi
+
+  if [[ -s "$usage_stderr_file" ]] || grep -Eq '^\[WARN[[:space:]]+usage::spec\]' "$usage_stdout_file"; then
+    log_err "Managed usage emitted diagnostics while completing the mise usage spec."
+    sed 's/^/    /' "$usage_stderr_file"
+    log_guide "Update aqua:jdx/usage in 10-tools.toml to satisfy the min_usage_version emitted by mise usage."
+    HAS_ERROR=1
+    return
+  fi
+
+  log_ok "Managed usage can complete the mise usage spec without diagnostics."
 }
 
 echo "--- 6. Toolchain Drift Analysis ---"
@@ -91,6 +159,8 @@ if [[ -x "$EXPECTED_MISE_BIN" ]]; then
     log_guide "Run chezmoi apply so .bootstrap-mise.sh repairs $EXPECTED_MISE_BIN."
     HAS_ERROR=1
   fi
+
+  check_mise_usage_completion_contract
 else
   printf "  Actual hermetic mise version: <missing>\n"
   log_err "Hermetic mise executable missing at $EXPECTED_MISE_BIN."
