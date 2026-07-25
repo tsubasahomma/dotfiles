@@ -15,7 +15,7 @@ includes = [
 # --- 1. Infrastructure Core & Runtimes ---
 "aqua:twpayne/chezmoi" = "2.70.4"
 # usage powers generated mise shell completions; keep it compatible with `mise usage`.
-"aqua:jdx/usage" = "3.5.0"
+"aqua:jdx/usage" = "3.6.0"
 node = "24.16.0"
 python = "3.14.5"
 pnpm = "11.6.0"
