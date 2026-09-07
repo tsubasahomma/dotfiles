@@ -89,5 +89,5 @@ gcloud = "565.0.0"
 # --- 10. AI Coding & Context Engineering ---
 "npm:repomix" = "1.14.0"
 "npm:@openai/codex" = "0.139.0"
-"npm:@anthropic-ai/claude-code" = "2.1.177"
+"npm:@anthropic-ai/claude-code" = "2.1.260"
 "npm:@google/gemini-cli" = "0.42.0"
