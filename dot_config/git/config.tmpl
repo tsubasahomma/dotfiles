@@ -155,11 +155,14 @@ Editing rules:
 
 [fetch]
     {{/* [Safety + Performance]
-    Keep local remote-tracking state tidy and update commit-graph after fetch.
+    Keep local remote-tracking branches tidy and update commit-graph after fetch.
+    Leave pruneTags unset: tags share one namespace across remotes, so global tag
+    pruning can delete local-only tags and tags fetched from another remote.
+    Opt in per repo/remote or explicit operation only when that deletion is intended.
+    Reference: https://git-scm.com/docs/git-fetch#_pruning
     Do NOT set fetch.all=true globally; in multi-remote repos that changes semantics too broadly.
     */ -}}
     prune = true
-    pruneTags = true
     writeCommitGraph = true
     negotiationAlgorithm = skipping
 
