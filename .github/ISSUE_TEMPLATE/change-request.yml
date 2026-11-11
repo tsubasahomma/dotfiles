@@ -1,89 +1,37 @@
 name: Change request
-description: Propose a scoped repository change with validation evidence.
+description: Describe a repository change and how to check its result.
 title: "[Change]: "
 body:
   - type: markdown
     attributes:
       value: |
-        Use this form for scoped repository changes. Keep the issue body as a
-        child issue executable scope contract, not an operating manual.
+        Describe the problem, intended result, and relevant boundaries.
+        See docs/development.md and docs/validation.md for repository guidance.
   - type: textarea
     id: goal
     attributes:
-      label: Goal
-      description: Describe the desired end state in one or two sentences.
-      placeholder: Define a durable boundary for...
+      label: Problem and intended result
+      description: What should change, and why?
     validations:
       required: true
   - type: textarea
-    id: current_defect
+    id: scope
     attributes:
-      label: Current defect
-      description: Describe the current problem, ambiguity, or drift risk.
-      placeholder: The current state still allows...
-    validations:
-      required: true
-  - type: textarea
-    id: required_changes
-    attributes:
-      label: Required changes
-      description: List the required changes for this scope.
-      placeholder: |
-        - Add...
-        - Update...
-    validations:
-      required: true
-  - type: textarea
-    id: out_of_scope
-    attributes:
-      label: Out of scope
-      description: List work that this issue intentionally excludes.
-      placeholder: |
-        - Do not change provisioning behavior.
-        - Do not change GitHub Actions workflow semantics.
-    validations:
-      required: true
-  - type: textarea
-    id: acceptance_criteria
-    attributes:
-      label: Acceptance criteria
-      description: Define required outcomes. Do not use checkbox-only completion as validation evidence.
-      placeholder: |
-        - The change aligns with the required artifact schema.
-        - The change preserves the documented ownership boundary.
+      label: Scope and constraints
+      description: Identify affected files or host state and any boundaries that matter.
     validations:
       required: true
   - type: textarea
     id: validation_required
     attributes:
-      label: Validation required
-      description: Define how the acceptance criteria must be proven.
-      placeholder: |
-        | Check | Required state | Notes |
-        | --- | --- | --- |
-        | `git diff --check` | Passed | Confirm whitespace safety. |
-        | `pre-commit run --all-files` | Passed | Confirm baseline hooks. |
-        | GitHub Actions CI | Pending or Passed | Report separately from local validation. |
-    validations:
-      required: true
-  - type: textarea
-    id: deliverables
-    attributes:
-      label: Deliverables
-      description: List the artifacts that must be produced.
-      placeholder: |
-        - Updated source files.
-        - PR body with state-bearing validation evidence.
-        - Issue-reference-free commit message.
+      label: How to check the result
+      description: Name relevant checks and what they establish. Distinguish planned checks from observed results.
     validations:
       required: true
   - type: textarea
     id: references
     attributes:
-      label: References
-      description: Link authoritative sources, related issues, prior decisions, or owning docs.
-      placeholder: |
-        - Parent issue: #<parent-issue-number>
-        - Related issue: #<issue-number>
+      label: Context and references
+      description: Link relevant code, documentation, or related work.
     validations:
       required: false

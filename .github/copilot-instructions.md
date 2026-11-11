@@ -1,36 +1,12 @@
-# GitHub Copilot adapter
+---
+type: Guide
+title: GitHub Copilot向けの入口
+description: 共通の作業境界と必要時知識へ進むための案内。
+status: draft
+generated:
+  by: codex/gpt-6
+  at: "2026-11-11T06:48:33+00:00"
+---
+# 作業の入口
 
-This file is the GitHub Copilot adapter for this repository.
-
-Use [AGENTS.md](../AGENTS.md) as the root context manifest. Route portable
-operating-contract guidance through
-[docs/agent-context/README.md](../docs/agent-context/README.md), and route repository-local
-facts through [docs/project/README.md](../docs/project/README.md) only when the task
-needs them.
-
-Copilot-specific guidance is secondary to the shared context operating contract:
-
-- Keep suggestions small, scoped, and behavior-preserving.
-- Use [docs/agent-context/README.md](../docs/agent-context/README.md) to select the smallest
-  sufficient portable context before relying on deeper evidence.
-- Use [docs/project/README.md](../docs/project/README.md) for local source-state,
-  surface, validation, workflow, Repomix, teardown, host, identity, or adapter
-  facts.
-- Prefer repository-relative links only when the target exists in the current
-  repository state.
-- Do not add `.github/instructions/**` unless an assigned issue explicitly
-  scopes that adapter.
-- Do not change workflows, templates, scripts, tasks, versions, dependencies,
-  lockfiles, rendered configuration, or generated artifacts as incidental
-  cleanup.
-- Treat Repomix snapshots and generated output as read-only evidence.
-
-For surface-specific constraints, start with
-[docs/project/surfaces.md](../docs/project/surfaces.md). For workflow procedure, start
-with [docs/agent-context/workflows.md](../docs/agent-context/workflows.md) and add
-[docs/project/workflows.md](../docs/project/workflows.md) only when local exceptions or
-templates matter. For Repomix generation or snapshot consumption, start with
-[docs/agent-context/evidence-packing.md](../docs/agent-context/evidence-packing.md) and add
-[docs/project/repomix.md](../docs/project/repomix.md) only for local paths and checks.
-For destructive local teardown guidance, use
-[docs/project/teardown.md](../docs/project/teardown.md).
+[AGENTS.md](../AGENTS.md)で作業の境界を確認し、そこから該当する知識文書だけを参照してください。共通ルールと操作手順はこのadapterへ複製しません。

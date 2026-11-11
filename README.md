@@ -1,287 +1,31 @@
+---
+type: Guide
+title: dotfiles
+description: このrepoの目的と対象環境を知り、導入・日常操作・変更に必要な文書を選ぶ。
+status: draft
+generated:
+  by: codex/gpt-6
+  at: "2026-11-11T06:40:22+00:00"
+---
 # dotfiles
 
-[![Compliance](https://github.com/tsubasahomma/dotfiles/actions/workflows/compliance.yml/badge.svg)](https://github.com/tsubasahomma/dotfiles/actions/workflows/compliance.yml)
-[![Built with chezmoi](https://img.shields.io/badge/built%20with-chezmoi-50b0f0.svg)](https://chezmoi.io/)
-[![Managed with mise](https://img.shields.io/badge/managed%20with-mise-blue.svg)](https://mise.jdx.dev/)
+macOSとWindows 11上のWSL2（Ubuntu 24.04以降）向けの、個人用ワークステーション設定です。chezmoiのsource stateとして設定を管理し、miseのツール宣言やタスク、Git・SSHで使う1Password由来のidentity設定を含みます。
 
-This repository is a chezmoi-managed source-state repository for personal
-workstation configuration.
+このrepoの宣言が、端末の現在の状態をすべて表しているとは限りません。手動で更新したツールや、repoの管理外にある状態もあります。導入・更新・復旧では、何を管理し、何を書き換えるかを先に確認します。
 
-It uses chezmoi to render host-specific dotfiles, mise to install declared
-runtime tools, and 1Password to provide identity metadata for Git, SSH signing,
-and SSH agent routing.
+# やりたいことから読む
 
-## Overview
+| やりたいこと | 参照先 |
+|---|---|
+| 新しい端末へ導入する | [初回導入の経路](docs/operations.md#first-install)、対象の[macOS](docs/platforms/macos.md)または[WSL・Windows](docs/platforms/wsl.md)、[identityの準備](docs/identity.md) |
+| 設定を反映する・生成物の欠損を調べる | [状態の所有境界](docs/ownership.md)、[apply・repairの操作と副作用](docs/operations.md) |
+| Git・SSH・1Passwordの問題を調べる | [identityのデータ契約](docs/identity.md)。Windowsとの連携は[WSL・Windows](docs/platforms/wsl.md)も参照 |
+| ツールや設定を変更し、確かめる | [開発と更新](docs/development.md)、[変更に応じた検証](docs/validation.md) |
+| bootstrap・apply・repair・doctorの設計を見直す | [収束設計の判断と代案](docs/decisions/convergence.md) |
+| 文書を追加・整理する | [OKFの構成と記述規約](docs/decisions/okf.md) |
 
-Use this repository to bootstrap and maintain a converged workstation on macOS
-or Windows 11 with Windows Subsystem for Linux 2 (WSL2) Ubuntu 24.04+.
+実機コマンドは操作文書で前提・対象・副作用を確認してから使います。現行のchezmoi設定には読み取り時のbootstrap hookがあり、dry-runも非変更の保証にはなりません。
 
-The README is the first-run entry point. It explains the supported bootstrap
-path and links to focused repository-local docs for behavior details.
+現在実行できる手順は[操作文書](docs/operations.md)、未実装の変更案は[設計判断](docs/decisions/convergence.md)に分けます。applyに管理対象生成物の欠損復旧を含める案は検討中で、現行実装の保証ではありません。
 
-## Bootstrap model
-
-First-run bootstrap has two separate prerequisite tracks:
-
-- `GITHUB_TOKEN` covers bootstrap-time GitHub access for mise tool resolution
-  and GitHub-hosted metadata or downloads.
-- 1Password identity preparation covers full identity, Git, SSH signing, SSH
-  agent, and identity-routing convergence.
-
-You can supply `GITHUB_TOKEN` manually. You don't need to source it from
-1Password, and it doesn't replace the required 1Password identity prerequisites.
-
-## Bootstrap a new machine
-
-### Before you start
-
-Prepare these generic requirements before running the bootstrap command:
-
-- A shell with `sh` and `curl` available.
-- A GitHub token for bootstrap-time access.
-- 1Password Desktop installed and signed in.
-- 1Password CLI integration enabled.
-- Required 1Password SSH Key items created with the repository-defined tags and
-  fields.
-- Pre-existing unmanaged dotfiles reviewed, backed up, or removed.
-- Any host-specific prerequisites for the supported host path you are
-  bootstrapping.
-
-> [!IMPORTANT]
-> This repository doesn't automatically move or back up pre-existing unmanaged
-> dotfiles during first apply. Review, back up, or remove conflicting regular
-> files before running `chezmoi init --apply`. In particular, an existing
-> regular `~/.ssh/config` may conflict with the managed compatibility symlink
-> that routes SSH configuration through the XDG config path.
-
-### Create a GitHub token
-
-Create a token by following GitHub's official
-[fine-grained personal access token documentation](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-fine-grained-personal-access-token).
-
-Use the minimum access needed for this repository and the GitHub-hosted resources
-that mise resolves during bootstrap. Keep the token value available for the
-first-run command.
-
-> [!IMPORTANT]
-> Treat the token as a secret. Don't paste a real token into issue comments,
-> pull request descriptions, logs, or shared validation output.
-
-### Prepare 1Password
-
-Full identity, Git, SSH signing, and SSH agent convergence requires prepared
-1Password identity prerequisites:
-
-- Install 1Password Desktop and sign in.
-- Enable 1Password CLI integration.
-- Create the required SSH Key items in 1Password.
-
-Each repository-managed identity comes from a 1Password SSH Key item with the
-`dotfiles-ssh-key` tag. The item must include the standard SSH Key public key
-metadata and these repository-defined fields:
-
-| Location | Name                 | Purpose                                                          |
-| -------- | -------------------- | ---------------------------------------------------------------- |
-| Tag      | `dotfiles-ssh-key`   | Marks SSH Key items for identity discovery.                      |
-| Section  | `dotfiles`           | Groups repository-specific identity metadata.                    |
-| Field    | `dotfiles_git_name`  | Git author name for the identity.                                |
-| Field    | `dotfiles_git_email` | Git author email for the identity.                               |
-| Field    | `dotfiles_git_dirs`  | Comma-separated directory globs for scoped Git identity routing. |
-
-For identity boundaries, use the
-[repository surface map](./docs/project/surfaces.md) and the
-[repository profile](./docs/project/profile.md).
-
-### Prepare your host
-
-Host-specific prerequisites are separate from the generic first-run command.
-Prepare only the supported path that applies to the host you are bootstrapping.
-
-> [!NOTE]
-> This README documents only macOS and Windows 11 with WSL2 Ubuntu 24.04+.
-> Other Linux distributions aren't currently supported first-run targets.
-
-#### macOS
-
-Grant Full Disk Access to the terminal emulator when the host needs to provision
-or inspect protected directories.
-
-Desktop provisioning installs Docker Desktop through the Homebrew
-`docker-desktop` cask outside CI. Start Docker Desktop and accept Docker's
-subscription terms before expecting the Docker daemon, socket, CLI, or Desktop
-integrations to be usable.
-
-#### Windows 11 with WSL2 Ubuntu 24.04+
-
-Prepare Windows 11 with WSL2 Ubuntu 24.04+ as a WSL-to-Windows interop path,
-not as generic Linux.
-
-Windows-side GUI provisioning does not install Docker Desktop. Install Docker
-Desktop manually and enable WSL 2 integration for the target Ubuntu distribution
-only when Docker commands are required from WSL2.
-
-The WSL2 Ubuntu path does not install Docker Engine or Docker CLI packages
-inside Linux. When Docker Desktop is installed manually, Docker daemon, socket,
-Desktop, and WSL integration behavior is owned by that Windows-side
-installation.
-
-The WSL2 SSH authentication path follows the official
-[1Password WSL integration](https://developer.1password.com/docs/ssh/integrations/wsl/):
-WSL invokes Windows OpenSSH with `ssh.exe` and `ssh-add.exe`, and Windows
-OpenSSH talks to the Windows-host 1Password SSH agent.
-
-The WSL2 first-run path requires:
-
-- Windows 11 as the host operating system.
-- Ubuntu 24.04 or later as the WSL2 distribution.
-- Windows interop commands available from WSL2, including `cmd.exe`,
-  `powershell.exe`, `wslpath`, and `winget.exe`.
-- Windows-side 1Password Desktop installed and signed in.
-- 1Password CLI integration enabled on the Windows side.
-- `op.exe` discoverable from WSL2.
-- Windows OpenSSH clients `ssh.exe` and `ssh-add.exe` available from WSL2.
-- The Windows-side 1Password SSH agent enabled and running.
-- Non-interactive `sudo` configured in WSL2 for Ubuntu package provisioning.
-
-Configure non-interactive `sudo` before first-run package provisioning. The
-WSL2 Ubuntu provisioning path checks `sudo -n true` before installing system
-packages.
-
-Use `sudo visudo` and add a rule for the target WSL2 Ubuntu user:
-
-```sudoers
-<linux-username> ALL=(ALL) NOPASSWD:ALL
-```
-
-Replace `<linux-username>` with the WSL2 Ubuntu user that runs
-`chezmoi init --apply`.
-
-For WSL2 validation boundaries, use the
-[repository surface map](./docs/project/surfaces.md) and the
-[repository validation contract](./docs/project/validation.md).
-
-#### WSL2 Windows OpenSSH preflight
-
-After bootstrap or after changing WSL/1Password/WezTerm identity behavior, run
-the focused local preflight from WSL2:
-
-```zsh
-mise tasks info check:wsl-openssh
-mise run check:wsl-openssh
-```
-
-The task checks WSL interop, Windows OpenSSH client availability, the Windows
-OpenSSH agent pipe, Win32 and WSL `SSH_AUTH_SOCK` routing, WezTerm
-`SSH_AUTH_SOCK` interference, `ssh-add.exe -l`, `ssh.exe -T git@github.com`,
-generated Git identity state, rendered `core.sshCommand` authentication, and Git
-SSH signing in a temporary repository.
-
-Safe shareable evidence should summarize only status categories and counts.
-Before sharing output, redact SSH public keys, full local usernames, Windows
-profile paths, 1Password account IDs, item IDs, generated identity file paths,
-private repository names, and raw socket paths.
-
-Useful focused smoke checks are:
-
-```zsh
-powershell.exe -NoProfile -NonInteractive -Command '[Console]::Write("powershell_ok")'
-powershell.exe -NoProfile -NonInteractive -Command '$v=$env:SSH_AUTH_SOCK; if ($v -eq "\\.\pipe\openssh-ssh-agent") { [Console]::Write("ssh_auth_sock=openssh_pipe") } elseif ($v -like "*wezterm*") { [Console]::Write("ssh_auth_sock=wezterm_interference") } elseif ([string]::IsNullOrWhiteSpace($v)) { [Console]::Write("ssh_auth_sock=unset") } else { [Console]::Write("ssh_auth_sock=other_redacted") }'
-tmp=$(mktemp); if ssh-add.exe -l >"$tmp" 2>&1; then awk 'END { printf "ssh_add_key_count=%d\n", NR }' "$tmp"; else echo "ssh_add=failed"; fi; rm -f "$tmp"
-tmp=$(mktemp); if ssh.exe -T git@github.com >"$tmp" 2>&1 || grep -qi 'successfully authenticated' "$tmp"; then echo "ssh_github=authenticated"; else echo "ssh_github=failed"; fi; rm -f "$tmp"
-```
-
-Share `ssh-add.exe -l` as a key count, not key lines. Share `ssh.exe -T` as
-success or failure with the GitHub account name redacted.
-
-### Run chezmoi init
-
-Run the supported first-run bootstrap command:
-
-```zsh
-GITHUB_TOKEN=<token> sh -c "$(curl -fsLS https://get.chezmoi.io)" -- init --apply <github-username>
-```
-
-Replace `<token>` with the GitHub token value and `<github-username>` with the
-GitHub account that owns this dotfiles repository.
-
-### Run the health check
-
-After bootstrap completes, run the repository health check:
-
-```zsh
-mise run doctor
-```
-
-This is the stable public health-check command. If it fails, follow the task
-output and the focused repository-local docs linked below.
-
-## Maintain this repository
-
-After bootstrap completes, the stable public operator command remains:
-
-```zsh
-mise run doctor
-```
-
-Use focused issues and pull requests for repository changes, and keep
-documentation changes scoped to the issue that authorizes them. Commands such as
-`chezmoi verify`, `mise run repair:nvim`, and `mise run update:lazy-lock` are
-validation, repair, or update workflows for scoped maintainer work; they are not
-the durable public operator command model.
-
-When auditing task behavior, treat source state under
-`dot_config/mise/repo-tasks/**` as the repository-owned task inventory. Local
-`mise tasks` output can reflect host rendering or local target drift.
-
-## Troubleshoot first-run failures
-
-Use the failing surface to choose the next check:
-
-- GitHub access or download failures: recreate the GitHub token with the minimum
-  required read access and retry the bootstrap command.
-- 1Password missing or locked: sign in to 1Password Desktop, enable
-  1Password CLI integration, and confirm the required SSH Key item metadata
-  exists.
-- WSL2 Ubuntu package provisioning failures: confirm non-interactive `sudo`
-  with `sudo -n true`, fix the host prerequisite, then rerun `chezmoi apply`.
-- WSL2 SSH authentication failures: review Windows interop, `op.exe`, Windows
-  OpenSSH clients, the Windows-side 1Password SSH agent, and the
-  focused `mise run check:wsl-openssh` preflight with the repository surface map
-  and validation contract. Local WSL2 host evidence is required for those
-  claims.
-- Post-bootstrap drift: run `mise run doctor` and use the focused
-  repository-local docs to route the failure.
-
-## Reference documentation
-
-Use these focused documents when the README isn't enough:
-
-| Document | Use it for |
-| --- | --- |
-| [Agent context contracts](./docs/agent-context/README.md) | Source-owned portable context architecture and task-to-context routing. |
-| [Project-local extension](./docs/project/README.md) | Consumer-owned dotfiles-local profile, surfaces, validation, workflow exceptions, sensitive-data boundaries, and Repomix routing. |
-| [Repository profile](./docs/project/profile.md) | Source-state boundaries, supported host posture, generated artifact boundaries, and root document roles. |
-| [Repository surface map](./docs/project/surfaces.md) | Chezmoi, mise, WSL2, identity, rendered configuration, package provisioning, Neovim, Renovate, and GitHub Actions surface routing, evidence, and validation boundaries. |
-| [Repository validation](./docs/project/validation.md) | Local validation baseline, documentation-only `mise run doctor` boundary, and touched-source validation routing. |
-| [Repository Repomix routing](./docs/project/repomix.md) | Local Repomix paths, recipes, generated-output handling, and confirmation checks. |
-
-External references:
-
-- [chezmoi documentation](https://www.chezmoi.io/user-guide/command-overview/)
-- [mise documentation](https://mise.jdx.dev/)
-- [1Password CLI documentation](https://developer.1password.com/docs/cli/)
-
-## Safety boundaries
-
-This README is documentation only. It doesn't change provisioning, identity,
-1Password, SSH, WSL2, shell startup, Neovim, WezTerm, Starship, Git, Homebrew,
-mise, GitHub Actions, CI, package lists, tool versions, runtime versions,
-dependencies, or lockfiles.
-
-Don't edit generated `repomix-*.xml` files or Repomix output under
-`.context/repomix/**`. Treat Repomix snapshots as read-only repository evidence.
-
-Don't treat GitHub Actions CI as proof of local WSL2 convergence. Local
-Windows 11 and WSL2 health depends on interactive Windows interop, 1Password
-Desktop state, Windows OpenSSH and 1Password SSH agent state, and host runtime
-state.
+このrepoのMarkdownは、repo全体を一つのOKF bundleとして整理します。エージェント向けの常時指示は[AGENTS.md](AGENTS.md)、人間とエージェントが必要時に参照する知識は`docs/`に置きます。

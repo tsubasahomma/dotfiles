@@ -19,4 +19,3 @@
 
 # Exclude repository meta files from git archive output.
 .github/ export-ignore
-repomix.config.json export-ignore

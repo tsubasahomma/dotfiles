@@ -1,18 +1,12 @@
-# Gemini Routing
+---
+type: Guide
+title: Gemini向けの入口
+description: 共通の作業境界と必要時知識へ進むための案内。
+status: draft
+generated:
+  by: codex/gpt-6
+  at: "2026-11-11T06:48:33+00:00"
+---
+# 作業の入口
 
-This file is a missing-only Gemini routing shim. It does not replace the durable
-operating contracts.
-
-Use this routing order before making or reviewing changes:
-
-1. Start with the root `AGENTS.md`.
-2. Read `docs/agent-context/README.md` and the relevant portable contracts.
-3. If `docs/project/**` exists, read the relevant local extension files for
-   repository-local identity, surfaces, validation commands, workflow
-   exceptions, and policy.
-4. If `docs/project/**` is absent or incomplete, report the missing local
-   evidence instead of inventing local facts.
-
-Do not put repository identity, maintainer names, host paths, local commands,
-secrets, tokens, private identifiers, or durable portable-core rules in this
-file. Local facts belong in the project extension.
+[AGENTS.md](AGENTS.md)で作業の境界を確認し、そこから該当する知識文書だけを参照してください。共通ルールと操作手順はこのadapterへ複製しません。
