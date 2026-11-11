@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+# [MISE] description="Probe provider discovery without user Neovim configuration"
+# [MISE] hide=true
+set -euo pipefail
+{{ includeTemplate "diagnostic_shell.tmpl" . }}
+require_command nvim
+require_command neovim-node-host
+[[ "$HAS_ERROR" -eq 0 ]] || exit "$HAS_ERROR"
+if nvim --headless -u NONE --noplugin -i NONE -n \
+  '+lua if vim.fn.has("python3") ~= 1 then vim.cmd("cquit 1") end' +qa >/dev/null 2>&1; then
+  log_ok "Python provider discovered with user config and plugins disabled."
+else
+  log_err "Python provider discovery failed with user config disabled."
+fi
+if neovim-node-host --version >/dev/null 2>&1; then
+  log_ok "Node provider host version command succeeded."
+else
+  log_err "Node provider host version command failed."
+fi
+log_warn "Probe executes provider code; it does not validate normal Neovim configuration or editor RPC behavior."
+exit "$HAS_ERROR"

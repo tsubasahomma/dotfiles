@@ -1,10 +1,13 @@
 #!/usr/bin/env bash
-# [MISE] description="Verify identity routing and SSH agent health"
+# [MISE] description="Inspect generated identity bindings without authentication"
 # [MISE] hide=true
 {{/* [Reference]: https://mise.jdx.dev/tasks/file-tasks.html */}}{{ "" -}}
 {{/* [Reference]: https://www.chezmoi.io/user-guide/password-managers/1password/ */}}{{ "" -}}
 
+{{- $identities := includeTemplate "validated_identities.tmpl" . | fromJson }}
+
 set -euo pipefail
+{{ includeTemplate "diagnostic_shell.tmpl" . }}
 
 GREEN='\033[0;32m'
 RED='\033[0;31m'
@@ -17,35 +20,99 @@ log_warn() { printf "  ${YELLOW}⚠️  %s${NC}\n" "$1"; }
 log_err() { printf "  ${RED}❌ %s${NC}\n" "$1"; }
 log_guide() { printf "  ${BLUE}👉 %s${NC}\n" "$1"; }
 
-IS_CI="${CI:-false}"
-OP_BIN="{{ .paths.op }}"
 HAS_ERROR=0
-{{ if .is_wsl -}}
-SSH_ADD_BIN="ssh-add.exe"
-{{ else -}}
-SSH_ADD_BIN="ssh-add"
-{{ end }}
-
-echo "--- 2. Identity & Auth Analysis ---"
-if "$OP_BIN" account get >/dev/null 2>&1; then
-  log_ok "1Password session authenticated."
-
+read_value() { git config --no-includes --file "$1" --get-all "$2" 2>/dev/null || true; }
+shell_word() { printf "'"; printf '%s' "$1" | sed "s/'/'\"'\"'/g"; printf "'"; }
+IDENTITY_ENTRY={{ includeTemplate "posix_shell_quote.tmpl" (joinPath .paths.xdg_config "git/identity.inc") }}
+IDENTITY_DISPATCH=$(read_value "$IDENTITY_ENTRY" include.path)
+GIT_IDENTITIES_DIR="${IDENTITY_DISPATCH%/*}"
+echo "--- Generated identity bindings (no authentication) ---"
+{{- if $identities }}
+if [[ ! -f "$IDENTITY_ENTRY" || ! -f "$IDENTITY_DISPATCH" ]]; then
+  log_err "Required identity entry or generation dispatch is missing."
+  exit 1
+fi
+if [[ "$(git config --no-includes --file "$IDENTITY_ENTRY" --name-only --list 2>/dev/null || true)" != include.path ]]; then
+  log_err "Identity entry must contain only its generation include."
+  HAS_ERROR=1
+fi
+# The producer needs these bookkeeping files to reuse the selected generation.
+# This checks presence/entry equality; manifest digest auditing remains with R05.
+if [[ ! -s "$GIT_IDENTITIES_DIR/manifest.json" || ! -f "$GIT_IDENTITIES_DIR/manifest.json" ]] ||
+   ! cmp -s "$GIT_IDENTITIES_DIR/entry" "$IDENTITY_ENTRY"; then
+  log_err "Required generation manifest or sealed entry is missing or changed."
+  HAS_ERROR=1
+fi
+GIT_CONFIG={{ includeTemplate "posix_shell_quote.tmpl" (joinPath .paths.xdg_config "git/config") }}
+if [[ "$(read_value "$GIT_CONFIG" include.path)" != "$IDENTITY_ENTRY" ]] ||
+   [[ "$(git config --no-includes --file "$GIT_CONFIG" --name-only --get-regexp '^(include|user\.(name|email|signingkey)$|core\.sshcommand$|gpg\.ssh\.allowedsignersfile$)' 2>/dev/null || true)" != include.path ]]; then
+  log_err "Git consumer entry or identity override differs from the managed contract."
+  HAS_ERROR=1
+fi
+DISPATCH_KEYS=$(git config --no-includes --file "$IDENTITY_DISPATCH" --name-only --list 2>/dev/null || true)
+if [[ -n "$(printf '%s\n' "$DISPATCH_KEYS" | grep -Ev '^(includeif\.gitdir/i:.*\.path|gpg\.ssh\.allowedsignersfile)$' || true)" ]]; then
+  log_err "Identity dispatch contains an unexpected setting."
+  HAS_ERROR=1
+fi
+ALLOWED_SIGNERS=$(read_value "$IDENTITY_DISPATCH" gpg.ssh.allowedSignersFile)
+if [[ "$ALLOWED_SIGNERS" != "$GIT_IDENTITIES_DIR/allowed_signers" || ! -f "$ALLOWED_SIGNERS" ]]; then
+  log_err "Required allowed signers file or reference is missing or changed."
+  HAS_ERROR=1
+elif ! cmp -s "$ALLOWED_SIGNERS" <(printf '%s\n' \
+{{- range $identities }}
+  {{ includeTemplate "posix_shell_quote.tmpl" (printf "%s namespaces=\"git\" %s" .email .public_key) }} \
+{{- end }}
+  | LC_ALL=C sort -u); then
+  log_err "Allowed signers differ from the rendered identity input."
+  HAS_ERROR=1
+fi
+{{- $routeCount := 0 }}
+{{- range $identities }}{{- $routeCount = add $routeCount (len .routes) }}{{- end }}
+INCLUDE_COUNT=$( (git config --no-includes --file "$IDENTITY_DISPATCH" --name-only --get-regexp '^include' 2>/dev/null || true) | wc -l)
+if [[ "$INCLUDE_COUNT" -ne {{ $routeCount }} ]]; then
+  log_err "Identity dispatch has missing or additional routing entries."
+  HAS_ERROR=1
+fi
+{{- end }}
   {{- if .identities }}
-  {{- range .identities }}
-  ID_CONF="{{ $.paths.xdg_config }}/git/identities/config_{{ .email }}_{{ .key_hash }}"
+  {{- range $identities }}
+  ID_CONF="$GIT_IDENTITIES_DIR/"{{ includeTemplate "posix_shell_quote.tmpl" (printf "config_%s_%s" .email .key_hash) }}
   if [[ -f "$ID_CONF" ]]; then
-    AUTH_EMAIL=$(git config -f "$ID_CONF" user.email 2>/dev/null || echo "")
-    if [[ "$AUTH_EMAIL" == "{{ .email }}" ]]; then
-      log_ok "Generated identity binding verified."
+    FRAGMENT_KEYS=$(git config --no-includes --file "$ID_CONF" --name-only --list 2>/dev/null | LC_ALL=C sort || true)
+    if [[ "$FRAGMENT_KEYS" != $'core.sshcommand\nuser.email\nuser.name\nuser.signingkey' ]]; then
+      log_err "Generated identity fragment has missing or unexpected settings."
+      HAS_ERROR=1
+    fi
+    AUTH_EMAIL=$(read_value "$ID_CONF" user.email)
+    if [[ "$AUTH_EMAIL" == {{ includeTemplate "posix_shell_quote.tmpl" .email }} ]]; then
+      log_ok "Generated identity email matches the rendered input."
     else
       log_err "Generated identity binding mismatch."
       log_guide "mise run generate:identity"
       HAS_ERROR=1
     fi
+    if [[ "$(read_value "$ID_CONF" user.name)" != {{ includeTemplate "posix_shell_quote.tmpl" .name }} ||
+          "$(read_value "$ID_CONF" user.signingkey)" != {{ includeTemplate "posix_shell_quote.tmpl" (printf "key::%s" .public_key) }} ]]; then
+      log_err "Generated name or signing key differs from the rendered input."
+      HAS_ERROR=1
+    fi
+    PUB_NAME={{ includeTemplate "posix_shell_quote.tmpl" (printf "id_%s_%s_%s.pub" .key_type .email .key_hash) }}
+    ID_PUB="$GIT_IDENTITIES_DIR/$PUB_NAME"
+    if [[ ! -f "$ID_PUB" ]] || ! cmp -s "$ID_PUB" <(printf '%s\n' {{ includeTemplate "posix_shell_quote.tmpl" .public_key }}); then
+      log_err "Required identity public key is missing or differs from the rendered input."
+      HAS_ERROR=1
+    fi
+    {{- range .routes }}
+    if [[ "$(read_value "$IDENTITY_DISPATCH" {{ includeTemplate "posix_shell_quote.tmpl" (printf "includeIf.gitdir/i:%s/**.path" .) }})" != "$ID_CONF" ]]; then
+      log_err "Identity routing differs from the rendered input."
+      HAS_ERROR=1
+    fi
+    {{- end }}
+    CORE_SSH_COMMAND=$(read_value "$ID_CONF" core.sshCommand)
     {{- if $.is_wsl }}
-    CORE_SSH_COMMAND=$(git config -f "$ID_CONF" core.sshCommand 2>/dev/null || echo "")
+    SSH_IDENTITY_OPTIONS={{ includeTemplate "posix_shell_quote.tmpl" (includeTemplate "ssh_identity_options.tmpl" $) }}
     case "$CORE_SSH_COMMAND" in
-    ssh.exe\ -i\ \'[A-Za-z]:\\*\'\ -o\ IdentitiesOnly=yes | ssh.exe\ -i\ \'\\\\*\'\ -o\ IdentitiesOnly=yes)
+    ssh.exe\ -i\ \'[A-Za-z]:\\*\'\ "$SSH_IDENTITY_OPTIONS" | ssh.exe\ -i\ \'\\\\*\'\ "$SSH_IDENTITY_OPTIONS")
       log_ok "WSL Git SSH command uses Windows OpenSSH with deterministic identity selection."
       ;;
     *)
@@ -53,6 +120,19 @@ if "$OP_BIN" account get >/dev/null 2>&1; then
       HAS_ERROR=1
       ;;
     esac
+    # No Windows process/path conversion in a local check. Verify the quoted
+    # basename; actual Windows directory mapping belongs to the explicit probe.
+    KEY_SUFFIX=$(shell_word "$PUB_NAME")
+    if [[ "$CORE_SSH_COMMAND" != *"\\${KEY_SUFFIX:1} $SSH_IDENTITY_OPTIONS" ]]; then
+      log_err "WSL SSH command does not reference the expected public key filename."
+      HAS_ERROR=1
+    fi
+    {{- else }}
+    EXPECTED_COMMAND="ssh -i $(shell_word "$ID_PUB") -o IdentitiesOnly=yes -o ControlPath=none"
+    if [[ "$CORE_SSH_COMMAND" != "$EXPECTED_COMMAND" ]]; then
+      log_err "SSH command does not reference the expected generated public key."
+      HAS_ERROR=1
+    fi
     {{- end }}
   else
     log_err "Generated scoped Git configuration is missing."
@@ -63,54 +143,5 @@ if "$OP_BIN" account get >/dev/null 2>&1; then
   {{- else }}
   log_warn "No identities mapped from 1Password schema."
   {{- end }}
-else
-  if [[ "$IS_CI" == "true" ]]; then
-    log_ok "Automation Mode: Sovereign Identity verification bypassed."
-  else
-    log_err "Sovereign Identity is locked or unreachable."
-    log_guide "Sign in to 1Password CLI, then rerun this check."
-    HAS_ERROR=1
-  fi
-fi
-
-{{ if .is_wsl }}
-echo "--- 3. WSL Win32 Auth Environment ---"
-WIN32_OP_BIOMETRIC_UNLOCK_ENABLED=$(powershell.exe -NoProfile -NonInteractive -Command '[Console]::Write($env:OP_BIOMETRIC_UNLOCK_ENABLED)' 2>/dev/null || true)
-if [[ "$WIN32_OP_BIOMETRIC_UNLOCK_ENABLED" == "true" ]]; then
-  log_ok "Win32 1Password biometric unlock flag propagated from WSL."
-else
-  log_err "Win32 1Password biometric unlock flag was not propagated from WSL."
-  HAS_ERROR=1
-fi
-
-WIN32_SSH_AUTH_SOCK=$(powershell.exe -NoProfile -NonInteractive -Command '[Console]::Write($env:SSH_AUTH_SOCK)' 2>/dev/null || true)
-if [[ "$WIN32_SSH_AUTH_SOCK" == '\\.\pipe\openssh-ssh-agent' ]]; then
-  log_ok "Win32 SSH_AUTH_SOCK targets the Windows OpenSSH agent pipe."
-else
-  log_err "Win32 SSH_AUTH_SOCK is not the Windows OpenSSH agent pipe."
-  HAS_ERROR=1
-fi
-
-echo "--- 4. SSH Agent & Cryptographic Trust ---"
-{{ else }}
-echo "--- 3. SSH Agent & Cryptographic Trust ---"
-{{ end }}
-if "$SSH_ADD_BIN" -l >/dev/null 2>&1; then
-  log_ok "SSH Agent is responsive and active."
-else
-  if [[ "$IS_CI" == "true" ]]; then
-    log_warn "SSH Agent unresponsive (expected in CI environment)."
-  else
-    log_err "SSH Agent is unresponsive."
-    {{ if .is_wsl }}
-    log_guide "Run 'mise run check:wsl-openssh' for the focused Windows OpenSSH preflight."
-    log_guide "Then rerun 'mise run doctor'."
-    {{ else }}
-    log_guide "Verify the 'SSH Agent' setting in 1Password Desktop App."
-    log_guide "Then rerun 'mise run doctor'."
-    {{ end }}
-    HAS_ERROR=1
-  fi
-fi
-
+log_warn "Authentication and agent availability are not checked; use dotfiles-diagnose --probe identity."
 exit "$HAS_ERROR"

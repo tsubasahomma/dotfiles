@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
-# [MISE] description="Verify mise availability, usage completions, and PATH precedence"
+# [MISE] description="Verify mise binary version, configuration presence, and PATH precedence"
 # [MISE] hide=true
 {{/* [Reference]: https://mise.jdx.dev/tasks/file-tasks.html */}}{{ "" -}}
 
 set -euo pipefail
+{{ includeTemplate "diagnostic_shell.tmpl" . }}
 
 GREEN='\033[0;32m'
 RED='\033[0;31m'
@@ -17,23 +18,37 @@ log_err() { printf "  ${RED}❌ %s${NC}\n" "$1"; }
 log_guide() { printf "  ${BLUE}👉 %s${NC}\n" "$1"; }
 
 IS_CI="${CI:-false}"
-HOME_DIR="{{ .paths.home }}"
-SOURCE_DIR="{{ .chezmoi.sourceDir }}"
-RENDERED_MISE_BIN="{{ .paths.mise }}"
-MISE_CONFIG_FILE="$HOME_DIR/.config/mise/config.toml"
+HOME_DIR={{ includeTemplate "posix_shell_quote.tmpl" .paths.home }}
+SOURCE_DIR={{ includeTemplate "posix_shell_quote.tmpl" .chezmoi.sourceDir }}
+RENDERED_MISE_BIN={{ includeTemplate "posix_shell_quote.tmpl" .paths.mise }}
+MISE_CONFIG_FILE={{ includeTemplate "posix_shell_quote.tmpl" (joinPath .paths.xdg_config "mise/config.toml") }}
 MISE_VERSION_FILE="$SOURCE_DIR/.mise-version"
 EXPECTED_MISE_BIN="$HOME_DIR/.local/bin/mise"
 EXPECTED_MISE_VERSION=""
 HAS_ERROR=0
-TMP_FILES=()
-
-# shellcheck disable=SC2329
-cleanup_tmp_files() {
-  if [[ "${#TMP_FILES[@]}" -gt 0 ]]; then
-    rm -f "${TMP_FILES[@]}"
-  fi
-}
-trap cleanup_tmp_files EXIT
+# Even --version enters mise startup (migration, pruning and latest-version lookup).
+# Run only this query in disposable state, without caller config or env overrides.
+# This is isolation by directory/settings, not a sandbox for an untrusted binary.
+query_mise_version() (
+  version_tmp=$(mktemp -d "${TMPDIR:-/tmp}/dotfiles-mise-version.XXXXXXXX") || exit 1
+  trap 'rm -rf -- "$version_tmp"' EXIT
+  trap 'exit 130' INT
+  trap 'exit 143' TERM
+  CDPATH= cd -P -- "$version_tmp" || exit 1
+  # mise compares cwd/ceiling paths literally, including through TMPDIR symlinks.
+  version_tmp="$PWD"
+  /usr/bin/env -i PATH=/usr/bin:/bin LC_ALL=C HOME="$version_tmp" TMPDIR="$version_tmp" \
+    XDG_CONFIG_HOME="$version_tmp/config" XDG_DATA_HOME="$version_tmp/data" \
+    XDG_CACHE_HOME="$version_tmp/cache" XDG_STATE_HOME="$version_tmp/state" \
+    MISE_CONFIG_DIR="$version_tmp/config/mise" MISE_DATA_DIR="$version_tmp/data/mise" \
+    MISE_CACHE_DIR="$version_tmp/cache/mise" MISE_STATE_DIR="$version_tmp/state/mise" \
+    MISE_SYSTEM_CONFIG_DIR="$version_tmp/system" MISE_SYSTEM_DATA_DIR="$version_tmp/system-data" \
+    MISE_CEILING_PATHS="$version_tmp" \
+    MISE_NO_CONFIG=true MISE_NO_ENV=true MISE_NO_HOOKS=true \
+    MISE_AUTO_INSTALL=false MISE_TASK_RUN_AUTO_INSTALL=false MISE_NOT_FOUND_AUTO_INSTALL=false \
+    MISE_CACHE_PRUNE_AGE=0s MISE_OFFLINE=true CI=true \
+    "$EXPECTED_MISE_BIN" --version
+)
 
 read_expected_mise_version() {
   if [[ ! -f "$MISE_VERSION_FILE" ]]; then
@@ -54,65 +69,6 @@ read_expected_mise_version() {
   fi
 }
 
-check_mise_usage_completion_contract() {
-  local usage_bin usage_install_dir usage_spec_file usage_stdout_file usage_stderr_file completion_rc spec_min_usage usage_version_output
-
-  if ! usage_install_dir="$("$EXPECTED_MISE_BIN" where aqua:jdx/usage 2>&1)"; then
-    log_err "Managed usage CLI is unavailable."
-    log_guide "Run chezmoi apply so mise installs the aqua:jdx/usage tool declared in 10-tools.toml."
-    printf "    %s\n" "$usage_install_dir"
-    HAS_ERROR=1
-    return
-  fi
-
-  usage_bin="$usage_install_dir/usage"
-  if [[ ! -x "$usage_bin" ]]; then
-    log_err "Managed usage executable is missing at $usage_bin."
-    log_guide "Run chezmoi apply so mise installs the aqua:jdx/usage tool declared in 10-tools.toml."
-    HAS_ERROR=1
-    return
-  fi
-
-  usage_version_output="$("$usage_bin" --version 2>&1)"
-  printf "  Managed usage version: %s\n" "$usage_version_output"
-
-  usage_spec_file="$(mktemp)"
-  usage_stdout_file="$(mktemp)"
-  usage_stderr_file="$(mktemp)"
-  TMP_FILES+=("$usage_spec_file" "$usage_stdout_file" "$usage_stderr_file")
-
-  if ! "$EXPECTED_MISE_BIN" usage >"$usage_spec_file" 2>"$usage_stderr_file"; then
-    log_err "Hermetic mise could not emit its usage spec."
-    sed 's/^/    /' "$usage_stderr_file"
-    HAS_ERROR=1
-    return
-  fi
-
-  spec_min_usage="$(awk '/^min_usage_version / { gsub(/"/, "", $2); print $2; exit }' "$usage_spec_file")"
-  printf "  Mise usage spec minimum usage version: %s\n" "${spec_min_usage:-<unspecified>}"
-
-  completion_rc=0
-  "$usage_bin" complete-word --shell zsh -f "$usage_spec_file" -- mise run \
-    >"$usage_stdout_file" 2>"$usage_stderr_file" || completion_rc=$?
-
-  if [[ "$completion_rc" -ne 0 ]]; then
-    log_err "Managed usage could not complete the mise usage spec."
-    sed 's/^/    /' "$usage_stderr_file"
-    HAS_ERROR=1
-    return
-  fi
-
-  if [[ -s "$usage_stderr_file" ]] || grep -Eq '^\[WARN[[:space:]]+usage::spec\]' "$usage_stdout_file"; then
-    log_err "Managed usage emitted diagnostics while completing the mise usage spec."
-    sed 's/^/    /' "$usage_stderr_file"
-    log_guide "Update aqua:jdx/usage in 10-tools.toml to satisfy the min_usage_version emitted by mise usage."
-    HAS_ERROR=1
-    return
-  fi
-
-  log_ok "Managed usage can complete the mise usage spec without diagnostics."
-}
-
 echo "--- 6. Toolchain Drift Analysis ---"
 read_expected_mise_version
 
@@ -129,7 +85,7 @@ else
   HAS_ERROR=1
 fi
 
-if [[ -f "$MISE_CONFIG_FILE" ]]; then
+if [[ -f "$MISE_CONFIG_FILE" && -s "$MISE_CONFIG_FILE" && -r "$MISE_CONFIG_FILE" ]]; then
   if grep -Eq '^[[:space:]]*credential_command[[:space:]]*=' "$MISE_CONFIG_FILE"; then
     log_err "Global mise config defines a GitHub credential command."
     log_guide "Keep promptful GitHub auth scoped to post-apply install via MISE_GITHUB_CREDENTIAL_COMMAND."
@@ -138,7 +94,8 @@ if [[ -f "$MISE_CONFIG_FILE" ]]; then
     log_ok "Global mise config does not define a promptful GitHub credential command."
   fi
 else
-  log_warn "Rendered mise config is missing; run chezmoi apply before relying on shell activation behavior."
+  log_err "Required rendered mise config is missing, empty or unreadable."
+  HAS_ERROR=1
 fi
 
 if [[ -n "${MISE_GITHUB_CREDENTIAL_COMMAND:-}" ]]; then
@@ -147,24 +104,25 @@ if [[ -n "${MISE_GITHUB_CREDENTIAL_COMMAND:-}" ]]; then
 fi
 
 if [[ -x "$EXPECTED_MISE_BIN" ]]; then
-  actual_mise_output="$("$EXPECTED_MISE_BIN" --version 2>&1 || true)"
+  version_status=0
+  actual_mise_output="$(query_mise_version 2>&1)" || version_status=$?
   actual_mise_version="$(printf '%s\n' "$actual_mise_output" | awk 'NR == 1 { print $1 }')"
   printf "  Actual hermetic mise path: %s\n" "$EXPECTED_MISE_BIN"
   printf "  Actual hermetic mise version: %s\n" "${actual_mise_version:-<unavailable>}"
 
-  if [[ -n "$EXPECTED_MISE_VERSION" && "$actual_mise_version" == "$EXPECTED_MISE_VERSION" ]]; then
+  if [[ "$version_status" -eq 0 && -n "$EXPECTED_MISE_VERSION" && "$actual_mise_version" == "$EXPECTED_MISE_VERSION" ]]; then
     log_ok "Hermetic mise binary matches the declared version."
   else
-    log_err "Hermetic mise version mismatch."
-    log_guide "Run chezmoi apply so .bootstrap-mise.sh repairs $EXPECTED_MISE_BIN."
+    log_err "Hermetic mise version command failed or the version mismatched."
+    log_guide "Inspect the owner and version of $EXPECTED_MISE_BIN; adopt the version in .mise-version or arrange an explicit replacement. Apply does not replace mise."
     HAS_ERROR=1
   fi
 
-  check_mise_usage_completion_contract
+  log_warn "Usage completion execution is not checked; use dotfiles-diagnose --probe toolchain."
 else
   printf "  Actual hermetic mise version: <missing>\n"
   log_err "Hermetic mise executable missing at $EXPECTED_MISE_BIN."
-  log_guide "Run chezmoi apply so .bootstrap-mise.sh installs $EXPECTED_MISE_BIN."
+  log_guide "If absent, run sh \"$SOURCE_DIR/.bootstrap-mise.sh\" --install. If present but unusable, inspect its owner/type/mode and repair it explicitly."
   HAS_ERROR=1
 fi
 

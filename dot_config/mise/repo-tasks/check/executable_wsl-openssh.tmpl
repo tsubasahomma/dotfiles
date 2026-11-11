@@ -8,10 +8,20 @@
 {{/* [Reference]: https://wezterm.org/config/lua/config/mux_env_remove.html */}}{{ "" -}}
 
 set -euo pipefail
+{{ includeTemplate "diagnostic_shell.tmpl" . }}
+if [[ "{{ .is_wsl }}" != true ]]; then
+  printf '[N/A] Windows OpenSSH probe applies only to WSL.\n'
+  exit 0
+fi
+if [[ "${1:-}" != --probe || $# -ne 1 ]]; then
+  printf '[NOT RUN] Explicit authentication/network probe: dotfiles-diagnose --probe wsl-openssh\n'
+  exit 2
+fi
 
-IS_WSL="{{ .is_wsl }}"
-GIT_IDENTITIES_DIR="{{ .paths.xdg_config }}/git/identities"
-ALLOWED_SIGNERS="{{ .paths.xdg_config }}/git/allowed_signers"
+IDENTITY_ENTRY={{ includeTemplate "posix_shell_quote.tmpl" (joinPath .paths.xdg_config "git/identity.inc") }}
+IDENTITY_DISPATCH=$(git config --file "$IDENTITY_ENTRY" --get include.path 2>/dev/null || true)
+GIT_IDENTITIES_DIR="${IDENTITY_DISPATCH%/*}"
+ALLOWED_SIGNERS=$(git config --file "${IDENTITY_DISPATCH:-/dev/null}" --get gpg.ssh.allowedSignersFile 2>/dev/null || true)
 EXPECTED_WIN32_SSH_AUTH_SOCK='\\.\pipe\openssh-ssh-agent'
 AUTH_TARGET="${DOTFILES_WSL_OPENSSH_AUTH_TARGET:-git@github.com:tsubasahomma/dotfiles.git}"
 HAS_ERROR=0
@@ -216,8 +226,9 @@ check_generated_identity_state() {
   fi
 
   core_ssh_command="$(git config -f "$identity_config" core.sshCommand 2>/dev/null || true)"
+  local ssh_identity_options={{ includeTemplate "posix_shell_quote.tmpl" (includeTemplate "ssh_identity_options.tmpl" .) }}
   case "$core_ssh_command" in
-  ssh.exe\ -i\ \'[A-Za-z]:\\*\'\ -o\ IdentitiesOnly=yes | ssh.exe\ -i\ \'\\\\*\'\ -o\ IdentitiesOnly=yes)
+  ssh.exe\ -i\ \'[A-Za-z]:\\*\'\ "$ssh_identity_options" | ssh.exe\ -i\ \'\\\\*\'\ "$ssh_identity_options")
     log_ok "Generated core.sshCommand uses Windows OpenSSH and deterministic identity selection."
     ;;
   "")
@@ -271,7 +282,7 @@ check_git_signing() {
   email="$(git config -f "$identity_config" user.email 2>/dev/null || true)"
   signing_key="$(git config -f "$identity_config" user.signingkey 2>/dev/null || true)"
   signer="$(git config --global --get gpg.ssh.program 2>/dev/null || true)"
-  allowed_signers="$(git config --global --get gpg.ssh.allowedSignersFile 2>/dev/null || true)"
+  allowed_signers="$ALLOWED_SIGNERS"
 
   if [[ -z "$name" || -z "$email" || -z "$signing_key" ]]; then
     record_error "Generated Git signing identity fields are incomplete."
@@ -294,7 +305,8 @@ check_git_signing() {
   TMP_DIR="$(mktemp -d)"
   output_file="$(mktemp)"
 
-  git -C "$TMP_DIR" init -q
+  git -c init.templateDir= -C "$TMP_DIR" init -q
+  git -C "$TMP_DIR" config core.hooksPath /dev/null
   git -C "$TMP_DIR" config user.name "$name"
   git -C "$TMP_DIR" config user.email "$email"
   git -C "$TMP_DIR" config user.signingkey "$signing_key"
@@ -314,8 +326,8 @@ check_git_signing() {
     return 0
   fi
 
-  if git -C "$TMP_DIR" log --show-signature -1 >"$output_file" 2>&1 && grep -q 'Good "git" signature' "$output_file"; then
-    log_ok "git log --show-signature -1 verified the temporary signed commit."
+  if git -C "$TMP_DIR" -c gpg.minTrustLevel=fully verify-commit HEAD >"$output_file" 2>&1; then
+    log_ok "git verify-commit accepted the temporary commit against the configured allowed signers."
   else
     record_error "Git signing verification failed for the temporary signed commit."
     log_guide "Verify allowed signers generation and keep signature output redacted."
@@ -325,11 +337,6 @@ check_git_signing() {
 }
 
 echo "--- WSL Windows OpenSSH / 1Password preflight ---"
-
-if [[ "$IS_WSL" != "true" ]]; then
-  log_warn "check:wsl-openssh is WSL-only; skipped on this host."
-  exit 0
-fi
 
 check_wsl_interop
 check_windows_openssh

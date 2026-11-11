@@ -1,0 +1,20 @@
+# Diagnostics never invoke mise run/exec or execute a shim implicitly.
+# These variables are defense in depth; the direct entry bypasses task startup.
+export MISE_AUTO_INSTALL=false MISE_TASK_RUN_AUTO_INSTALL=false MISE_NOT_FOUND_AUTO_INSTALL=false
+HAS_ERROR=0
+log_ok() { printf '[OK] %s\n' "$1"; }
+log_warn() { printf '[WARN] %s\n' "$1"; }
+log_err() { printf '[FAIL] %s\n' "$1"; HAS_ERROR=1; }
+require_file() { [[ -f "$1" && -s "$1" ]] || log_err "Required file missing or empty: $1"; }
+# PATH must contain installed binaries. Shims and empty/relative PATH entries
+# are excluded; no activation/config evaluation is performed by this helper.
+diagnostic_path=""
+IFS=: read -r -a diagnostic_parts <<< "$PATH"
+for diagnostic_part in "${diagnostic_parts[@]}"; do
+  case "$diagnostic_part" in /*/shims|/*/shims/|""|[!/]*) continue ;; esac
+  diagnostic_path="${diagnostic_path:+$diagnostic_path:}$diagnostic_part"
+done
+export PATH="$diagnostic_path"
+require_command() {
+  command -v "$1" >/dev/null 2>&1 || log_err "Required executable unavailable on non-shim PATH: $1"
+}

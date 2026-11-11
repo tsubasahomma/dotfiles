@@ -1,70 +1,19 @@
 #!/usr/bin/env bash
-# [MISE] description="Verify Neovim lockfile and provider health"
+# [MISE] description="Compare Neovim lock bytes without starting Neovim"
 # [MISE] hide=true
-{{/* [Reference]: https://mise.jdx.dev/tasks/file-tasks.html */}}{{ "" -}}
-{{/* [Reference]: https://neovim.io/doc/user/provider.html#provider-python */}}{{ "" -}}
-{{/* [Reference]: https://neovim.io/doc/user/provider.html#provider-nodejs */}}{{ "" -}}
-
 set -euo pipefail
-
-GREEN='\033[0;32m'
-RED='\033[0;31m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m'
-
-log_ok() { printf "  ${GREEN}✅ %s${NC}\n" "$1"; }
-log_warn() { printf "  ${YELLOW}⚠️  %s${NC}\n" "$1"; }
-log_err() { printf "  ${RED}❌ %s${NC}\n" "$1"; }
-log_guide() { printf "  ${BLUE}👉 %s${NC}\n" "$1"; }
-
-IS_CI="${CI:-false}"
-LOCK_FILE="{{ .paths.xdg_config }}/nvim/lazy-lock.json"
-MISE_BIN="{{ .paths.mise }}"
-HAS_ERROR=0
-
-echo "--- 4. Neovim Deterministic State ---"
-if [[ -f "$LOCK_FILE" ]]; then
-  if chezmoi verify "$LOCK_FILE" >/dev/null 2>&1; then
-    log_ok "Neovim lockfile (lazy-lock.json) is synchronized."
+{{ includeTemplate "diagnostic_shell.tmpl" . }}
+LOCK_FILE={{ includeTemplate "posix_shell_quote.tmpl" (joinPath .paths.xdg_config "nvim/lazy-lock.json") }}
+SOURCE_LOCK={{ includeTemplate "posix_shell_quote.tmpl" (joinPath .chezmoi.sourceDir "dot_config/nvim/lazy-lock.json") }}
+require_file "$LOCK_FILE"
+require_file "$SOURCE_LOCK"
+if [[ "$HAS_ERROR" -eq 0 ]]; then
+  if cmp -s "$SOURCE_LOCK" "$LOCK_FILE"; then
+    log_ok "Neovim lock bytes match the current source file."
   else
-    log_warn "Neovim lockfile drift detected. Ensure you run 'mise run update:lazy-lock' to commit changes."
-    if [[ "$IS_CI" != "true" ]]; then HAS_ERROR=1; fi
+    log_err "Neovim lock drift detected (also a failure in CI)."
   fi
-else
-  log_err "Neovim lockfile is missing."
-  log_guide "mise run repair:nvim && chezmoi add $LOCK_FILE"
-  HAS_ERROR=1
 fi
-
-if command -v nvim >/dev/null 2>&1; then
-  if nvim --headless +"lua if vim.fn.has('python3') == 1 then print('PYTHON_PROVIDER_OK') end" +qa 2>&1 | grep -q "PYTHON_PROVIDER_OK"; then
-    log_ok "Python Provider is natively recognized and functional in Neovim."
-  else
-    log_err "Python Provider is dysfunctional or not recognized by Neovim."
-    log_guide "Ensure 'pipx:neovim/pynvim' is declared in dot_config/mise/conf.d/10-tools.toml and run 'mise install'."
-    HAS_ERROR=1
-  fi
-
-  NODE_HOST="$("$MISE_BIN" which neovim-node-host 2>/dev/null || true)"
-
-  if [[ -n "$NODE_HOST" && -x "$NODE_HOST" ]]; then
-    log_ok "Node.js Provider host executable resolved via mise ($NODE_HOST)."
-  else
-    log_err "Node.js Provider host executable could not be resolved via mise."
-    log_guide "Ensure 'npm:neovim' is declared in dot_config/mise/conf.d/10-tools.toml and run 'mise install'."
-    HAS_ERROR=1
-  fi
-
-  if [[ -n "$NODE_HOST" ]] && "$NODE_HOST" --version >/dev/null 2>&1; then
-    log_ok "Node.js Provider host executable runs successfully."
-  else
-    log_err "Node.js Provider host executable failed to run."
-    log_guide "Run '\"$NODE_HOST\" --version' and inspect the error."
-    HAS_ERROR=1
-  fi
-else
-  log_warn "Neovim executable not found in PATH. Skipping provider verification."
-fi
-
+require_command nvim
+log_warn "Provider execution and installed plugin revisions are not checked; use dotfiles-diagnose --probe nvim for isolated provider discovery."
 exit "$HAS_ERROR"

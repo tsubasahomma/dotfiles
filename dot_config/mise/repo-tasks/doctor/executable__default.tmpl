@@ -1,46 +1,14 @@
 #!/usr/bin/env bash
-# [MISE] description="System Health Check Orchestrator"
-{{/* [Reference]: https://mise.jdx.dev/tasks/file-tasks.html */}}{{ "" -}}
-
+# [MISE] description="Inspect selected local assets; no authentication or application startup"
 set -euo pipefail
-
-GREEN='\033[0;32m'
-RED='\033[0;31m'
-NC='\033[0m'
-
-IS_CI="${CI:-false}"
-MISE_BIN="{{ .paths.mise }}"
-HAS_ERROR=0
-
-tasks=(
-  "check:security"
-  "check:identity"
-  "check:nvim"
-  "check:vale"
-  "check:toolchain"
-)
-
-if [[ "$IS_CI" != "true" ]]; then
-  tasks+=(
-    "check:npm-backend"
-    "check:hubspot"
-    "check:completion"
-  )
-else
-  printf "⚠️  Skipping workstation-only HubSpot CLI diagnostics in CI.\n"
-fi
-
-for task in "${tasks[@]}"; do
-  if ! "$MISE_BIN" run "$task"; then
-    HAS_ERROR=1
-  fi
+{{ includeTemplate "diagnostic_shell.tmpl" . }}
+TASK_DIR={{ includeTemplate "posix_shell_quote.tmpl" (joinPath .paths.xdg_config "mise/repo-tasks") }}
+for task in security identity nvim vale toolchain npm-backend hubspot completion; do
+  if ! /bin/bash "$TASK_DIR/check/$task"; then HAS_ERROR=1; fi
 done
-
-printf "\n"
 if [[ "$HAS_ERROR" -eq 0 ]]; then
-  printf "${GREEN}✨ System Health Evaluation Complete (Zero Drift)${NC}\n"
-  exit 0
+  log_ok "Selected local checks passed; warnings and untested runtime/authentication behavior remain."
 else
-  printf "${RED}❌ System Health Evaluation Failed. Address the errors above.${NC}\n"
-  exit 1
+  log_err "Selected local checks failed. No repair was attempted."
 fi
+exit "$HAS_ERROR"

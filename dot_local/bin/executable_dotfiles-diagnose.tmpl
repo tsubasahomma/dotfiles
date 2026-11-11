@@ -1,0 +1,18 @@
+#!/bin/bash
+# Direct diagnostic entry: intentionally bypasses mise task startup/config evaluation.
+set -euo pipefail
+{{ includeTemplate "diagnostic_shell.tmpl" . }}
+TASK_DIR={{ includeTemplate "posix_shell_quote.tmpl" (joinPath .paths.xdg_config "mise/repo-tasks") }}
+case "${1:-doctor}" in
+  doctor) [[ $# -le 1 ]] || exit 2; exec /bin/bash "$TASK_DIR/doctor/_default" ;;
+  check:security|check:identity|check:nvim|check:vale|check:toolchain|check:npm-backend|check:hubspot|check:completion|check:wsl-openssh)
+    [[ $# -eq 1 ]] || exit 2; exec /bin/bash "$TASK_DIR/check/${1#check:}" ;;
+  --probe)
+    [[ $# -eq 2 ]] || exit 2
+    case "$2" in
+      wsl-openssh) exec /bin/bash "$TASK_DIR/check/wsl-openssh" --probe ;;
+      identity|nvim|toolchain|hubspot|completion|vale) exec /bin/bash "$TASK_DIR/probe/$2" ;;
+      *) printf '[FAIL] Unknown probe\n' >&2; exit 2 ;;
+    esac ;;
+  *) printf 'Usage: dotfiles-diagnose [doctor|check:NAME|--probe NAME]\n' >&2; exit 2 ;;
+esac

@@ -4,6 +4,7 @@
 {{/* [Reference]: https://mise.jdx.dev/tasks/file-tasks.html */}}{{ "" -}}
 
 set -euo pipefail
+{{ includeTemplate "diagnostic_shell.tmpl" . }}
 
 GREEN='\033[0;32m'
 RED='\033[0;31m'
@@ -16,7 +17,7 @@ log_warn() { printf "  ${YELLOW}⚠️  %s${NC}\n" "$1"; }
 log_err() { printf "  ${RED}❌ %s${NC}\n" "$1"; }
 log_guide() { printf "  ${BLUE}👉 %s${NC}\n" "$1"; }
 
-HOME_DIR="{{ .paths.home }}"
+HOME_DIR={{ includeTemplate "posix_shell_quote.tmpl" .paths.home }}
 HAS_ERROR=0
 
 dir_mode() {
@@ -33,7 +34,7 @@ dir_mode() {
 }
 
 echo "--- 1. Infrastructure Security & Permissions ---"
-for dir in "$HOME_DIR/.ssh" "{{ .paths.xdg_state }}/ssh"; do
+for dir in "$HOME_DIR/.ssh" {{ includeTemplate "posix_shell_quote.tmpl" (joinPath .paths.xdg_state "ssh") }}; do
   if [[ -d "$dir" ]]; then
     if mode="$(dir_mode "$dir")"; then
       if [[ "$mode" == "700" ]]; then
@@ -45,11 +46,12 @@ for dir in "$HOME_DIR/.ssh" "{{ .paths.xdg_state }}/ssh"; do
       fi
     else
       log_err "Permission mode could not be inspected for $dir."
-      log_guide "Inspect the directory permissions manually, then rerun 'mise run doctor'."
+      log_guide "Inspect the directory permissions manually, then rerun 'dotfiles-diagnose'."
       HAS_ERROR=1
     fi
   else
-    log_warn "Directory not present; skipping permission check for $dir."
+    log_err "Required directory is missing: $dir."
+    HAS_ERROR=1
   fi
 done
 

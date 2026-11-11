@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# [MISE] description="Execute the installed HubSpot CLI version command"
+# [MISE] hide=true
+set -euo pipefail
+{{ includeTemplate "diagnostic_shell.tmpl" . }}
+require_command hs
+[[ "$HAS_ERROR" -eq 0 ]] || exit "$HAS_ERROR"
+if hs --version >/dev/null 2>&1; then
+  log_ok "HubSpot CLI version command succeeded on the current non-shim PATH."
+else
+  log_err "HubSpot CLI version command failed."
+fi
+exit "$HAS_ERROR"

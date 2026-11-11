@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+# [MISE] description="Explicit 1Password and SSH agent authentication probe"
+# [MISE] hide=true
+set -euo pipefail
+{{ includeTemplate "diagnostic_shell.tmpl" . }}
+CHECK={{ includeTemplate "posix_shell_quote.tmpl" (joinPath .paths.xdg_config "mise/repo-tasks/check/identity") }}
+if ! /bin/bash "$CHECK"; then HAS_ERROR=1; fi
+OP_BIN={{ includeTemplate "posix_shell_quote.tmpl" .paths.op }}
+if "$OP_BIN" account get >/dev/null 2>&1; then
+  log_ok "1Password account probe succeeded."
+else
+  log_err "1Password account probe failed; sign in explicitly before retrying."
+fi
+{{ if .is_wsl -}}
+SSH_ADD_BIN=ssh-add.exe
+WIN32_UNLOCK=$(powershell.exe -NoProfile -NonInteractive -Command '[Console]::Write($env:OP_BIOMETRIC_UNLOCK_ENABLED)' 2>/dev/null || true)
+[[ "$WIN32_UNLOCK" == true ]] || log_err "Win32 biometric unlock flag was not propagated."
+WIN32_SOCK=$(powershell.exe -NoProfile -NonInteractive -Command '[Console]::Write($env:SSH_AUTH_SOCK)' 2>/dev/null || true)
+[[ "$WIN32_SOCK" == '\\.\pipe\openssh-ssh-agent' ]] || log_err "Win32 agent pipe environment mismatch."
+{{ else -}}
+SSH_ADD_BIN=ssh-add
+{{ end -}}
+if "$SSH_ADD_BIN" -l >/dev/null 2>&1; then
+  log_ok "SSH agent listed keys. Key identity and remote authentication are not verified."
+else
+  log_err "SSH agent unavailable; inspect the agent configuration before retrying."
+fi
+exit "$HAS_ERROR"
