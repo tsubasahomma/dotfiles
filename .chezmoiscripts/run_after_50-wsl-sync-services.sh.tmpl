@@ -1,0 +1,11 @@
+{{- if .is_wsl -}}
+#!/usr/bin/env bash
+# Every apply checks only the two Windows settings after target placement.
+set -euo pipefail
+if [[ "${CI:-false}" == "true" ]]; then
+  echo "[N/A] Windows settings sync in CI."
+  exit 0
+fi
+/bin/bash {{ template "posix_shell_quote.tmpl" (joinPath .paths.xdg_config "mise/repo-tasks/sync/1password-agent") }}
+/bin/bash {{ template "posix_shell_quote.tmpl" (joinPath .paths.xdg_config "mise/repo-tasks/sync/wezterm") }}
+{{- end }}
