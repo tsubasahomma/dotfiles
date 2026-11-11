@@ -201,4 +201,5 @@ sourceDir = {{ .chezmoi.sourceDir | quote }}
     command = "nvim"
 
 [hooks.read-source-state.pre]
-    command = "{{ .chezmoi.sourceDir }}/.bootstrap-mise.sh"
+    command = {{ joinPath .chezmoi.sourceDir ".bootstrap-mise.sh" | quote }}
+    args = ["--check"]
