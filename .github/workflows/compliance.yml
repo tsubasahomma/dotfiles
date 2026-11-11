@@ -1,6 +1,5 @@
-# Chezmoi state validation stays separate from mise runtime integration.
-# [Reference]: https://mise.jdx.dev/continuous-integration.html
-# This workflow applies chezmoi first, then runs mise-managed integration checks.
+# Fixture checks have their own tool setup and never depend on workstation apply.
+# Network/package integration is a separate job; one apply is not idempotency proof.
 name: compliance
 
 on:
@@ -60,8 +59,75 @@ jobs:
           npx --yes --package "renovate@${RENOVATE_VERSION}" -- renovate-config-validator --version
           npx --yes --package "renovate@${RENOVATE_VERSION}" -- renovate-config-validator --strict
 
-  convergence:
-    name: Convergence & Idempotency Proof
+  isolated:
+    name: Isolated ${{ matrix.suite }} (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, macos-14]
+        suite: [render, regression]
+    runs-on: ${{ matrix.os }}
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+
+      - name: Prepare Explicit Fixture Tool Manifest
+        id: fixture-tools
+        shell: bash
+        run: |
+          python3 - <<'PYTHON'
+          import os, pathlib, re
+          root = pathlib.Path(os.environ['GITHUB_WORKSPACE'])
+          directory = pathlib.Path(os.environ['RUNNER_TEMP']) / 'fixture-tools'
+          directory.mkdir()
+          version = (root / '.mise-version').read_text().strip()
+          assert re.fullmatch(r'[0-9]+\.[0-9]+\.[0-9]+', version), 'invalid mise pin'
+          # Only these three declared runtimes: no global config, tasks or init/apply.
+          sources = [(root / '.mise.toml', '"aqua:twpayne/chezmoi"'),
+                     (root / 'dot_config/mise/conf.d/10-tools.toml', 'python'),
+                     (root / 'dot_config/mise/conf.d/10-tools.toml', '"aqua:neovim/neovim"')]
+          lines = ['[tools]']
+          for path, key in sources:
+              matches = re.findall(r'^' + re.escape(key) + r' = "([0-9.]+)"$', path.read_text(), re.M)
+              assert len(matches) == 1, 'missing/ambiguous tool pin: ' + key
+              lines.append(key + ' = "' + matches[0] + '"')
+          (directory / '.mise.toml').write_text('\n'.join(lines) + '\n')
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
+              output.write('directory=' + str(directory) + '\nversion=' + version + '\n')
+          PYTHON
+
+      - name: Install Fixture Tools (Network Setup Only)
+        env:
+          MISE_TRUSTED_CONFIG_PATHS: ${{ steps.fixture-tools.outputs.directory }}
+        # Pinned action supports working_directory and install; no production bootstrap.
+        # https://github.com/jdx/mise-action/blob/dba19683ed58901619b14f395a24841710cb4925/action.yml
+        uses: jdx/mise-action@dba19683ed58901619b14f395a24841710cb4925 # v4
+        with:
+          version: ${{ steps.fixture-tools.outputs.version }}
+          working_directory: ${{ steps.fixture-tools.outputs.directory }}
+          install: true
+          cache: true
+          add_shims_to_path: false
+          cache_key: fixture-v1-${{ runner.os }}-${{ runner.arch }}-${{ matrix.os }}-${{ hashFiles('.mise-version', '.mise.toml', 'dot_config/mise/conf.d/10-tools.toml') }}
+
+      - name: Install Fixture System Utilities (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends zsh git openssh-client
+
+      - name: Run ${{ matrix.suite }} Checks Without Authentication
+        # The Python entry strips ambient credentials/settings and makes a temporary
+        # HOME/XDG. Missing prerequisites and skipped tests fail, never pass silently.
+        env:
+          CHECK_SUITE: ${{ matrix.suite }}
+        run: python3 tests/run_checks.py "$CHECK_SUITE"
+
+  integration:
+    name: Network Integration - One Apply and Selected Diagnostics (${{ matrix.os }})
+    needs: isolated
     strategy:
       fail-fast: false
       matrix:
@@ -98,36 +164,6 @@ jobs:
           printf 'Resolved mise bootstrap version: %s\n' "$mise_version"
           printf 'version=%s\n' "$mise_version" >> "$GITHUB_OUTPUT"
 
-      - name: Prove Bootstrap Repairs Stale Mise
-        shell: bash
-        env:
-          MISE_VERSION: ${{ steps.mise_version.outputs.version }}
-        run: |
-          tmp_home="$(mktemp -d)"
-          trap 'rm -rf "$tmp_home"' EXIT
-
-          mkdir -p "$tmp_home/.local/bin"
-          cat > "$tmp_home/.local/bin/mise" <<'STALE_MISE'
-          #!/bin/sh
-          echo "0.0.0 stale"
-          STALE_MISE
-          chmod +x "$tmp_home/.local/bin/mise"
-
-          before_version="$("$tmp_home/.local/bin/mise" --version | awk 'NR == 1 { print $1 }')"
-          if [[ "$before_version" == "$MISE_VERSION" ]]; then
-            echo "::error::Stale mise fixture unexpectedly matches the desired version."
-            exit 1
-          fi
-
-          HOME="$tmp_home" ./.bootstrap-mise.sh
-
-          repaired_version="$("$tmp_home/.local/bin/mise" --version | awk 'NR == 1 { print $1 }')"
-          if [[ "$repaired_version" != "$MISE_VERSION" ]]; then
-            echo "::error::Bootstrap did not repair stale hermetic mise: expected $MISE_VERSION, got ${repaired_version:-unavailable}."
-            "$tmp_home/.local/bin/mise" --version || true
-            exit 1
-          fi
-
       - name: Bootstrap Tier 0 Tools (mise)
         uses: jdx/mise-action@dba19683ed58901619b14f395a24841710cb4925 # v4
         with:
@@ -140,7 +176,7 @@ jobs:
         env:
           MISE_VERSION: ${{ steps.mise_version.outputs.version }}
         run: |
-          ./.bootstrap-mise.sh
+          ./.bootstrap-mise.sh --install
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
           hermetic_mise="$HOME/.local/bin/mise"
@@ -198,7 +234,7 @@ jobs:
           tool_count="$(find "$CACHE_PATH" -mindepth 1 -maxdepth 1 -type d 2> /dev/null | wc -l | tr -d '[:space:]')"
           printf 'Post-apply mise installs cache path top-level entries: %s\n' "${tool_count:-0}"
 
-      - name: Phase 1 - Provisioning (Static Apply)
+      - name: Phase 1 - CI Provisioning (One Apply, Network and Installs)
         run: |
           chezmoi init --source="$GITHUB_WORKSPACE" --apply
 
@@ -233,24 +269,30 @@ jobs:
             exit 1
           fi
 
-      - name: Phase 2 - Idempotency Proof (Static Convergence)
+      - name: Phase 2 - Verify Managed Targets After One Apply
         run: |
-          # Verify that the applied chezmoi state remains byte-for-byte converged.
+          # Check managed targets after one apply; no reapply or deletion/recovery test.
           if ! chezmoi verify; then
-            echo "❌ [Idempotency Failure] State drift detected."
+            echo "❌ [Verify Failure] Managed target drift detected."
             chezmoi status
             exit 1
           fi
-          echo "✅ [Convergence] Zero-drift confirmed."
+          echo "✅ Managed static targets passed chezmoi verify; generated state and runtime behavior are checked separately."
 
-      - name: Phase 3 - Application Integration (Dynamic Convergence)
+      - name: Phase 3 - Neovim Plugin Restore (Network)
         run: |
           "$HOME/.local/bin/mise" run repair:nvim
 
-      - name: Phase 4 - Final Health Check (Doctor)
-        if: always()
+      - name: Phase 4 - Selected Local Diagnostics
+        env:
+          # Set before mise starts: task-body exports cannot protect task startup.
+          MISE_AUTO_INSTALL: "false"
+          MISE_TASK_RUN_AUTO_INSTALL: "false"
+          MISE_NOT_FOUND_AUTO_INSTALL: "false"
         run: |
-          "$HOME/.local/bin/mise" run doctor
+          # Expose already-installed tool paths using the CI-managed configuration.
+          # The diagnostic entry itself neither activates mise nor installs tools.
+          "$HOME/.local/bin/mise" exec -- "$HOME/.local/bin/dotfiles-diagnose"
 
       - name: Save Post-Apply Mise Installs Cache
         if: ${{ success() && steps.post_apply_mise_installs_cache.outputs.cache-hit != 'true' }}

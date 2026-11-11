@@ -5,7 +5,7 @@ description: 文書の配置・読み分け・最小メタデータを変更す�
 status: draft
 generated:
   by: codex/gpt-6
-  at: "2026-11-11T06:48:33+00:00"
+  at: "2026-11-11T10:38:11+00:00"
 sources:
   - id: maintainer
     resource: "Maintainer direction in the repository OKF design conversation, 2026-11-11"
@@ -65,7 +65,7 @@ AGENTSから上の知識へ直接進めるようにし、全員にREADMEや全do
 
 operationsには現在のコードで実行できる手順と限界を書く。管理対象生成物の欠損復旧をapplyの成功条件へ含める案は、convergenceで扱う。採用判断と実装・検証の完了は別々に記す。
 
-AGENTSとREADMEに残した副作用の注意には具体的な根拠がある。現行コードはsource state読込前にmiseのbootstrapを起動し、その処理は宣言版との不一致でmiseを置き換え得る。chezmoiはdry-runでもhookを実行する。通常の確認コマンドだから安全とする判断を避けるため、この注意だけは入口にも置く。これは現状を維持すべきという決定ではない。[^repo-hook][^repo-bootstrap][^hooks]
+AGENTSとREADMEに残した副作用の注意には具体的な根拠がある。注意を導入した時点のコードはsource読込でmiseを宣言版へ置き換え得た。R01で読込検査と明示導入を分離したため、現在の入口もその契約と旧configの移行条件へ更新した。chezmoiはdry-runでもhookを実行し、external/cache等の別の副作用もあるので、通常の確認コマンドだから全面的に非変更とする判断は避ける。[^repo-hook][^repo-bootstrap][^hooks]
 
 利用者が報告した端末状態は、実機を確認した観測と区別する。提案を繰り返し記載しても採用済みにはしない。判断が変わったら本文・代案・実装予定を書き直し、古い版はGit履歴に残す。会話を追記し続ける台帳は作らない。
 

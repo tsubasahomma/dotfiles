@@ -5,20 +5,20 @@ description: macOSでbootstrap・apply・認証・GUI app・生成物を扱う�
 status: draft
 generated:
   by: codex/gpt-6
-  at: "2026-11-11T06:40:22+00:00"
+  at: "2026-11-11T14:59:16+00:00"
 sources:
   - id: config
-    resource: "https://github.com/tsubasahomma/dotfiles/blob/f4fe1fac3e0722b173b5291a06e98e1e066786f1/.chezmoi.toml.tmpl"
+    resource: "../../.chezmoi.toml.tmpl"
     title: "ホスト入力と1Password identity取得"
   - id: pbfile
     resource: "https://github.com/tsubasahomma/dotfiles/blob/f4fe1fac3e0722b173b5291a06e98e1e066786f1/dot_config/mise/repo-tasks/build/executable_pbfile.tmpl"
     title: "macOS Swift build"
   - id: wezterm-link
-    resource: "https://github.com/tsubasahomma/dotfiles/blob/f4fe1fac3e0722b173b5291a06e98e1e066786f1/dot_local/bin/symlink_wezterm.tmpl"
+    resource: "../../dot_local/bin/symlink_wezterm.tmpl"
     title: "macOS/WSLのWezTerm実体探索"
   - id: brew-script
-    resource: "https://github.com/tsubasahomma/dotfiles/blob/f4fe1fac3e0722b173b5291a06e98e1e066786f1/.chezmoiscripts/run_onchange_before_provision-macos-homebrew.sh.tmpl"
-    title: "Homebrewの導入・更新・bundle実行"
+    resource: "../../.chezmoiscripts/run_onchange_before_provision-macos-homebrew.sh.tmpl"
+    title: "Homebrew不足導入と前提検査"
   - id: order
     resource: "https://www.chezmoi.io/reference/application-order/"
     title: "chezmoi公式：target計算とbefore/afterの順序"
@@ -26,7 +26,7 @@ sources:
     resource: "https://developer.apple.com/documentation/xcode/installing-the-command-line-tools"
     title: "Apple公式：command-line tools"
   - id: packages
-    resource: "https://github.com/tsubasahomma/dotfiles/blob/f4fe1fac3e0722b173b5291a06e98e1e066786f1/.chezmoidata/packages.yaml"
+    resource: "../../.chezmoidata/packages.yaml"
     title: "OS別package宣言"
   - id: brewfile
     resource: "https://github.com/tsubasahomma/dotfiles/blob/f4fe1fac3e0722b173b5291a06e98e1e066786f1/dot_config/homebrew/Brewfile.tmpl"
@@ -34,6 +34,12 @@ sources:
   - id: brew
     resource: "https://docs.brew.sh/Brew-Bundle-and-Brewfile"
     title: "Homebrew公式：bundleの更新と版管理の限界"
+  - id: brew-man
+    resource: "https://docs.brew.sh/Manpage"
+    title: "Homebrew：no-upgradeとupdate/cleanup/dependentsの環境変数"
+  - id: brew-implementation
+    resource: "https://github.com/Homebrew/brew/tree/bc63375ac3a4d6debb1ceb441ae6e22854f0909a/Library/Homebrew/bundle"
+    title: "静的照合したHomebrew Bundle実装：brew/cask/installer/subcommand install"
   - id: docker-mac
     resource: "https://docs.docker.com/desktop/setup/install/mac-install/"
     title: "Docker公式：Macへの導入と起動"
@@ -49,27 +55,34 @@ macOSはこのrepoの対象環境である。以下は2026-11-11に読んだsour
 | 対象 | sourceが期待する状態 | sourceだけでは用意・保証しないこと |
 |---|---|---|
 | 1Password | 非CIのconfig生成時に`op`が使え、accountへ認証済み。署名helperとagentを利用 | appの初回設定、unlock、SSH agentの有効化、remoteへの鍵登録 |
-| 開発tool | `build:pbfile`が`xcrun -sdk macosx swiftc`でSwift sourceをbuildする | 適切なSDK/toolchainが利用可能か。Xcodeまたは対応するCommand Line ToolsはOS側の前提 |
+| 開発tool | `build:pbfile`がxcrunで選択compiler/SDKを解決し、Swift sourceをbuildする | 適切なSDK/toolchainが利用可能か。Xcodeまたは対応するCommand Line ToolsはOS側の前提 |
 | WezTerm | symlink先に`/Applications/WezTerm.app/Contents/MacOS/wezterm`を使う | 別場所へのapp導入を探索することやGUI起動の成功 |
-| Homebrew | before scriptがbrew導入・update・bundle installを担う | 一般のapplyに完全なversion固定や非更新性があること |
+| Homebrew | 本体とPATHは初回準備。before scriptは不足packageのbundle installを担う | 初回本体導入、完全なversion固定、依存変更まで含む非変更性 |
 
-1Passwordがpackage宣言にあることだけでは初回の認証前提を満たさない。chezmoiはtarget stateを計算してからbefore scriptを実行するため、config/template評価に必要なものを後段のpackage installだけで用意できるとは考えない。[^config][^pbfile][^wezterm-link][^brew-script][^order]
+Git・Python 3.9+・ssh-keygenは[初期tool準備](../operations.md#first-install)で先行させる。Python/Gitの不足はidentity beforeで停止するが、Homebrew不足の判定はその後なので、全前提を無変更で検査する構成ではない。WezTermのmacOS分岐は固定pathを返すだけで、WSLと異なり実体欠損をrender時に拒否しない。通常の非CI applyでは後段bundleの導入対象であり、render成功をapp存在・起動の証拠にしない。
+
+1Passwordがpackage宣言にあることだけでは初回の認証前提を満たさない。config生成はapplyより前なので、この前提を後段のpackage installで用意できない。targetのtemplate評価はbeforeより後になる場合もあり、[適用順の限界](../operations.md#applyで通る段階)と区別する。[^config][^pbfile][^wezterm-link][^brew-script][^order]
 
 AppleはXcodeに含まれるtoolと、単独のCommand Line Toolsを提供している。どのOS/SDKの組合せが必要かはその時点の公式対応表と実際のbuildで確認する。このrepoのために常にfull Xcodeを要求する根拠はない。[^apple-tools]
 
 # Homebrew・mise・GUIの境界
 
-package宣言にはbrewの`colima`とGUIの`docker-desktop`が共存する。ほかにもmiseとbrewで重なるCLIがある。宣言されていることを、実際に使うcommandやcontainer runtimeが決まっている証拠としない。brewの実体・miseの実体・PATH上の選択を分ける。[^packages]
+package宣言にはbrewの`colima`とGUIの`docker-desktop`が共存する。just・atuin・duckdb・deno・AWS CLIは利用者決定によりmiseを主担当とし、macOSのbrew宣言を外した。既存実体は保持する。宣言されていることを、実際に使うcommandやcontainer runtimeが決まっている証拠としない。brewの実体・miseの実体・PATH上の選択を分ける。[^packages]
 
-現行before scriptの`brew update`と`brew bundle install`は更新を伴い得る。Brewfile templateにはCIでGUI appを省く分岐がある。通常のbundle installは既存の宣言対象もupgradeし得て、`--no-upgrade`も厳密なlockfileにはならない。手動で更新したbrewの状態を維持するか、宣言へ採用するかは、applyの責務と分けて決める。[^brew-script][^brewfile][^brew]
+<a id="homebrew-policy"></a>
+通常applyは不足導入、既存項目の更新は明示保守へ分離した。[操作とflag/env](../operations.md#homebrew-packages)を正本とする。CIではheadlessだけ、非CIではmedia/GUIも導入対象である。[^brew-script][^brewfile]
+
+2026-11-11に現行公式manpageと、この端末に存在するHomebrew checkout `bc63375ac3a4d6debb1ceb441ae6e22854f0909a`の該当fileを静的照合した（HEADとのdiffなし、brew本体は実行していない）。Bundleのbrew/cask `preinstall!`は`no_upgrade`時に既存項目を省略する。installerは不足対象をinstallへ渡すが、batch内で`HOMEBREW_NO_INSTALL_UPGRADE`を解除するので、このenvを追加しても依存更新全体を禁止した証拠にはならない。install subcommandは失敗を非zeroにし、継承した`HOMEBREW_BUNDLE_INSTALL_CLEANUP` / `HOMEBREW_BUNDLE_FORCE_INSTALL_CLEANUP`によるcleanup経路を持つため、通常scriptで両方をunsetする。brew/cask skipも解除する。[^brew-implementation]
+
+Homebrew公式資料も`--no-upgrade`を依存まで含めた版固定とはしていない。自動update/cleanupとinstall後のdependents検査は個別envで抑えるが、不足の依存導入、link、post-install、tap移行などは残る。dependentsの追随修復を止めるため既存consumerの正常性は保証しない。古いmetadataで不足導入に失敗した場合は成功扱いにせず、明示更新で解決する。別版Homebrewや独自`brew.env`、実installerの動作は隔離stub検査の対象外である。[^brew-man][^brew]
 
 Docker Desktopはpackageがあること、appが起動していること、目的のCLI/context/daemonが使えることを分けて確認する。公式導入手順にもapp起動の段階がある。Colimaとのどちらを使うかをこの文案で決めず、実機の利用先を調べてから所有範囲を決める。両方を自動起動する案は採用していない。[^packages][^docker-mac]
 
 # 認証とmacOS固有の生成物
 
-configは1Passwordのsocketを`~/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock`として扱う。署名helperは`/Applications/1Password.app/Contents/MacOS/op-ssh-sign`の固定pathに設定される。Git author・署名・SSH認証、socketの入力階層の不一致は[identity](../identity.md)を正本にする。このpathが実機で存在し、望む鍵を提供していることは未確認である。[^config]
+configは1Passwordのsocketを`~/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock`として扱う。署名helperは`/Applications/1Password.app/Contents/MacOS/op-ssh-sign`の固定pathに設定される。Git author・署名・SSH認証、明示的IdentityAgentの入力契約は[identity](../identity.md)を正本にする。このpathが実機で存在し、望む鍵を提供していることは未確認である。[^config]
 
-`build:pbfile`はSwift sourceがあれば`~/.local/bin/pbfile`をbuildする。source不在時に明示的な欠損失敗にする実装ではない。現行taskの終了だけで全管理生成物が揃ったと解釈せず、[validation](../validation.md)の対象別確認と、[convergence](../decisions/convergence.md)の成功条件案を分けて扱う。[^pbfile]
+`build:pbfile`はmacOSの毎apply after_42から呼ぶ。source・選択compiler・SDK代表入力と所有receiptを確認し、必要時だけ一時build/検証後に`~/.local/bin/pbfile`へ反映する。source/compiler/SDK欠落、compile/検証失敗は非zeroで旧実体を保持する。未知の既存binaryは自動採用しない。[出力・移行契約](../operations.md#generated-assets)と[検証範囲](../validation.md#generated-assets)を参照。実機未適用。
 
 # 設計変更の参照先
 
@@ -77,13 +90,16 @@ brewの版管理・更新をapplyへ含めるかの比較は[convergenceの手�
 
 Full Disk Accessや無制限のpasswordless sudoが本repoの全操作に必要という確認はしていない。実際の操作で不足する権限が分かった場合に、その操作と対象を絞って扱う。
 
-[^config]: [ホスト入力と1Password identity取得](https://github.com/tsubasahomma/dotfiles/blob/f4fe1fac3e0722b173b5291a06e98e1e066786f1/.chezmoi.toml.tmpl)。
+[^config]: [ホスト入力と1Password identity取得](../../.chezmoi.toml.tmpl)。
 [^pbfile]: [macOS Swift build](https://github.com/tsubasahomma/dotfiles/blob/f4fe1fac3e0722b173b5291a06e98e1e066786f1/dot_config/mise/repo-tasks/build/executable_pbfile.tmpl)。
-[^wezterm-link]: [macOS/WSLのWezTerm実体探索](https://github.com/tsubasahomma/dotfiles/blob/f4fe1fac3e0722b173b5291a06e98e1e066786f1/dot_local/bin/symlink_wezterm.tmpl)。
-[^brew-script]: [Homebrewの導入・更新・bundle実行](https://github.com/tsubasahomma/dotfiles/blob/f4fe1fac3e0722b173b5291a06e98e1e066786f1/.chezmoiscripts/run_onchange_before_provision-macos-homebrew.sh.tmpl)。
+[^wezterm-link]: [macOS/WSLのWezTerm実体探索](../../dot_local/bin/symlink_wezterm.tmpl)。
+[^brew-script]: [Homebrew不足導入と前提検査](../../.chezmoiscripts/run_onchange_before_provision-macos-homebrew.sh.tmpl)。
 [^order]: [chezmoi公式：target計算とbefore/afterの順序](https://www.chezmoi.io/reference/application-order/)。
 [^apple-tools]: [Apple公式：command-line tools](https://developer.apple.com/documentation/xcode/installing-the-command-line-tools)。
-[^packages]: [OS別package宣言](https://github.com/tsubasahomma/dotfiles/blob/f4fe1fac3e0722b173b5291a06e98e1e066786f1/.chezmoidata/packages.yaml)。
+[^packages]: [OS別package宣言](../../.chezmoidata/packages.yaml)。
 [^brewfile]: [macOS BrewfileとCI分岐](https://github.com/tsubasahomma/dotfiles/blob/f4fe1fac3e0722b173b5291a06e98e1e066786f1/dot_config/homebrew/Brewfile.tmpl)。
 [^brew]: [Homebrew公式：bundleの更新と版管理の限界](https://docs.brew.sh/Brew-Bundle-and-Brewfile)。
 [^docker-mac]: [Docker公式：Macへの導入と起動](https://docs.docker.com/desktop/setup/install/mac-install/)。
+
+[^brew-man]: [Homebrew brew(1)](https://docs.brew.sh/Manpage)。2026-11-11閲覧。
+[^brew-implementation]: [Bundle実装](https://github.com/Homebrew/brew/tree/bc63375ac3a4d6debb1ceb441ae6e22854f0909a/Library/Homebrew/bundle)。`brew.rb` / `cask.rb`の`preinstall!`、`installer.rb`の`batch_install_homebrew!`、`subcommand/install.rb`をローカルcheckoutで確認。

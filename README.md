@@ -5,7 +5,7 @@ description: このrepoの目的と対象環境を知り、導入・日常操作
 status: draft
 generated:
   by: codex/gpt-6
-  at: "2026-11-11T06:40:22+00:00"
+  at: "2026-11-11T10:38:11+00:00"
 ---
 # dotfiles
 
@@ -24,7 +24,7 @@ macOSとWindows 11上のWSL2（Ubuntu 24.04以降）向けの、個人用ワー�
 | bootstrap・apply・repair・doctorの設計を見直す | [収束設計の判断と代案](docs/decisions/convergence.md) |
 | 文書を追加・整理する | [OKFの構成と記述規約](docs/decisions/okf.md) |
 
-実機コマンドは操作文書で前提・対象・副作用を確認してから使います。現行のchezmoi設定には読み取り時のbootstrap hookがあり、dry-runも非変更の保証にはなりません。
+実機コマンドは操作文書で前提・対象・副作用を確認してから使います。読み取りhookはmiseの存在・実行属性の確認だけを行い、導入には明示的な`--install`が必要です。[旧configの移行](docs/operations.md#mise-bootstrap)とexternal/cache等の別の副作用も確認し、dry-run全体を非変更とは扱いません。
 
 現在実行できる手順は[操作文書](docs/operations.md)、未実装の変更案は[設計判断](docs/decisions/convergence.md)に分けます。applyに管理対象生成物の欠損復旧を含める案は検討中で、現行実装の保証ではありません。
 
