@@ -1,62 +1,47 @@
--- Configure prose and shell linting without replacing LazyVim setup hooks.
--- The opts pattern keeps custom Vale settings across LazyVim's markdown extra
--- merging while maintaining path-agnostic parsing.
--- [Reference]: https://github.com/mfussenegger/nvim-lint
-
+-- Keep LazyVim's setup and nvim-lint's Vale stdin, severity and error handling.
 return {
   {
     "mfussenegger/nvim-lint",
-    -- [Note]: LazyVim handles the 'config' and triggers. We only provide the 'opts'.
-    opts = {
-      linters_by_ft = {
-        bash = { "shellcheck" },
-        gitcommit = { "vale" },
-        markdown = { "vale" },
-        sh = { "shellcheck" },
-      },
-      -- [Critical]: Define linter overrides in 'linters' table to allow
-      -- LazyVim's internal setup function to merge them correctly.
-      linters = {
-        vale = {
-          stdin = false,
-          ignore_exitcode = true,
-          args = {
-            "--config",
-            vim.env.VALE_CONFIG_PATH,
-            "--ext",
-            ".md",
-            "--output",
-            "JSON",
-          },
-          -- [Path-Agnostic Parser]: Robust decoding for symlinks/absolute paths.
-          -- Ensures diagnostics are attached to the current buffer even if Vale
-          -- returns absolute paths that don't match the buffer name string exactly.
-          parser = function(output, _)
-            local diagnostics = {}
-            local ok, decoded = pcall(vim.json.decode, output)
-            if not ok or not decoded then
-              return diagnostics
-            end
-
-            for _, messages in pairs(decoded) do
-              for _, msg in ipairs(messages) do
-                table.insert(diagnostics, {
-                  lnum = msg.Line - 1,
-                  col = msg.Span[1] - 1,
-                  end_lnum = msg.Line - 1,
-                  end_col = msg.Span[2],
-                  severity = vim.diagnostic.severity[msg.Severity:upper()]
-                    or vim.diagnostic.severity.INFO,
-                  source = "vale",
-                  message = msg.Message,
-                  code = msg.Check,
-                })
-              end
-            end
-            return diagnostics
-          end,
+    opts = function(_, opts)
+      local parse = require("lint.linters.vale").parser
+      return vim.tbl_deep_extend("force", opts, {
+        linters_by_ft = {
+          bash = { "shellcheck" },
+          gitcommit = { "vale" },
+          markdown = { "vale" },
+          sh = { "shellcheck" },
         },
-      },
-    },
+        linters = {
+          vale = {
+            -- Adopted LazyVim appends these, so the last --ext wins. Keep
+            -- Markdown rules for extensionless commit buffers as well.
+            -- Vale reads VALE_CONFIG_PATH itself; unset uses its normal search.
+            prepend_args = { "--ext", ".md" },
+            parser = function(output, bufnr, ...)
+              local ext = "." .. vim.fn.fnamemodify(vim.api.nvim_buf_get_name(bufnr), ":e")
+              if ext ~= ".md" and vim.trim(output) ~= "" then
+                local decoded = vim.json.decode(output)
+                -- Upstream selects stdin by the buffer's extension, whereas
+                -- our forced Markdown input is always returned as stdin.md.
+                decoded["stdin" .. ext] = decoded["stdin.md"]
+                output = vim.json.encode(decoded)
+              end
+              local diagnostics = parse(output, bufnr, ...)
+              for _, diagnostic in ipairs(diagnostics) do
+                local line =
+                  vim.api.nvim_buf_get_lines(bufnr, diagnostic.lnum, diagnostic.lnum + 1, false)[1]
+                -- nvim-lint 5259819 converts the 1-based start then subtracts
+                -- one byte, landing inside a multibyte character. Move only
+                -- that start back to its UTF-8 boundary; the end is exclusive.
+                if diagnostic.col >= 0 and diagnostic.col < #line then
+                  diagnostic.col = diagnostic.col + vim.str_utf_start(line, diagnostic.col + 1)
+                end
+              end
+              return diagnostics
+            end,
+          },
+        },
+      })
+    end,
   },
 }
