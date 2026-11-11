@@ -14,8 +14,8 @@ if [[ "$HOST_OS" != "linux" ]]; then
 fi
 
 if ! sudo -n true 2>/dev/null; then
-  echo "Non-interactive sudo is required for Linux shell provisioning." >&2
-  echo "Run 'sudo visudo' and configure passwordless sudo for this user." >&2
+  echo "Linux shell provisioning requires 'sudo -n true' to succeed." >&2
+  echo "Confirm sudo availability, authentication and permissions for /etc/shells registration and chsh with your administrator, then retry. See docs/operations.md#first-install." >&2
   exit 1
 fi
 

@@ -8,9 +8,8 @@ set -eu
 
 # Non-interactive sudo avoids silent hangs during automated provisioning.
 if ! sudo -n true 2>/dev/null; then
-  echo "❌ [Fatal] Non-interactive sudo is not configured."
-  echo "👉 Action Required: Run 'sudo visudo' and configure passwordless sudo for this user."
-  echo "   Example: $USER ALL=(ALL) NOPASSWD:ALL"
+  echo "[Fatal] Linux package preparation requires 'sudo -n true' to succeed." >&2
+  echo "Confirm sudo availability, authentication and the required apt-get/dnf/pacman permissions with your administrator, then retry apply. See docs/operations.md#first-install." >&2
   exit 1
 fi
 

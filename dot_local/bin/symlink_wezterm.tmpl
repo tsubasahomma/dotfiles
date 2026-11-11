@@ -12,6 +12,6 @@
 {{- if stat $wsl_path -}}
 {{- $wsl_path -}}
 {{- else -}}
-{{- fail "[FATAL] WezTerm.exe not found on Windows host." -}}
+{{- fail "[FATAL] WezTerm.exe not found at C:\\Program Files\\WezTerm\\wezterm.exe. Prepare WezTerm on Windows and check wslpath/drive mounts before retrying apply. See docs/operations.md#first-install." -}}
 {{- end -}}
 {{- end -}}

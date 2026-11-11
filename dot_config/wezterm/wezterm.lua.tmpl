@@ -73,7 +73,7 @@ config.inactive_pane_hsb = {
 if wezterm.target_triple:find("windows") then
 {{ if .is_wsl -}}
 {{- $wsl_distro_name := env "WSL_DISTRO_NAME" | trim -}}
-{{- if eq $wsl_distro_name "" }}{{ fail "[FATAL] WSL_DISTRO_NAME is empty; cannot render WezTerm default_domain for Windows." }}{{ end -}}
+{{- if eq $wsl_distro_name "" }}{{ fail "[FATAL] WSL_DISTRO_NAME is empty; cannot render WezTerm default_domain for Windows. Run apply from the intended WSL distribution and confirm its WSL_DISTRO_NAME; see docs/operations.md#first-install." }}{{ end -}}
   config.default_domain = {{ printf "WSL:%s" $wsl_distro_name | quote }}
 
   -- Keep WSL-launched Win32 OpenSSH on the Windows 1Password agent path.

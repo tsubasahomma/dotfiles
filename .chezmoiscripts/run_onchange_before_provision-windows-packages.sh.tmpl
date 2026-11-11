@@ -6,47 +6,14 @@
 
 set -eu
 
-echo "🔄 [Windows Packages] Updating WinGet package sources..."
-winget.exe source update > /dev/null 2>&1 || true
-
-install_winget_app() {
-  app_id=$1
-  if ! winget.exe list --id "$app_id" > /dev/null 2>&1; then
-    echo "📦 [Windows Packages] Installing $app_id on Windows..."
-
-    # Nightly packages can have volatile WinGet manifests.
-    # Hash verification is bypassed only for nightly package IDs.
-    # Conditional bypass is required to ensure non-interactive convergence.
-    extra_flags=""
-    if echo "$app_id" | grep -q "nightly"; then
-      echo "  ⚠️  [Security] Volatile package detected. Bypassing hash verification: $app_id"
-      extra_flags="--ignore-security-hash"
-    fi
-
-    winget.exe install --id "$app_id" \
-      --silent \
-      --accept-package-agreements \
-      --accept-source-agreements \
-      $extra_flags
-  else
-    echo "✅ [Windows Packages] $app_id is already installed on Windows."
-  fi
-}
-
-echo "📦 [Windows Packages] Provisioning Windows host packages..."
-
-# --- Headless Packages ---
-{{ range .packages.headless.windows -}}
-install_winget_app {{ . | quote }}
+# Keep HRESULT and native command-line handling on Windows. Only a Base64
+# UTF-16LE PowerShell program crosses WSL interop; Python classifies its JSON.
+exec python3 - <<'DOTFILES_WINDOWS_PACKAGES_PY'
+{{ includeTemplate "windows_packages.py" . }}
+package_ids = json.loads(base64.b64decode('{{ .packages.headless.windows | toJson | b64enc }}'))
+{{ if not (env "CI") -}}
+package_ids += json.loads(base64.b64decode('{{ .packages.gui.windows | toJson | b64enc }}'))
 {{ end -}}
-
-{{- if not (env "CI") }}
-# --- Desktop & Media ---
-{{ range .packages.gui.windows -}}
-install_winget_app {{ . | quote }}
-{{ end -}}
-
-{{- end }}
-
-echo "✅ [Windows Packages] Windows package provisioning complete."
+sys.exit(main(package_ids))
+DOTFILES_WINDOWS_PACKAGES_PY
 {{ end -}}

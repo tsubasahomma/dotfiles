@@ -6,27 +6,24 @@
 
 set -euo pipefail
 
-# Resolve bootstrap binaries through chezmoi before invoking installers.
-CURL_BIN="{{ lookPath "curl" }}"
-BASH_BIN="{{ lookPath "bash" }}"
-
-if [ -z "$CURL_BIN" ] || [ -z "$BASH_BIN" ]; then
-  echo "❌ [Fatal] Essential commodity binaries (curl, bash) not found in PATH."
+# Homebrew itself is an explicit first-install prerequisite, not an apply action.
+# Use the caller's selected installation; do not switch prefixes via shellenv.
+if ! command -v brew >/dev/null 2>&1; then
+  echo "❌ [Fatal] Homebrew is required in PATH. Prepare it explicitly: https://brew.sh; see docs/operations.md#homebrew-packages." >&2
   exit 1
 fi
 
-if ! command -v brew &> /dev/null; then
-  echo "📦 [Homebrew Packages] Installing Homebrew..."
-  "$BASH_BIN" -c "$("$CURL_BIN" -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-fi
+# Keep ordinary apply separate from maintenance. Required dependency installs,
+# links and package post-install actions can still change the host.
+export HOMEBREW_NO_AUTO_UPDATE=1
+unset HOMEBREW_FORCE_API_AUTO_UPDATE
+export HOMEBREW_NO_INSTALL_CLEANUP=1
+export HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK=1
+# Inherited Bundle preferences must not remove undeclared packages or skip
+# required declarations. These changes are local to this script's process.
+unset HOMEBREW_BUNDLE_INSTALL_CLEANUP HOMEBREW_BUNDLE_FORCE_INSTALL_CLEANUP
+unset HOMEBREW_BUNDLE_BREW_SKIP HOMEBREW_BUNDLE_CASK_SKIP
 
-if [[ -x "/opt/homebrew/bin/brew" ]]; then
-  eval "$(/opt/homebrew/bin/brew shellenv)"
-elif [[ -x "/usr/local/bin/brew" ]]; then
-  eval "$(/usr/local/bin/brew shellenv)"
-fi
-
-brew update
 TEMP_BREWFILE=$(mktemp)
 trap 'rm -f "$TEMP_BREWFILE"' EXIT
 cat << 'EOF' > "$TEMP_BREWFILE"
@@ -34,8 +31,7 @@ cat << 'EOF' > "$TEMP_BREWFILE"
 EOF
 
 echo "📦 [Homebrew Packages] Installing Brewfile bundle: $TEMP_BREWFILE"
-export HOMEBREW_BUNDLE_NO_LOCK=1
-brew bundle install --file="$TEMP_BREWFILE"
+brew bundle install --no-upgrade --file="$TEMP_BREWFILE"
 
 echo "✅ [Homebrew Packages] Homebrew package provisioning complete."
 {{ end -}}
