@@ -1,21 +1,12 @@
 #!/usr/bin/env bash
-# [MISE] description="Repair strict permissions on dynamically generated assets"
+# [MISE] description="Explain generator-owned permissions (compatibility task)"
 {{/* [Reference]: https://mise.jdx.dev/tasks/file-tasks.html */}}{{ "" -}}
 
 set -euo pipefail
 
-echo "🔒 [Security] Enforcing permissions on dynamic cryptographic assets..."
-
-SSH_DIR="{{ .paths.home }}/.ssh"
-
-# 0700 directory permissions are declared before SSH sockets are used.
-# by chezmoi's 'private_' source state attributes. This script only manages
-# files dynamically extracted post-provisioning.
-
-if [[ -d "$SSH_DIR" ]]; then
-  # Assert 0600 on dynamically extracted 1Password SSH identities.
-  find "$SSH_DIR" -type f -name "id_*" ! -name "*.pub" -exec chmod 0600 {} \;
-  echo "  ✅ Secured: SSH private keys (0600)"
-fi
-
-echo "✅ [Security] Cryptographic asset permissions converged."
+# Keep the existing task dependency valid without inferring ownership from id_*.
+# Source attributes set managed directory permissions; generate:identity sets
+# its public key and allowed_signers modes when writing those outputs.
+# No private keys are extracted by that generator. Existing keys and unknown
+# files, including symlink targets, belong to their respective owners.
+echo "ℹ️  [Security] No permission changes: managed output modes are set during generation."
