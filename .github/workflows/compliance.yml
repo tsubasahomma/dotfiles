@@ -64,7 +64,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-24.04, macos-14]
+        # macOS 14 retired on 2026-11-02; keep an explicit supported image.
+        # https://github.blog/changelog/2026-10-01-github-actions-macos-14-runner-image-retirement/
+        os: [ubuntu-24.04, macos-15]
         suite: [render, regression]
     runs-on: ${{ matrix.os }}
     env:
@@ -131,7 +133,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-24.04, macos-14]
+        os: [ubuntu-24.04, macos-15]
     runs-on: ${{ matrix.os }}
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true

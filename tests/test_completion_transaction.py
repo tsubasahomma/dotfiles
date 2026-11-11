@@ -40,7 +40,8 @@ class CompletionTransaction(unittest.TestCase):
         # No ambient optional CLI can be discovered, even if /usr/bin has WezTerm.
         utilities = self.root / 'utilities'
         utilities.mkdir()
-        for name in ('mkdir', 'mktemp', 'mv', 'rm', 'rmdir', 'chmod', 'cat', 'tr', 'touch', 'sleep', 'python3', 'bash'):
+        # Zsh's getent fallback uses grep during compaudit on Linux.
+        for name in ('mkdir', 'mktemp', 'mv', 'rm', 'rmdir', 'chmod', 'cat', 'tr', 'touch', 'sleep', 'python3', 'bash', 'grep'):
             (utilities / name).symlink_to(shutil.which(name))
         self.env = {'HOME': str(self.home), 'PATH': str(utilities), 'LC_ALL': 'C',
                     'TMPDIR': str(self.root), 'XDG_CACHE_HOME': str(self.cache),
