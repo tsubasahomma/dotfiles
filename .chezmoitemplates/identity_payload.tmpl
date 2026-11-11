@@ -1,0 +1,7 @@
+{{- $identities := includeTemplate "validated_identities.tmpl" . | fromJson -}}
+{{- range $identities -}}
+{{- $_ := set . "config" (includeTemplate "git_identity_config.tmpl" (dict "name" .name "email" .email "public_key" .public_key "key_type" .key_type "key_hash" .key_hash "home" $.paths.home "ssh_command" "")) -}}
+{{- end -}}
+{{- $options := "-o IdentitiesOnly=yes -o ControlPath=none" -}}
+{{- if and .is_wsl $identities -}}{{- $options = includeTemplate "ssh_identity_options.tmpl" . -}}{{- end -}}
+{{- dict "identities" $identities "git_dir" (joinPath .paths.xdg_config "git") "is_wsl" .is_wsl "ssh_options" $options "engine_sha256" (include ".chezmoitemplates/identity_transaction.py" | sha256sum) | toJson -}}

@@ -1,0 +1,3 @@
+{{- /* SSH config token, not a shell word. Only literal single-line paths. */ -}}
+{{- if regexMatch `[[:cntrl:]]` . -}}{{- fail "ssh config: control character in path" -}}{{- end -}}
+"{{- . | replace "\\" "\\\\" | replace "\"" "\\\"" -}}"{{- "" -}}

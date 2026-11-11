@@ -1,73 +1,11 @@
 #!/bin/zsh
-# [MISE] description="Generate Git and SSH identity files"
+# [MISE] description="Validate and switch the Git identity generation (--clear for intentional empty input)"
 # [MISE] depends=["repair:security"]
-# [MISE] sources=[".config/mise/repo-tasks/generate/identity"]
-# [MISE] outputs=[".config/git/identities", ".config/git/allowed_signers", ".ssh/id_*.pub"]
-{{/* [Reference]: https://mise.jdx.dev/tasks/file-tasks.html */}}{{ "" -}}
-{{/* [Reference]: https://www.chezmoi.io/reference/special-directories/chezmoitemplates/ */}}{{ "" -}}
-
-set -euo pipefail
-
-SSH_DIR="{{ .paths.home }}/.ssh"
-GIT_CONFIG_DIR="{{ .paths.xdg_config }}/git/identities"
-ALLOWED_SIGNERS="{{ .paths.xdg_config }}/git/allowed_signers"
-
-# Chezmoi source state owns stable SSH and Git parent topology before
-# generated identity convergence writes variable identity artifacts.
-
-# Remove stale generated Git identity includes before writing the new set.
-rm -rf "$GIT_CONFIG_DIR"
-mkdir -p "$GIT_CONFIG_DIR"
-TEMP_SIGNERS=$(mktemp)
-
-echo "🔐 [Identity] Converging Content-Addressable Sovereign Identities..."
-
-{{ $home := .paths.home -}}
-{{ range .identities -}}
-# --- Provisioning Identity: {{ .name }} ({{ .email }}) ---
-# Generated public key paths include identity hash material.
-PUBKEY_FILE="$SSH_DIR/id_{{ .key_type }}_{{ .email }}_{{ .key_hash }}.pub"
-echo {{ .public_key | quote }} > "$PUBKEY_FILE"
-chmod 600 "$PUBKEY_FILE"
-
-CONFIG_FILE="$GIT_CONFIG_DIR/config_{{ .email }}_{{ .key_hash }}"
-{{ if $.is_wsl -}}
-PUBKEY_FILE_WIN="$(wslpath -w "$PUBKEY_FILE")"
-PUBKEY_FILE_WIN_SQ="'${PUBKEY_FILE_WIN//\'/\'\\\'\'}'"
-CORE_SSH_COMMAND="ssh.exe -i $PUBKEY_FILE_WIN_SQ -o IdentitiesOnly=yes"
-{{ end -}}
-# Delegate generated Git config content to the shared identity template.
-cat << 'EOF' > "$CONFIG_FILE"
-{{ if $.is_wsl -}}
-{{ includeTemplate "git_identity_config.tmpl" (dict "name" .name "email" .email "public_key" .public_key "key_type" .key_type "key_hash" .key_hash "home" $home "ssh_command" "__DOTFILES_CORE_SSH_COMMAND__") }}
-{{ else -}}
-{{ includeTemplate "git_identity_config.tmpl" (dict "name" .name "email" .email "public_key" .public_key "key_type" .key_type "key_hash" .key_hash "home" $home) }}
-{{ end -}}
-EOF
-{{ if $.is_wsl -}}
-git config --file "$CONFIG_FILE" core.sshCommand "$CORE_SSH_COMMAND"
-{{ end }}
-
-# [Reference]: https://man.openbsd.org/ssh-keygen#ALLOWED_SIGNERS
-echo "{{ .email }} namespaces=\"git\" {{ trim .public_key }}" >> "$TEMP_SIGNERS"
-
-echo "  ✅ Synced context routing: {{ .email }} [Hash: {{ .key_hash }}]"
-{{ end -}}
-
-{{ if not .identities -}}
-# CI can verify file generation even when no user identities are mapped.
-echo "ci-bot@example.com namespaces=\"git\" ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAI_CI_FALLBACK_KEY_STUB" >> "$TEMP_SIGNERS"
-echo "⚠️  [Identity] No sovereign identities mapped. CI fallback stub generated."
-{{ end -}}
-
-# [Idempotency]: Atomic write with unique sorting to prevent duplicate accumulation.
-if [[ -s "$TEMP_SIGNERS" ]]; then
-  sort -u "$TEMP_SIGNERS" > "$ALLOWED_SIGNERS"
-else
-  : > "$ALLOWED_SIGNERS"
+# Run whenever invoked: a directory mtime cannot prove the selected generation.
+if ! command -v python3 >/dev/null 2>&1; then
+  echo 'identity: Python 3.9+ must be on PATH before apply/generate (see docs/operations.md)' >&2
+  exit 1
 fi
-
-rm -f "$TEMP_SIGNERS"
-chmod 644 "$ALLOWED_SIGNERS"
-
-echo "✅ [Identity] O(1) Convergence complete. All local keyfiles and context scopes provisioned."
+exec python3 - {{ includeTemplate "posix_shell_quote.tmpl" (includeTemplate "identity_payload.tmpl" .) }} generate "$@" <<'DOTFILES_IDENTITY_PY'
+{{ include ".chezmoitemplates/identity_transaction.py" }}
+DOTFILES_IDENTITY_PY

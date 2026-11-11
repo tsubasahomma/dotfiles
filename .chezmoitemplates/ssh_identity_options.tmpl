@@ -1,0 +1,9 @@
+{{- /* Shell fragment shared by the generator and its shape checks. */ -}}
+-o IdentitiesOnly=yes -o ControlPath=none
+{{- if .is_wsl -}}
+{{- $pipe := `\\.\pipe\openssh-ssh-agent` -}}
+{{- if ne .ssh_auth_sock $pipe -}}
+{{- fail "ssh agent: WSL requires the Windows OpenSSH named pipe" -}}
+{{- end -}}
+{{- printf " -o %s" (includeTemplate "posix_shell_quote.tmpl" (printf "IdentityAgent=%s" (includeTemplate "ssh_config_quote.tmpl" $pipe))) -}}
+{{- end -}}

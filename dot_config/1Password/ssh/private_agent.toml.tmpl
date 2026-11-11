@@ -3,7 +3,8 @@
 # Specifying 'account' disambiguates keys in multi-account environments.
 # Bind directly to Item UUID and Account ID to avoid vault routing ambiguity.
 
-{{ range .identities -}}
+{{ $identities := includeTemplate "validated_identities.tmpl" . | fromJson -}}
+{{ range $identities -}}
 [[ssh-keys]]
 item = {{ .item_id | quote }}
 account = {{ .account_id | quote }}

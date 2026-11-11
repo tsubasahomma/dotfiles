@@ -1,0 +1,10 @@
+#!/bin/sh
+# Identity owns a per-apply check independent of the onchange package/tool graph.
+# No mise runner, install or authentication; same engine as generate:identity.
+if ! command -v python3 >/dev/null 2>&1; then
+  echo 'identity: Python 3.9+ must be on PATH before apply/generate (see docs/operations.md)' >&2
+  exit 1
+fi
+exec python3 - {{ includeTemplate "posix_shell_quote.tmpl" (includeTemplate "identity_payload.tmpl" .) }} generate <<'DOTFILES_IDENTITY_PY'
+{{ include ".chezmoitemplates/identity_transaction.py" }}
+DOTFILES_IDENTITY_PY

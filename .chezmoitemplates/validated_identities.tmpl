@@ -1,0 +1,69 @@
+{{- /* Validate the complete set before any consumer emits output. No input in diagnostics. */ -}}
+{{- if not (kindIs "slice" .identities) -}}{{- fail "identity: identities must be an array" -}}{{- end -}}
+{{- $result := list -}}
+{{- $routes := list -}}
+{{- $files := list -}}
+{{- range $field := list "home" "xdg_config" -}}
+{{-   $value := index $.paths $field -}}
+{{-   if or (not (hasPrefix "/" $value)) (regexMatch `[[:cntrl:]]` $value) (regexMatch `(^|/)\.\.?(/|$)|//` $value) (eq $value "/") -}}
+{{-     fail (printf "identity: invalid paths.%s" $field) -}}
+{{-   end -}}
+{{- end -}}
+{{- /* OpenSSH expands % tokens and ${ENV} in IdentityFile, even for -i. */ -}}
+{{- if or (contains "%" .paths.home) (contains "${" .paths.home) (contains "%" .paths.xdg_config) (contains "${" .paths.xdg_config) -}}
+{{-   fail "identity: home or xdg_config contains unsupported OpenSSH path expansion" -}}
+{{- end -}}
+{{- range $index, $id := .identities -}}
+{{-   range $field := list "item_id" "account_id" "name" "email" "key_type" "key_hash" "public_key" "dirs" -}}
+{{-     $value := index $id $field -}}
+{{-     if not (kindIs "string" $value) -}}
+{{-       fail (printf "identity %d: %s must be a string" $index $field) -}}
+{{-     end -}}
+{{-     if or (eq (trim $value) "") (regexMatch `[[:cntrl:]]` $value) -}}
+{{-       fail (printf "identity %d: empty or control character in %s" $index $field) -}}
+{{-     end -}}
+{{-   end -}}
+{{- /* Email is also a single literal allowed_signers principal and filename component. */ -}}
+{{-   if or (gt (len $id.email) 180) (contains "${" $id.email) (not (regexMatch "^[A-Za-z0-9][A-Za-z0-9.!#$&'+=^_`{}~-]*@[A-Za-z0-9][A-Za-z0-9.-]*$" $id.email)) -}}
+{{-     fail (printf "identity %d: unsupported email/principal" $index) -}}
+{{-   end -}}
+{{-   if or (gt (len $id.key_type) 32) (not (regexMatch `^[a-z0-9][a-z0-9-]*$` $id.key_type)) -}}
+{{-     fail (printf "identity %d: invalid key_type" $index) -}}
+{{-   end -}}
+{{-   if ne $id.key_hash (substr 0 8 (sha256sum $id.public_key)) -}}
+{{-     fail (printf "identity %d: key_hash does not match public_key" $index) -}}
+{{-   end -}}
+{{-   if not (regexMatch `^(ssh-ed25519|ssh-rsa|ecdsa-sha2-nistp(256|384|521)) [A-Za-z0-9+/]+={0,2}( .*)?$` $id.public_key) -}}
+{{-     fail (printf "identity %d: unsupported public key record" $index) -}}
+{{-   end -}}
+{{- /* Pipe data as argv/stdin, never interpolate it into shell program text. */ -}}
+{{-   $valid := output "sh" "-c" `printf '%s\n' "$1" | ssh-keygen -lf /dev/stdin >/dev/null 2>&1 && printf valid || printf invalid` "identity-key-check" $id.public_key -}}
+{{-   if ne $valid "valid" -}}
+{{-     fail (printf "identity %d: invalid public key or ssh-keygen unavailable" $index) -}}
+{{-   end -}}
+{{-   $file := printf "config_%s_%s" $id.email $id.key_hash | lower -}}
+{{-   if has $file $files -}}{{- fail (printf "identity %d: duplicate output filename" $index) -}}{{- end -}}
+{{-   $files = append $files $file -}}
+{{-   $idRoutes := list -}}
+{{-   range (splitList "," $id.dirs) -}}
+{{-     $dir := trim . -}}
+{{-     if hasPrefix "~/" $dir -}}{{- $dir = printf "%s/%s" (trimSuffix "/" $.paths.home) (trimPrefix "~/" $dir) -}}{{- end -}}
+{{-     if contains "//" $dir -}}{{- fail (printf "identity %d: repeated slash in dirs" $index) -}}{{- end -}}
+{{-     $dir = trimSuffix "/" $dir -}}
+{{-     if or (not (hasPrefix "/" $dir)) (eq $dir "") (regexMatch `[\\*?\[\]]|(^|/)\.\.?(/|$)|//` $dir) -}}
+{{-       fail (printf "identity %d: dirs requires non-root absolute or ~/ literal directories; empty entries, globs and dot segments are forbidden" $index) -}}
+{{-     end -}}
+{{-     $folded := lower $dir -}}
+{{-     range $routes -}}
+{{-       if or (eq . $folded) (hasPrefix (printf "%s/" .) $folded) (hasPrefix (printf "%s/" $folded) .) -}}
+{{-         fail (printf "identity %d: duplicate or overlapping dirs (case-insensitive)" $index) -}}
+{{-       end -}}
+{{-     end -}}
+{{-     $routes = append $routes $folded -}}
+{{-     $idRoutes = append $idRoutes $dir -}}
+{{-   end -}}
+{{-   $copy := deepCopy $id -}}
+{{-   $_ := set $copy "routes" $idRoutes -}}
+{{-   $result = append $result $copy -}}
+{{- end -}}
+{{- $result | toJson -}}

@@ -1,17 +1,11 @@
-{{- /* Generated Git identity config fragment. */ -}}
-{{- /* [Security]: Decoupled template to prevent script pollution. */ -}}
-{{- $ssh_command := printf "ssh -i %s/.ssh/id_%s_%s_%s.pub -o IdentitiesOnly=yes" .home .key_type .email .key_hash -}}
-{{- if hasKey . "ssh_command" -}}
-{{-   $ssh_command = .ssh_command -}}
-{{- end -}}
-# Auto-generated identity config for {{ .name }}
-
+{{- /* Validated identity data; quote separately for shell argv and Git syntax. */ -}}
+{{- $key_path := joinPath .home (printf ".ssh/id_%s_%s_%s.pub" .key_type .email .key_hash) -}}
+{{- $ssh_command := printf "ssh -i %s -o IdentitiesOnly=yes -o ControlPath=none" (includeTemplate "posix_shell_quote.tmpl" $key_path) -}}
+{{- if hasKey . "ssh_command" -}}{{- $ssh_command = .ssh_command -}}{{- end -}}
+# Auto-generated identity config.
 [user]
-    name = {{ .name | quote }}
-    email = {{ .email | quote }}
-    # [Security]: Use Literal Public Key format to decouple from physical files for signing.
-    signingkey = key::{{ trim .public_key }}
-
+    name = {{ includeTemplate "git_config_quote.tmpl" .name }}
+    email = {{ includeTemplate "git_config_quote.tmpl" .email }}
+    signingkey = {{ includeTemplate "git_config_quote.tmpl" (printf "key::%s" .public_key) }}
 [core]
-    # [Security]: Physical file path remains required for sshCommand authentication routing.
-    sshCommand = {{ $ssh_command | quote }}
+    sshCommand = {{ includeTemplate "git_config_quote.tmpl" $ssh_command }}

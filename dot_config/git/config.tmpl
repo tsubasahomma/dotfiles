@@ -45,8 +45,8 @@ Editing rules:
     [CRITICAL]: Do NOT set revocationFile. 1Password's op-ssh-sign does not yet
     support the '-r' flag passed by Git, which causes verification failure.
     */ -}}
-    program = {{ .paths.op_sign | quote }}
-    allowedSignersFile = {{ (joinPath .paths.xdg_config "git/allowed_signers") | quote }}
+    program = {{ includeTemplate "git_config_quote.tmpl" .paths.op_sign }}
+    # The selected identity generation supplies allowedSignersFile.
 
 [core]
     editor = nvim
@@ -295,22 +295,11 @@ Editing rules:
 #   and Windows filesystems.
 # - Each included file may define user.name, user.email, user.signingKey, etc.
 
-{{- $home := .paths.home }}
-{{- $xdg_config := .paths.xdg_config }}
-{{- range .identities }}
-{{-   $email := .email }}
-{{-   $key_hash := .key_hash }}
-{{-   $config_path := joinPath $xdg_config (printf "git/identities/config_%s_%s" $email $key_hash) }}
-{{-   $dirs := splitList "," .dirs }}
-{{-   range $dirs }}
-{{-     $normalized_dir := trim . }}
-{{-     if hasPrefix "~/" $normalized_dir }}
-{{-       $normalized_dir = joinPath $home (trimPrefix "~/" $normalized_dir) }}
-{{-     end }}
-[includeIf "gitdir/i:{{ $normalized_dir }}/**"]
-    path = {{ $config_path | quote }}
-{{-   end }}
-{{- end }}
+{{- $identities := includeTemplate "validated_identities.tmpl" . | fromJson }}
+# A before script preserves legacy routing before this consumer is installed.
+# Only the generator switches identity.inc after validating the whole generation.
+[include]
+    path = {{ includeTemplate "git_config_quote.tmpl" (joinPath .paths.xdg_config "git/identity.inc") }}
 
 {{- /* [Optional / Aggressive]
 Uncomment only after verifying all Git clients touching your repos are modern enough.

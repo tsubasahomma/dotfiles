@@ -1,13 +1,22 @@
-{{- /* Extract optional SSH agent path without assuming the data key exists. */ -}}
+{{- /* Root data.ssh_auth_sock is a POSIX socket except on WSL (Windows pipe).
+      WSL's native ssh must not try to open the exported pipe as a POSIX socket. */ -}}
 {{- $ssh_auth_sock := "" -}}
-{{- if hasKey . "paths" }}{{ if hasKey .paths "ssh_auth_sock" }}{{ $ssh_auth_sock = .paths.ssh_auth_sock }}{{ end }}{{ end -}}
+{{- if .is_wsl -}}
+{{- $ssh_auth_sock = "none" -}}
+{{- else if hasKey . "ssh_auth_sock" -}}
+{{- $ssh_auth_sock = .ssh_auth_sock -}}
+{{- if and (ne $ssh_auth_sock "") (or (not (hasPrefix "/" $ssh_auth_sock)) (contains "%" $ssh_auth_sock) (contains "${" $ssh_auth_sock)) -}}
+{{- fail "ssh agent: expected a literal absolute POSIX socket path" -}}
+{{- end -}}
+{{- end -}}
 # Modular SSH configuration routed through XDG paths.
 # [Security]: Hardened defaults with ControlPersist for high-performance infrastructure.
 
 # ================================================================
 # 1. Modular Configurations (Highest Priority)
 # ================================================================
-Include {{ .paths.xdg_config }}/ssh/conf.d/*
+{{- $include_dir := printf "%s/ssh/conf.d" .paths.xdg_config | replace "\\" "\\\\" | replace "*" "\\*" | replace "?" "\\?" | replace "[" "\\[" }}
+Include {{ includeTemplate "ssh_config_quote.tmpl" (printf "%s/*" $include_dir) }}
 
 # ================================================================
 # 2. Global Defaults (Fallback)
@@ -15,12 +24,12 @@ Include {{ .paths.xdg_config }}/ssh/conf.d/*
 Host *
     # --- Performance: Connection Multiplexing ---
     ControlMaster auto
-    ControlPath {{ .paths.xdg_state }}/ssh/sockets/%r@%h:%p
+    ControlPath {{ includeTemplate "ssh_config_quote.tmpl" (printf "%s/ssh/sockets/%%r@%%h:%%p" .paths.xdg_state) }}
     ControlPersist 1h
 
     # --- Security & Identity ---
     IdentitiesOnly yes
-{{ if ne $ssh_auth_sock "" }}    IdentityAgent {{ $ssh_auth_sock | quote }}
+{{ if ne $ssh_auth_sock "" }}    IdentityAgent {{ includeTemplate "ssh_config_quote.tmpl" $ssh_auth_sock }}
 {{ end }}    ForwardAgent yes
 
     # --- Reliability & Automation ---
@@ -32,4 +41,4 @@ Host *
 
     # --- XDG Compliance ---
     # Store known_hosts under XDG state instead of ~/.ssh.
-    UserKnownHostsFile {{ .paths.xdg_state }}/ssh/known_hosts
+    UserKnownHostsFile {{ includeTemplate "ssh_config_quote.tmpl" (printf "%s/ssh/known_hosts" .paths.xdg_state) }}

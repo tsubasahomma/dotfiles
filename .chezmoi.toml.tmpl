@@ -80,17 +80,17 @@ sourceDir = {{ .chezmoi.sourceDir | quote }}
 
 {{- /* [Assertion]: 1Password CLI is a Tier -2 prerequisite. */}}
 {{- if and (not (env "CI")) (eq $op_bin "") -}}
-{{-   fail "[FATAL] 1Password CLI ('op') not found. Please install it manually before running chezmoi." -}}
+{{-   fail "[FATAL] 1Password CLI ('op') not found. Prepare it on PATH and configure authentication before retrying chezmoi init; package scripts run later. See docs/operations.md#first-install." -}}
 {{- end -}}
 
 {{- $op_status := "locked" -}}
 {{- if ne $op_bin "" -}}
-{{-   $op_status = output "sh" "-c" (printf "'%s' account get >/dev/null 2>&1 && echo 'ready' || echo 'locked'" $op_bin) | trim -}}
+{{-   $op_status = output "sh" "-c" `"$1" account get >/dev/null 2>&1 && printf ready || printf locked` "dotfiles-op-probe" $op_bin | trim -}}
 {{- end -}}
 
 {{- /* [Assertion]: 1Password session must be authenticated. */}}
 {{- if and (not (env "CI")) (eq $op_status "locked") -}}
-{{-   fail "[FATAL] 1Password session is locked. Run 'op signin' and try again." -}}
+{{-   fail "[FATAL] 1Password CLI account check failed. Confirm the selected CLI's account, app integration and authentication (Windows op.exe on WSL), then retry chezmoi init. See docs/operations.md#first-install; this check does not distinguish a locked session from other CLI failures." -}}
 {{- end -}}
 
 {{- /* --- 3. Content-Addressable Identity Aggregation --- */}}
@@ -98,40 +98,48 @@ sourceDir = {{ .chezmoi.sourceDir | quote }}
 {{- $ssh_keys_hash_input := "" -}}
 {{- if eq $op_status "ready" -}}
 {{-   $accounts_json := output $op_bin "account" "list" "--format" "json" -}}
-{{-   if ne $accounts_json "" -}}
-{{-     $accounts := fromJson $accounts_json -}}
-{{-     range $accounts -}}
-{{-       $account_id := .account_uuid -}}
-{{-       $items_json := output $op_bin "item" "list" "--tags" "dotfiles-ssh-key" "--account" $account_id "--format" "json" -}}
-{{-       if and (ne $items_json "") (ne $items_json "[]") -}}
-{{-         $items := fromJson $items_json -}}
-{{-         $ssh_keys_hash_input = printf "%s%s" $ssh_keys_hash_input $items_json -}}
-{{-         range $items -}}
-{{-           $item_id := .id -}}
-{{-           $details := fromJson (output $op_bin "item" "get" $item_id "--account" $account_id "--format" "json") -}}
-{{-           $git_name := "" -}}
-{{-           $git_email := "" -}}
-{{-           $git_dirs := "" -}}
-{{-           $key_type := "ed25519" -}}
-{{-           $public_key := "" -}}
-{{-           range $details.fields -}}
-{{-             if and (hasKey . "section") (eq .section.label "dotfiles") -}}
-{{-               if eq .label "dotfiles_git_name" }}{{ $git_name = .value }}{{ end -}}
-{{-               if eq .label "dotfiles_git_email" }}{{ $git_email = .value }}{{ end -}}
-{{-               if eq .label "dotfiles_git_dirs" }}{{ $git_dirs = .value }}{{ end -}}
-{{-             end -}}
-{{-             if eq .label "key type" }}{{ $key_type = .value }}{{ end -}}
-{{-             if eq .label "public key" }}{{ $public_key = .value }}{{ end -}}
-{{-           end -}}
-{{-           if and (ne $git_name "") (ne $git_email "") (ne $git_dirs "") (ne $public_key "") -}}
-{{-             $key_hash := substr 0 8 (sha256sum $public_key) -}}
-{{-             $identities = append $identities (dict "item_id" $item_id "account_id" $account_id "key_hash" $key_hash "key_type" (lower $key_type) "name" $git_name "email" $git_email "dirs" $git_dirs "public_key" $public_key) -}}
-{{-           end -}}
+{{-   $accounts := fromJson $accounts_json -}}
+{{-   if not (kindIs "slice" $accounts) -}}{{- fail "identity: account list must be a JSON array" -}}{{- end -}}
+{{-   range $accounts -}}
+{{-     if not (kindIs "map" .) -}}{{- fail "identity: account must be a JSON object" -}}{{- end -}}
+{{-     $account_id := .account_uuid -}}
+{{-     if not (kindIs "string" $account_id) -}}{{- fail "identity: account ID must be a string" -}}{{- end -}}
+{{-     if or (eq (trim $account_id) "") (regexMatch `[[:cntrl:]]` $account_id) -}}{{- fail "identity: account ID must be nonblank and single-line" -}}{{- end -}}
+{{-     $items_json := output $op_bin "item" "list" "--tags" "dotfiles-ssh-key" "--account" $account_id "--format" "json" -}}
+{{-     $items := fromJson $items_json -}}
+{{-     if not (kindIs "slice" $items) -}}{{- fail "identity: item list must be a JSON array" -}}{{- end -}}
+{{-     if $items -}}{{- $ssh_keys_hash_input = printf "%s%s" $ssh_keys_hash_input $items_json -}}{{- end -}}
+{{-     range $items -}}
+{{-       if not (kindIs "map" .) -}}{{- fail "identity: item must be a JSON object" -}}{{- end -}}
+{{-       $item_id := .id -}}
+{{-       if not (kindIs "string" $item_id) -}}{{- fail "identity: item ID must be a string" -}}{{- end -}}
+{{-       if or (eq (trim $item_id) "") (regexMatch `[[:cntrl:]]` $item_id) -}}{{- fail "identity: item ID must be nonblank and single-line" -}}{{- end -}}
+{{-       $details := fromJson (output $op_bin "item" "get" $item_id "--account" $account_id "--format" "json") -}}
+{{-       if not (kindIs "map" $details) -}}{{- fail "identity: item details must be a JSON object" -}}{{- end -}}
+{{-       if not (kindIs "slice" $details.fields) -}}{{- fail "identity: item fields must be a JSON array" -}}{{- end -}}
+{{-       $git_name := "" -}}
+{{-       $git_email := "" -}}
+{{-       $git_dirs := "" -}}
+{{-       $key_type := "ed25519" -}}
+{{-       $public_key := "" -}}
+{{-       range $details.fields -}}
+{{-         if not (kindIs "map" .) -}}{{- fail "identity: field must be a JSON object" -}}{{- end -}}
+{{-         if and (hasKey . "section") (eq .section.label "dotfiles") -}}
+{{-           if eq .label "dotfiles_git_name" }}{{ $git_name = .value }}{{ end -}}
+{{-           if eq .label "dotfiles_git_email" }}{{ $git_email = .value }}{{ end -}}
+{{-           if eq .label "dotfiles_git_dirs" }}{{ $git_dirs = .value }}{{ end -}}
 {{-         end -}}
+{{-         if eq .label "key type" }}{{ $key_type = .value }}{{ end -}}
+{{-         if eq .label "public key" }}{{ $public_key = .value }}{{ end -}}
 {{-       end -}}
+{{- /* Every tagged item must satisfy the schema; do not silently drop invalid input. */ -}}
+{{-       $key_hash := substr 0 8 (sha256sum $public_key) -}}
+{{-       $identities = append $identities (dict "item_id" $item_id "account_id" $account_id "key_hash" $key_hash "key_type" (lower $key_type) "name" $git_name "email" $git_email "dirs" $git_dirs "public_key" $public_key) -}}
 {{-     end -}}
 {{-   end -}}
 {{- end -}}
+
+{{- $identities = includeTemplate "validated_identities.tmpl" (dict "identities" $identities "paths" (dict "home" $home "xdg_config" (joinPath $home ".config"))) | fromJson -}}
 
 {{- $ssh_keys_hash := "none" -}}
 {{- if ne $ssh_keys_hash_input "" -}}

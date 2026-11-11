@@ -1,0 +1,14 @@
+#!/bin/sh
+# Preserve legacy routing and restore owned missing generation files before targets.
+# No op/auth; requires Python 3.9+ and Git already available on PATH.
+if ! command -v python3 >/dev/null 2>&1; then
+  echo 'identity: Python 3.9+ must be on PATH before apply. Prepare it outside the post-apply mise install, then retry; see docs/operations.md#first-install.' >&2
+  exit 1
+fi
+if ! command -v git >/dev/null 2>&1; then
+  echo 'identity: Git must be on PATH before apply. Prepare it with the OS tools, then retry; see docs/operations.md#first-install.' >&2
+  exit 1
+fi
+exec python3 - {{ includeTemplate "posix_shell_quote.tmpl" (includeTemplate "identity_payload.tmpl" .) }} prepare <<'DOTFILES_IDENTITY_PY'
+{{ include ".chezmoitemplates/identity_transaction.py" }}
+DOTFILES_IDENTITY_PY
