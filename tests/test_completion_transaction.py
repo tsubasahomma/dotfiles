@@ -275,6 +275,29 @@ printf 'print -r -- completed-after-termination\\n'
             p.communicate()
 
     def test_rename_failure_and_interrupt_at_commit(self):
+        # Keep Zsh's real cache/audit functions, but exclude ambient completions
+        # and their directory permissions from this publication fixture.
+        helpers = ('compinit', 'compaudit', 'compdump', 'compinstall')
+        sources = self.run_zsh(['-c', 'autoload -Uz "$@"; autoload +X "$@" || exit; '
+                               'for name in "$@"; do print -r -- "${functions_source[$name]}"; done',
+                               'zsh', *helpers]).splitlines()
+        self.assertEqual(len(sources), len(helpers))
+        functions = self.root / 'completion-functions'
+        functions.mkdir()
+        for name, source in zip(helpers, sources):
+            shutil.copyfile(source, functions / name)
+        setup = 'fpath=("$1" "$3"); _compdir=; autoload -Uz compinit; '
+        # Restrict discovery rather than bypassing compaudit: an insecure
+        # fixture directory must still be rejected without an interactive tty.
+        self.comp.chmod(0o777)
+        try:
+            rejected = subprocess.run([ZSH, '-f', '-c', setup + 'compinit -d "$2"',
+                                       'zsh', str(self.comp), str(self.cache / 'rejected-dump'), str(functions)],
+                                      env=self.env, cwd=self.root, text=True, capture_output=True)
+            self.assertNotEqual(rejected.returncode, 0)
+            self.assertFalse((self.cache / 'rejected-dump').exists())
+        finally:
+            self.comp.chmod(0o755)
         # Instrument only the rendered fixture; production renames execute inside
         # the task process, so a killed parent cannot leave an orphan mv publisher.
         self.assertNotIn('command mv', self.script.read_text())
@@ -297,8 +320,8 @@ printf 'print -r -- completed-after-termination\\n'
             with self.subTest(mode=mode):
                 before = self.old(path, '#compdef old-mise-alias\nprint -r -- old-good\n')
                 dump = self.cache / 'zsh/zcompdump'
-                self.run_zsh(['-c', 'fpath=("$1" $fpath); autoload -Uz compinit; compinit -d "$2"; zcompile "$2"',
-                              'zsh', str(self.comp), str(dump)])
+                self.run_zsh(['-c', setup + 'compinit -d "$2"; zcompile "$2"',
+                              'zsh', str(self.comp), str(dump), str(functions)])
                 dump_before = dump.read_bytes(), Path(str(dump) + '.zwc').read_bytes()
                 self.env['MOVE_MODE'] = mode
                 p = self.run_generator()
@@ -311,10 +334,9 @@ printf 'print -r -- completed-after-termination\\n'
                     # Exercise the exact .zshrc dispatch-cache decision after interruption.
                     consumer = (REPO / 'dot_config/zsh/dot_zshrc.tmpl').read_text()
                     consumer = consumer[consumer.index('  local zcompdump='):consumer.index('  bashcompinit')]
-                    result = self.run_zsh(['-c', 'fpath=("$1" $fpath); autoload -Uz compinit; '
-                                           'ZSH_COMPDUMP_DIR="$2"; ' + consumer +
+                    result = self.run_zsh(['-c', setup + 'ZSH_COMPDUMP_DIR="$2"; ' + consumer +
                                            '; print -r -- "${_comps[mise]-missing}" "${_comps[old-mise-alias]-missing}"',
-                                           'zsh', str(self.comp), str(self.cache / 'zsh')])
+                                           'zsh', str(self.comp), str(self.cache / 'zsh'), str(functions)])
                     self.assertEqual(result, '_mise missing\n')
                 else:
                     self.assertEqual((dump.read_bytes(), Path(str(dump) + '.zwc').read_bytes()), dump_before)
