@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+# Every apply reaches only the bat-cache checker, after after_20 tool preparation.
+set -euo pipefail
+export XDG_CONFIG_HOME={{ template "posix_shell_quote.tmpl" .paths.xdg_config }}
+export XDG_DATA_HOME={{ template "posix_shell_quote.tmpl" .paths.xdg_data }}
+export XDG_STATE_HOME={{ template "posix_shell_quote.tmpl" .paths.xdg_state }}
+export XDG_CACHE_HOME={{ template "posix_shell_quote.tmpl" .paths.xdg_cache }}
+export PNPM_HOME={{ template "posix_shell_quote.tmpl" (joinPath .paths.xdg_data "pnpm") }}
+# Match explicit tasks' project/config context; never invoke the common graph.
+cd {{ template "posix_shell_quote.tmpl" .paths.home }}
+exec /bin/bash {{ template "posix_shell_quote.tmpl" (joinPath .paths.xdg_config "mise/repo-tasks/cache/bat") }}

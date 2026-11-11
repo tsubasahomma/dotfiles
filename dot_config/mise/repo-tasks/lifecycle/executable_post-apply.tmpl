@@ -2,11 +2,11 @@
 # [MISE] description="Run post-apply generated, cache, build, and sync graph"
 # [MISE] hide=true
 {{- if eq .osid "linux" }}
-# [MISE] depends=["repair:security", "provision:linux-shell", "provision:pnpm", "generate:completions", "cache:bat", "sync:vale", "generate:identity"]
+# [MISE] depends=["repair:security", "provision:linux-shell", "provision:pnpm"]
 {{- else if eq .osid "darwin" }}
-# [MISE] depends=["repair:security", "provision:pnpm", "generate:completions", "cache:bat", "sync:vale", "build:pbfile", "generate:identity"]
+# [MISE] depends=["repair:security", "provision:pnpm"]
 {{- else }}
-# [MISE] depends=["repair:security", "provision:pnpm", "generate:completions", "cache:bat", "sync:vale", "generate:identity"]
+# [MISE] depends=["repair:security", "provision:pnpm"]
 {{- end }}
 {{/* [Reference]: https://mise.jdx.dev/tasks/file-tasks.html */}}{{ "" -}}
 

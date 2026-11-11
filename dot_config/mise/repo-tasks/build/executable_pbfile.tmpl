@@ -1,21 +1,17 @@
 #!/usr/bin/env bash
-# [MISE] description="Build the native pbfile clipboard bridge"
-# [MISE] sources=[".config/mise/repo-tasks/build/pbfile", ".local/share/pbcopy/pbfile.swift"]
-# [MISE] outputs=[".local/bin/pbfile"]
-{{/* [Reference]: https://mise.jdx.dev/tasks/file-tasks.html */}}{{ "" -}}
-
+# [MISE] description="Validate and build the native pbfile bridge"
 set -euo pipefail
-
 {{ if eq .osid "darwin" -}}
-SOURCE="{{ .paths.xdg_data }}/pbcopy/pbfile.swift"
-TARGET="{{ .paths.home }}/.local/bin/pbfile"
-
-if [[ -f "$SOURCE" ]]; then
-  echo "🔨 [Swift] Compiling native clipboard bridge..."
-  # [Optimization]: Use whole-module-optimization for sub-millisecond execution.
-  xcrun -sdk macosx swiftc -O -whole-module-optimization "$SOURCE" -o "$TARGET"
-  echo "✅ [Swift] pbfile converged."
-fi
+cd {{ template "posix_shell_quote.tmpl" .paths.home }}
+exec python3 - {{ template "posix_shell_quote.tmpl" .paths.home }} {{ template "posix_shell_quote.tmpl" .paths.xdg_data }} {{ template "posix_shell_quote.tmpl" .paths.xdg_state }} "$0" <<'PY_GENERATOR'
+import sys
+{{ include ".chezmoitemplates/generated_files.py" }}
+try:
+    exec(compile({{ include ".chezmoitemplates/pbfile_build.py" | toJson }}, "pbfile_build.py", "exec"))
+except Exception as error:
+    print("[Error] pbfile_build.py:", error, file=sys.stderr)
+    sys.exit(1)
+PY_GENERATOR
 {{ else -}}
-echo "⏭️  [Swift] Skipping pbfile compilation on non-macOS host."
+echo "[pbfile] non-macOS: not applicable"
 {{ end -}}

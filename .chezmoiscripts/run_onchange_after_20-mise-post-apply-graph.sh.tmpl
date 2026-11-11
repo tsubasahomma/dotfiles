@@ -1,21 +1,11 @@
 #!/usr/bin/env bash
 {{/* [Reference]: https://www.chezmoi.io/user-guide/use-scripts-to-perform-actions/ */}}{{ "" -}}
 # Platform-neutral post-apply convergence is delegated to the repo-owned mise graph.
-# The 20 prefix keeps this graph before WSL/Windows-specific 51/52/90 adapters.
+# The 20 prefix prepares tools before the dedicated 30/40/41/42/50 checks.
 # [Trigger]: dynamic mise config hash: {{ include "dot_config/mise/config.toml.tmpl" | sha256sum }}
 # [Trigger]: static tool manifest hash: {{ include "dot_config/mise/conf.d/10-tools.toml" | sha256sum }}
 # [Trigger]: external asset manifest hash: {{ include ".chezmoiexternal.toml.tmpl" | sha256sum }}
-# [Trigger]: bat theme target hash: {{ if stat (joinPath .paths.home ".config/bat/themes/Catppuccin Mocha.tmTheme") }}{{ include (joinPath .paths.home ".config/bat/themes/Catppuccin Mocha.tmTheme") | sha256sum }}{{ else }}missing{{ end }}
 # [Trigger]: post-apply lifecycle task hash: {{ include "dot_config/mise/repo-tasks/lifecycle/executable_post-apply.tmpl" | sha256sum }}
-# [Trigger]: completion data hash: {{ include ".chezmoidata/completions.yaml" | sha256sum }}
-# [Trigger]: completion task hash: {{ include "dot_config/mise/repo-tasks/generate/executable_completions.tmpl" | sha256sum }}
-# [Trigger]: bat cache task hash: {{ include "dot_config/mise/repo-tasks/cache/executable_bat.tmpl" | sha256sum }}
-# [Trigger]: Vale config hash: {{ include "dot_config/vale/vale.ini.tmpl" | sha256sum }}
-# [Trigger]: Vale sync task hash: {{ include "dot_config/mise/repo-tasks/sync/executable_vale.tmpl" | sha256sum }}
-# [Trigger]: pbfile source hash: {{ include "dot_local/share/pbcopy/pbfile.swift" | sha256sum }}
-# [Trigger]: pbfile build task hash: {{ include "dot_config/mise/repo-tasks/build/executable_pbfile.tmpl" | sha256sum }}
-# [Trigger]: generated identity input hash: {{ .ssh_keys_hash }}
-# [Trigger]: generated identity task hash: {{ include "dot_config/mise/repo-tasks/generate/executable_identity.tmpl" | sha256sum }}
 # [Trigger]: security repair task hash: {{ include "dot_config/mise/repo-tasks/repair/executable_security.tmpl" | sha256sum }}
 # [Trigger]: Linux shell provision task hash: {{ include "dot_config/mise/repo-tasks/provision/executable_linux-shell.tmpl" | sha256sum }}
 # [Trigger]: pnpm provision task hash: {{ include "dot_config/mise/repo-tasks/provision/executable_pnpm.tmpl" | sha256sum }}
@@ -24,17 +14,18 @@ set -euo pipefail
 
 # This script runs before the new Zsh environment is fully initialized.
 # Export the rendered XDG contract before mise or tool subprocesses derive paths.
-export XDG_CONFIG_HOME="{{ .paths.xdg_config }}"
-export XDG_DATA_HOME="{{ .paths.xdg_data }}"
-export XDG_STATE_HOME="{{ .paths.xdg_state }}"
-export XDG_CACHE_HOME="{{ .paths.xdg_cache }}"
+export XDG_CONFIG_HOME={{ includeTemplate "posix_shell_quote.tmpl" .paths.xdg_config }}
+export XDG_DATA_HOME={{ includeTemplate "posix_shell_quote.tmpl" .paths.xdg_data }}
+export XDG_STATE_HOME={{ includeTemplate "posix_shell_quote.tmpl" .paths.xdg_state }}
+export XDG_CACHE_HOME={{ includeTemplate "posix_shell_quote.tmpl" .paths.xdg_cache }}
 
 # PATH injection is required because this subshell executes before Zsh bootstrap completes.
-export PNPM_HOME="{{ .paths.xdg_data }}/pnpm"
-export PATH="$PNPM_HOME:{{ .paths.home }}/.local/bin:$PATH"
+export PNPM_HOME={{ includeTemplate "posix_shell_quote.tmpl" (joinPath .paths.xdg_data "pnpm") }}
+LOCAL_BIN={{ includeTemplate "posix_shell_quote.tmpl" (joinPath .paths.home ".local/bin") }}
+export PATH="$PNPM_HOME:$LOCAL_BIN:$PATH"
 
-MISE_BIN="{{ .paths.mise }}"
-OP_BIN="{{ .paths.op }}"
+MISE_BIN={{ includeTemplate "posix_shell_quote.tmpl" .paths.mise }}
+OP_BIN={{ includeTemplate "posix_shell_quote.tmpl" .paths.op }}
 MISE_GITHUB_CREDENTIAL_COMMAND_VALUE=""
 
 configure_mise_github_auth() {

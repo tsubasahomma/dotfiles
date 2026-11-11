@@ -1,20 +1,13 @@
 #!/usr/bin/env bash
-# [MISE] description="Synchronize Vale external style packages (Google)"
-# [MISE] sources=[".config/mise/repo-tasks/sync/vale", ".config/mise/conf.d/10-tools.toml", ".config/vale/vale.ini"]
-# [MISE] outputs=[".local/share/vale/styles/Google"]
-{{/* [Reference]: https://vale.sh/docs/topics/config/#stylespath */}}{{ "" -}}
-
+# [MISE] description="Validate and sync owned Google style rules"
 set -euo pipefail
-
-MISE_BIN="{{ .paths.mise }}"
-VALE_CONFIG="{{ .paths.xdg_config }}/vale/vale.ini"
-
-if [[ ! -f "$VALE_CONFIG" ]]; then
-  echo "⚠️  [Vale] Configuration not found at $VALE_CONFIG. Skipping sync."
-  exit 0
-fi
-
-echo "📦 [Vale] Synchronizing style packages..."
-"$MISE_BIN" exec -- vale --config="$VALE_CONFIG" sync
-
-echo "✅ [Vale] Styles converged."
+cd {{ template "posix_shell_quote.tmpl" .paths.home }}
+exec python3 - {{ template "posix_shell_quote.tmpl" .paths.mise }} {{ template "posix_shell_quote.tmpl" .paths.xdg_config }} {{ template "posix_shell_quote.tmpl" .paths.xdg_data }} {{ template "posix_shell_quote.tmpl" .paths.xdg_state }} "$0" <<'PY_GENERATOR'
+import sys
+{{ include ".chezmoitemplates/generated_files.py" }}
+try:
+    exec(compile({{ include ".chezmoitemplates/vale_styles.py" | toJson }}, "vale_styles.py", "exec"))
+except Exception as error:
+    print("[Error] vale_styles.py:", error, file=sys.stderr)
+    sys.exit(1)
+PY_GENERATOR

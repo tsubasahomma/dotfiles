@@ -1,14 +1,17 @@
 #!/bin/zsh
 # [MISE] description="Generate static Zsh completions and init assets"
-# [MISE] depends=["provision:pnpm"]
-# [MISE] sources=[".config/mise/repo-tasks/generate/completions", ".config/mise/conf.d/10-tools.toml", ".config/zsh/completions/_*", ".config/zsh/completions/git-completion.bash"]
-# [MISE] outputs=[".cache/zsh/completions", ".cache/zsh/init"]
 {{/* [Reference]: https://mise.jdx.dev/tasks/file-tasks.html */}}{{ "" -}}
 
 set -euo pipefail
 setopt extended_glob
+# This entry never installs tools or runs dependency preparation. Initial apply
+# prepares tools in after_20; after_30 and explicit generation only use them.
+export MISE_AUTO_INSTALL=false MISE_EXEC_AUTO_INSTALL=false MISE_TASK_RUN_AUTO_INSTALL=false
+export MISE_OFFLINE=true
 
-export PATH="{{ .paths.home }}/.local/bin:$PATH"
+
+cd {{ template "posix_shell_quote.tmpl" .paths.home }}
+export PATH={{ template "posix_shell_quote.tmpl" (printf "%s/.local/bin" .paths.home) }}:"$PATH"
 
 {{/* [Template Variables] */ -}}
 {{- $tool_keys := .completions.tool_keys -}}
@@ -30,106 +33,238 @@ export PATH="{{ .paths.home }}/.local/bin:$PATH"
 {{- $id_codex := index $tool_keys "codex" -}}
 {{- $id_scc := index $tool_keys "scc" -}}
 
-MISE_BIN="{{ .paths.mise }}"
-COMP_DIR="{{ .paths.xdg_cache }}/zsh/completions"
-INIT_DIR="{{ .paths.xdg_cache }}/zsh/init"
+MISE_BIN={{ template "posix_shell_quote.tmpl" .paths.mise }}
+COMP_DIR={{ template "posix_shell_quote.tmpl" (printf "%s/zsh/completions" .paths.xdg_cache) }}
+INIT_DIR={{ template "posix_shell_quote.tmpl" (printf "%s/zsh/init" .paths.xdg_cache) }}
 
-echo "[Infrastructure] Provisioning static Zsh assets..."
+# A directory-wide compiled digest can shadow every new completion. It is not
+# produced/owned here, so require explicit resolution instead of deleting it.
+if [[ -e "$COMP_DIR.zwc" || -L "$COMP_DIR.zwc" ]]; then
+  print -u2 -- "[Error] Unmanaged compiled directory shadows completions: $COMP_DIR.zwc"
+  exit 1
+fi
+# The configured XDG root may be relocated, but fixed generated subdirectories
+# must not redirect writes into an unrelated tree.
+for directory in "${COMP_DIR:h}" "$COMP_DIR" "$INIT_DIR"; do
+  if [[ -L "$directory" || ( -e "$directory" && ! -d "$directory" ) ]]; then
+    print -u2 -- "[Error] Refusing redirected asset directory: $directory"
+    exit 1
+  fi
+done
 mkdir -p "$COMP_DIR" "$INIT_DIR"
 
-local -a stale_files
-stale_files=("$COMP_DIR"/*.zwc(N) "$INIT_DIR"/*.zwc(N))
-if (( ${#stale_files} > 0 )); then
-  rm -f "${stale_files[@]}"
+# A persistent inode plus kernel lock avoids ownership races on lock removal.
+# Never unlink this file: another task may already have it open.
+LOCK_FILE="${COMP_DIR:h}/.completion-generation.lock"
+if ! zmodload zsh/system || ! zsystem supports flock || ! zmodload -F zsh/files b:zf_mv; then
+  print -u2 -- "[Error] Zsh system flock and files zf_mv support are required for safe completion generation."
+  exit 1
 fi
+if [[ ! -e "$LOCK_FILE" && ! -L "$LOCK_FILE" ]]; then
+  (umask 077; setopt noclobber; : > "$LOCK_FILE") || {
+    [[ -f "$LOCK_FILE" && ! -L "$LOCK_FILE" ]] || exit 1
+  }
+fi
+if [[ ! -f "$LOCK_FILE" || -L "$LOCK_FILE" ]]; then
+  print -u2 -- "[Error] Refusing non-regular completion lock: $LOCK_FILE"
+  exit 1
+fi
+if ! zsystem flock -t 0 "$LOCK_FILE"; then
+  print -u2 -- "[Error] Completion generator locked or lock unavailable: $LOCK_FILE"
+  exit 1
+fi
+# The task shell holds the lock until exit, including SIGKILL. Child execs do not
+# inherit it; only this process can publish or restore a cache.
+STAGE=""
+CANDIDATE=""
+typeset -a ASSET_CACHES
+ASSET_CACHES=()
+function cleanup_asset {
+  [[ -n "$STAGE" ]] || return 0
+  local cache backup
+  for cache in "${ASSET_CACHES[@]}"; do
+    backup="$STAGE/previous-${cache:t}"
+    if [[ -e "$backup" ]]; then
+      # The source rename is the commit point, including an immediate signal.
+      if [[ -e "$CANDIDATE" ]]; then
+        builtin zf_mv -f -- "$backup" "$cache" || return 1
+      fi
+    fi
+  done
+  command rm -rf -- "$STAGE" || return 1
+  STAGE=""
+}
+DEPENDENCY_STAGE=""
+function cleanup_completion {
+  cleanup_asset || return 1
+  [[ -z "$DEPENDENCY_STAGE" ]] || command rm -rf -- "$DEPENDENCY_STAGE"
+}
+trap cleanup_completion EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+trap 'exit 129' HUP
 
-function generate_comp {
-  local mise_id="$1"
-  local bin_name="$2"
-  shift 2
-  echo "  [Completions] Generating for: $bin_name" >&2
-  "$MISE_BIN" exec "$mise_id" -- "$bin_name" "$@" || echo "  [Warn] Failed to generate completions for $bin_name." >&2
+DEPENDENCY_STAGE=$(mktemp -d "${TMPDIR:-/tmp}/completion-inputs.XXXXXXXX")
+export COMPLETION_DIGEST_CACHE="$DEPENDENCY_STAGE/digests.json"
+
+# Fingerprint checks read actual bytes, never directory existence or mtimes.
+# Python only reads dependencies / writes private staging; the locked Zsh parent
+# remains the sole publisher, including the receipt after the source commit.
+SCRIPT_FILE=${0:A}
+typeset -a ASSET_DEPENDENCIES
+ASSET_DEPENDENCIES=()
+function asset_state {
+  python3 - "$1" "$2" "$3" "$SCRIPT_FILE" "${ASSET_DEPENDENCIES[@]}" <<'PY_COMPLETION_STATE'
+{{ include ".chezmoitemplates/completion_state.py" | trim }}
+PY_COMPLETION_STATE
 }
 
-# --- Phase 1: Verified Completion Generation ---
-"$MISE_BIN" completion zsh > "$COMP_DIR/_mise"
+# Resolve and execute the same absolute file. `which --tool` selects the
+# configured/installed tool; exec retains its runtime environment but cannot
+# choose a different PATH executable. JS launchers also depend on Node and their
+# installation contents (e.g. Codex's vendor executable), not just the launcher.
+function tool_asset {
+  local requirement="$1" target="$2" kind="$3" tool="$4" executable="$5" resolved root node
+  shift 5
+  resolved=$("$MISE_BIN" which --tool "$tool" "$executable") || return 1
+  [[ -n "$resolved" && -x "$resolved" ]] || return 1
+  ASSET_DEPENDENCIES=("$MISE_BIN" "$resolved")
+  if [[ "$executable" == pnpm || "$executable" == codex ]]; then
+    root=$("$MISE_BIN" where "$tool") || return 1
+    node=$("$MISE_BIN" which --tool node node) || return 1
+    [[ -d "$root" && -x "$node" ]] || return 1
+    ASSET_DEPENDENCIES+=("$root" "$node")
+    generate_asset "$requirement" "$target" "$kind" "$MISE_BIN" exec --no-deps "$tool" -- \
+      /bin/sh -c 'PATH="$1:$PATH"; export PATH; shift; exec "$@"' sh "${node:h}" "$resolved" "$@"
+    return
+  fi
+  generate_asset "$requirement" "$target" "$kind" "$MISE_BIN" exec --no-deps "$tool" -- "$resolved" "$@"
+}
 
-generate_comp "{{ $id_gh }}" "gh" completion -s zsh > "$COMP_DIR/_gh"
-generate_comp "{{ $id_ripgrep }}" "rg" --generate complete-zsh > "$COMP_DIR/_rg"
-generate_comp "{{ $id_fd }}" "fd" --gen-completions zsh > "$COMP_DIR/_fd"
-generate_comp "{{ $id_uv }}" "uv" generate-shell-completion zsh > "$COMP_DIR/_uv"
-generate_comp "{{ $id_starship }}" "starship" completions zsh > "$COMP_DIR/_starship"
-generate_comp "{{ $id_yq }}" "yq" completion zsh > "$COMP_DIR/_yq"
-generate_comp "{{ $id_doggo }}" "doggo" completions zsh > "$COMP_DIR/_doggo"
-generate_comp "{{ $id_kubectl }}" "kubectl" completion zsh > "$COMP_DIR/_kubectl"
-generate_comp "{{ $id_helm }}" "helm" completion zsh > "$COMP_DIR/_helm"
-generate_comp "{{ $id_k9s }}" "k9s" completion zsh > "$COMP_DIR/_k9s"
-generate_comp "{{ $id_lazygit }}" "lazygit" completion zsh > "$COMP_DIR/_lazygit"
-generate_comp "{{ $id_pnpm }}" "pnpm" completion zsh > "$COMP_DIR/_pnpm" || true
-generate_comp "{{ $id_codex }}" "codex" completion zsh > "$COMP_DIR/_codex"
-generate_comp "{{ $id_scc }}" "scc" completion --shell zsh > "$COMP_DIR/_scc"
+# Each output commits independently in the task shell. A signal to this PID must
+# not leave a child publisher running after the task exits.
+function publish_asset {
+  local target="$1" kind="$2" cache state_check
+  local receipt="${target:h}/.${target:t}.generation.json"
+  shift 2
+  state_check=$(asset_state check "$target" "$receipt") || return 1
+  [[ "$state_check" != current ]] || return 0
+  STAGE=$(mktemp -d "${target:h}/.completion-stage.XXXXXXXX") || return 1
+  CANDIDATE="$STAGE/${target:t}"
+  ASSET_CACHES=("$target.zwc")
+  if [[ "$kind" == completion ]]; then
+    # Retire compiled dump first, before any new source can become visible.
+    # Only these exact consumer paths, never glob legacy or unknown caches.
+    ASSET_CACHES+=("${COMP_DIR:h}/zcompdump.zwc" "${COMP_DIR:h}/zcompdump")
+  fi
+  if [[ -e "$target" && ! -f "$target" ]] || [[ -L "$target" && "$kind" != include ]]; then
+    print -u2 -- "[Error] Refusing non-regular output: $target"
+    return 1
+  fi
+  for cache in "${ASSET_CACHES[@]}"; do
+    if [[ -e "$cache" || -L "$cache" ]]; then
+      if [[ ! -f "$cache" || -L "$cache" ]]; then
+        print -u2 -- "[Error] Refusing non-regular compiled output or dump: $cache"
+        return 1
+      fi
+    fi
+  done
+  if ! "$@" > "$CANDIDATE"; then
+    print -u2 -- "[Error] Generator failed: $target"
+    return 1
+  fi
+  if [[ ! -s "$CANDIDATE" ]] || ! zcompile -U "$CANDIDATE"; then
+    print -u2 -- "[Error] Empty or invalid Zsh output: $target"
+    return 1
+  fi
+  # Keep the canonical basename for zcompile/autoload validation. Do not publish
+  # compiled files: a two-file rename cannot atomically switch source and zwc.
+  chmod 644 "$CANDIDATE" || return 1
+  asset_state record "$CANDIDATE" "$receipt" > "$STAGE/receipt.json" || return 1
+  chmod 644 "$STAGE/receipt.json" || return 1
+  for cache in "${ASSET_CACHES[@]}"; do
+    if [[ -f "$cache" ]]; then
+      builtin zf_mv -- "$cache" "$STAGE/previous-${cache:t}" || return 1
+    fi
+  done
+  builtin zf_mv -f -- "$CANDIDATE" "$target" || return 1
+  builtin zf_mv -f -- "$STAGE/receipt.json" "$receipt" || return 1
+}
 
-"$MISE_BIN" exec "{{ $id_delta }}" -- delta --generate-completion zsh 2>/dev/null > "$COMP_DIR/_delta" || true
+function generate_asset {
+  local requirement="$1" target="$2" kind="$3"
+  shift 3
+  if publish_asset "$target" "$kind" "$@"; then
+    cleanup_asset || exit 1
+  else
+    cleanup_asset || exit 1
+    if [[ "$requirement" == optional ]]; then
+      print -u2 -- "[Warn] Optional completion unavailable; retained previous output: $target"
+    else
+      print -u2 -- "[Error] Required Zsh asset failed: $target"
+      exit 1
+    fi
+  fi
+}
 
-"{{ .chezmoi.executable }}" completion zsh > "$COMP_DIR/_chezmoi"
+# All declared CLI generators are required, including pnpm and delta.
+ASSET_DEPENDENCIES=("$MISE_BIN")
+# mise completion resolves usage in its configured tool environment, then falls
+# back to an embedded completion if usage is absent/fails. Observe that same
+# PATH (including a system fallback), without making usage a new required asset.
+USAGE_BIN=$("$MISE_BIN" exec --no-deps -- /bin/sh -c 'command -v usage || true')
+[[ -z "$USAGE_BIN" ]] || ASSET_DEPENDENCIES+=("$USAGE_BIN")
+generate_asset required "$COMP_DIR/_mise" completion "$MISE_BIN" completion zsh
+tool_asset required "$COMP_DIR/_gh" completion "{{ $id_gh }}" "gh" completion -s zsh
+tool_asset required "$COMP_DIR/_rg" completion "{{ $id_ripgrep }}" "rg" --generate complete-zsh
+tool_asset required "$COMP_DIR/_fd" completion "{{ $id_fd }}" "fd" --gen-completions zsh
+tool_asset required "$COMP_DIR/_uv" completion "{{ $id_uv }}" "uv" generate-shell-completion zsh
+tool_asset required "$COMP_DIR/_starship" completion "{{ $id_starship }}" "starship" completions zsh
+tool_asset required "$COMP_DIR/_yq" completion "{{ $id_yq }}" "yq" completion zsh
+tool_asset required "$COMP_DIR/_doggo" completion "{{ $id_doggo }}" "doggo" completions zsh
+tool_asset required "$COMP_DIR/_kubectl" completion "{{ $id_kubectl }}" "kubectl" completion zsh
+tool_asset required "$COMP_DIR/_helm" completion "{{ $id_helm }}" "helm" completion zsh
+tool_asset required "$COMP_DIR/_k9s" completion "{{ $id_k9s }}" "k9s" completion zsh
+tool_asset required "$COMP_DIR/_lazygit" completion "{{ $id_lazygit }}" "lazygit" completion zsh
+tool_asset required "$COMP_DIR/_pnpm" completion "{{ $id_pnpm }}" "pnpm" completion zsh
+tool_asset required "$COMP_DIR/_codex" completion "{{ $id_codex }}" "codex" completion zsh
+tool_asset required "$COMP_DIR/_scc" completion "{{ $id_scc }}" "scc" completion --shell zsh
+tool_asset required "$COMP_DIR/_delta" completion "{{ $id_delta }}" delta --generate-completion zsh
+ASSET_DEPENDENCIES=({{ template "posix_shell_quote.tmpl" .chezmoi.executable }})
+generate_asset required "$COMP_DIR/_chezmoi" completion {{ template "posix_shell_quote.tmpl" .chezmoi.executable }} completion zsh
 
+function wezterm_completion {
+  wezterm shell-completion --shell zsh | tr -d '\r'
+}
 if command -v wezterm >/dev/null 2>&1; then
-  echo "  [Completions] Generating for: wezterm" >&2
-  wezterm shell-completion --shell zsh 2>/dev/null | tr -d '\r' > "$COMP_DIR/_wezterm" || true
+  ASSET_DEPENDENCIES=("${commands[wezterm]}" "${commands[tr]}")
+  generate_asset optional "$COMP_DIR/_wezterm" completion wezterm_completion
+else
+  print -u2 -- "[Warn] Optional completion unavailable: wezterm not found; retained previous output."
 fi
 
-# --- Phase 2: Static Init Generation & Compilation ---
-"$MISE_BIN" exec {{ $id_zoxide }} -- zoxide init zsh > "$INIT_DIR/zoxide.zsh"
-"$MISE_BIN" exec {{ $id_starship }} -- starship init zsh --print-full-init > "$INIT_DIR/starship.zsh"
+tool_asset required "$INIT_DIR/zoxide.zsh" init "{{ $id_zoxide }}" zoxide init zsh
+tool_asset required "$INIT_DIR/starship.zsh" init "{{ $id_starship }}" starship init zsh --print-full-init
 
-local -a init_scripts
-init_scripts=("$INIT_DIR"/*.zsh(N))
-for f in "${init_scripts[@]}"; do
-  [[ "$f" == *.zwc ]] && continue
-  zcompile -U "$f"
-done
-
-# --- Phase 3: Dynamic Toolchain Symlinking & JIT Completion ---
-GCLOUD_DIR=$("$MISE_BIN" where {{ $id_gcloud }} 2>/dev/null || true)
-if [[ -n "$GCLOUD_DIR" && -f "$GCLOUD_DIR/completion.zsh.inc" ]]; then
-  ln -sf "$GCLOUD_DIR/completion.zsh.inc" "$INIT_DIR/gcloud.zsh.inc"
-  cat << EOF > "$COMP_DIR/_gcloud"
-#compdef gcloud
-local gcloud_inc="${INIT_DIR}/gcloud.zsh.inc"
-if [[ -f "\$gcloud_inc" ]]; then
-  source "\$gcloud_inc" 2>/dev/null
-  if (( \$+functions[_python_argcomplete] )); then
-    _python_argcomplete "\$@"
+# Snapshot the selected SDK include. A mutable symlink could bypass validation on
+# a later tool upgrade. Replace a legacy link itself, never its SDK target.
+if ! GCLOUD_DIR=$("$MISE_BIN" where "{{ $id_gcloud }}") || [[ -z "$GCLOUD_DIR" ]]; then
+  print -u2 -- "[Error] Required gcloud SDK location unavailable; retained previous output."
+  exit 1
+fi
+ASSET_DEPENDENCIES=("$MISE_BIN" "$GCLOUD_DIR/completion.zsh.inc")
+generate_asset required "$INIT_DIR/gcloud.zsh.inc" include cat -- "$GCLOUD_DIR/completion.zsh.inc"
+function gcloud_wrapper {
+  print -r -- '#compdef gcloud'
+  print -r -- "local gcloud_inc=${(q)INIT_DIR}/gcloud.zsh.inc"
+  cat <<'EOF'
+if [[ -f "$gcloud_inc" ]]; then
+  source "$gcloud_inc"
+  if (( $+functions[_python_argcomplete] )); then
+    _python_argcomplete "$@"
   fi
 fi
 EOF
-fi
-
-# --- Phase 4: Unified Asset Compilation ---
-# Use managed paths and verify readability before zcompile.
-# Generated assets from third-party CLIs may contain bashisms that fail Zsh's strict AOT parser.
-# We gracefully catch compilation failures to allow JIT parsing fallback without breaking convergence.
-local -a compile_targets
-compile_targets=(
-  "$COMP_DIR"/_*(N-.)
-  "{{ .paths.home }}/.config/zsh/completions"/_*(N-.)
-)
-
-for f in "${compile_targets[@]}"; do
-  [[ "$f" == *.zwc ]] && continue
-  if [[ -r "$f" && -s "$f" ]]; then
-    zcompile -U "$f" 2>/dev/null || echo "  [Warn] AOT compilation bypassed for $f (Syntax constraints)." >&2
-  else
-    echo "  [Warn] Skipping unreadable or empty completion: $f" >&2
-  fi
-done
-
-# --- Phase 5: Completion Cache Invalidation ---
-ZSH_CACHE_DIR="{{ .paths.xdg_cache }}/zsh"
-local -a stale_dumps
-stale_dumps=("$ZSH_CACHE_DIR"/zcompdump*(N) "${ZDOTDIR:-$HOME}"/.zcompdump*(N))
-
-if (( ${#stale_dumps} > 0 )); then
-  echo "  [Infrastructure] Invalidating Zsh completion cache to force JIT rebuild..." >&2
-  rm -f "${stale_dumps[@]}"
-fi
+}
+ASSET_DEPENDENCIES=()
+generate_asset required "$COMP_DIR/_gcloud" completion gcloud_wrapper

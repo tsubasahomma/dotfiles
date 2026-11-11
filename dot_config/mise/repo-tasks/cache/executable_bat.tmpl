@@ -1,14 +1,13 @@
 #!/usr/bin/env bash
-# [MISE] description="Rebuild bat syntax cache for Catppuccin Mocha"
-# [MISE] sources=[".config/mise/repo-tasks/cache/bat", ".config/mise/conf.d/10-tools.toml", ".config/bat/themes/Catppuccin Mocha.tmTheme"]
-# [MISE] outputs=[".cache/bat"]
-{{/* [Reference]: https://github.com/sharkdp/bat#customization */}}{{ "" -}}
-
+# [MISE] description="Validate and rebuild owned bat cache"
 set -euo pipefail
-
-MISE_BIN="{{ .paths.mise }}"
-
-echo "📦 [bat] Rebuilding theme cache..."
-"$MISE_BIN" exec bat -- bat cache --build
-
-echo "✅ [bat] Theme cache converged."
+cd {{ template "posix_shell_quote.tmpl" .paths.home }}
+exec python3 - {{ template "posix_shell_quote.tmpl" .paths.mise }} {{ template "posix_shell_quote.tmpl" .paths.xdg_config }} {{ template "posix_shell_quote.tmpl" .paths.xdg_cache }} {{ template "posix_shell_quote.tmpl" .paths.xdg_state }} "$0" <<'PY_GENERATOR'
+import sys
+{{ include ".chezmoitemplates/generated_files.py" }}
+try:
+    exec(compile({{ include ".chezmoitemplates/bat_cache.py" | toJson }}, "bat_cache.py", "exec"))
+except Exception as error:
+    print("[Error] bat_cache.py:", error, file=sys.stderr)
+    sys.exit(1)
+PY_GENERATOR
