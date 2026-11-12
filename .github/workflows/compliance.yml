@@ -274,9 +274,10 @@ jobs:
       - name: Phase 2 - Verify Managed Targets After One Apply
         run: |
           # Check managed targets after one apply; no reapply or deletion/recovery test.
-          if ! chezmoi verify; then
+          # Every-apply scripts intentionally remain runnable; verify file state.
+          if ! chezmoi verify --exclude=scripts; then
             echo "❌ [Verify Failure] Managed target drift detected."
-            chezmoi status
+            chezmoi status --exclude=scripts
             exit 1
           fi
           echo "✅ Managed static targets passed chezmoi verify; generated state and runtime behavior are checked separately."
