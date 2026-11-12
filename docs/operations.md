@@ -5,7 +5,7 @@ description: 現行の入口、実行前提、副作用、失敗時の扱いを�
 status: draft
 generated:
   by: codex/gpt-6
-  at: "2026-11-12T00:24:47+00:00"
+  at: "2026-11-12T15:54:02+00:00"
 sources:
   - id: apply-implementation
     resource: "https://github.com/twpayne/chezmoi/blob/v2.70.4/internal/cmd/config.go#L750"
@@ -79,6 +79,9 @@ sources:
   - id: verify
     resource: "https://www.chezmoi.io/reference/commands/verify/"
     title: "chezmoi verifyの確認範囲"
+  - id: status
+    resource: "https://www.chezmoi.io/reference/commands/status/"
+    title: "chezmoi statusのR表示"
   - id: doctor
     resource: "../dot_config/mise/repo-tasks/doctor/executable__default.tmpl"
     title: "doctorの共通検査集合"
@@ -241,6 +244,8 @@ GitHub tokenは常時必須という旧記述を引き継ぎません。source�
 | `mise run generate:identity`等の個別task | 対象taskとその依存を実行する | identityは直接呼ぶたびに所有・入力を検証し、必要時だけ世代生成・復旧する。他taskには省略条件がある。「名前を指定すれば欠損だけ直す」とは限らない[^identity][^mise-tasks] |
 | 配置済み`repo-tasks/update/lazy-lock`を直接実行 | 選択local revisionの隔離plugin更新とlock候補生成 | 一時HOME/XDGへ取得・書込し、成功/失敗artifactを保持。通常sourceへの採用とGit/PR公開は別。mise run経由ではtask開始前の自動導入があり得る。[範囲と採用手順](development.md#neovimrestoreと更新を混同しない)を確認する[^update-nvim] |
 
+適用後の静的配置は`chezmoi verify --exclude=scripts`の終了値と`chezmoi status --exclude=scripts`の出力で確認します。通常の`status`の`R`は次回適用時の実行予定を示します。毎回の検査用scriptは適用成功後も`R`に現れ、通常の`verify`は終了コード1になり得ます。chezmoi 2.70.4では、非WSLで空白だけに展開される`50-wsl-sync-services.sh`も`R`に表示されます。毎回の検査用scriptと対象外の空白scriptだけが残る場合、追加適用は不要です。各処理の成功は直前の`apply`の終了値で確認します。[^status][^scripts][^verify]
+
 checkごとの保証範囲は[validation](validation.md)、Neovim更新の詳細は[development](development.md)を正本にします。`dotfiles-diagnose --probe wsl-openssh`はdoctorに含まれず、外部通信・認証・一時署名commitを伴います。検査名だけで非変更と判断しないでください。
 
 現行に単一の汎用`repair`コマンドはありません。mise本体には明示的な`--install`入口がありますが、初期導入全体はconfig生成・package script等に分散しています。タスクが実際にどのコードを実行するかは、sourceとレンダリング済み配置物を照合して判断します。[^tasks][^config]
@@ -365,6 +370,7 @@ HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_NO_INSTALL_CLEANUP=1 brew upgrade --formula c
 [^init]: [chezmoi init](https://www.chezmoi.io/reference/commands/init/).
 [^scripts]: [chezmoi scripts：onchangeの成功済み内容による再実行判定](https://www.chezmoi.io/user-guide/use-scripts-to-perform-actions/).
 [^verify]: [chezmoi verifyの確認範囲](https://www.chezmoi.io/reference/commands/verify/).
+[^status]: [chezmoi statusの表示と除外オプション](https://www.chezmoi.io/reference/commands/status/)。
 [^doctor]: [doctorの共通検査集合](../dot_config/mise/repo-tasks/doctor/executable__default.tmpl).
 [^check-nvim]: [Neovim lockの直接比較と実体の存在検査](../dot_config/mise/repo-tasks/check/executable_nvim.tmpl).
 [^lazy]: [Neovim起動時のlazy.nvim取得](https://github.com/tsubasahomma/dotfiles/blob/f4fe1fac3e0722b173b5291a06e98e1e066786f1/dot_config/nvim/lua/config/lazy.lua).
