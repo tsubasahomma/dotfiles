@@ -22,15 +22,11 @@
   ],
   "packageRules": [
     {
-      "description": "Keep dependency changes independent; only the shared chezmoi pin is grouped below.",
+      "description": "Validate routine tool and action updates together once a week.",
       "matchManagers": ["mise", "github-actions", "custom.regex"],
-      "groupName": null
-    },
-    {
-      "description": "Update bootstrap and rendered global chezmoi declarations together.",
-      "matchManagers": ["mise"],
-      "matchDepNames": ["aqua:twpayne/chezmoi"],
-      "groupName": "chezmoi mise tool"
+      "groupName": "weekly dependencies",
+      "groupSlug": "weekly-dependencies",
+      "separateMajorMinor": false
     }
   ],
   "automerge": true,
@@ -38,7 +34,11 @@
   "automergeStrategy": "squash",
   "platformAutomerge": true,
   "rebaseWhen": "behind-base-branch",
-  "prConcurrentLimit": 3,
+  "timezone": "Asia/Tokyo",
+  // Create new branches in the Monday window. Existing branches can rebase
+  // between windows to keep Required CI current with main.
+  "schedule": ["* * * * 1"],
+  "prConcurrentLimit": 1,
   "lockFileMaintenance": {
     "enabled": false
   }

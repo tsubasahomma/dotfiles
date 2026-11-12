@@ -131,7 +131,9 @@ build・通常plugin init/config・editor event・submodule取得は行わない
 
 # RenovateとCIの現行
 
-Renovateはrootの`.mise.toml`と`dot_config/mise/conf.d/*.toml`をnative mise managerで扱い、`.mise-version`にはmise release向けのcustom regexを使う。更新は原則個別PRとし、chezmoiの2宣言だけを同じPRで更新する。backend分類や更新ごとの承認・AIレビューは要求しない。majorを含む更新PRにsquash automergeを指定し、同時PRは通常3件までとして、最新mainへの追随CIの費用を抑える。対応lockfileがないためweekly lock maintenanceは無効にする。[^renovate]
+Renovateはrootの`.mise.toml`と`dot_config/mise/conf.d/*.toml`をnative mise managerで扱い、`.mise-version`にはmise release向けのcustom regexを使う。mise・GitHub Actions・custom regexの通常更新を、majorを含めて一つのPRにまとめる。作成枠は日本時間の月曜で、同時PR上限は1件。月曜の枠内にbotが実行され、対象の更新があるときに作成する。対応lockfileがないためweekly lock maintenanceは無効にする。[^renovate]
+
+`Required CI`に合格したPRはsquashで自動マージする。既存のPRが最新mainに追随するためのrebaseとCI完了後のマージは、月曜の作成枠外でも進む。失敗した場合はログを調べ、原因の更新を特定して分離する。
 
 2026-11-12の利用者決定により、Renovate PRには元SHAを保持する純粋なFFに代えてsquashを許可する。merge commitは禁止する。GitHub rebaseも元SHAを保持せず、Renovateの`fast-forward` enumはGitHub対応の根拠にならない。実機への取り込みは利用者が都合のよい時点で開始する。[^merge-methods]
 
