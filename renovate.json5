@@ -1,24 +1,11 @@
-// Renovate governance is intentionally official-manager-first.
-// config:best-practices provides config:recommended, GitHub Actions digest pinning,
-// npm release-age protection, config migration, and other maintainer-recommended defaults.
-// Package rules below document review domains without grouping unrelated failures.
-// [Reference]: https://docs.renovatebot.com/presets-config/#configbest-practices
+// GitHub must require Required CI and an up-to-date branch before enabling automerge.
+// https://docs.renovatebot.com/key-concepts/automerge/
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": [
-    "config:best-practices",
-    ":approveMajorUpdates",
-    ":dependencyDashboard"
-  ],
+  "extends": ["config:best-practices"],
   "labels": ["dependencies", "renovate"],
-  "commitMessageAction": "Update",
-  "commitMessageTopic": "{{depName}}",
-  "commitMessageExtra": "to v{{newVersion}}",
   "mise": {
-    "managerFilePatterns": [
-      "/^\\.mise\\.toml$/",
-      "/^dot_config/mise/conf\\.d/.*\\.toml$/"
-    ]
+    "managerFilePatterns": ["/^\\.mise\\.toml$/", "/^dot_config/mise/conf\\.d/.*\\.toml$/"]
   },
   "customManagers": [
     {
@@ -35,95 +22,24 @@
   ],
   "packageRules": [
     {
-      "description": "Keep the bootstrap mise CLI pin separate from mise-managed runtime and tool updates.",
-      "matchManagers": ["custom.regex"],
-      "matchDepNames": ["jdx/mise"],
-      "dependencyDashboardCategory": "mise bootstrap CLI",
+      "description": "Keep dependency changes independent; only the shared chezmoi pin is grouped below.",
+      "matchManagers": ["mise", "github-actions", "custom.regex"],
       "groupName": null
     },
     {
-      "description": "Keep GitHub Actions updates separate from mise-managed tool updates.",
-      "matchManagers": ["github-actions"],
-      "dependencyDashboardCategory": "GitHub Actions",
-      "groupName": null
-    },
-    {
-      "description": "Keep core runtimes independent from CLI tool backends.",
-      "matchManagers": ["mise"],
-      "matchDepNames": ["node", "python", "go", "rust", "core:deno", "deno"],
-      "dependencyDashboardCategory": "mise core runtimes",
-      "groupName": null
-    },
-    {
-      "description": "Keep pnpm as a standalone CLI update, not an npm backend umbrella.",
-      "matchManagers": ["mise"],
-      "matchDepNames": ["pnpm"],
-      "dependencyDashboardCategory": "mise pnpm CLI",
-      "groupName": null
-    },
-    {
-      "description": "Keep npm-backed CLI tools separate from pnpm and core runtimes.",
-      "matchManagers": ["mise"],
-      "matchDepNames": ["/^npm:/"],
-      "dependencyDashboardCategory": "mise npm CLI tools",
-      "groupName": null
-    },
-    {
-      "description": "Keep aqua-backed CLI tools separate from npm, pnpm, and core runtimes.",
-      "matchManagers": ["mise"],
-      "matchDepNames": ["/^aqua:/"],
-      "dependencyDashboardCategory": "mise aqua-backed tools",
-      "groupName": null
-    },
-    {
-      "description": "Update the bootstrap-tier and rendered global chezmoi declarations together.",
+      "description": "Update bootstrap and rendered global chezmoi declarations together.",
       "matchManagers": ["mise"],
       "matchDepNames": ["aqua:twpayne/chezmoi"],
-      "dependencyDashboardCategory": "mise aqua-backed tools",
       "groupName": "chezmoi mise tool"
-    },
-    {
-      "description": "Keep cargo-backed tools separate from npm and aqua backends.",
-      "matchManagers": ["mise"],
-      "matchDepNames": ["/^cargo:/"],
-      "dependencyDashboardCategory": "mise cargo-backed tools",
-      "groupName": null
-    },
-    {
-      "description": "Keep go-backed tools separate from npm and aqua backends.",
-      "matchManagers": ["mise"],
-      "matchDepNames": ["/^go:/"],
-      "dependencyDashboardCategory": "mise go-backed tools",
-      "groupName": null
-    },
-    {
-      "description": "Keep pipx-backed tools separate from npm and aqua backends.",
-      "matchManagers": ["mise"],
-      "matchDepNames": ["/^pipx:/"],
-      "dependencyDashboardCategory": "mise pipx-backed tools",
-      "groupName": null
-    },
-    {
-      "description": "Keep GitHub-backed mise tools separate from aqua-backed tools.",
-      "matchManagers": ["mise"],
-      "matchDepNames": ["/^github:/"],
-      "dependencyDashboardCategory": "mise GitHub-backed tools",
-      "groupName": null
-    },
-    {
-      "description": "Keep mise registry short-name CLI tools out of npm and aqua backend groups.",
-      "matchManagers": ["mise"],
-      "matchDepNames": [
-        "kubectl",
-        "helm",
-        "opentofu",
-        "terraform",
-        "tflint",
-        "terragrunt",
-        "gcloud"
-      ],
-      "dependencyDashboardCategory": "mise registry short-name tools",
-      "groupName": null
     }
-  ]
+  ],
+  "automerge": true,
+  "automergeType": "pr",
+  "automergeStrategy": "squash",
+  "platformAutomerge": true,
+  "rebaseWhen": "behind-base-branch",
+  "prConcurrentLimit": 3,
+  "lockFileMaintenance": {
+    "enabled": false
+  }
 }

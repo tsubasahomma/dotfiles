@@ -5,7 +5,7 @@ description: 設定や依存を変更するときに正本、更新taskの副作
 status: draft
 generated:
   by: codex/gpt-6
-  at: "2026-11-12T00:57:55+00:00"
+  at: "2026-11-12T04:57:11+00:00"
 sources:
   - id: pin
     resource: "../.mise-version"
@@ -35,7 +35,7 @@ sources:
     resource: "https://www.chezmoi.io/user-guide/use-scripts-to-perform-actions/"
     title: "chezmoi公式：render後のscript内容によるonchange判定"
   - id: renovate
-    resource: "https://github.com/tsubasahomma/dotfiles/blob/f4fe1fac3e0722b173b5291a06e98e1e066786f1/renovate.json5"
+    resource: "../renovate.json5"
     title: "Renovateのmanagerと更新単位"
   - id: ci
     resource: "../.github/workflows/compliance.yml"
@@ -67,6 +67,18 @@ sources:
   - id: nvim-errmsg
     resource: "https://neovim.io/doc/user/vvars.html#v:errmsg"
     title: "Neovim v:errmsg：直近のエラーメッセージ"
+  - id: merge-methods
+    resource: "https://docs.github.com/en/pull-requests/reference/pull-request-merges"
+    title: "GitHubのsquash/rebaseと元SHAの扱い"
+  - id: protected-branches
+    resource: "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches"
+    title: "必須check・strict・linear history・admin適用"
+  - id: automerge
+    resource: "https://docs.renovatebot.com/key-concepts/automerge/"
+    title: "Renovate automergeの前提と限界"
+  - id: kubectl-skew
+    resource: "https://kubernetes.io/releases/version-skew-policy/#kubectl"
+    title: "kubectlとAPI serverの対応範囲"
 ---
 # 変更する場所を決める
 
@@ -119,7 +131,15 @@ build・通常plugin init/config・editor event・submodule取得は行わない
 
 # RenovateとCIの現行
 
-Renovateはrootの`.mise.toml`と`dot_config/mise/conf.d/*.toml`をnative mise managerで扱い、`.mise-version`にはmise release向けのcustom regexを使う。依存のcategory付与と、一つのPRへgroup化することは別である。現行ではchezmoiの複数宣言をまとめるgroupがある一方、各分類が一律にgroup化される設定ではない。pnpm・npm tool・GitHub Actions等も各ruleの範囲を確認する。[^renovate]
+Renovateはrootの`.mise.toml`と`dot_config/mise/conf.d/*.toml`をnative mise managerで扱い、`.mise-version`にはmise release向けのcustom regexを使う。更新は原則個別PRとし、chezmoiの2宣言だけを同じPRで更新する。backend分類や更新ごとの承認・AIレビューは要求しない。majorを含む更新PRにsquash automergeを指定し、同時PRは通常3件までとして、最新mainへの追随CIの費用を抑える。対応lockfileがないためweekly lock maintenanceは無効にする。[^renovate]
+
+2026-11-12の利用者決定により、Renovate PRには元SHAを保持する純粋なFFに代えてsquashを許可する。merge commitは禁止する。GitHub rebaseも元SHAを保持せず、Renovateの`fast-forward` enumはGitHub対応の根拠にならない。実機への取り込みは利用者が都合のよい時点で開始する。[^merge-methods]
+
+GitHub側はmainに`Required CI`を必須とし、発行元をGitHub Actionsに限定、最新baseへの追随とlinear historyを要求する。adminにも適用し、恒常bypass・force-push・deleteを許可しない。required reviewやPR経由の一律必須化は加えないが、必須checkはdirect pushにも作用する。GitHub設定はrepo内のJSONだけでは反映されない。導入・修復時は[固定gateの検証](validation.md#isolated-regression)と保護設定を先に確認してからautomergeを有効にする。runner版で変わる内部job名を必須名にしない。[^protected-branches][^automerge]
+
+`config:best-practices`は設定の土台であり、全toolの互換性保証ではない。npm向けrelease-ageの待機を維持するが、minor/patchも破壊変更がないとはみなさない。実際に不具合が確認された版だけ理由と解除条件を付けて除外する。切り戻す場合は次回の自動再更新も抑える。仕事固有のtool制約はプロジェクト側mise設定へ分離する。例えばkubectlはAPI serverの±1 minorが公式範囲であり、globalの最新CLIをすべてのclusterへ使えるとは限らない。[^automerge][^kubectl-skew]
+
+Homebrew/WinGet/OS package、Neovim plugin lock・Mason・parser、chezmoi externalのURL、Vale stylesはこの設定の版更新対象ではない。gcloudとworkflowのvalidator env pinも2026-11-12のDashboard検出一覧にはない。同日のRenovate 43.150.0によるnative抽出ではgcloudに`unsupported-datasource`が返った。gcloudの既存「manual review」コメントは承認ruleではなく、検出がない間は別途明示更新する。bot側の対応が変われば実抽出を確認してnative managerを優先する。mise pin更新でも既存mise本体は自動置換されず、Git revertはbinary・DB・remote stateのrollbackではない。実機更新と復旧の範囲は[操作](operations.md#mise-bootstrap)・[所有境界](ownership.md)に従う。
 
 Renovate validatorの版はCI workflow、Nodeの要求はworkflowが読むtool宣言を正本にする。変更時のcommandと結果の限界は[validation](validation.md)を参照する。workflowで指定したつもりのruntimeと、実際の`node --version`は分けて記録する。診断の入口は[operations](operations.md#diagnostic-entry)に従い、CIも必須driftを成功へ変えない。登録済みmoduleの隔離回帰は`python3 tests/run_checks.py regression`、OS分岐のrender/構文検査は`python3 tests/run_checks.py render`で再現する。tool準備と通常applyを前提にしないfixture実行、通信・導入を伴う統合jobの違いは[検証の入口](validation.md#isolated-regression)を参照する。通常Neovim初期化や実認証を使わない診断fixtureもこの回帰集合に含める。現行CIがUbuntu/macOSで合格しても、WSL・Windows・実認証の成功とはしない。[^ci]
 
@@ -148,8 +168,8 @@ PR templateの廃止理由と再検討条件は[OKF Decision](decisions/okf.md)�
 [^update-nvim]: [選択revisionからの隔離lock候補生成](../dot_config/mise/repo-tasks/update/executable_lazy-lock.tmpl)。
 [^wrapper]: [post-apply wrapperのhash入力と起動条件](https://github.com/tsubasahomma/dotfiles/blob/f4fe1fac3e0722b173b5291a06e98e1e066786f1/.chezmoiscripts/run_onchange_after_20-mise-post-apply-graph.sh.tmpl)。
 [^scripts]: [chezmoi公式：render後のscript内容によるonchange判定](https://www.chezmoi.io/user-guide/use-scripts-to-perform-actions/)。
-[^renovate]: [Renovateのmanagerと更新単位](https://github.com/tsubasahomma/dotfiles/blob/f4fe1fac3e0722b173b5291a06e98e1e066786f1/renovate.json5)。
-[^ci]: [CIの対象・実行段階・validator版](https://github.com/tsubasahomma/dotfiles/blob/f4fe1fac3e0722b173b5291a06e98e1e066786f1/.github/workflows/compliance.yml)。
+[^renovate]: [Renovateのmanagerと更新単位](../renovate.json5)。
+[^ci]: [CIの対象・実行段階・validator版](../.github/workflows/compliance.yml)。
 [^user]: 単一bundle、PR template廃止、上流同期終了・Repomix退役の方向。文書移行の方針。実機操作は別。
 
 
@@ -168,3 +188,8 @@ PR templateの廃止理由と再検討条件は[OKF Decision](decisions/okf.md)�
 [^lazyvim-mason]: [採用LazyVimのMason setup・背景導入](https://github.com/LazyVim/LazyVim/blob/83d90f339defdb109a6ede333865a66ffc7ef6aa/lua/lazyvim/plugins/lsp/init.lua)。
 
 [^nvim-errmsg]: [Neovim v:errmsg：直近のエラーメッセージ](https://neovim.io/doc/user/vvars.html#v:errmsg)。
+
+[^merge-methods]: [GitHubのsquash/rebaseと元SHAの扱い](https://docs.github.com/en/pull-requests/reference/pull-request-merges)。
+[^protected-branches]: [必須check・strict・linear history・admin適用](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches)。
+[^automerge]: [Renovate automergeの前提と限界](https://docs.renovatebot.com/key-concepts/automerge/)。
+[^kubectl-skew]: [kubectlとAPI serverの対応範囲](https://kubernetes.io/releases/version-skew-policy/#kubectl)。
