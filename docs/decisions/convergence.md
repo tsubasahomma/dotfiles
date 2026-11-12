@@ -5,7 +5,7 @@ description: 採用した検討方針と未実装案を分け、成功条件・�
 status: draft
 generated:
   by: codex/gpt-6
-  at: "2026-11-11T16:58:03+00:00"
+  at: "2026-11-12T00:24:47+00:00"
 sources:
   - id: order
     resource: "https://www.chezmoi.io/reference/application-order/"
@@ -288,6 +288,12 @@ R13では、必要な前提を手動で先行準備する方式を採用する�
 config生成のop認証はapplyのbefore package導入では補えない。WezTermも初回手順では手動先行準備とする。ただし公式の概略順だけから全templateがbefore前に評価済みとは断定しない。chezmoi 2.70.4の実装と隔離fixtureでは、WezTerm実体/distro不足より前にbeforeが走る遅延評価を確認した（[操作上の限界](../operations.md#applyで通る段階)）。Python 3.9+とGitもidentityのbefore段階で必要になり、afterのmise installには依存できない。準備を手動で分けることでこの循環を避ける。新たな汎用bootstrapや探索の後段移動は、手動手順で解決できない具体的な障害が出た場合に再検討する。[^order]
 
 局所guardの失敗は後段の配置・生成を止めるが、先行beforeでの変更は残り得る。Linux sudoの案内は必要commandの権限確認へ限定し、無制限のpasswordless設定を勧めない。fixture合格を実WSL・実認証・クリーン端末の成功に置き換えない。
+
+# Neovim restoreの成功条件
+
+CIで通常startupのmissing installが採用pinを失い、checkout失敗でも終了0になることを確認したため、`repair:nvim`を専用sessionでのinstall/restoreへ変更した。入力lockを保持し、task/process失敗と最終active pluginのcheckout/originを検査する。通常applyに含めない境界は維持する。具体的な対応範囲と副作用は[development](../development.md#neovimrestoreと更新を混同しない)、検証入口は[validation](../validation.md#neovim-restoreの検証)を正本とする。
+
+CIから復元を削除する案、診断のlock driftを警告へ落とす案、終了後にlockだけを書き戻す案では実checkout失敗が隠れるため採らない。submoduleの一律無効化も既存機能が使う依存を欠くため採らない。上流managerの非公開境界へ触れるadapterには版制約を置き、engine更新時は失敗fixtureと隔離native復元で再確認する。
 
 [^order]: [chezmoi application order](https://www.chezmoi.io/reference/application-order/)。全templateの評価時刻までこの概略から推測せず、[採用版実装とfixture](../validation.md#first-install-order)を照合する。
 

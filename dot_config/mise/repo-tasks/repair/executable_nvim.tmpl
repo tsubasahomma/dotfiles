@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
-# [MISE] description="Repair Neovim plugin state from lazy-lock"
-
+# [MISE] description="Restore Neovim plugin revisions without editor startup"
 set -euo pipefail
-
-# Redirecting stdin from /dev/null prevents hanging on interactive prompts.
-echo "📦 [Neovim] Converging plugins via lazy.nvim..."
-"{{ .paths.mise }}" exec aqua:neovim/neovim -- nvim --headless "+Lazy! restore" +qa < /dev/null
+work_dir=$(mktemp -d)
+trap 'rm -rf "$work_dir"' EXIT
+cat > "$work_dir/restore.lua" <<'LUA_RESTORE'
+{{ include ".chezmoitemplates/lazy_restore.lua" }}
+LUA_RESTORE
+export DOTFILES_RESTORE_LOCK="$work_dir/lazy-lock.json"
+{{ template "posix_shell_quote.tmpl" .paths.mise }} exec aqua:neovim/neovim -- nvim --headless -u NONE -i NONE -n -l "$work_dir/restore.lua" < /dev/null

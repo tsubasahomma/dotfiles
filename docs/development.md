@@ -5,7 +5,7 @@ description: 設定や依存を変更するときに正本、更新taskの副作
 status: draft
 generated:
   by: codex/gpt-6
-  at: "2026-11-11T16:57:14+00:00"
+  at: "2026-11-12T00:24:47+00:00"
 sources:
   - id: pin
     resource: "../.mise-version"
@@ -23,7 +23,7 @@ sources:
     resource: "https://github.com/tsubasahomma/dotfiles/blob/f4fe1fac3e0722b173b5291a06e98e1e066786f1/.chezmoidata/packages.yaml"
     title: "OS別package宣言"
   - id: repair-nvim
-    resource: "https://github.com/tsubasahomma/dotfiles/blob/f4fe1fac3e0722b173b5291a06e98e1e066786f1/dot_config/mise/repo-tasks/repair/executable_nvim.tmpl"
+    resource: "../dot_config/mise/repo-tasks/repair/executable_nvim.tmpl"
     title: "採用lockによるLazy restore"
   - id: update-nvim
     resource: "../dot_config/mise/repo-tasks/update/executable_lazy-lock.tmpl"
@@ -52,6 +52,15 @@ sources:
   - id: lazy-task
     resource: "https://github.com/folke/lazy.nvim/blob/85c7ff3711b730b4030d03144f6db6375044ae82/lua/lazy/manage/task/init.lua"
     title: "採用版のtaskとprocess失敗処理"
+  - id: lazy-restore
+    resource: "../.chezmoitemplates/lazy_restore.lua"
+    title: "採用lockを保持するrestore adapter"
+  - id: git-clone
+    resource: "https://git-scm.com/docs/git-clone"
+    title: "Git clone：no-checkoutとsubmodule"
+  - id: git-submodule
+    resource: "https://git-scm.com/docs/git-submodule"
+    title: "Git submodule update：親commitが指す版の初期化"
 ---
 # 変更する場所を決める
 
@@ -74,7 +83,11 @@ sources:
 
 # Neovim：restoreと更新を混同しない
 
-`repair:nvim`は採用lockに基づく`Lazy restore`を実行する。plugin directoryやcacheに書き込み、必要なら取得を伴うため、検査ではなく修復操作として扱う。source lock自体を新しい版へ更新する目的ではない。[^repair-nvim]
+`repair:nvim`は配置済みlockを入力として、通常editor startupを止めたsessionで上流のinstall/restoreを実行する。lock writerの出力は一時copyに限定し、restore前に入力pinを戻す。active pluginの採用lock欠損、spec/task/processエラー、最終checkout/origin不一致は非zeroにする。source・配置済みlockは更新せず、既存のplugin directory、submodule、build/cacheには書き込む。[^repair-nvim][^lazy-restore]
+
+採用engineは更新taskと同じ`85c7ff3711b730b4030d03144f6db6375044ae82`に限定する。欠損したlazy.nvim/LazyVimは採用pinを取得するが、既存engineの別版、bootstrap先のlocal変更・異なるoriginは停止する。local/dev/virtual plugin、custom root/lockfile、rocksは対応外。project `.lazy.lua`は読み込まない。信頼する配置済みLuaを実行するので、任意Luaへのsandboxではない。
+
+新規cloneでは現在のbranchを展開せず、採用親commitのcheckout後にその版のsubmoduleを初期化する。kulalaのfmt等を省略して成功扱いにしない。通常startupは止めるが、plugin managerのbuild taskは実行する。buildに必要なplugin configが読み込まれ、Mason等の背景導入が始まる場合がある。成功条件はactive pluginのrevision一致とmanagerが観測するtaskの成功であり、背景導入の完了やeditor/provider/Mason/parserの正常動作を保証しない。失敗時は非zeroで止まり、途中まで変更されたpluginを自動rollback・削除しない。失敗したdirectoryやlocal変更は内容を確認してから個別に扱う。[^lazy-restore][^git-clone][^git-submodule]
 
 `update:lazy-lock`は、既存local revision（既定`HEAD`）の`dot_config/nvim`をGit objectから一時directoryへ展開し、lock候補だけを作る。staged・unstaged・untrackedは入力外で、通常branch/index/sourceや配置済みNeovimには書かない。remote branchのfetch、checkout切替、`chezmoi add`、commit/push/PR作成は行わない。plugin取得・更新は一時HOME/XDG内で通信を伴う。[^update-nvim]
 
@@ -125,7 +138,7 @@ PR templateの廃止理由と再検討条件は[OKF Decision](decisions/okf.md)�
 [^mise-root]: [repo内tool要求](https://github.com/tsubasahomma/dotfiles/blob/f4fe1fac3e0722b173b5291a06e98e1e066786f1/.mise.toml)。
 [^tools]: [観測時のmise tool宣言](https://github.com/tsubasahomma/dotfiles/blob/f4fe1fac3e0722b173b5291a06e98e1e066786f1/dot_config/mise/conf.d/10-tools.toml)。
 [^packages]: [OS別package宣言](https://github.com/tsubasahomma/dotfiles/blob/f4fe1fac3e0722b173b5291a06e98e1e066786f1/.chezmoidata/packages.yaml)。
-[^repair-nvim]: [採用lockによるLazy restore](https://github.com/tsubasahomma/dotfiles/blob/f4fe1fac3e0722b173b5291a06e98e1e066786f1/dot_config/mise/repo-tasks/repair/executable_nvim.tmpl)。
+[^repair-nvim]: [採用lockによるLazy restore](../dot_config/mise/repo-tasks/repair/executable_nvim.tmpl)。
 [^update-nvim]: [選択revisionからの隔離lock候補生成](../dot_config/mise/repo-tasks/update/executable_lazy-lock.tmpl)。
 [^wrapper]: [post-apply wrapperのhash入力と起動条件](https://github.com/tsubasahomma/dotfiles/blob/f4fe1fac3e0722b173b5291a06e98e1e066786f1/.chezmoiscripts/run_onchange_after_20-mise-post-apply-graph.sh.tmpl)。
 [^scripts]: [chezmoi公式：render後のscript内容によるonchange判定](https://www.chezmoi.io/user-guide/use-scripts-to-perform-actions/)。
@@ -139,3 +152,9 @@ PR templateの廃止理由と再検討条件は[OKF Decision](decisions/okf.md)�
 [^lazy-usage]: [lazy.nvim Usage：waitと更新API](https://lazy.folke.io/usage)。
 
 [^lazy-task]: [採用版のtaskとprocess失敗処理](https://github.com/folke/lazy.nvim/blob/85c7ff3711b730b4030d03144f6db6375044ae82/lua/lazy/manage/task/init.lua)。
+
+[^lazy-restore]: [採用lockを保持するrestore adapter](../.chezmoitemplates/lazy_restore.lua)。
+
+[^git-clone]: [Git clone：no-checkoutとsubmodule](https://git-scm.com/docs/git-clone)。
+
+[^git-submodule]: [Git submodule update：親commitが指す版の初期化](https://git-scm.com/docs/git-submodule)。

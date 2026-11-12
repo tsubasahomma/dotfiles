@@ -5,7 +5,7 @@ description: 現行の入口、実行前提、副作用、失敗時の扱いを�
 status: draft
 generated:
   by: codex/gpt-6
-  at: "2026-11-11T16:58:03+00:00"
+  at: "2026-11-12T00:24:47+00:00"
 sources:
   - id: apply-implementation
     resource: "https://github.com/twpayne/chezmoi/blob/v2.70.4/internal/cmd/config.go#L750"
@@ -89,7 +89,7 @@ sources:
     resource: "https://github.com/tsubasahomma/dotfiles/blob/f4fe1fac3e0722b173b5291a06e98e1e066786f1/dot_config/nvim/lua/config/lazy.lua"
     title: "Neovim起動時のlazy.nvim取得"
   - id: repair-nvim
-    resource: "https://github.com/tsubasahomma/dotfiles/blob/f4fe1fac3e0722b173b5291a06e98e1e066786f1/dot_config/mise/repo-tasks/repair/executable_nvim.tmpl"
+    resource: "../dot_config/mise/repo-tasks/repair/executable_nvim.tmpl"
     title: "採用lockからのLazy restore"
   - id: security
     resource: "../dot_config/mise/repo-tasks/repair/executable_security.tmpl"
@@ -236,7 +236,7 @@ GitHub tokenは常時必須という旧記述を引き継ぎません。source�
 | `chezmoi diff` / `chezmoi verify` / `--dry-run`を使う操作 | 差分表示・管理targetの照合・予定表示 | 更新済みread hookはmiseの存在・実行属性だけ確認し、不足時は停止。external/cacheまで無通信・無書込ではない。verifyの成功は任意の生成物や認証までの保証ではない[^hooks][^verify] |
 | `~/.local/bin/dotfiles-diagnose` | 配置済みcheckを直接呼び、必須欠損・driftはCIでも失敗にする | mise task開始前の自動導入を迂回する。file検査、Git config読取、mise `--version`だけ。全tool・pluginの正常動作は保証しない[^doctor][^check-nvim] |
 | `mise run doctor` / `mise run check:*` | 互換用task名 | task本体の前に自動導入や利用者config評価が起こり得る。非変更の診断入口として使わない |
-| `mise run repair:nvim` | Lazy restoreを呼ぶ | pluginの取得・変更、通常Neovim初期化を伴い得る。repoの版を最新版へ進める入口とは別[^repair-nvim] |
+| `mise run repair:nvim` | 採用lockでinstall/restoreし、active pluginのcheckoutを照合する | plugin・submodule・build/cacheへの書込と通信。通常startupは止める。lockは更新せず、失敗時の自動rollbackはない。[対応範囲](development.md#neovimrestoreと更新を混同しない)を確認する |
 | `mise run repair:security` | 変更を行わず、生成時にmodeを設定する旨を表示する互換入口 | 鍵の権限検査・修復の成功を意味しない。generate:identityへの既存依存を保持する[^security] |
 | `mise run generate:identity`等の個別task | 対象taskとその依存を実行する | identityは直接呼ぶたびに所有・入力を検証し、必要時だけ世代生成・復旧する。他taskには省略条件がある。「名前を指定すれば欠損だけ直す」とは限らない[^identity][^mise-tasks] |
 | 配置済み`repo-tasks/update/lazy-lock`を直接実行 | 選択local revisionの隔離plugin更新とlock候補生成 | 一時HOME/XDGへ取得・書込し、成功/失敗artifactを保持。通常sourceへの採用とGit/PR公開は別。mise run経由ではtask開始前の自動導入があり得る。[範囲と採用手順](development.md#neovimrestoreと更新を混同しない)を確認する[^update-nvim] |
@@ -368,7 +368,7 @@ HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_NO_INSTALL_CLEANUP=1 brew upgrade --formula c
 [^doctor]: [doctorの共通検査集合](../dot_config/mise/repo-tasks/doctor/executable__default.tmpl).
 [^check-nvim]: [Neovim lockの直接比較と実体の存在検査](../dot_config/mise/repo-tasks/check/executable_nvim.tmpl).
 [^lazy]: [Neovim起動時のlazy.nvim取得](https://github.com/tsubasahomma/dotfiles/blob/f4fe1fac3e0722b173b5291a06e98e1e066786f1/dot_config/nvim/lua/config/lazy.lua).
-[^repair-nvim]: [採用lockからのLazy restore](https://github.com/tsubasahomma/dotfiles/blob/f4fe1fac3e0722b173b5291a06e98e1e066786f1/dot_config/mise/repo-tasks/repair/executable_nvim.tmpl).
+[^repair-nvim]: [採用lockからのLazy restore](../dot_config/mise/repo-tasks/repair/executable_nvim.tmpl).
 [^security]: [権限変更を行わない互換task](../dot_config/mise/repo-tasks/repair/executable_security.tmpl).
 [^identity]: [identityの検証・世代切替](../dot_config/mise/repo-tasks/generate/executable_identity.tmpl).
 [^mise-tasks]: [mise v2026.6.11：task省略と依存順序](https://github.com/jdx/mise/blob/v2026.6.11/docs/tasks/running-tasks.md).

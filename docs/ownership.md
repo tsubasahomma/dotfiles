@@ -5,7 +5,7 @@ description: 設定・生成物・手動管理状態について、現行の所�
 status: draft
 generated:
   by: codex/gpt-6
-  at: "2026-11-11T16:02:49+00:00"
+  at: "2026-11-12T00:24:47+00:00"
 sources:
   - id: config
     resource: "../.chezmoi.toml.tmpl"
@@ -56,7 +56,7 @@ sources:
     resource: "https://github.com/tsubasahomma/dotfiles/tree/f4fe1fac3e0722b173b5291a06e98e1e066786f1/dot_config/mise/repo-tasks"
     title: "repo所有taskの実装"
   - id: repair-nvim
-    resource: "https://github.com/tsubasahomma/dotfiles/blob/f4fe1fac3e0722b173b5291a06e98e1e066786f1/dot_config/mise/repo-tasks/repair/executable_nvim.tmpl"
+    resource: "../dot_config/mise/repo-tasks/repair/executable_nvim.tmpl"
     title: "採用lockからのLazy restore"
   - id: lifecycle
     resource: "../dot_config/mise/repo-tasks/lifecycle/executable_post-apply.tmpl"
@@ -98,7 +98,7 @@ R02ではidentity集合を取得・render時に検証し、不正入力を出力
 | 補完・init・cache・styles・pbfile | tool宣言、補完定義、外部asset、Swiftソース | generate:completions、cache:bat、sync:vale、build:pbfile | `.cache/zsh`、`.cache/bat`、`.config/zsh/completions`のzwc、`.local/share/vale`、`.local/bin/pbfile`等。補完の切替対象は[個別出力と対応cache](operations.md#completion-generation)に限定。bat/Vale/pbfileの所有は[個別出力receipt](operations.md#generated-assets)に限定。cacheという分類だけで全内容を所有しない[^completions][^tasks] |
 | login shell・pnpm設定 | provision task内の期待値 | `/etc/shells`とユーザーshellの変更、`pnpm config set global-bin-dir` | ホスト設定への変更。pnpmの設定保存先は実行環境に依存し、今回未確認[^tasks] |
 | Windows側1Password / WezTerm設定 | WSLへ配置したagent.toml / wezterm.lua | 専用after_50 → 2個のsync taskが実LOCALAPPDATA / USERPROFILEへ同期 | target隣のreceipt・lockで前回bytesを照合。初回相違・手動編集・不明なpathは保持停止。同一既存fileだけ無書換で採用。限定契約は[操作](operations.md#windows-settings-sync)を参照 |
-| Neovimのlock・plugins | repoのlockとNeovim設定 | repair:nvimはLazy restore、通常起動も初期化し得る。update:lazy-lockは選択local revisionから一時HOME/XDG内で候補・差分を生成し保持する | 通常source/branch/index/config/plugin/cacheへの反映と公開は別の明示操作。lazy.nvim実行版・build等の[更新範囲](development.md#neovimrestoreと更新を混同しない)を確認する。plugin復元は通常applyに含めない[^repair-nvim][^lifecycle][^update-nvim] |
+| Neovimのlock・plugins | repoのlockとNeovim設定 | repair:nvimは配置済みlockを保持するinstall/restore。通常起動も別途初期化し得る。update:lazy-lockは選択local revisionから一時HOME/XDG内で候補・差分を生成し保持する | 通常source/branch/index/config/plugin/cacheへの反映と公開は別の明示操作。lazy.nvim実行版・build等の[更新範囲](development.md#neovimrestoreと更新を混同しない)を確認する。plugin復元は通常applyに含めない[^repair-nvim][^lifecycle][^update-nvim] |
 | script実行履歴・taskの省略状態 | chezmoiの成功済みscript内容、miseのsources/outputs | 各ツールが再実行の要否を判断 | 出力の妥当性や1ファイル欠損の完全な検査とは別。履歴消去を一般的な修復手順にしない[^scripts][^mise-tasks] |
 
 同じ領域に異なる所有者が混在します。例えば`.config/zsh/completions`の取得済み補完本体はchezmoi externalです。R07以降、生成taskはその隣の既存zwcには触れず、cache配下の明示した生成出力と対応zwcだけを切り替えます。`.ssh`のdirectory管理、利用者の鍵、旧生成公開鍵も同一の所有範囲ではありません。directoryごとの再帰削除で一括管理しない設計が必要ですが、まだ全出力の境界を実装した状態ではありません。[^externals][^completions][^ignore][^security]
@@ -144,7 +144,7 @@ macOSのjust・atuin・duckdb・deno・AWS CLIは、2026-11-11の利用者決定
 [^security]: [権限変更を行わない互換task](../dot_config/mise/repo-tasks/repair/executable_security.tmpl).
 [^completions]: [補完・initの個別検証と切替](../dot_config/mise/repo-tasks/generate/executable_completions.tmpl).
 [^tasks]: [repo所有taskの実装](https://github.com/tsubasahomma/dotfiles/tree/f4fe1fac3e0722b173b5291a06e98e1e066786f1/dot_config/mise/repo-tasks).
-[^repair-nvim]: [採用lockからのLazy restore](https://github.com/tsubasahomma/dotfiles/blob/f4fe1fac3e0722b173b5291a06e98e1e066786f1/dot_config/mise/repo-tasks/repair/executable_nvim.tmpl).
+[^repair-nvim]: [採用lockからのLazy restore](../dot_config/mise/repo-tasks/repair/executable_nvim.tmpl).
 [^lifecycle]: [OS別post-apply依存graph](../dot_config/mise/repo-tasks/lifecycle/executable_post-apply.tmpl).
 [^update-nvim]: [選択revisionからの隔離lock候補生成](../dot_config/mise/repo-tasks/update/executable_lazy-lock.tmpl).
 [^scripts]: [chezmoi scripts：onchangeの成功済み内容による再実行判定](https://www.chezmoi.io/user-guide/use-scripts-to-perform-actions/).

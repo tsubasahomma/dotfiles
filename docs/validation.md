@@ -5,7 +5,7 @@ description: 文書・template・tool更新・認証の変更に対して、必�
 status: draft
 generated:
   by: codex/gpt-6
-  at: "2026-11-12T00:01:15+00:00"
+  at: "2026-11-12T00:24:47+00:00"
 sources:
   - id: evals
     resource: "https://www.anthropic.com/research/demystifying-evals-for-ai-agents"
@@ -332,6 +332,12 @@ stage書込・target replace・receipt publishの失敗、通常rollback、rollb
 
 Windows stubはEncodedCommandをdecodeして固定queryと引数を照合するが、PowerShell 5.1の評価、Windowsのreparse/DrvFs lock/rename/ACL、別distroの共有filesystem、アプリ導入検出、GUI設定探索・reload、1Password unlock/認証、実CI runは検証しない。macOSでの隔離合格は実Windows互換性の証拠ではない。アプリ未導入の前提と順序はR11/R13の別検査、設定source欠損はこの検査の非zero条件であり、アプリの状態をsource欠損から推定しない。R10cの出力条件を再受入したという意味でもない。
 
+
+# Neovim restoreの検証
+
+`python3 tests/test_lazy_restore.py`は一時HOME/XDGのnative Neovimとmodule doubleで、lockの入力と出力の分離、silent process失敗、submodule/build/spec/taskエラー、異なるorigin・engine・local変更、未採用plugin、最終checkout不一致を検査する。submoduleは採用親commitのcheckout後に初期化する。通常startupを起動せず、成功・失敗とも採用lockのbyteが変わらないことを確認する。
+
+このfixtureは上流取得・実buildを代替しない。CIの独立したnetwork integration jobが、配置された`repair:nvim`を実際の採用lockで実行し、後続のlocal診断でsourceとのlock byte一致を確認する。復元成功はactive pluginのrevision一致とmanagerが観測するtaskの成功を指す。buildが起動するMason等の背景導入完了や、editor・provider・Mason/parserの動作証明ではない。未適用の実機や既存の破損pluginを自動修復できる保証も含まない。
 
 # Neovim lock候補の隔離検証
 
