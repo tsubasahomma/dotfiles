@@ -156,9 +156,9 @@ class HomebrewPackages(unittest.TestCase):
 
     def test_ci_has_headless_only_and_other_os_is_empty(self):
         self.render(ci=True)
-        self.assertFalse(any(key.startswith('cask:') for key in self.entries))
+        self.assertEqual({key for key in self.entries if key.startswith('cask:')}, {'cask:azure-cli'})
         self.assertNotIn('brew:ffmpeg', self.entries)
-        self.assertIn('brew:azure-cli', self.entries)
+        self.assertNotIn('brew:azure-cli', self.entries)
         _, after, _ = self.execute({})
         self.assertEqual(set(after), set(self.entries))
         Path(self.env['CALL_LOG']).unlink()
@@ -170,7 +170,8 @@ class HomebrewPackages(unittest.TestCase):
         self.render()
         packages = json.loads(self.template('{{ .packages | toJson }}'))
         self.assertEqual(packages['headless']['darwin']['brews'],
-                         ['openssl@3', 'colima', 'eza', 'xh', 'azure-cli'])
+                         ['openssl@3', 'colima', 'eza', 'xh'])
+        self.assertEqual(packages['headless']['darwin']['casks'], ['azure-cli'])
         self.assertEqual(packages['headless']['common'], ['ca-certificates', 'git', 'zsh', 'jq'])
         self.assertEqual(packages['headless']['windows'],
                          ['Atuinsh.Atuin', 'DuckDB.cli', 'DenoLand.Deno', 'eza-community.eza',
