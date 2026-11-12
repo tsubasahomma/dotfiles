@@ -21,4 +21,4 @@ completions:
     zoxide: "aqua:ajeetdsouza/zoxide"
     gcloud: "gcloud"
     codex: "npm:@openai/codex"
-    scc: "go:github.com/boyter/scc/v3"
+    scc: "aqua:boyter/scc"
