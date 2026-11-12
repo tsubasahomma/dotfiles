@@ -5,7 +5,7 @@ description: 設定や依存を変更するときに正本、更新taskの副作
 status: draft
 generated:
   by: codex/gpt-6
-  at: "2026-11-12T00:24:47+00:00"
+  at: "2026-11-12T00:57:55+00:00"
 sources:
   - id: pin
     resource: "../.mise-version"
@@ -61,6 +61,12 @@ sources:
   - id: git-submodule
     resource: "https://git-scm.com/docs/git-submodule"
     title: "Git submodule update：親commitが指す版の初期化"
+  - id: lazyvim-mason
+    resource: "https://github.com/LazyVim/LazyVim/blob/83d90f339defdb109a6ede333865a66ffc7ef6aa/lua/lazyvim/plugins/lsp/init.lua"
+    title: "採用LazyVimのMason setup・背景導入"
+  - id: nvim-errmsg
+    resource: "https://neovim.io/doc/user/vvars.html#v:errmsg"
+    title: "Neovim v:errmsg：直近のエラーメッセージ"
 ---
 # 変更する場所を決める
 
@@ -83,11 +89,11 @@ sources:
 
 # Neovim：restoreと更新を混同しない
 
-`repair:nvim`は配置済みlockを入力として、通常editor startupを止めたsessionで上流のinstall/restoreを実行する。lock writerの出力は一時copyに限定し、restore前に入力pinを戻す。active pluginの採用lock欠損、spec/task/processエラー、最終checkout/origin不一致は非zeroにする。source・配置済みlockは更新せず、既存のplugin directory、submodule、build/cacheには書き込む。[^repair-nvim][^lazy-restore]
+`repair:nvim`は配置済みlockを入力として、通常editor startupを止めたsessionで上流のinstall/restoreを実行する。lock writerの出力は一時copyに限定し、restore前に入力pinを戻す。active pluginの採用lock欠損、spec/task/processエラー、検査時点のNeovim callback/commandエラー、最終checkout/origin不一致は非zeroにする。source・配置済みlockは更新せず、既存のplugin directory、submodule、build/cacheには書き込む。[^repair-nvim][^lazy-restore]
 
 採用engineは更新taskと同じ`85c7ff3711b730b4030d03144f6db6375044ae82`に限定する。欠損したlazy.nvim/LazyVimは採用pinを取得するが、既存engineの別版、bootstrap先のlocal変更・異なるoriginは停止する。local/dev/virtual plugin、custom root/lockfile、rocksは対応外。project `.lazy.lua`は読み込まない。信頼する配置済みLuaを実行するので、任意Luaへのsandboxではない。
 
-新規cloneでは現在のbranchを展開せず、採用親commitのcheckout後にその版のsubmoduleを初期化する。kulalaのfmt等を省略して成功扱いにしない。通常startupは止めるが、plugin managerのbuild taskは実行する。buildに必要なplugin configが読み込まれ、Mason等の背景導入が始まる場合がある。成功条件はactive pluginのrevision一致とmanagerが観測するtaskの成功であり、背景導入の完了やeditor/provider/Mason/parserの正常動作を保証しない。失敗時は非zeroで止まり、途中まで変更されたpluginを自動rollback・削除しない。失敗したdirectoryやlocal変更は内容を確認してから個別に扱う。[^lazy-restore][^git-clone][^git-submodule]
+新規cloneでは現在のbranchを展開せず、採用親commitのcheckout後にその版のsubmoduleを初期化する。kulalaのfmt等を省略して成功扱いにしない。通常startupは止めるが、plugin managerのbuild taskは実行する。Masonに限り、このsessionのconfigを`mason.setup(opts)`へ限定し、LazyVimによる並行registry refresh・`ensure_installed`導入・FileType再triggerを実行しない。`:MasonUpdate` buildは維持する。その他のbuildがplugin configやparser等の背景処理を起動する可能性は残る。例えばTreesitterのbuildがMason経由でtree-sitter-cliを導入する経路は維持する。成功条件はactive pluginのrevision一致、managerが観測するtaskの成功と検査時点のNeovimエラー不在であり、背景処理の完了やeditor/provider/Mason/parserの正常動作を保証しない。失敗時は非zeroで止まり、途中まで変更されたpluginを自動rollback・削除しない。失敗したdirectoryやlocal変更は内容を確認してから個別に扱う。[^lazy-restore][^git-clone][^git-submodule][^lazyvim-mason][^nvim-errmsg]
 
 `update:lazy-lock`は、既存local revision（既定`HEAD`）の`dot_config/nvim`をGit objectから一時directoryへ展開し、lock候補だけを作る。staged・unstaged・untrackedは入力外で、通常branch/index/sourceや配置済みNeovimには書かない。remote branchのfetch、checkout切替、`chezmoi add`、commit/push/PR作成は行わない。plugin取得・更新は一時HOME/XDG内で通信を伴う。[^update-nvim]
 
@@ -158,3 +164,7 @@ PR templateの廃止理由と再検討条件は[OKF Decision](decisions/okf.md)�
 [^git-clone]: [Git clone：no-checkoutとsubmodule](https://git-scm.com/docs/git-clone)。
 
 [^git-submodule]: [Git submodule update：親commitが指す版の初期化](https://git-scm.com/docs/git-submodule)。
+
+[^lazyvim-mason]: [採用LazyVimのMason setup・背景導入](https://github.com/LazyVim/LazyVim/blob/83d90f339defdb109a6ede333865a66ffc7ef6aa/lua/lazyvim/plugins/lsp/init.lua)。
+
+[^nvim-errmsg]: [Neovim v:errmsg：直近のエラーメッセージ](https://neovim.io/doc/user/vvars.html#v:errmsg)。

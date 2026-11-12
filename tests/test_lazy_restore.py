@@ -35,6 +35,11 @@ local config = {plugins = {example={name="example", dir=root.."/example", url="h
 local fault, head = false, target
 local lock = {lock={}}
 local loader = {startup=function() error("editor startup executed") end}
+package.preload["mason"] = function() return {setup=function(opts)
+  assert(opts.registry_fixture == "preserved")
+  vim.g.mason_setup = true
+end} end
+package.preload["mason-registry"] = function() error("editor provisioning executed") end
 local task = {spawn=function(self, command, opts)
   if mode == "silent" then return false end
   if opts.args[1] == "clone" then
@@ -78,6 +83,10 @@ package.preload["lazy"] = function() return {
   setup=function(opts)
     assert(opts.install.missing == false and opts.local_spec == false)
     assert(opts.lockfile ~= vim.fn.stdpath("config") .. "/lazy-lock.json")
+    local override = opts.spec[#opts.spec]
+    assert(override[1] == "mason-org/mason.nvim" and override.optional == true)
+    override.config(nil, {registry_fixture="preserved"})
+    assert(vim.g.mason_setup)
     loader.startup()
   end,
   install=function(opts)
@@ -89,6 +98,7 @@ package.preload["lazy"] = function() return {
     if mode == "build" then fault=true end
     if mode == "new-plugin" then config.plugins.unknown=config.plugins.example end
     if mode == "notify" then vim.notify("async failure", vim.log.levels.ERROR) end
+    if mode == "callback" then vim.schedule(function() error("fixture async callback") end) end
     -- Model upstream's destructive lock writer: adopted file must be independent.
     lock.lock = {example={commit=string.rep("2", 40)}}
     vim.fn.writefile({"{}"}, vim.env.DOTFILES_RESTORE_LOCK)
@@ -113,7 +123,7 @@ package.preload["lazy"] = function() return {
         self.assertEqual(result.returncode, 0, result.stderr)
 
     def test_failures_are_nonzero_and_preserve_adopted_lock(self):
-        for mode in ('silent', 'submodule', 'build', 'spec', 'dirty', 'engine', 'origin', 'new-plugin', 'notify', 'drift'):
+        for mode in ('silent', 'submodule', 'build', 'spec', 'dirty', 'engine', 'origin', 'new-plugin', 'notify', 'callback', 'drift'):
             with self.subTest(mode=mode):
                 result = self.run_case(mode)
                 self.assertNotEqual(result.returncode, 0, result.stdout)

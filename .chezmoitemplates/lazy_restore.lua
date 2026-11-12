@@ -72,6 +72,12 @@ local function main()
     opts.change_detection = { enabled = false }
     opts.headless = { process = false, colors = false }
     opts.concurrency = 8
+    -- MasonUpdate needs Mason setup, not LazyVim's concurrent registry refresh
+    -- and ensure_installed provisioning. Keep this override repair-session only.
+    table.insert(opts.spec, {
+      "mason-org/mason.nvim", optional = true,
+      config = function(_, mason_opts) require("mason").setup(mason_opts) end,
+    })
     setup(opts)
   end
   dofile(config .. "/init.lua")
@@ -97,6 +103,7 @@ local function main()
     end
     vim.wait(600)
     assert(#errors == 0, table.concat(errors, "\n"))
+    assert(vim.v.errmsg == "", "Neovim callback/command error: " .. vim.v.errmsg)
     assert(read(lockfile) == original, "Adopted lock changed during restore")
   end
   check(false)
