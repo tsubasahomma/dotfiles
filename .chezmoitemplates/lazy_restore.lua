@@ -76,7 +76,12 @@ local function main()
     -- and ensure_installed provisioning. Keep this override repair-session only.
     table.insert(opts.spec, {
       "mason-org/mason.nvim", optional = true,
-      config = function(_, mason_opts) require("mason").setup(mason_opts) end,
+      config = function(_, mason_opts)
+        if vim.env.DOTFILES_MASON_DEBUG == "1" then
+          mason_opts.log_level = vim.log.levels.DEBUG
+        end
+        require("mason").setup(mason_opts)
+      end,
     })
     setup(opts)
   end

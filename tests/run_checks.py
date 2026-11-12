@@ -18,7 +18,7 @@ REGRESSION = [
     'test_identity_convergence', 'test_ownership_boundary', 'test_completion_transaction', 'test_completion_convergence', 'test_git_fetch',
     'test_diagnostic_boundary', 'test_generated_convergence', 'test_windows_packages', 'test_windows_config_sync', 'test_homebrew_packages',
     'test_first_install_order', 'test_lazy_lock_update', 'test_lazy_restore', 'test_ci_verify',
-    'test_shell_startup',
+    'test_shell_startup', 'test_mason_log',
 ]
 
 

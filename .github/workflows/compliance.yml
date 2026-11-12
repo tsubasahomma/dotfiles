@@ -257,8 +257,29 @@ jobs:
           echo "✅ Managed static targets passed chezmoi verify; generated state and runtime behavior are checked separately."
 
       - name: Phase 3 - Neovim Plugin Restore (Network)
+        id: nvim_restore
+        env:
+          DOTFILES_MASON_DEBUG: "1"
+          NVIM_APPNAME: nvim
+          XDG_STATE_HOME: ${{ runner.temp }}/nvim-restore-state
         run: |
           "$HOME/.local/bin/mise" run repair:nvim
+
+      - name: Collect Failed Mason Diagnostics
+        if: ${{ failure() && steps.nvim_restore.outcome == 'failure' }}
+        env:
+          MASON_LOG: ${{ runner.temp }}/nvim-restore-state/nvim/mason.log
+          MASON_ARTIFACT: ${{ runner.temp }}/mason-failure
+        run: python3 tests/collect_mason_log.py --log-file "$MASON_LOG" --output-dir "$MASON_ARTIFACT"
+
+      - name: Upload Failed Mason Diagnostics
+        if: ${{ failure() && steps.nvim_restore.outcome == 'failure' }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: mason-failure-${{ matrix.os }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/mason-failure/
+          if-no-files-found: error
+          retention-days: 7
 
       - name: Phase 4 - Selected Local Diagnostics
         env:

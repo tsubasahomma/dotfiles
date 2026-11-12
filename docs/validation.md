@@ -5,7 +5,7 @@ description: 文書・template・tool更新・認証の変更に対して、必�
 status: draft
 generated:
   by: codex/gpt-6
-  at: "2026-11-12T04:55:16+00:00"
+  at: "2026-11-12T05:49:18+00:00"
 sources:
   - id: evals
     resource: "https://www.anthropic.com/research/demystifying-evals-for-ai-agents"
@@ -99,6 +99,8 @@ R01とR13のinit検査は実config template・読込hook・bootstrapを保持し
 | Isolated render / regression（Ubuntu/macOSそれぞれ） | checkout → runnerのPythonで一時mise manifest作成 → mise-actionでpin版miseと宣言から抽出したPython/chezmoi/Neovimを導入 → LinuxのZsh/Git/OpenSSH導入 → 上記command | fixture実行自体の前に通信・tool導入はある。端末のinit/apply・認証・全tool導入は前提にしない |
 | Network Integration - One Apply and Selected Diagnostics（Ubuntu/macOS） | 隔離jobの成功後、明示bootstrap → CI用init/apply一回 → 配置済みZsh起動検査 → managed target verify（`--exclude=scripts`） → Neovim restore → 配置済み入口のlocal診断 | 二回適用の無変更性、生成物欠損復旧、実1Password、Windows/WSL・GUIの動作 |
 | Renovate Config Validation | Node準備 → 固定版validatorの取得・実行 | 依存更新の動作や端末の正常性 |
+
+Neovim restoreのCI stepだけでMasonのDEBUG logを有効にし、一時XDG stateへ保存する。step失敗時は`mason.log`だけを収集し、環境に渡されたtoken・secret・passwordの値とAuthorization headerを除去して、OS・run・attempt別の`mason-failure-*` artifactに7日間保存する。ログ未生成時もその旨を記した`status.txt`を保存する。収集・uploadは失敗を成功へ変えず、後続診断や自動マージを通さない。通常実機のrestoreではDEBUGを有効にしない。artifactには外部commandや取得URLが含まれ得るため、環境に渡されていない任意の秘密まで自動除去する保証ではない。
 
 毎apply scriptは次回も実行予定なので、統合jobの静的target検査は`chezmoi verify --exclude=scripts`を使う。scriptの失敗は直前のapply終了値で判定する。[隔離検査](../tests/test_ci_verify.py)はscriptのみ実行予定ならこのverifyが成功し、管理fileのdriftは非zeroになること、verify自体がscriptを実行しないことを確認する。
 

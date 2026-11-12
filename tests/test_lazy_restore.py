@@ -37,6 +37,7 @@ local lock = {lock={}}
 local loader = {startup=function() error("editor startup executed") end}
 package.preload["mason"] = function() return {setup=function(opts)
   assert(opts.registry_fixture == "preserved")
+  assert(opts.log_level == (mode == "debug" and vim.log.levels.DEBUG or nil))
   vim.g.mason_setup = true
 end} end
 package.preload["mason-registry"] = function() error("editor provisioning executed") end
@@ -113,14 +114,18 @@ package.preload["lazy"] = function() return {
             env = {'HOME': str(root), 'PATH': '/usr/bin:/bin', 'XDG_CONFIG_HOME': str(root / 'config'),
                    'XDG_DATA_HOME': str(root / 'data'), 'XDG_STATE_HOME': str(root / 'state'),
                    'XDG_CACHE_HOME': str(root / 'cache'), 'DOTFILES_RESTORE_LOCK': str(root / 'work-lock.json')}
+            if mode == 'debug':
+                env['DOTFILES_MASON_DEBUG'] = '1'
             result = subprocess.run([NVIM, '--headless', '-u', 'NONE', '-i', 'NONE', '-n', '-l', str(script)],
                                     cwd=root, env=env, capture_output=True, text=True, timeout=15)
             self.assertEqual((config / 'lazy-lock.json').read_bytes(), original)
             return result
 
     def test_success_preserves_input_and_initializes_pinned_submodules(self):
-        result = self.run_case('success')
-        self.assertEqual(result.returncode, 0, result.stderr)
+        for mode in ('success', 'debug'):
+            with self.subTest(mode=mode):
+                result = self.run_case(mode)
+                self.assertEqual(result.returncode, 0, result.stderr)
 
     def test_failures_are_nonzero_and_preserve_adopted_lock(self):
         for mode in ('silent', 'submodule', 'build', 'spec', 'dirty', 'engine', 'origin', 'new-plugin', 'notify', 'callback', 'drift'):
