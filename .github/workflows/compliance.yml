@@ -240,36 +240,10 @@ jobs:
         run: |
           chezmoi init --source="$GITHUB_WORKSPACE" --apply
 
-      - name: Prove Mise Activation Is Prompt-Free
-        shell: bash
-        run: |
-          mise_config="$HOME/.config/mise/config.toml"
-          if [[ ! -f "$mise_config" ]]; then
-            echo "::error::$mise_config is required after chezmoi apply."
-            exit 1
-          fi
-
-          if grep -Eq '^[[:space:]]*credential_command[[:space:]]*=' "$mise_config"; then
-            echo "::error file=dot_config/mise/config.toml.tmpl::Global mise config must not define a promptful credential_command."
-            exit 1
-          fi
-
-          tmp_bin="$(mktemp -d)"
-          trap 'rm -rf "$tmp_bin"' EXIT
-          cat > "$tmp_bin/op" <<'FAKE_OP'
-          #!/bin/sh
-          echo "op was invoked during mise activation" > "$OP_CALLED"
-          exit 1
-          FAKE_OP
-          chmod +x "$tmp_bin/op"
-          op_called="$tmp_bin/op-called"
-          rm -f "$op_called"
-
-          OP_CALLED="$op_called" PATH="$tmp_bin:$PATH" "$HOME/.local/bin/mise" activate zsh >/dev/null
-          if [[ -e "$op_called" ]]; then
-            echo "::error::mise activation invoked op; GitHub credential lookup is on the shell startup path."
-            exit 1
-          fi
+      - name: Check Provisioned Shell Startup Without Authentication
+        # This is the disposable runner HOME populated by the CI apply above.
+        # The probe strips credentials and disables mise auto-install before Zsh.
+        run: python3 tests/check_shell_startup.py --home "$HOME"
 
       - name: Phase 2 - Verify Managed Targets After One Apply
         run: |
@@ -303,3 +277,21 @@ jobs:
         with:
           path: ${{ steps.post_apply_mise_cache_scope.outputs.installs-dir }}
           key: ${{ steps.post_apply_mise_installs_cache.outputs.cache-primary-key }}
+
+  required-ci:
+    name: Required CI
+    # Never let an upstream failure/cancellation turn this required check into a
+    # successful skip. Keep the name stable across runner and matrix updates.
+    if: ${{ always() }}
+    needs: [renovate-config, isolated, integration]
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Require Every Validation Job to Succeed
+        env:
+          RENOVATE_RESULT: ${{ needs.renovate-config.result }}
+          ISOLATED_RESULT: ${{ needs.isolated.result }}
+          INTEGRATION_RESULT: ${{ needs.integration.result }}
+        run: |
+          test "$RENOVATE_RESULT" = success
+          test "$ISOLATED_RESULT" = success
+          test "$INTEGRATION_RESULT" = success

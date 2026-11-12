@@ -5,7 +5,7 @@ description: 文書・template・tool更新・認証の変更に対して、必�
 status: draft
 generated:
   by: codex/gpt-6
-  at: "2026-11-12T00:57:55+00:00"
+  at: "2026-11-12T04:55:16+00:00"
 sources:
   - id: evals
     resource: "https://www.anthropic.com/research/demystifying-evals-for-ai-agents"
@@ -97,10 +97,14 @@ R01とR13のinit検査は実config template・読込hook・bootstrapを保持し
 | CI job表示 | 前提を用意する順序・実施範囲 | 成功が示さないこと |
 |---|---|---|
 | Isolated render / regression（Ubuntu/macOSそれぞれ） | checkout → runnerのPythonで一時mise manifest作成 → mise-actionでpin版miseと宣言から抽出したPython/chezmoi/Neovimを導入 → LinuxのZsh/Git/OpenSSH導入 → 上記command | fixture実行自体の前に通信・tool導入はある。端末のinit/apply・認証・全tool導入は前提にしない |
-| Network Integration - One Apply and Selected Diagnostics（Ubuntu/macOS） | 隔離jobの成功後、明示bootstrap → CI用init/apply一回 → activation guard → managed target verify（`--exclude=scripts`） → Neovim restore → 配置済み入口のlocal診断 | 二回適用の無変更性、生成物欠損復旧、実1Password、Windows/WSL・GUIの動作 |
+| Network Integration - One Apply and Selected Diagnostics（Ubuntu/macOS） | 隔離jobの成功後、明示bootstrap → CI用init/apply一回 → 配置済みZsh起動検査 → managed target verify（`--exclude=scripts`） → Neovim restore → 配置済み入口のlocal診断 | 二回適用の無変更性、生成物欠損復旧、実1Password、Windows/WSL・GUIの動作 |
 | Renovate Config Validation | Node準備 → 固定版validatorの取得・実行 | 依存更新の動作や端末の正常性 |
 
 毎apply scriptは次回も実行予定なので、統合jobの静的target検査は`chezmoi verify --exclude=scripts`を使う。scriptの失敗は直前のapply終了値で判定する。[隔離検査](../tests/test_ci_verify.py)はscriptのみ実行予定ならこのverifyが成功し、管理fileのdriftは非zeroになること、verify自体がscriptを実行しないことを確認する。
+
+`Required CI`は上の3 job ID（matrixを含む）の結果を集約する固定名のcheckである。`always()`で上流失敗後にも実行し、すべての結果が`success`の場合だけ成功する。failure/cancelled/skippedを合格へ変えない。runner版をcheck名に含めず、runner更新でGitHub側の必須check名が失われることを避ける。検証jobを追加したら`needs`も更新する。[^actions-needs]
+
+`tests/check_shell_startup.py --home <使い捨てCI HOME>`は、配置済み`.zshenv`・`.zshrc`と生成済みzoxide/starship initを実Zshで読み込み、miseのhookによるtool選択を確認する。通常端末のHOMEへ向けない。起動前に環境を限定し、token/agentを引き継がず、mise自動導入を無効化し、認証commandを失敗stubへ向ける。30秒timeout、stderr、認証呼出し、関数/PATH不成立を失敗とする。cache書込は使い捨てHOMEに許容する。`-d`でsystem rcを外し、prompt表示・Tab補完・実認証・WSLは検証しない。`test_shell_startup`は一時HOMEとCLI doubleでactivation失敗の握りつぶし、空init、認証失敗の握りつぶし、stderr、hangを検査し、regressionへ含める。
 
 全jobはworkflow既存のpush/PR（main/master）、手動、週次triggerで動く。統合jobは隔離jobに依存し、失敗時は実行されない。その未実行を統合合格とは表示しない。fixtureの検査結果が統合applyの成否に依存する方向にはしない。tool準備にはpin済みmise-actionの`working_directory`と`install`を使い、一時manifestを明示的にtrustする。actionがPATHへ公開した導入済み実体をrunnerが検査し、fixtureにはactionの認証環境を渡さない。[^ci][^mise-action][^actions-needs]
 
