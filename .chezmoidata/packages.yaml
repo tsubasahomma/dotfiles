@@ -31,8 +31,7 @@ packages:
         - colima
         - eza
         - xh
-      casks:
-        - azure-cli
+      casks: []
     windows:
       - Atuinsh.Atuin
       - DuckDB.cli
@@ -40,7 +39,6 @@ packages:
       - eza-community.eza
       - ducaale.xh
       - Amazon.AWSCLI
-      - Microsoft.AzureCLI
 
   gui:
     darwin:

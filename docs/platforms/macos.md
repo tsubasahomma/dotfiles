@@ -40,12 +40,6 @@ sources:
   - id: brew-implementation
     resource: "https://github.com/Homebrew/brew/tree/bc63375ac3a4d6debb1ceb441ae6e22854f0909a/Library/Homebrew/bundle"
     title: "静的照合したHomebrew Bundle実装：brew/cask/installer/subcommand install"
-  - id: azure-cask
-    resource: "https://formulae.brew.sh/cask/azure-cli"
-    title: "Homebrew公式：Azure CLIのcask配布"
-  - id: azure-migration
-    resource: "https://learn.microsoft.com/en-us/cli/azure/install-azure-cli-macos"
-    title: "Microsoft公式：旧formulaからの移行"
   - id: docker-mac
     resource: "https://docs.docker.com/desktop/setup/install/mac-install/"
     title: "Docker公式：Macへの導入と起動"
@@ -73,7 +67,7 @@ AppleはXcodeに含まれるtoolと、単独のCommand Line Toolsを提供して
 
 # Homebrew・mise・GUIの境界
 
-Azure CLIは現在の配布に合わせ、headlessのcaskとして宣言する。CIでも導入対象だがGUI appを追加する変更ではない。旧formulaの実機からの移行は未検証で、このrepoは自動uninstallを追加しない。旧実体との競合がある場合は停止結果と所有・導入元を確認し、Microsoftの移行案内にある旧formulaの削除・再導入を別の明示操作として判断する。[^azure-cask][^azure-migration]
+Azure CLIはmacOSとWindowsの導入宣言から外した。既存のformulaやcaskの削除は、インストールの所有者が別途行う。
 
 package宣言にはbrewの`colima`とGUIの`docker-desktop`が共存する。just・atuin・duckdb・deno・AWS CLIは利用者決定によりmiseを主担当とし、macOSのbrew宣言を外した。既存実体は保持する。宣言されていることを、実際に使うcommandやcontainer runtimeが決まっている証拠としない。brewの実体・miseの実体・PATH上の選択を分ける。[^packages]
 
@@ -111,6 +105,3 @@ Full Disk Accessや無制限のpasswordless sudoが本repoの全操作に必要�
 
 [^brew-man]: [Homebrew brew(1)](https://docs.brew.sh/Manpage)。2026-11-11閲覧。
 [^brew-implementation]: [Bundle実装](https://github.com/Homebrew/brew/tree/bc63375ac3a4d6debb1ceb441ae6e22854f0909a/Library/Homebrew/bundle)。`brew.rb` / `cask.rb`の`preinstall!`、`installer.rb`の`batch_install_homebrew!`、`subcommand/install.rb`をローカルcheckoutで確認。
-
-[^azure-cask]: [Homebrew Azure CLI cask](https://formulae.brew.sh/cask/azure-cli)。
-[^azure-migration]: [Microsoft：Azure CLIのmacOS導入・旧formula移行](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli-macos)。

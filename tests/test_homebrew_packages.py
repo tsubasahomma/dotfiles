@@ -156,7 +156,7 @@ class HomebrewPackages(unittest.TestCase):
 
     def test_ci_has_headless_only_and_other_os_is_empty(self):
         self.render(ci=True)
-        self.assertEqual({key for key in self.entries if key.startswith('cask:')}, {'cask:azure-cli'})
+        self.assertFalse(any(key.startswith('cask:') for key in self.entries))
         self.assertNotIn('brew:ffmpeg', self.entries)
         self.assertNotIn('brew:azure-cli', self.entries)
         _, after, _ = self.execute({})
@@ -171,11 +171,11 @@ class HomebrewPackages(unittest.TestCase):
         packages = json.loads(self.template('{{ .packages | toJson }}'))
         self.assertEqual(packages['headless']['darwin']['brews'],
                          ['openssl@3', 'colima', 'eza', 'xh'])
-        self.assertEqual(packages['headless']['darwin']['casks'], ['azure-cli'])
+        self.assertEqual(packages['headless']['darwin']['casks'], [])
         self.assertEqual(packages['headless']['common'], ['ca-certificates', 'git', 'zsh', 'jq'])
         self.assertEqual(packages['headless']['windows'],
                          ['Atuinsh.Atuin', 'DuckDB.cli', 'DenoLand.Deno', 'eza-community.eza',
-                          'ducaale.xh', 'Amazon.AWSCLI', 'Microsoft.AzureCLI'])
+                          'ducaale.xh', 'Amazon.AWSCLI'])
         for name in ['just', 'atuin', 'duckdb', 'deno', 'awscli']:
             self.assertNotIn('brew:' + name, self.entries)
         self.assertIn('brew:ffmpeg', self.entries); self.assertIn('cask:slack', self.entries)
