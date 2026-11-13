@@ -5,7 +5,7 @@ description: 文書・template・tool更新・認証の変更に対して、必�
 status: draft
 generated:
   by: claude-code/claude-opus-5-5
-  at: "2026-11-13T14:23:03+00:00"
+  at: "2026-11-13T15:14:18+00:00"
 sources:
   - id: evals
     resource: "https://www.anthropic.com/research/demystifying-evals-for-ai-agents"
@@ -126,7 +126,7 @@ localの隔離試験とworkflow構文検査は、実際のGitHub Actions runや�
 
 導入済みのchezmoiとPython 3を指定して`python3 tests/test_mise_read_boundary.py`を実行する。`CHEZMOI_BIN`でchezmoi実体を指定できる。検査自体はmiseによるtool自動導入を起動しない。[検査コード](../tests/test_mise_read_boundary.py)はsourceコピーと一時HOME/XDGを使い、実config templateから`chezmoi init`でconfigを生成する。opはstub、external定義はコピー内で空にし、hookとbootstrapは実sourceを使う。
 
-新configと旧config相当の引数なしhookで、旧版・pin一致・新版・不在のmiseに対し実chezmoiの`diff`/`verify`とその`--dry-run`を実行する。取得stubとmiseの呼出し記録、既存fileの内容・mode、不在時のdirectory未作成、非zeroと導入案内を確認する。非実行file・directory・symlinkとリンク切れも保持を検査する。明示`--install`は不在時の導入・版確認をinstaller stubで検査し、既存版不一致の保持と一致版の無変更も確認する。
+新configと旧config相当の引数なしhookで、旧版・pin一致・新版・不在のmiseに対し実chezmoiの`diff`/`verify`とその`--dry-run`を実行する（hookは`--dry-run`でも必ず実行される）。[^hooks]取得stubとmiseの呼出し記録、既存fileの内容・mode、不在時のdirectory未作成、非zeroと導入案内を確認する。非実行file・directory・symlinkとリンク切れも保持を検査する。明示`--install`は不在時の導入・版確認をinstaller stubで検査し、既存版不一致の保持と一致版の無変更も確認する。
 
 macOSでchezmoi 2.70.4を用いた隔離検証は成功した。CIにも同じ検査を接続したが、workflow全体やUbuntu/WSL実機、実installerの通信・配布物・実認証は今回未検証。対象はmise取得・差替えの境界であり、chezmoi external/cacheまで無通信・無書込とする証拠ではない。
 
