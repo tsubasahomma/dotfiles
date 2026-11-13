@@ -10,7 +10,7 @@
 {{- end -}}
 {{- end -}}
 # Modular SSH configuration routed through XDG paths.
-# [Security]: Hardened defaults with ControlPersist for high-performance infrastructure.
+# Connection sharing via ControlPersist; agent forwarding is opt-in per host.
 
 # ================================================================
 # 1. Modular Configurations (Highest Priority)
@@ -30,7 +30,10 @@ Host *
     # --- Security & Identity ---
     IdentitiesOnly yes
 {{ if ne $ssh_auth_sock "" }}    IdentityAgent {{ includeTemplate "ssh_config_quote.tmpl" $ssh_auth_sock }}
-{{ end }}    ForwardAgent yes
+{{ end }}    # Agent forwarding stays off unless a host opts in: a forwarded agent lets the
+    # remote side use every loaded identity. Enable it per host in conf.d, which is
+    # included above and therefore takes precedence over this default.
+    ForwardAgent no
 
     # --- Reliability & Automation ---
     # Avoid hanging on first connection to a new host while still recording host keys.
