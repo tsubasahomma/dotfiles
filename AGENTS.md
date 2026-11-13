@@ -5,7 +5,7 @@ description: 変更と実機操作の境界、変更の確かめ方を確認し�
 status: draft
 generated:
   by: claude-code/claude-opus-5-5
-  at: "2026-11-13T13:55:21+00:00"
+  at: "2026-11-13T14:03:00+00:00"
 ---
 # 作業の境界
 
@@ -22,7 +22,7 @@ generated:
 repo rootで実行します。どれも一時HOMEを使い、実機のHOMEや認証には触れません。
 
 ```sh
-python3 tests/run_checks.py fast            # applyを伴わない検査。変更のたびに。約30秒
+python3 tests/run_checks.py fast            # applyを伴わない全test。変更のたびに。約30秒
 python3 tests/run_checks.py full            # 全件。PRの前に。約80秒
 python3 tests/run_checks.py test_git_fetch  # module単位。複数指定やtest_x.Class.test_yも可
 ```
@@ -31,6 +31,7 @@ python3 tests/run_checks.py test_git_fetch  # module単位。複数指定やtest
 - miseは`.mise-version`と同じ版が要ります。違う版しかなければ`MISE_BIN`で指定します。
 - Python 3.11未満で起動すると、宣言版のPythonで自分を起動し直します。
 - moduleごとに一時HOMEを分けて並列に実行し、所要時間を出します。成功したmoduleの出力は`-v`で表示します。
+- `fast`ではchezmoiのapplyを拒否します。applyを伴うtestは`tests/run_checks.py`の`SLOW`に載せ、`slow`（と`full`）で実行します。
 - 完了とするのは、変更に関係する検査が成功し、確認していない範囲を報告に書いたときです。skipや未実行を成功に数えません。
 - 検査の対象と限界は[検証の範囲](docs/validation.md)にあります。
 

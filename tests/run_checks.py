@@ -3,6 +3,7 @@
 
 Targets are suites or test modules (test_git_fetch, test_git_fetch.Class.test).
 Each module runs in its own isolated child with a temporary HOME, in parallel.
+The fast layer is every test that does not apply; there chezmoi refuses apply.
 No installs here: each binary comes from NAME_BIN, then PATH, then the mise
 install of the version this repository declares. CI's tool setup supplies the
 same prerequisites.
@@ -15,6 +16,7 @@ import json
 import os
 from pathlib import Path
 import re
+import shlex
 import shutil
 import subprocess
 import sys
@@ -31,19 +33,33 @@ REGRESSION = [
     'test_first_install_order', 'test_lazy_lock_update', 'test_lazy_restore', 'test_ci_verify',
     'test_shell_startup', 'test_mason_log',
 ]
-# Modules with no chezmoi apply, not even --dry-run, on any fixture.
-FAST = [
-    'test_render_syntax', 'test_mise_read_boundary', 'test_identity_boundary',
-    'test_completion_transaction', 'test_git_fetch', 'test_diagnostic_boundary',
-    'test_windows_packages', 'test_homebrew_packages', 'test_lazy_lock_update',
-    'test_lazy_restore', 'test_shell_startup', 'test_mason_log',
-]
+MODULES = ['test_render_syntax'] + REGRESSION
+# The slow layer: tests that run chezmoi apply (also --dry-run or init --apply) on a
+# reduced source. None means the whole module. Every other test is fast, and the
+# fast layer runs with a chezmoi that refuses those commands, so a test that
+# starts to apply fails there until it is listed here.
+SLOW = {
+    'test_ci_verify': None,
+    'test_completion_convergence': None,
+    'test_first_install_order': None,
+    'test_generated_convergence': None,
+    'test_identity_convergence': None,
+    'test_identity_transaction': ['Transaction.test_r05_before_failure_prevents_target_change_and_retry'],
+    'test_ownership_boundary': [
+        'OwnershipBoundary.test_owned_source_modes_still_apply',
+        'OwnershipBoundary.test_retired_files_and_manual_docker_install',
+        'OwnershipBoundary.test_retired_names_replaced_by_nested_directories',
+        'OwnershipBoundary.test_retired_names_replaced_by_symlinks',
+    ],
+    'test_windows_config_sync': None,
+}
 SUITES = {
-    'fast': FAST,
-    'full': ['test_render_syntax'] + REGRESSION,
+    'fast': [(module, 'fast') for module in MODULES],
+    'slow': [(module, 'slow') for module in MODULES if module in SLOW],
+    'full': [(module, layer) for module in MODULES for layer in ('fast', 'slow')],
     # Kept until CI and the documents move to the suites above.
-    'render': ['test_render_syntax'],
-    'regression': REGRESSION,
+    'render': [('test_render_syntax', 'all')],
+    'regression': [(module, 'all') for module in REGRESSION],
 }
 # Pins used when PATH has no real binary or only a mise shim:
 # name -> (manifest, mise tool key, executable).
@@ -169,25 +185,42 @@ def known_modules():
     return sorted(p.stem for p in TESTS.glob('test_*.py'))
 
 
+def unit_for(module, layer):
+    """Return (label, names, excluded test ids, guard) for one child, or None if empty."""
+    slow = SLOW.get(module, ())
+    if layer == 'fast':
+        if slow is None:
+            return None
+        return (f'{module} (fast)' if module in SLOW else module, [module],
+                [f'{module}.{name}' for name in slow], True)
+    if layer == 'slow':
+        names = [module] if slow is None else [f'{module}.{name}' for name in slow]
+        return (f'{module} (slow)' if slow else module, names, [], False) if names else None
+    return module, [module], [], False
+
+
 def expand(targets, parser):
-    """Turn suite and module names into {module: [unittest names]} in a stable order."""
-    groups, modules = {}, set(known_modules())
+    """Turn suite and module targets into a de-duplicated list of child units."""
+    units, modules = [], set(known_modules())
+    explicit = {}
     for target in targets:
         if target.endswith('.py'):
             target = Path(target).stem
         if target in SUITES:
-            selected = SUITES[target]
+            selected = [unit_for(module, layer) for module, layer in SUITES[target]]
         elif target.split('.')[0] in modules:
-            selected = [target]
+            explicit.setdefault(target.split('.')[0], []).append(target)
+            continue
         else:
             parser.error(f'unknown target {target!r}; use a suite ({", ".join(SUITES)}) '
                          f'or a module: {", ".join(sorted(modules))}')
-        for name in selected:
-            names = groups.setdefault(name.split('.')[0], [])
-            if name not in names:
-                names.append(name)
-    # A whole module wins over single tests of the same module.
-    return {module: [module] if module in names else names for module, names in groups.items()}
+        units += [unit for unit in selected if unit and unit not in units]
+    for module, names in explicit.items():
+        # A whole module wins over single tests of the same module.
+        unit = (module, [module] if module in names else names, [], False)
+        if unit not in units:
+            units.append(unit)
+    return units
 
 
 class TimedResult(unittest.TextTestResult):
@@ -202,20 +235,52 @@ class TimedResult(unittest.TextTestResult):
         super().stopTest(test)
 
 
-def run_child(names, report):
+def flatten(suite):
+    for item in suite:
+        if isinstance(item, unittest.TestSuite):
+            yield from flatten(item)
+        else:
+            yield item
+
+
+def run_child(names, excluded, report):
     """Inside the isolated child: run the names and write a JSON report."""
-    tests = unittest.defaultTestLoader.loadTestsFromNames(names)
+    loaded = list(flatten(unittest.defaultTestLoader.loadTestsFromNames(names)))
+    missing = [name for name in excluded if name not in {test.id() for test in loaded}]
+    tests = unittest.TestSuite(test for test in loaded if test.id() not in excluded)
     result = unittest.TextTestRunner(stream=sys.stdout, verbosity=2, resultclass=TimedResult).run(tests)
+    if missing:
+        print('Listed in SLOW but not found: ' + ', '.join(missing))
     Path(report).write_text(json.dumps({
         'run': result.testsRun, 'failures': len(result.failures), 'errors': len(result.errors),
         'skipped': len(result.skipped), 'expected_failures': len(result.expectedFailures),
         'unexpected_successes': len(result.unexpectedSuccesses), 'seconds': TimedResult.seconds}))
-    return 0 if result.wasSuccessful() else 1
+    return 0 if result.wasSuccessful() and not missing else 1
 
 
-def isolated_env(root, binaries, module):
+GUARD = """#!/bin/sh
+# Fast layer: apply belongs to the slow layer in tests/run_checks.py (SLOW).
+for argument in "$@"; do
+  case "$argument" in
+    apply | --apply | update)
+      echo "run_checks fast layer: chezmoi $argument is refused; list this test in SLOW" >&2
+      exit 97 ;;
+  esac
+done
+exec {chezmoi} "$@"
+"""
+
+
+def isolated_env(root, binaries, module, guard):
     home = root / 'home'; home.mkdir()
     bin_dir = root / 'bin'; bin_dir.mkdir()
+    binaries = dict(binaries)
+    if guard:
+        wrapper = root / 'guard' / 'chezmoi'
+        wrapper.parent.mkdir()
+        wrapper.write_text(GUARD.replace('{chezmoi}', shlex.quote(binaries['chezmoi'])))
+        wrapper.chmod(0o755)
+        binaries['chezmoi'] = str(wrapper)
     for name, path in dict(binaries, python3=sys.executable).items():
         (bin_dir / name).symlink_to(path)
     env = {'HOME': str(home), 'PATH': f'{bin_dir}:/usr/bin:/bin:/usr/sbin:/sbin',
@@ -234,18 +299,23 @@ def isolated_env(root, binaries, module):
     return env
 
 
-def run_module(module, names, binaries):
-    """Run one module in a fresh temporary root; return (module, code, output, report, secs)."""
+def run_unit(unit, binaries):
+    """Run one unit in a fresh temporary root; return (label, code, output, report, secs)."""
+    label, names, excluded, guard = unit
+    module = names[0].split('.')[0]
     started = time.monotonic()
     with tempfile.TemporaryDirectory(prefix=f'dotfiles-checks-{module}-') as temporary:
         root = Path(temporary).resolve()
         report = root / 'report.json'
-        result = subprocess.run([sys.executable, str(Path(__file__).resolve()), '--isolated-child',
-                                 '--report', str(report), *names],
-                                cwd=root, env=isolated_env(root, binaries, module),
+        command = [sys.executable, str(Path(__file__).resolve()), '--isolated-child',
+                   '--report', str(report)]
+        for name in excluded:
+            command += ['--exclude', name]
+        result = subprocess.run(command + names, cwd=root,
+                                env=isolated_env(root, binaries, module, guard),
                                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
         data = json.loads(report.read_text()) if report.is_file() else None
-    return module, result.returncode, result.stdout, data, time.monotonic() - started
+    return label, result.returncode, result.stdout, data, time.monotonic() - started
 
 
 def main():
@@ -260,15 +330,17 @@ def main():
                         help='print the output of passing modules too')
     parser.add_argument('--isolated-child', action='store_true', help=argparse.SUPPRESS)
     parser.add_argument('--report', help=argparse.SUPPRESS)
+    parser.add_argument('--exclude', action='append', default=[], help=argparse.SUPPRESS)
     args = parser.parse_args()
     if args.isolated_child:
-        return run_child(args.targets, args.report)
+        return run_child(args.targets, args.exclude, args.report)
     started = time.monotonic()
-    groups = expand(args.targets, parser)
+    units = expand(args.targets, parser)
+    modules = {unit[1][0].split('.')[0] for unit in units}
     names = list(BASE_TOOLS)
-    if set(groups) - WITHOUT_MISE:
+    if modules - WITHOUT_MISE:
         names.append('mise')
-    for module in groups:
+    for module in sorted(modules):
         names += [tool for tool in EXTRA_TOOLS.get(module, []) if tool not in names]
     binaries = {}
     for name in names:
@@ -278,12 +350,13 @@ def main():
             parser.error(str(error))
         binaries[name] = str(path)
         print(f'{name}: {path} ({origin})', flush=True)
-    print(f'Running {len(groups)} module(s), {args.jobs} at a time', flush=True)
+    print(f'Running {len(units)} unit(s) from {len(modules)} module(s), {args.jobs} at a time', flush=True)
     failed, counts, slowest = [], {'run': 0, 'skipped': 0}, []
     # Longest modules first keeps the wall time near the slowest single module.
-    order = sorted(groups, key=lambda m: SLOW_FIRST.index(m) if m in SLOW_FIRST else len(SLOW_FIRST))
+    order = sorted(units, key=lambda unit: SLOW_FIRST.index(unit[1][0].split('.')[0])
+                   if unit[1][0].split('.')[0] in SLOW_FIRST else len(SLOW_FIRST))
     with ThreadPoolExecutor(max_workers=max(1, args.jobs)) as pool:
-        futures = [pool.submit(run_module, module, groups[module], binaries) for module in order]
+        futures = [pool.submit(run_unit, unit, binaries) for unit in order]
         for future in as_completed(futures):
             module, code, output, data, seconds = future.result()
             ok = code == 0 and data and data['run'] and not (
@@ -305,7 +378,7 @@ def main():
     if counts['skipped']:
         print('NOT PASSED: skipped or expected-failure tests are not evidence.')
     status = 'passed' if not failed and not counts['skipped'] else 'FAILED'
-    print(f'{" ".join(args.targets)}: {status}, {counts["run"]} tests, {len(groups)} modules, '
+    print(f'{" ".join(args.targets)}: {status}, {counts["run"]} tests, {len(units)} units, '
           f'{elapsed:.1f}s wall' + (f'; failed: {", ".join(failed)}' if failed else ''))
     return 0 if status == 'passed' else 1
 
