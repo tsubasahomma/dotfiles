@@ -65,6 +65,9 @@ elif name=='vale':
         (out/'Google/Headings.yml').write_bytes(content)
         (out/'Google/vocab.txt').write_text('')
         (out/'Google/meta.json').write_text('{}')
+        (out/'Google/LICENSE').write_text('fixture license\n')
+        if extra := os.environ.get('FIXTURE_VALE_EXTRA_OUTPUT'):
+            (out/extra).write_text('unknown package output\n')
     elif os.environ.get('INVALID')=='vale': sys.exit(42)
 elif name=='swiftc':
     log('generate pbfile')
@@ -122,7 +125,9 @@ class GeneratedConvergence(unittest.TestCase):
         (self.home / 'sdk').mkdir(); (self.home / 'sdk/SDKSettings.json').write_text('{}')
         self.outputs = {'bat': self.home / '.cache/bat', 'vale': self.home / '.local/share/vale/styles', 'pbfile': self.bin}
         self.names = {'bat': ['syntaxes.bin', 'themes.bin', 'metadata.yaml'],
-                      'vale': ['Google/Acronyms.yml', 'Google/AMPM.yml', 'Google/Headings.yml', 'Google/vocab.txt', 'Google/meta.json'], 'pbfile': ['pbfile']}
+                      'vale': ['Google/Acronyms.yml', 'Google/AMPM.yml', 'Google/Headings.yml',
+                               'Google/vocab.txt', 'Google/meta.json', 'Google/LICENSE'],
+                      'pbfile': ['pbfile']}
 
     def apply(self, success=True):
         result = subprocess.run([CHEZMOI, '--config', str(self.config), '--source', str(self.source),
@@ -187,6 +192,21 @@ class GeneratedConvergence(unittest.TestCase):
         before = self.calls(); self.apply(); self.assertEqual(self.calls(), before + ['before', 'generate vale'])
         (package / 'input').write_text('v2')
         before = self.calls(); self.apply(); self.assertEqual(self.calls(), before + ['before', 'generate vale'])
+
+    def test_vale_only_accepts_license_at_the_exact_package_path(self):
+        self.apply()
+        receipt = self.home / '.local/state/dotfiles-generators/vale.json'
+        self.assertIn('Google/LICENSE', json.loads(receipt.read_text())['files'])
+        task = self.home / '.config/mise/repo-tasks' / TASKS['vale']
+        task.write_text(task.read_text() + '\n# resync the package\n')
+        before = self.snapshot('vale')
+        for extra in ['LICENSE', 'Google/LICENSE.txt']:
+            with self.subTest(extra=extra):
+                self.env['FIXTURE_VALE_EXTRA_OUTPUT'] = extra
+                result = self.task('vale', False)
+                self.assertIn(f'Unexpected Google package output: {extra}', result.stderr)
+                self.assertEqual(self.snapshot('vale'), before)
+                self.assertFalse((self.outputs['vale'] / extra).exists())
 
     def test_generation_and_validation_failure_preserve_all_old_outputs(self):
         self.apply()

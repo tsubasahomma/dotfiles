@@ -43,7 +43,8 @@ def inputs():
 
 
 def allowed(name):
-    return name in ('Google/vocab.txt', 'Google/meta.json') or bool(re.fullmatch(r'Google/[A-Za-z0-9_-]+\.yml', name))
+    return name in ('Google/vocab.txt', 'Google/meta.json', 'Google/LICENSE') or bool(
+        re.fullmatch(r'Google/[A-Za-z0-9_-]+\.yml', name))
 
 
 with locked(state, 'vale') as receipt:
