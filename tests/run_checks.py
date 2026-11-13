@@ -26,7 +26,12 @@ import unittest
 
 TESTS = Path(__file__).resolve().parent
 REPO = TESTS.parent
-REGRESSION = [
+# Every module of the fast and slow layers. test_lint has its own suite and
+# test_vale_lint needs prepared plugin checkouts, so both stay outside.
+MODULES = [
+    'test_render_syntax',
+    'test_repo_rules',
+    'test_ci_changes',
     'test_mise_read_boundary',
     'test_identity_boundary',
     'test_identity_transaction',
@@ -46,9 +51,7 @@ REGRESSION = [
     'test_ci_verify',
     'test_shell_startup',
     'test_mason_log',
-    'test_repo_rules',
 ]
-MODULES = ['test_render_syntax'] + REGRESSION
 # The slow layer: tests that run chezmoi apply (also --dry-run or init --apply) on a
 # reduced source. None means the whole module. Every other test is fast, and the
 # fast layer runs with a chezmoi that refuses those commands, so a test that
@@ -76,9 +79,6 @@ SUITES = {
     'lint': [('test_lint', 'all')],
     'full': [('test_lint', 'all')]
     + [(module, layer) for module in MODULES for layer in ('fast', 'slow')],
-    # Kept until CI and the documents move to the suites above.
-    'render': [('test_render_syntax', 'all')],
-    'regression': [(module, 'all') for module in REGRESSION],
 }
 # Pins used when PATH has no real binary or only a mise shim:
 # name -> (manifest, mise tool key, executable).
@@ -100,11 +100,12 @@ MANIFEST_TOOLS = {
 }
 BASE_TOOLS = ['chezmoi', 'nvim', 'zsh', 'git', 'ssh', 'ssh-keygen']
 # Modules that run without mise; every other module gets the pinned mise.
-WITHOUT_MISE = {'test_render_syntax', 'test_lint', 'test_repo_rules'}
+WITHOUT_MISE = {'test_render_syntax', 'test_lint', 'test_repo_rules', 'test_ci_changes'}
 # Modules that need more tools, and variables they may read.
 # Modules that need only these tools instead of BASE_TOOLS (no Neovim or Zsh).
 OWN_TOOLS = {
     'test_repo_rules': ['git'],
+    'test_ci_changes': ['git'],
     'test_lint': [
         'chezmoi',
         'git',
