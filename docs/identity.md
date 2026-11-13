@@ -4,8 +4,8 @@ title: Git・SSH identityの入力と生成物
 description: 1Passwordの入力、Gitの選択、SSH認証と署名の経路を変更・調査するときに読む。
 status: draft
 generated:
-  by: codex/gpt-6
-  at: "2026-11-11T13:12:42+00:00"
+  by: claude-code/claude-fable-5-2
+  at: "2026-11-13T05:44:03+00:00"
 sources:
   - id: identity-after
     resource: "../.chezmoiscripts/run_after_10-identity.sh.tmpl"
@@ -104,7 +104,7 @@ sources:
 
 account/item一覧とitem fieldsはJSON配列を要求し、`null`・object・空応答を正常な空集合とみなさない。保存済みconfigのidentitiesも配列を要求する。タグ付きitemに必須fieldの欠落・空値・制御文字（改行、tab等）があれば集合全体を拒否し、黙ってitemを落とさない。emailはallowed signersのpattern構文も考慮し、`*`・`?`・`,`・先頭`!`、空白、path区切りを許可しない。filenameの移行を避けるため、OpenSSHがpath内で展開する`%`・`${…}`とWindowsでfilenameに使えない縦棒もemailでは拒否する。quoted local部や国際化emailは未対応なので、該当入力が必要なら契約と全consumerを先に変更する。[^config][^validation][^signers]
 
-`key_hash`はpublic key文字列のSHA-256先頭8文字で、consumerでも一致を確認する。basenameは維持し、生成先は下記の世代directoryへ移す。同じ生成config名になるidentityは大文字小文字を無視して拒否する。短いhashが衝突しない保証はない。`ssh_keys_hash`は従来どおりitem一覧JSON由来であり、詳細fieldすべての変更検知はR02では変更していない。[^config][^validation]
+`key_hash`はpublic key文字列のSHA-256先頭8文字で、consumerでも一致を確認する。basenameは維持し、生成先は下記の世代directoryへ移す。同じ生成config名になるidentityは大文字小文字を無視して拒否する。短いhashが衝突しない保証はない。[^config][^validation]
 
 # routingと各出力の境界
 
