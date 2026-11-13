@@ -4,8 +4,8 @@ title: 変更に応じた検証と結果の限界
 description: 文書・template・tool更新・認証の変更に対して、必要な検査と副作用を選ぶ。
 status: draft
 generated:
-  by: claude-code/claude-fable-5-2
-  at: "2026-11-13T05:49:10+00:00"
+  by: claude-code/claude-opus-5-5
+  at: "2026-11-13T13:55:21+00:00"
 sources:
   - id: evals
     resource: "https://www.anthropic.com/research/demystifying-evals-for-ai-agents"
@@ -79,16 +79,17 @@ sources:
 <a id="isolated-regression"></a>
 # 隔離回帰・render・統合の入口
 
-repo rootから、導入済みのPython 3.11+と実体を使って次を実行する。runner自身はtoolを導入しない。不足やshimを検出したら検査前に非zeroで停止する。
+repo rootから次を実行する。runner自身はtoolを導入しない。不足・shimだけ・版違いを検出したら検査前に非zeroで停止する。
 
 ```sh
-python3 tests/run_checks.py regression
-python3 tests/run_checks.py render
+python3 tests/run_checks.py fast            # applyを伴わないmodule
+python3 tests/run_checks.py full            # 全module
+python3 tests/run_checks.py test_git_fetch  # module・class・test単位（複数可）
 ```
 
-両方にchezmoi・Neovim・Zsh・Git/OpenSSHとOS utilityが必要で、regressionにはmise実体も必要である。`CHEZMOI_BIN`・`NVIM_BIN`・`MISE_BIN`・`ZSH_BIN`で実体を指定できる。Pythonは起動した実体を使う。fixture内の一部stubと本番scriptは`/usr/bin/python3`・`/bin/zsh`・`/usr/bin/ssh`等も使うため、任意OSへの可搬性を保証する入口ではない。macOS/Ubuntuを対象にする。
+chezmoi・Neovim・Zsh・Git/OpenSSHとOS utilityが必要で、render検査以外にはmise実体も要る。各実体は`CHEZMOI_BIN`・`NVIM_BIN`・`MISE_BIN`・`ZSH_BIN`等の環境変数、PATH上の実体、repoが宣言した版のmise install（chezmoiは`.mise.toml`、NeovimとPythonは`dot_config/mise/conf.d/10-tools.toml`）の順に探す。PATHの先頭がmiseのshimなら宣言版のinstallを使う。miseは`~/.local/bin/mise`を候補にし、版が`.mise-version`と一致しなければ停止する。Python 3.11未満で起動した場合は宣言版のPythonで起動し直す。fixture内の一部stubと本番scriptは`/usr/bin/python3`・`/bin/zsh`・`/usr/bin/ssh`等も使うため、任意OSへの可搬性を保証する入口ではない。macOS/Ubuntuを対象にする。
 
-[runner](../tests/run_checks.py)は一時HOME/XDGと限定PATHで子processを起動し、実ユーザーのGit/mise設定override、SSH agent、OP環境変数、tokenを引き継がない。各fixtureも自身の一時HOME/XDGと明示configを使う。regressionは同runnerの`REGRESSION`に列挙したmoduleを一括実行し、Windows設定同期とlazy-lock候補生成の検査も含む。R17のVale native検査は[別入口](#vale-lint)である。R05は既存`load_tests`で自身の12件を選択する。失敗・例外・skip・expected failure・空suiteは非zeroになる。
+[runner](../tests/run_checks.py)はmoduleごとに一時HOME/XDGと限定PATHの子processを起動し、CPU数まで並列に実行する。実ユーザーのGit/mise設定override、SSH agent、OP環境変数、tokenを引き継がない。各fixtureも自身の一時HOME/XDGと明示configを使う。moduleごとの件数・所要時間と遅いtestを表示し、失敗したmoduleの出力だけを表示する（`-v`で全出力）。`fast`は同runnerの`FAST`に列挙した、chezmoi applyを`--dry-run`も含めて実行しないmoduleである。`full`は全moduleで、Windows設定同期とlazy-lock候補生成の検査も含む。CIは移行まで旧名の`render`（render検査だけ）と`regression`（render以外の全module）を使う。R17のVale native検査は[別入口](#vale-lint)である。R05は既存`load_tests`で自身の12件を選択する。失敗・例外・skip・expected failure・空suiteは非zeroになる。
 
 R01とR13のinit検査は実config template・読込hook・bootstrapを保持し、取得/認証をstubに置き換える。R02のconfig生成fixtureは入力検証を保持してhook部分をsourceコピーから除き、生成configにhookがないことを検査する。他はhookなしconfigを使い、external取得を空定義または最小sourceで除外する。縮小sourceへのapply、使い捨て鍵の署名、ローカルbare remoteのfetch、UNIX socketのmux検査を含むが、実機applyや実認証は行わない。socket bindが許されない環境は失敗となり、skipで代替しない。
 
