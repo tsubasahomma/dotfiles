@@ -4,8 +4,8 @@ title: 欠損復旧を含むapplyと操作の責務分離
 description: 採用した検討方針と未実装案を分け、成功条件・手動更新の扱い・代案・反証条件を確認する。
 status: draft
 generated:
-  by: codex/gpt-6
-  at: "2026-11-12T00:24:47+00:00"
+  by: claude-code/claude-opus-5-5
+  at: "2026-11-13T13:50:15+00:00"
 sources:
   - id: order
     resource: "https://www.chezmoi.io/reference/application-order/"
@@ -140,6 +140,8 @@ sources:
     resource: https://github.com/jdx/mise/blob/v2026.6.11/src/runtime_symlinks.rs
     title: 共有installを含むruntime symlink移行
 ---
+> 2026-11-13に、生成物ごとの専用機構を専用ディレクトリ単位の所有と再生成へ置き換えると決めた。下記の採用済み範囲のうち置き換える部分は[生成物の所有と再生成の判断](generated-state.md)を参照する。
+
 # 採用した検討方針と、まだ実装していないこと
 
 applyの成功条件に、管理対象生成物の欠損復旧まで含める案を主軸に検討する。これは利用者が選んだ検討方針である。現在の`chezmoi apply`がその条件を満たすという意味ではない。[^direction]
