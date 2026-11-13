@@ -20,7 +20,3 @@ indent_size = 2
 [*.md]
 trim_trailing_whitespace = false
 max_line_length = off
-
-# Makefile recipes require physical tabs.
-[Makefile]
-indent_style = tab

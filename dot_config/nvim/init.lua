@@ -10,7 +10,9 @@ end
 -- This ensures the signal survives startup/exit and reaches the terminal server.
 -- [Reference]: https://wezterm.org/config/lua/pane/get_user_vars.html
 local function set_wezterm_var(name, value)
-  if vim.env.TERM_PROGRAM ~= "WezTerm" then return end
+  if vim.env.TERM_PROGRAM ~= "WezTerm" then
+    return
+  end
   local str_value = value and "true" or "false"
   local osc = string.format("\027]1337;SetUserVar=%s=%s\007", name, vim.base64.encode(str_value))
 
