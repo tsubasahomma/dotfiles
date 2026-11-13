@@ -399,7 +399,7 @@ printf 'print -r -- completed-after-termination\\n'
         self.assertEqual(len(sources), len(helpers))
         functions = self.root / 'completion-functions'
         functions.mkdir()
-        for name, source in zip(helpers, sources):
+        for name, source in zip(helpers, sources, strict=True):
             shutil.copyfile(source, functions / name)
         setup = 'fpath=("$1" "$3"); _compdir=; autoload -Uz compinit; '
         # Restrict discovery rather than bypassing compaudit: an insecure

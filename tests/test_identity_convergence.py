@@ -12,7 +12,7 @@ import shutil
 import unittest
 
 import test_identity_boundary as boundary
-from test_identity_transaction import Transaction, PREPARE
+from test_identity_transaction import PREPARE, Transaction
 
 AFTER = '.chezmoiscripts/run_after_10-identity.sh.tmpl'
 

@@ -6,14 +6,10 @@ consumer, identity before script and identity generator (no hooks/externals).
 """
 
 import copy
-import hashlib
 import json
-import os
 from pathlib import Path
 import shlex
 import shutil
-import signal
-import subprocess
 import unittest
 
 import test_identity_boundary as boundary

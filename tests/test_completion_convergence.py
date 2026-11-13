@@ -2,13 +2,11 @@
 """R10b: real reduced before/target/after applies, stub tool preparation only."""
 
 import json
-import os
-from pathlib import Path
 import shutil
 import subprocess
 import unittest
 
-from test_completion_transaction import CompletionTransaction, REPO, CHEZMOI, ZSH
+from test_completion_transaction import CHEZMOI, REPO, CompletionTransaction
 
 AFTER = '.chezmoiscripts/run_after_30-completions.sh.tmpl'
 WRAPPER = '.chezmoiscripts/run_onchange_after_20-mise-post-apply-graph.sh.tmpl'
@@ -132,16 +130,16 @@ if [ "$1" = which ]; then
 
     def generated_calls(self):
         return [
-            l
-            for l in self.calls.read_text().splitlines()
-            if l.startswith(('exec ', 'completion ')) and 'command -v usage' not in l
+            line
+            for line in self.calls.read_text().splitlines()
+            if line.startswith(('exec ', 'completion ')) and 'command -v usage' not in line
         ]
 
     def assert_no_graph(self, since):
         self.assertFalse(
             any(
-                l.startswith(('install', 'run '))
-                for l in self.calls.read_text().splitlines()[since:]
+                line.startswith(('install', 'run '))
+                for line in self.calls.read_text().splitlines()[since:]
             )
         )
 

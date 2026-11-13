@@ -72,7 +72,9 @@ SLOW = {
 SUITES = {
     'fast': [(module, 'fast') for module in MODULES],
     'slow': [(module, 'slow') for module in MODULES if module in SLOW],
-    'full': [(module, layer) for module in MODULES for layer in ('fast', 'slow')],
+    'lint': [('test_lint', 'all')],
+    'full': [('test_lint', 'all')]
+    + [(module, layer) for module in MODULES for layer in ('fast', 'slow')],
     # Kept until CI and the documents move to the suites above.
     'render': [('test_render_syntax', 'all')],
     'regression': [(module, 'all') for module in REGRESSION],
@@ -84,15 +86,38 @@ MANIFEST_TOOLS = {
     'nvim': ('dot_config/mise/conf.d/10-tools.toml', 'aqua:neovim/neovim', 'nvim'),
     'python3': ('dot_config/mise/conf.d/10-tools.toml', 'python', 'python3'),
     'vale': ('dot_config/mise/conf.d/10-tools.toml', 'aqua:errata-ai/vale', 'vale'),
+    'stylua': ('dot_config/mise/conf.d/10-tools.toml', 'aqua:JohnnyMorganz/StyLua', 'stylua'),
+    'shellcheck': (
+        'dot_config/mise/conf.d/10-tools.toml',
+        'aqua:koalaman/shellcheck',
+        'shellcheck',
+    ),
+    'shfmt': ('dot_config/mise/conf.d/10-tools.toml', 'aqua:mvdan/sh', 'shfmt'),
+    'ruff': ('tests/lint-tools.toml', 'aqua:astral-sh/ruff', 'ruff'),
+    'zizmor': ('tests/lint-tools.toml', 'aqua:zizmorcore/zizmor', 'zizmor'),
+    'actionlint': ('tests/lint-tools.toml', 'aqua:rhysd/actionlint', 'actionlint'),
 }
 BASE_TOOLS = ['chezmoi', 'nvim', 'zsh', 'git', 'ssh', 'ssh-keygen']
 # Modules that run without mise; every other module gets the pinned mise.
-WITHOUT_MISE = {'test_render_syntax'}
+WITHOUT_MISE = {'test_render_syntax', 'test_lint'}
 # Modules that need more tools, and variables they may read.
-EXTRA_TOOLS = {'test_vale_lint': ['vale']}
+# Modules that need only these tools instead of BASE_TOOLS (no Neovim or Zsh).
+OWN_TOOLS = {
+    'test_lint': [
+        'chezmoi',
+        'git',
+        'ruff',
+        'stylua',
+        'shfmt',
+        'shellcheck',
+        'actionlint',
+        'zizmor',
+    ],
+}
+EXTRA_TOOLS = {
+    'test_vale_lint': ['vale'],
+}
 PASSTHROUGH = {'test_vale_lint': ['NVIM_LINT_DIR', 'LAZYVIM_DIR']}
-# Modules outside the suites: they need prepared plugin checkouts.
-STANDALONE = ['test_vale_lint']
 
 
 def env_name(name):
@@ -417,11 +442,13 @@ def main():
     started = time.monotonic()
     units = expand(args.targets, parser)
     modules = {unit[1][0].split('.')[0] for unit in units}
-    names = list(BASE_TOOLS)
+    names = [] if modules <= set(OWN_TOOLS) else list(BASE_TOOLS)
     if modules - WITHOUT_MISE:
         names.append('mise')
     for module in sorted(modules):
-        names += [tool for tool in EXTRA_TOOLS.get(module, []) if tool not in names]
+        names += [
+            tool for tool in OWN_TOOLS.get(module, EXTRA_TOOLS.get(module, [])) if tool not in names
+        ]
     binaries = {}
     for name in names:
         try:

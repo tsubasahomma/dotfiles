@@ -36,6 +36,7 @@ jobs:
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Resolve Renovate Shell Node Runtime
         id: renovate-node
@@ -61,6 +62,61 @@ jobs:
           npx --yes --package "renovate@${RENOVATE_VERSION}" -- renovate-config-validator --version
           npx --yes --package "renovate@${RENOVATE_VERSION}" -- renovate-config-validator --strict
 
+  lint:
+    name: Lint
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        with:
+          persist-credentials: false
+
+      - name: Prepare Explicit Lint Tool Manifest
+        id: lint-tools
+        shell: bash
+        run: |
+          python3 - <<'PYTHON'
+          import os, pathlib, re
+          root = pathlib.Path(os.environ['GITHUB_WORKSPACE'])
+          directory = pathlib.Path(os.environ['RUNNER_TEMP']) / 'lint-tools'
+          directory.mkdir()
+          version = (root / '.mise-version').read_text().strip()
+          assert re.fullmatch(r'[0-9]+\.[0-9]+\.[0-9]+', version), 'invalid mise pin'
+          # The pins the lint entry resolves; no global config, tasks or init/apply.
+          tools = root / 'dot_config/mise/conf.d/10-tools.toml'
+          lint = root / 'tests/lint-tools.toml'
+          sources = [(root / '.mise.toml', '"aqua:twpayne/chezmoi"'),
+                     (tools, '"aqua:JohnnyMorganz/StyLua"'), (tools, '"aqua:koalaman/shellcheck"'),
+                     (tools, '"aqua:mvdan/sh"'), (lint, '"aqua:astral-sh/ruff"'),
+                     (lint, '"aqua:zizmorcore/zizmor"'), (lint, '"aqua:rhysd/actionlint"')]
+          lines = ['[tools]']
+          for path, key in sources:
+              matches = re.findall(r'^' + re.escape(key) + r' = "([0-9.]+)"$', path.read_text(), re.M)
+              assert len(matches) == 1, 'missing/ambiguous tool pin: ' + key
+              lines.append(key + ' = "' + matches[0] + '"')
+          (directory / '.mise.toml').write_text('\n'.join(lines) + '\n')
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
+              output.write('directory=' + str(directory) + '\nversion=' + version + '\n')
+          PYTHON
+
+      - name: Install Lint Tools (Network Setup Only)
+        env:
+          MISE_TRUSTED_CONFIG_PATHS: ${{ steps.lint-tools.outputs.directory }}
+        uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4
+        with:
+          version: ${{ steps.lint-tools.outputs.version }}
+          working_directory: ${{ steps.lint-tools.outputs.directory }}
+          install: true
+          cache: true
+          add_shims_to_path: false
+          cache_key: lint-v1-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('.mise-version', '.mise.toml', 'dot_config/mise/conf.d/10-tools.toml', 'tests/lint-tools.toml') }}
+
+      - name: Run Lint Without Authentication
+        run: python3 tests/run_checks.py lint
+
   isolated:
     name: Isolated ${{ matrix.suite }} (${{ matrix.os }})
     strategy:
@@ -77,6 +133,8 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        with:
+          persist-credentials: false
 
       - name: Prepare Explicit Fixture Tool Manifest
         id: fixture-tools
@@ -150,6 +208,7 @@ jobs:
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Resolve Mise Bootstrap Version
         id: mise_version
@@ -308,16 +367,18 @@ jobs:
     # Never let an upstream failure/cancellation turn this required check into a
     # successful skip. Keep the name stable across runner and matrix updates.
     if: ${{ always() }}
-    needs: [renovate-config, isolated, integration]
+    needs: [renovate-config, lint, isolated, integration]
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
       - name: Require Every Validation Job to Succeed
         env:
           RENOVATE_RESULT: ${{ needs.renovate-config.result }}
+          LINT_RESULT: ${{ needs.lint.result }}
           ISOLATED_RESULT: ${{ needs.isolated.result }}
           INTEGRATION_RESULT: ${{ needs.integration.result }}
         run: |
           test "$RENOVATE_RESULT" = success
+          test "$LINT_RESULT" = success
           test "$ISOLATED_RESULT" = success
           test "$INTEGRATION_RESULT" = success

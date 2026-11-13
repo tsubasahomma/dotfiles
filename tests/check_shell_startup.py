@@ -12,7 +12,6 @@ import shutil
 import subprocess
 import tempfile
 
-
 STARTUP_CHECK = r'''
 setopt err_exit nounset
 [[ "$ZDOTDIR" == "$HOME/.config/zsh" ]]

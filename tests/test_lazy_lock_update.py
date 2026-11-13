@@ -4,7 +4,6 @@ CLI downloads/editor outputs are stubs; upstream native network evidence is
 recorded separately. Tests never use normal Neovim config or plugin directories.
 """
 
-import hashlib
 import json
 import os
 from pathlib import Path

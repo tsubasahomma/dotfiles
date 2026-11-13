@@ -5,7 +5,7 @@ description: 設定や依存を変更するときに正本、更新taskの副作
 status: draft
 generated:
   by: claude-code/claude-opus-5-5
-  at: "2026-11-13T06:49:21+00:00"
+  at: "2026-11-13T14:12:17+00:00"
 sources:
   - id: pin
     resource: "../.mise-version"
@@ -131,7 +131,7 @@ build・通常plugin init/config・editor event・submodule取得は行わない
 
 # RenovateとCIの現行
 
-Renovateはrootの`.mise.toml`と`dot_config/mise/conf.d/*.toml`をnative mise managerで扱い、`.mise-version`にはmise release向けのcustom regexを使う。CI workflowの`RENOVATE_VERSION`は直前行の`# renovate:`注釈を公式preset `customManagers:githubActionsVersions`で読み、pre-commit hookの`rev`は既定で無効のpre-commit managerを有効にして追う。mise・GitHub Actions・custom regex・pre-commitの通常更新を、majorを含めて一つのPRにまとめる。作成枠は日本時間の月曜で、同時PR上限は1件。月曜の枠内にbotが実行され、対象の更新があるときに作成する。対応lockfileがないためweekly lock maintenanceは無効にする。[^renovate]
+Renovateはrootの`.mise.toml`、`dot_config/mise/conf.d/*.toml`、CIのlintだけが使う`tests/lint-tools.toml`をnative mise managerで扱い、`.mise-version`にはmise release向けのcustom regexを使う。CI workflowの`RENOVATE_VERSION`は直前行の`# renovate:`注釈を公式preset `customManagers:githubActionsVersions`で読み、pre-commit hookの`rev`は既定で無効のpre-commit managerを有効にして追う。mise・GitHub Actions・custom regex・pre-commitの通常更新を、majorを含めて一つのPRにまとめる。作成枠は日本時間の月曜で、同時PR上限は1件。月曜の枠内にbotが実行され、対象の更新があるときに作成する。対応lockfileがないためweekly lock maintenanceは無効にする。[^renovate]
 
 `Required CI`に合格したPRはsquashで自動マージする。既存のPRが最新mainに追随するためのrebaseとCI完了後のマージは、月曜の作成枠外でも進む。失敗した場合はログを調べ、原因の更新を特定して分離する。
 

@@ -5,7 +5,12 @@
   "extends": ["config:best-practices", "customManagers:githubActionsVersions"],
   "labels": ["dependencies", "renovate"],
   "mise": {
-    "managerFilePatterns": ["/^\\.mise\\.toml$/", "/^dot_config/mise/conf\\.d/.*\\.toml$/"]
+    // tests/lint-tools.toml pins the CI-only lint tools in the same [tools] format.
+    "managerFilePatterns": [
+      "/^\\.mise\\.toml$/",
+      "/^dot_config/mise/conf\\.d/.*\\.toml$/",
+      "/^tests/lint-tools\\.toml$/"
+    ]
   },
   // Disabled by default upstream; opt in so hook revisions do not go stale.
   // https://docs.renovatebot.com/modules/manager/pre-commit/
