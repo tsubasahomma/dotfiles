@@ -13,20 +13,38 @@ local function main()
   end
   local original = read(lockfile)
   local adopted = vim.json.decode(original)
-  assert(adopted["lazy.nvim"] and adopted["lazy.nvim"].commit == engine, "Unsupported lazy.nvim lock")
+  assert(
+    adopted["lazy.nvim"] and adopted["lazy.nvim"].commit == engine,
+    "Unsupported lazy.nvim lock"
+  )
   for name, entry in pairs(adopted) do
-    assert(type(name) == "string" and name:match("^[%w_.-]+$") and name ~= "." and name ~= ".."
-      and type(entry) == "table" and type(entry.commit) == "string"
-      and #entry.commit == 40 and entry.commit:match("^[0-9a-f]+$"), "Invalid lock entry")
+    assert(
+      type(name) == "string"
+        and name:match("^[%w_.-]+$")
+        and name ~= "."
+        and name ~= ".."
+        and type(entry) == "table"
+        and type(entry.commit) == "string"
+        and #entry.commit == 40
+        and entry.commit:match("^[0-9a-f]+$"),
+      "Invalid lock entry"
+    )
   end
   local worklock = assert(vim.env.DOTFILES_RESTORE_LOCK)
-  local f = assert(io.open(worklock, "wb")); f:write(original); f:close()
+  local f = assert(io.open(worklock, "wb"))
+  f:write(original)
+  f:close()
   local function git(dir, args)
     local command = { "git" }
-    if dir then vim.list_extend(command, { "-C", dir }) end
+    if dir then
+      vim.list_extend(command, { "-C", dir })
+    end
     vim.list_extend(command, args)
     local result = vim.system(command, { text = true }):wait()
-    assert(result.code == 0, "Git failed: " .. table.concat(args, " ") .. "\n" .. (result.stderr or ""))
+    assert(
+      result.code == 0,
+      "Git failed: " .. table.concat(args, " ") .. "\n" .. (result.stderr or "")
+    )
     return vim.trim(result.stdout)
   end
   local function bootstrap(name, url)
@@ -40,7 +58,10 @@ local function main()
       assert(git(dir, { "remote", "get-url", "origin" }) == url, "Unexpected origin: " .. name)
       assert(git(dir, { "status", "--porcelain" }) == "", "Local changes: " .. name)
       if name == "lazy.nvim" then
-        assert(git(dir, { "rev-parse", "HEAD" }) == engine, "Installed lazy.nvim engine is unsupported")
+        assert(
+          git(dir, { "rev-parse", "HEAD" }) == engine,
+          "Installed lazy.nvim engine is unsupported"
+        )
       end
     end
     if missing or git(dir, { "rev-parse", "HEAD" }) ~= entry.commit then
@@ -55,13 +76,18 @@ local function main()
   vim.opt.rtp:prepend(root .. "/lazy.nvim")
   local errors = {}
   vim.notify = function(message, level)
-    if (level or 0) >= vim.log.levels.ERROR then errors[#errors + 1] = tostring(message) end
+    if (level or 0) >= vim.log.levels.ERROR then
+      errors[#errors + 1] = tostring(message)
+    end
   end
   local lazy = require("lazy")
   require("lazy.core.loader").startup = function() end
   local setup, called = lazy.setup, false
   lazy.setup = function(opts)
-    assert(not called and type(opts) == "table" and type(opts.spec) == "table", "Unsupported lazy setup")
+    assert(
+      not called and type(opts) == "table" and type(opts.spec) == "table",
+      "Unsupported lazy setup"
+    )
     called = true
     assert(not opts.root and not opts.lockfile, "Custom root/lockfile is unsupported")
     assert(opts.rocks and opts.rocks.enabled == false, "Rocks are unsupported")
@@ -75,7 +101,8 @@ local function main()
     -- MasonUpdate needs Mason setup, not LazyVim's concurrent registry refresh
     -- and ensure_installed provisioning. Keep this override repair-session only.
     table.insert(opts.spec, {
-      "mason-org/mason.nvim", optional = true,
+      "mason-org/mason.nvim",
+      optional = true,
       config = function(_, mason_opts)
         if vim.env.DOTFILES_MASON_DEBUG == "1" then
           mason_opts.log_level = vim.log.levels.DEBUG
@@ -95,15 +122,19 @@ local function main()
     assert(C.spec:report() == 0, "Plugin spec contains errors")
     for name, p in pairs(C.plugins) do
       assert(adopted[name], "Active plugin absent from adopted lock: " .. name)
-      assert(not p._.is_local and not p.virtual and not p.dev and p.dir == root .. "/" .. name,
-        "Unsupported plugin location: " .. name)
+      assert(
+        not p._.is_local and not p.virtual and not p.dev and p.dir == root .. "/" .. name,
+        "Unsupported plugin location: " .. name
+      )
       assert(not Plugin.has_errors(p), "Plugin task failed: " .. name)
       if p._.installed then
         assert(Git.get_origin(p.dir) == p.url, "Unexpected plugin origin: " .. name)
       end
       if final then
-        assert(p._.installed and Git.info(p.dir).commit == adopted[name].commit,
-          "Adopted lock/checkout mismatch: " .. name)
+        assert(
+          p._.installed and Git.info(p.dir).commit == adopted[name].commit,
+          "Adopted lock/checkout mismatch: " .. name
+        )
       end
     end
     vim.wait(600)
@@ -117,24 +148,40 @@ local function main()
   Task.spawn = function(self, command, opts)
     -- Clone without checking out today's branch/submodules before the locked commit.
     if command == "git" and opts.args and opts.args[1] == "clone" then
-      opts.args = vim.tbl_filter(function(arg) return arg ~= "--recurse-submodules" end, opts.args)
+      opts.args = vim.tbl_filter(function(arg)
+        return arg ~= "--recurse-submodules"
+      end, opts.args)
       table.insert(opts.args, 2, "--no-checkout")
     end
     local ok = spawn(self, command, opts)
-    if not ok then self:error("Subprocess failed: " .. command) end
+    if not ok then
+      self:error("Subprocess failed: " .. command)
+    end
     return ok
   end
   local checkout = require("lazy.manage.task.git").checkout
   local run = checkout.run
   checkout.run = function(self, opts)
     if self.plugin._.cloned then
-      self:spawn("git", { args = { "checkout", "--no-recurse-submodules", "--detach", assert(adopted[self.plugin.name]).commit },
-        cwd = self.plugin.dir })
-      if Plugin.has_errors(self.plugin) then return end
+      self:spawn("git", {
+        args = {
+          "checkout",
+          "--no-recurse-submodules",
+          "--detach",
+          assert(adopted[self.plugin.name]).commit,
+        },
+        cwd = self.plugin.dir,
+      })
+      if Plugin.has_errors(self.plugin) then
+        return
+      end
     end
     run(self, opts)
     if not Plugin.has_errors(self.plugin) and self.plugin.submodules ~= false then
-      self:spawn("git", { args = { "submodule", "update", "--init", "--recursive" }, cwd = self.plugin.dir })
+      self:spawn(
+        "git",
+        { args = { "submodule", "update", "--init", "--recursive" }, cwd = self.plugin.dir }
+      )
     end
   end
   -- Upstream writes only the work copy. Restore must still use the original input
@@ -145,7 +192,9 @@ local function main()
   Lock.lock, Lock._loaded = vim.deepcopy(adopted), true
   lazy.restore({ wait = true, show = false, clear = false })
   check(true)
-  print("Restored active plugin revisions; adopted lock unchanged. Editor/provider readiness is not checked.")
+  print(
+    "Restored active plugin revisions; adopted lock unchanged. Editor/provider readiness is not checked."
+  )
 end
 local ok, err = xpcall(main, debug.traceback)
 if not ok then

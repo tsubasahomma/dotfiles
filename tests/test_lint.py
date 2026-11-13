@@ -35,9 +35,6 @@ SHELLCHECK_FILE_EXCLUDE = {
 }
 # Rendered Lua is parse-checked by test_render_syntax; StyLua sees only plain files.
 STYLUA_SKIP_SUFFIX = '.lua.tmpl'
-# PENDING: deployed and not yet formatted. Formatting changes the files on every
-# workstation, so it waits for the owner's approval in its own pull request.
-STYLUA_PENDING = ['.chezmoitemplates/lazy_lock_update.lua', '.chezmoitemplates/lazy_restore.lua']
 
 
 def tool(name):
@@ -105,12 +102,7 @@ class Lint(unittest.TestCase):
         self.check([tool('ruff'), 'format', '--no-cache', '--check', '--diff', '.'])
 
     def test_stylua(self):
-        pending = {REPO / name for name in STYLUA_PENDING}
-        files = [
-            p
-            for p in tracked('*.lua')
-            if not p.name.endswith(STYLUA_SKIP_SUFFIX) and p not in pending
-        ]
+        files = [p for p in tracked('*.lua') if not p.name.endswith(STYLUA_SKIP_SUFFIX)]
         self.assertGreater(len(files), 10)
         self.check([tool('stylua'), '--check', *files])
 

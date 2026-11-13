@@ -4,7 +4,9 @@ local function main()
   local root = vim.fn.stdpath("data") .. "/lazy"
   local errors = {}
   vim.notify = function(message, level)
-    if (level or 0) >= vim.log.levels.ERROR then errors[#errors + 1] = tostring(message) end
+    if (level or 0) >= vim.log.levels.ERROR then
+      errors[#errors + 1] = tostring(message)
+    end
   end
   -- Do not run editor events, plugin init/config, builds, Mason or parsers.
   vim.o.eventignore = "all"
@@ -17,12 +19,17 @@ local function main()
   local setup = lazy.setup
   local called = false
   lazy.setup = function(opts)
-    assert(not called and type(opts) == "table" and type(opts.spec) == "table", "Unsupported lazy setup")
+    assert(
+      not called and type(opts) == "table" and type(opts.spec) == "table",
+      "Unsupported lazy setup"
+    )
     called = true
     assert(not opts.root and not opts.lockfile, "Custom lazy root/lockfile is unsupported")
     assert(not opts.dev or not next(opts.dev), "Development plugin paths are unsupported")
-    assert(not opts.performance or not opts.performance.rtp or not opts.performance.rtp.paths,
-      "Additional runtime paths are unsupported")
+    assert(
+      not opts.performance or not opts.performance.rtp or not opts.performance.rtp.paths,
+      "Additional runtime paths are unsupported"
+    )
     assert(opts.rocks and opts.rocks.enabled == false, "Disable rocks in the selected config first")
     opts.install = { missing = false }
     opts.checker = { enabled = false }
@@ -41,10 +48,18 @@ local function main()
   local function check(require_installed)
     assert(C.spec:report() == 0, "Plugin spec contains errors")
     for name, p in pairs(C.plugins) do
-      assert(not p._.is_local and not p.virtual and not p.dev, "Unsupported local/dev/virtual plugin: " .. name)
-      assert(p.dir == root .. "/" .. name and not name:find("[/\\]"), "Plugin outside isolated root: " .. name)
+      assert(
+        not p._.is_local and not p.virtual and not p.dev,
+        "Unsupported local/dev/virtual plugin: " .. name
+      )
+      assert(
+        p.dir == root .. "/" .. name and not name:find("[/\\]"),
+        "Plugin outside isolated root: " .. name
+      )
       assert(not Plugin.has_errors(p), "Plugin task failed: " .. name)
-      if require_installed then assert(p._.installed, "Plugin not installed: " .. name) end
+      if require_installed then
+        assert(p._.installed, "Plugin not installed: " .. name)
+      end
     end
     -- LazyVim delays notifications; no editor events can run with eventignore=all.
     vim.wait(600)
@@ -59,12 +74,16 @@ local function main()
   local spawn = assert(Task.spawn)
   Task.spawn = function(self, command, opts)
     local ok = spawn(self, command, opts)
-    if not ok then self:error("Subprocess failed: " .. command) end
+    if not ok then
+      self:error("Subprocess failed: " .. command)
+    end
     return ok
   end
   local function downloads_only()
     -- Locks record repository commits, not build-time submodule checkouts.
-    for _, p in pairs(C.plugins) do p.submodules = false end
+    for _, p in pairs(C.plugins) do
+      p.submodules = false
+    end
   end
   if phase ~= "verify" then
     downloads_only()
@@ -73,7 +92,11 @@ local function main()
   end
   if phase == "update" then
     local names = {}
-    for name in pairs(C.plugins) do if name ~= "lazy.nvim" then names[#names + 1] = name end end
+    for name in pairs(C.plugins) do
+      if name ~= "lazy.nvim" then
+        names[#names + 1] = name
+      end
+    end
     downloads_only()
     lazy.update({ plugins = names, wait = true, show = false, clear = false })
   end
@@ -88,20 +111,37 @@ local function main()
       assert(Git.get_origin(p.dir) == p.url, "Spec/origin mismatch: " .. name)
       if not p.pin then
         local target = assert(Git.get_target(p))
-        local resolved = vim.system({ "git", "-C", p.dir, "rev-parse", "--verify",
-          "--end-of-options", assert(target.commit, "Missing spec target: " .. name) .. "^{commit}" },
-          { text = true }):wait()
-        assert(resolved.code == 0 and vim.trim(resolved.stdout) == info.commit
-          and lock[name].branch == target.branch, "Updated spec target differs from candidate: " .. name)
+        local resolved = vim
+          .system({
+            "git",
+            "-C",
+            p.dir,
+            "rev-parse",
+            "--verify",
+            "--end-of-options",
+            assert(target.commit, "Missing spec target: " .. name) .. "^{commit}",
+          }, { text = true })
+          :wait()
+        assert(
+          resolved.code == 0
+            and vim.trim(resolved.stdout) == info.commit
+            and lock[name].branch == target.branch,
+          "Updated spec target differs from candidate: " .. name
+        )
       end
     end
     active[name] = { commit = info.commit, url = p.url }
   end
   for name in pairs(lock) do
-    assert(active[name] or C.spec.disabled[name] or C.spec.ignore_installed[name], "Unexplained lock entry: " .. name)
+    assert(
+      active[name] or C.spec.disabled[name] or C.spec.ignore_installed[name],
+      "Unexplained lock entry: " .. name
+    )
   end
-  vim.fn.writefile({ vim.json.encode({ phase = phase, active = active, imports = C.spec.modules }) },
-    assert(vim.env.DOTFILES_LAZY_REPORT))
+  vim.fn.writefile(
+    { vim.json.encode({ phase = phase, active = active, imports = C.spec.modules }) },
+    assert(vim.env.DOTFILES_LAZY_REPORT)
+  )
 end
 local ok, err = xpcall(main, debug.traceback)
 if not ok then
