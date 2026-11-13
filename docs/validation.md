@@ -5,7 +5,7 @@ description: 文書・template・tool更新・認証の変更に対して、必�
 status: draft
 generated:
   by: claude-code/claude-opus-5-5
-  at: "2026-11-13T14:19:38+00:00"
+  at: "2026-11-13T14:23:03+00:00"
 sources:
   - id: evals
     resource: "https://www.anthropic.com/research/demystifying-evals-for-ai-agents"
@@ -40,6 +40,9 @@ sources:
   - id: mise-action
     resource: "https://github.com/jdx/mise-action/blob/dba19683ed58901619b14f395a24841710cb4925/action.yml"
     title: "採用mise-actionの導入入力"
+  - id: required-skip
+    resource: "https://docs.github.com/en/pull-requests/how-tos/merge-and-close-pull-requests/troubleshooting-required-status-checks"
+    title: "GitHub公式：skipされた必須checkの扱い"
   - id: actions-needs
     resource: "https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#jobsjob_idneeds"
     title: "GitHub Actionsのjob依存と失敗伝播"
@@ -90,7 +93,7 @@ python3 tests/run_checks.py test_git_fetch  # module・class・test単位（複�
 
 chezmoi・Neovim・Zsh・Git/OpenSSHとOS utilityが必要で、render検査以外にはmise実体も要る。各実体は`CHEZMOI_BIN`・`NVIM_BIN`・`MISE_BIN`・`ZSH_BIN`等の環境変数、PATH上の実体、repoが宣言した版のmise install（chezmoiは`.mise.toml`、NeovimとPythonは`dot_config/mise/conf.d/10-tools.toml`）の順に探す。PATHの先頭がmiseのshimなら宣言版のinstallを使う。miseは`~/.local/bin/mise`を候補にし、版が`.mise-version`と一致しなければ停止する。Python 3.11未満で起動した場合は宣言版のPythonで起動し直す。fixture内の一部stubと本番scriptは`/usr/bin/python3`・`/bin/zsh`・`/usr/bin/ssh`等も使うため、任意OSへの可搬性を保証する入口ではない。macOS/Ubuntuを対象にする。
 
-[runner](../tests/run_checks.py)はmoduleごとに一時HOME/XDGと限定PATHの子processを起動し、CPU数まで並列に実行する。実ユーザーのGit/mise設定override、SSH agent、OP環境変数、tokenを引き継がない。各fixtureも自身の一時HOME/XDGと明示configを使う。moduleごとの件数・所要時間と遅いtestを表示し、失敗したmoduleの出力だけを表示する（`-v`で全出力）。`slow`は同runnerの`SLOW`に列挙した、縮小sourceへchezmoi applyを（`--dry-run`・`init --apply`も含めて）実行するtestである。`fast`はそれ以外の全testで、chezmoiを`apply`・`--apply`・`update`を拒否するwrapperに差し替えて実行する。applyを始めたtestは`SLOW`へ移すまでfastで失敗する。`full`は`lint`・`fast`・`slow`の和で、Windows設定同期とlazy-lock候補生成の検査も含む。CIは移行まで旧名の`render`（render検査だけ）と`regression`（render以外の全module）を使う。R17のVale native検査は[別入口](#vale-lint)である。R05は既存`load_tests`で自身の12件を選択する。失敗・例外・skip・expected failure・空suiteは非zeroになる。
+[runner](../tests/run_checks.py)はmoduleごとに一時HOME/XDGと限定PATHの子processを起動し、CPU数まで並列に実行する。実ユーザーのGit/mise設定override、SSH agent、OP環境変数、tokenを引き継がない。各fixtureも自身の一時HOME/XDGと明示configを使う。moduleごとの件数・所要時間と遅いtestを表示し、失敗したmoduleの出力だけを表示する（`-v`で全出力）。`slow`は同runnerの`SLOW`に列挙した、縮小sourceへchezmoi applyを（`--dry-run`・`init --apply`も含めて）実行するtestである。`fast`はそれ以外の全testで、chezmoiを`apply`・`--apply`・`update`を拒否するwrapperに差し替えて実行する。applyを始めたtestは`SLOW`へ移すまでfastで失敗する。`full`は`lint`・`fast`・`slow`の和で、Windows設定同期とlazy-lock候補生成の検査も含む。R17のVale native検査は[別入口](#vale-lint)である。R05は既存`load_tests`で自身の12件を選択する。失敗・例外・skip・expected failure・空suiteは非zeroになる。
 
 R01とR13のinit検査は実config template・読込hook・bootstrapを保持し、取得/認証をstubに置き換える。R02のconfig生成fixtureは入力検証を保持してhook部分をsourceコピーから除き、生成configにhookがないことを検査する。他はhookなしconfigを使い、external取得を空定義または最小sourceで除外する。縮小sourceへのapply、使い捨て鍵の署名、ローカルbare remoteのfetch、UNIX socketのmux検査を含むが、実機applyや実認証は行わない。socket bindが許されない環境は失敗となり、skipで代替しない。
 
@@ -98,7 +101,9 @@ R01とR13のinit検査は実config template・読込hook・bootstrapを保持し
 
 | CI job表示 | 前提を用意する順序・実施範囲 | 成功が示さないこと |
 |---|---|---|
-| Isolated render / regression（Ubuntu/macOSそれぞれ） | checkout → runnerのPythonで一時mise manifest作成 → mise-actionでpin版miseと宣言から抽出したPython/chezmoi/Neovimを導入 → LinuxのZsh/Git/OpenSSH導入 → 上記command | fixture実行自体の前に通信・tool導入はある。端末のinit/apply・認証・全tool導入は前提にしない |
+| Classify Changes | checkout（全履歴） → [分類script](../tests/ci_changes.py)でPRのbaseとheadの差分（pushは前後のcommit）を読み、`docs/`のMarkdownとroot文書（`AGENTS.md`・`CLAUDE.md`・`GEMINI.md`・`README.md`・`LICENSE`）だけなら`docs_only=true` | 文書の内容の正しさ。手動・週次・baseの無いpushは常に全job |
+| Lint | 一時manifestで`tests/lint-tools.toml`と`10-tools.toml`のlint tool・chezmoiのpinだけを導入 → `run_checks.py lint test_repo_rules` | 端末で同じ版のtoolが使えること |
+| Isolated fast / slow（Ubuntu/macOSそれぞれ） | checkout → runnerのPythonで一時mise manifest作成 → mise-actionでpin版miseと宣言から抽出したPython/chezmoi/Neovimを導入 → LinuxのZsh/Git/OpenSSH導入 → `run_checks.py fast`または`slow` | fixture実行自体の前に通信・tool導入はある。端末のinit/apply・認証・全tool導入は前提にしない |
 | Network Integration - One Apply and Selected Diagnostics（Ubuntu/macOS） | 隔離jobの成功後、明示bootstrap → CI用init/apply一回 → 配置済みZsh起動検査 → managed target verify（`--exclude=scripts`） → Neovim restore → 配置済み入口のlocal診断 | 二回適用の無変更性、生成物欠損復旧、実1Password、Windows/WSL・GUIの動作 |
 | Renovate Config Validation | Node準備 → 固定版validatorの取得・実行 | 依存更新の動作や端末の正常性 |
 
@@ -106,11 +111,11 @@ Neovim restoreのCI stepだけでMasonのDEBUG logを有効にし、一時XDG st
 
 毎apply scriptは次回も実行予定なので、統合jobの静的target検査は`chezmoi verify --exclude=scripts`を使う。scriptの失敗は直前のapply終了値で判定する。[隔離検査](../tests/test_ci_verify.py)はscriptのみ実行予定ならこのverifyが成功し、管理fileのdriftは非zeroになること、verify自体がscriptを実行しないことを確認する。
 
-`Required CI`は上の3 job ID（matrixを含む）の結果を集約する固定名のcheckである。`always()`で上流失敗後にも実行し、すべての結果が`success`の場合だけ成功する。failure/cancelled/skippedを合格へ変えない。runner版をcheck名に含めず、runner更新でGitHub側の必須check名が失われることを避ける。検証jobを追加したら`needs`も更新する。[^actions-needs]
+`Required CI`は上の5 job ID（matrixを含む）の結果を集約する固定名のcheckである。`always()`で上流失敗後にも実行する。Classify ChangesとLintは常に`success`を要する。残る3 job（Renovate・Isolated・Integration）は、`docs_only=true`のときだけ3つとも`skipped`、それ以外は3つとも`success`を要する。failure/cancelledを合格へ変えず、文書だけでない変更でのskipも失敗にする。GitHubは必須workflowをpath filterで丸ごと止めると必須checkが保留のまま残ると説明しているため、workflowは常に起動し、job内の条件で分ける。条件でskipしたjobのcheckは「Success」を返すので、合否は集約jobが結果の種類で判定する。[^required-skip]runner版をcheck名に含めず、runner更新でGitHub側の必須check名が失われることを避ける。検証jobを追加したら`needs`も更新する。[^actions-needs]
 
-`tests/check_shell_startup.py --home <使い捨てCI HOME>`は、配置済み`.zshenv`・`.zshrc`と生成済みzoxide/starship initを実Zshで読み込み、miseのhookによるtool選択を確認する。通常端末のHOMEへ向けない。起動前に環境を限定し、token/agentを引き継がず、mise自動導入を無効化し、認証commandを失敗stubへ向ける。30秒timeout、stderr、認証呼出し、関数/PATH不成立を失敗とする。cache書込は使い捨てHOMEに許容する。`-d`でsystem rcを外し、prompt表示・Tab補完・実認証・WSLは検証しない。`test_shell_startup`は一時HOMEとCLI doubleでactivation失敗の握りつぶし、空init、認証失敗の握りつぶし、stderr、hangを検査し、regressionへ含める。
+`tests/check_shell_startup.py --home <使い捨てCI HOME>`は、配置済み`.zshenv`・`.zshrc`と生成済みzoxide/starship initを実Zshで読み込み、miseのhookによるtool選択を確認する。通常端末のHOMEへ向けない。起動前に環境を限定し、token/agentを引き継がず、mise自動導入を無効化し、認証commandを失敗stubへ向ける。30秒timeout、stderr、認証呼出し、関数/PATH不成立を失敗とする。cache書込は使い捨てHOMEに許容する。`-d`でsystem rcを外し、prompt表示・Tab補完・実認証・WSLは検証しない。`test_shell_startup`は一時HOMEとCLI doubleでactivation失敗の握りつぶし、空init、認証失敗の握りつぶし、stderr、hangを検査し、`full`（fast層）へ含める。
 
-全jobはworkflow既存のpush/PR（main/master）、手動、週次triggerで動く。統合jobは隔離jobに依存し、失敗時は実行されない。その未実行を統合合格とは表示しない。fixtureの検査結果が統合applyの成否に依存する方向にはしない。tool準備にはpin済みmise-actionの`working_directory`と`install`を使い、一時manifestを明示的にtrustする。actionがPATHへ公開した導入済み実体をrunnerが検査し、fixtureにはactionの認証環境を渡さない。[^ci][^mise-action][^actions-needs]
+workflowはmainへのpush/PR、手動、週次triggerで動く。統合jobは隔離jobに依存し、失敗時は実行されない。その未実行を統合合格とは表示しない。fixtureの検査結果が統合applyの成否に依存する方向にはしない。tool準備にはpin済みmise-actionの`working_directory`と`install`を使い、一時manifestを明示的にtrustする。actionがPATHへ公開した導入済み実体をrunnerが検査し、fixtureにはactionの認証環境を渡さない。[^ci][^mise-action][^actions-needs]
 
 これはこのrepoでの設計判断である。代案は同一job内でfixtureをapply前へ移す方法だが、job表示と失敗範囲が混ざるため分離した。専用container/VM imageへ全依存を封じる方式もあり得るが、macOSを含む別imageの維持は追加していない。runner付属OS utility・配布物取得・GitHub ActionsサービスはCI実行時の依存であり、この設計だけで再現性や無通信を完全保証しない。
 
@@ -270,12 +275,13 @@ Ubuntu/macOS CI stepへ接続するが、local実行はmacOS隔離fixtureの証�
 
 [^render-command]: [chezmoi execute-template](https://www.chezmoi.io/reference/commands/execute-template/)、[明示config/source/destination/cacheのflags](https://www.chezmoi.io/reference/command-line-flags/global/)。renderはtemplate内のoutputを無効にしないため、fixture入力とstubを別途制御する。
 [^mise-action]: [採用mise-actionのinputs](https://github.com/jdx/mise-action/blob/dba19683ed58901619b14f395a24841710cb4925/action.yml)と[導入・環境export実装](https://github.com/jdx/mise-action/blob/dba19683ed58901619b14f395a24841710cb4925/src/index.ts)。2026-11-11参照。最新READMEだけでは採用revisionの仕様を断定しない。
+[^required-skip]: [GitHub公式：skipされた必須checkの扱い](https://docs.github.com/en/pull-requests/how-tos/merge-and-close-pull-requests/troubleshooting-required-status-checks)。
 [^actions-needs]: [GitHub Actions workflow syntax: jobs.needs](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#jobsjob_idneeds)。依存jobの成功後に動く条件と、失敗/skip時の伝播。
 
 <a id="identity-convergence"></a>
 # R10a identityの再適用・欠損検査
 
-`python3 tests/test_identity_convergence.py`は、一時HOME/XDG・ダミーidentity・明示configで、実before/after/Git consumerと共通onchange wrapperを含む縮小sourceへapplyする。miseはinstall/runの呼出記録だけを行うstubで、package導入・認証・externals・実repo hookは起動しない。`tests/run_checks.py regression`と既存CIの隔離jobにも接続する。
+`python3 tests/test_identity_convergence.py`は、一時HOME/XDG・ダミーidentity・明示configで、実before/after/Git consumerと共通onchange wrapperを含む縮小sourceへapplyする。miseはinstall/runの呼出記録だけを行うstubで、package導入・認証・externals・実repo hookは起動しない。`tests/run_checks.py full`と既存CIの隔離jobにも接続する。
 
 同一入力二回適用のfile内容・mode・mtime・inode・世代数、各公開鍵/fragment/signers/dispatch/世代内entryの単独削除と同じpathへの復旧、shared templateだけ／engineだけの変更が同じapplyで反映されることを確認する。identityの欠損・変更だけで共通wrapperが再起動しないこと、不要な生成commandを呼ばないこと、R08 checkと実Git consumerが復旧後の参照を読めることを確かめる。
 
@@ -287,7 +293,7 @@ WSLでは実変換結果を模す`wslpath` stubのdistro変更、変換失敗、
 <a id="completion-convergence"></a>
 # R10b 補完の再適用・依存変更検査
 
-`test_completion_convergence.py`をR09の`python3 tests/run_checks.py regression`へ接続した。hookなしの明示config・隔離HOME/XDG・reduced source・実chezmoiを使い、before → target配置 → 実after_20 wrapper → 実after_30の順序を検査する。外部取得定義はfixtureで空にし、tool準備と共通graphの実処理はmise stubに置換する。初回導入・実graphの副作用の成功証拠ではない。
+`test_completion_convergence.py`を`python3 tests/run_checks.py full`へ接続した。hookなしの明示config・隔離HOME/XDG・reduced source・実chezmoiを使い、before → target配置 → 実after_20 wrapper → 実after_30の順序を検査する。外部取得定義はfixtureで空にし、tool準備と共通graphの実処理はmise stubに置換する。初回導入・実graphの副作用の成功証拠ではない。
 
 二回applyで全補完source/receipt/lockのhash・mode・mtime・inodeを比較し、CLI生成の呼出増加がないことを検査する。21個の必須補完/init/includeを一つずつ削除し、同回applyの復旧と他出力の保持を比較する。補完定義と共通checker template、mise本体bytes、代表CLI bytes/採用path、Node、package内実装、usageの実体と有無、SDK include変更を検査する。生成失敗・receipt競合・未知fileの保持を検査し、R07の旧source/zwc保持・親PID signal・並行lock・builtin rename・symlink親拒否も継続する。R08存在診断の成功と非変更性を確認する。
 
@@ -297,7 +303,7 @@ WSLでは実変換結果を模す`wslpath` stubのdistro変更、変換失敗、
 <a id="generated-assets"></a>
 # R10c bat・Vale・pbfileの隔離検査
 
-[test_generated_convergence.py](../tests/test_generated_convergence.py)をR09のregression runnerへ登録する。hookなし明示config・一時HOME/XDG・実chezmoiの縮小applyを用い、before → target → 実after_20 wrapper（mise準備/graphのみstub）→ 実after_40/41/42を検査する。R10a/R10bの全処理を重複fixtureへ組み込まず、それぞれ既存試験で保持する。
+[test_generated_convergence.py](../tests/test_generated_convergence.py)を`python3 tests/run_checks.py full`へ登録する。hookなし明示config・一時HOME/XDG・実chezmoiの縮小applyを用い、before → target → 実after_20 wrapper（mise準備/graphのみstub）→ 実after_40/41/42を検査する。R10a/R10bの全処理を重複fixtureへ組み込まず、それぞれ既存試験で保持する。
 
 bat/Vale/compilerは決定的なstubを使い、同一入力の二回applyで生成・通信相当呼出し・出力/receiptの書換がないこと、各必須fileの単独欠損、その回でのtheme反映、Vale config/local package更新、Swift source/compiler/SDK代表入力変更を検査する。生成途中と検証での失敗、batの成功終了に隠れたtheme parse warning、未知file/独自style/手動tool保持、receipt喪失・不正・symlink・出力先redirect・手動変更の拒否、source/config欠落と他OSの非該当を区別する。共有publishには通常I/O例外のrollbackと再試行、rollback自体の失敗・receipt再読失敗時のbackup保持、publish途中のSIGKILLで部分反映が残り次回は競合停止する検査、receipt切替直後のSIGINTでは新出力と新receiptを保持する検査を追加する。これらを「すべての失敗で旧正常状態」とまとめない。native通信やcompiler互換性の証拠にstubを代用しない。
 
@@ -307,7 +313,7 @@ bat/Vale/compilerは決定的なstubを使い、同一入力の二回applyで生
 <a id="windows-packages"></a>
 # R11 Windows packageの識別・失敗分類の隔離検査
 
-[test_windows_packages.py](../tests/test_windows_packages.py)をR09のregression runnerへ接続した。一時HOME/XDG、hookなし明示configと縮小sourceで実chezmoiにbefore templateをrenderさせ、実shell/Python helperを起動する。`powershell.exe`はfixtureであり、渡されたUTF-16LE Base64をdecodeし、Windows側で意図する引数を照合して全32bit終了値・stdout・stderrのJSONを返す。実package導入、source更新、PowerShellの評価は行わない。
+[test_windows_packages.py](../tests/test_windows_packages.py)を`python3 tests/run_checks.py full`へ接続した。一時HOME/XDG、hookなし明示configと縮小sourceで実chezmoiにbefore templateをrenderさせ、実shell/Python helperを起動する。`powershell.exe`はfixtureであり、渡されたUTF-16LE Base64をdecodeし、Windows側で意図する引数を照合して全32bit終了値・stdout・stderrのJSONを返す。実package導入、source更新、PowerShellの評価は行わない。
 
 CLIだけ導入済みのGUI不足、完全一致一件の再installなし、多言語の正常未導入、nightly hash不一致、source/認証/曖昧照合/引数/導入失敗、未導入と同じ低8bit・低8bitが0の別エラー、警告を伴うlist成功/未導入、install終了値0にsource警告やstderrが併存する場合、install identity表示の多言語・ID一致、複数行・省略ID・不正JSON・bridge不在を検査する。list/installのsource・exact・非対話/認証mode・installのsilent/agreements/no-upgrade、ID入力の拒否、実package宣言、非WSLの空出力とCIのheadless限定も確認する。hash迂回flagやsource更新失敗の握りつぶしを追加しない。
 
@@ -316,7 +322,7 @@ stubはPowerShellの構文・`.NET ProcessStartInfo`による実Windows argv分�
 <a id="homebrew-packages"></a>
 # R12 Homebrew不足導入の隔離検査
 
-[test_homebrew_packages.py](../tests/test_homebrew_packages.py)を`python3 tests/run_checks.py regression`へ接続した。一時HOME/XDGとhookなし明示configで実chezmoiに実package宣言・Brewfile・before scriptをrenderさせ、実Zshで実行する。brewは状態を持つstubだけをPATHへ置き、curl/bashはinstaller禁止のguardとする。実Homebrewやinstallerを実行しない。
+[test_homebrew_packages.py](../tests/test_homebrew_packages.py)を`python3 tests/run_checks.py full`へ接続した。一時HOME/XDGとhookなし明示configで実chezmoiに実package宣言・Brewfile・before scriptをrenderさせ、実Zshで実行する。brewは状態を持つstubだけをPATHへ置き、curl/bashはinstaller禁止のguardとする。実Homebrewやinstallerを実行しない。
 
 旧版の宣言項目と未宣言項目の保持要求、不足formula/caskの追加、導入失敗の終了値伝播と成功表示なし、一時Brewfileの後始末、Homebrew不在時の停止、CI/headlessと非CI/media/GUI、macOS重複5件だけの除去とWindows native一覧保持、宣言変更がonchange入力へ反映されることを確認する。継承されたcleanup/skip設定の解除とauto-update/cleanup/dependents抑制も引数・環境の境界で照合する。
 
@@ -325,7 +331,7 @@ stubはHomebrewの依存解決、link、cask installer、brew.env読込、失敗
 <a id="first-install-order"></a>
 # R13 初回段階と不足時停止の隔離検査
 
-`python3 tests/test_first_install_order.py`は、導入済みchezmoi・Python・GitとOS shellを使用する。[検査実装](../tests/test_first_install_order.py)は空HOME/XDG、限定PATH、最小source、明示config/cacheを使い、regression runnerにも登録する。実installer・package manager・op・Windows tool・認証は使わない。init検査だけ実config templateと実read hookを維持し、mise実体・opをstubにする。その他はhookなしconfigを使う。
+`python3 tests/test_first_install_order.py`は、導入済みchezmoi・Python・GitとOS shellを使用する。[検査実装](../tests/test_first_install_order.py)は空HOME/XDG、限定PATH、最小source、明示config/cacheを使い、`full`にも登録する。実installer・package manager・op・Windows tool・認証は使わない。init検査だけ実config templateと実read hookを維持し、mise実体・opをstubにする。その他はhookなしconfigを使う。
 
 検査は、op不在/account失敗でinitが停止すること、成功init単独ではtargetやscriptsを適用しないこと、WSLのWezTerm/distro不足時に後続targetとafterが実行されないこと、Python/Git不足でbefore05がidentity出力を書く前に停止すること、Linux package/shellのsudo拒否時の案内と後続未実行を確認する。成功する対照も置き、単にfixture全体が壊れているための失敗を区別する。Python/Git不足時には先行before markerが残る。
 
@@ -336,7 +342,7 @@ macOSのWezTermは固定pathのrenderのみを確認し、存在確認とはし�
 <a id="windows-settings-sync"></a>
 # R14・R10 Windows同期の隔離検査
 
-[test_windows_config_sync.py](../tests/test_windows_config_sync.py)をregression runnerへ登録する。隔離HOME/XDG・ダミーidentity・hookなし明示config・縮小sourceで、実chezmoiと実Python helperを実行する。実after_20のmise準備/graphはstub、PowerShell/wslpathはWindows境界stub。before marker→target配置→after_20→after_50という観測順と、その回のtarget bytes配送を検査する。R13の訂正を維持し、全templateがbefore前に評価されるとは仮定しない。
+[test_windows_config_sync.py](../tests/test_windows_config_sync.py)を`python3 tests/run_checks.py full`へ登録する。隔離HOME/XDG・ダミーidentity・hookなし明示config・縮小sourceで、実chezmoiと実Python helperを実行する。実after_20のmise準備/graphはstub、PowerShell/wslpathはWindows境界stub。before marker→target配置→after_20→after_50という観測順と、その回のtarget bytes配送を検査する。R13の訂正を維持し、全templateがbefore前に評価されるとは仮定しない。
 
 同一入力2applyでtarget/receiptのbytes・mtime・inodeが不変であることを検査する。各targetの単独削除は同回に復旧し、distroやshared identity templateの変更で期待bytesが変わる場合はその回に更新する。一方、mise宣言・mise pin・実体・adapter/helperだけが変わり期待bytesが同じ場合は、同期出力を再書込しないことを検査する。初回欠損/同一採用/相違、手動編集、receipt喪失/破損/別destination、別distroの共有receiptとlock、redirected LOCALAPPDATA、旧誤pathと未知file保持、source欠損、query/変換失敗、POSIX symlink/非通常file/hardlink、Windows reparse拒否応答、CI/非WSLの対象外を分ける。
 
@@ -353,7 +359,7 @@ Windows stubはEncodedCommandをdecodeして固定queryと引数を照合する�
 
 # Neovim lock候補の隔離検証
 
-`python3 tests/test_lazy_lock_update.py`は実Gitの一時repoとCLI stubで、A/B revisionと配置config Cの不一致、HEADとstagedの分離、dirty/index/untracked保持、literal options、取得前の入力拒否、非zero/成功report欠落/不正候補とartifact保持、literal lockのsource名、末尾改行なし/CRLFのpatchを別checkoutへ実Gitで適用して検査する。native Neovimでmodule doubleを用い、実Lua driverのsilent process・task・spec失敗gate、最終origin/target不一致も通す。上流取得はstubなので、これだけでupstream互換を証明しない。`tests/run_checks.py regression`にも接続する。
+`python3 tests/test_lazy_lock_update.py`は実Gitの一時repoとCLI stubで、A/B revisionと配置config Cの不一致、HEADとstagedの分離、dirty/index/untracked保持、literal options、取得前の入力拒否、非zero/成功report欠落/不正候補とartifact保持、literal lockのsource名、末尾改行なし/CRLFのpatchを別checkoutへ実Gitで適用して検査する。native Neovimでmodule doubleを用い、実Lua driverのsilent process・task・spec失敗gate、最終origin/target不一致も通す。上流取得はstubなので、これだけでupstream互換を証明しない。`tests/run_checks.py full`にも接続する。
 
 別のmacOS隔離native試験ではNeovim 0.12.3、lazy.nvim `85c7ff3`と選択HEAD `7dabf575`の実spec/lockを用い、public pluginの取得→更新→fresh process補完→最終照合まで成功した。50 active plugin、51 lock entry、34 entry差分を観測した。staged lockは入力外。lazy.nvimを保持し、通常plugin init/config・build・submodule取得は停止した。終了0でもbuild内部例外がtask ERRORになる経路と、無出力fetch失敗がtask ERRORにすらならない経路を採用版の別fixtureで再現し、process観測の必要性を確認した。
 

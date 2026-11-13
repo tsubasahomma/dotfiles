@@ -19,8 +19,34 @@ permissions:
   contents: read
 
 jobs:
+  changes:
+    # Documents-only changes run lint and the document rules alone. GitHub asks not
+    # to skip a required workflow with path filters, so the jobs decide instead.
+    # https://docs.github.com/en/pull-requests/how-tos/merge-and-close-pull-requests/troubleshooting-required-status-checks
+    name: Classify Changes
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    outputs:
+      docs_only: ${{ steps.classify.outputs.docs_only }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Classify Changed Paths
+        id: classify
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: python3 tests/ci_changes.py --event "$EVENT_NAME" --base "$BASE_SHA" --head "$HEAD_SHA"
+
   renovate-config:
     name: Renovate Config Validation
+    needs: changes
+    if: needs.changes.outputs.docs_only != 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     env:
@@ -114,18 +140,20 @@ jobs:
           add_shims_to_path: false
           cache_key: lint-v1-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('.mise-version', '.mise.toml', 'dot_config/mise/conf.d/10-tools.toml', 'tests/lint-tools.toml') }}
 
-      - name: Run Lint Without Authentication
-        run: python3 tests/run_checks.py lint
+      - name: Run Lint and Repository Rules Without Authentication
+        run: python3 tests/run_checks.py lint test_repo_rules
 
   isolated:
     name: Isolated ${{ matrix.suite }} (${{ matrix.os }})
+    needs: changes
+    if: needs.changes.outputs.docs_only != 'true'
     strategy:
       fail-fast: false
       matrix:
         # macOS 14 retired on 2026-11-02; keep an explicit supported image.
         # https://github.blog/changelog/2026-10-01-github-actions-macos-14-runner-image-retirement/
         os: [ubuntu-24.04, macos-15]
-        suite: [render, regression]
+        suite: [fast, slow]
     runs-on: ${{ matrix.os }}
     timeout-minutes: 20
     env:
@@ -190,7 +218,8 @@ jobs:
 
   integration:
     name: Network Integration - One Apply and Selected Diagnostics (${{ matrix.os }})
-    needs: isolated
+    needs: [changes, isolated]
+    if: needs.changes.outputs.docs_only != 'true'
     strategy:
       fail-fast: false
       matrix:
@@ -367,18 +396,27 @@ jobs:
     # Never let an upstream failure/cancellation turn this required check into a
     # successful skip. Keep the name stable across runner and matrix updates.
     if: ${{ always() }}
-    needs: [renovate-config, lint, isolated, integration]
+    needs: [changes, renovate-config, lint, isolated, integration]
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
       - name: Require Every Validation Job to Succeed
         env:
-          RENOVATE_RESULT: ${{ needs.renovate-config.result }}
+          CHANGES_RESULT: ${{ needs.changes.result }}
+          DOCS_ONLY: ${{ needs.changes.outputs.docs_only }}
           LINT_RESULT: ${{ needs.lint.result }}
+          RENOVATE_RESULT: ${{ needs.renovate-config.result }}
           ISOLATED_RESULT: ${{ needs.isolated.result }}
           INTEGRATION_RESULT: ${{ needs.integration.result }}
         run: |
-          test "$RENOVATE_RESULT" = success
+          test "$CHANGES_RESULT" = success
           test "$LINT_RESULT" = success
-          test "$ISOLATED_RESULT" = success
-          test "$INTEGRATION_RESULT" = success
+          # Only a documents-only change may skip the build jobs, and then all of them.
+          expected=success
+          if [[ "$DOCS_ONLY" == true ]]; then
+            expected=skipped
+          fi
+          printf 'docs_only=%s; build jobs must be %s\n' "${DOCS_ONLY:-false}" "$expected"
+          test "$RENOVATE_RESULT" = "$expected"
+          test "$ISOLATED_RESULT" = "$expected"
+          test "$INTEGRATION_RESULT" = "$expected"
