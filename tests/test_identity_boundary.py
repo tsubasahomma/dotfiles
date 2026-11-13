@@ -100,7 +100,7 @@ class IdentityBoundary(unittest.TestCase):
 
     def write_data(self, ids=None, wsl=False):
         self.config.write_text(json.dumps({'data': {'identities': self.ids if ids is None else ids,
-                                                   'paths': self.paths, 'is_wsl': wsl, 'ssh_keys_hash': 'fixture',
+                                                   'paths': self.paths, 'is_wsl': wsl,
                                                    'ssh_auth_sock': r'\\.\pipe\openssh-ssh-agent' if wsl else ''}}))
 
     def chezmoi(self, *args, **kwargs):
