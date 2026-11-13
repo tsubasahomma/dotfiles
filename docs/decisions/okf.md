@@ -4,8 +4,8 @@ title: リポジトリ全体を一つのOKF bundleにする
 description: 文書の配置・読み分け・最小メタデータを変更するときに、判断理由と代案を確認する。
 status: draft
 generated:
-  by: codex/gpt-6
-  at: "2026-11-11T10:38:11+00:00"
+  by: claude-code/claude-fable-5-2
+  at: "2026-11-13T05:46:36+00:00"
 sources:
   - id: maintainer
     resource: "Maintainer direction in the repository OKF design conversation, 2026-11-11"
@@ -31,6 +31,15 @@ sources:
   - id: repo-bootstrap
     resource: https://github.com/tsubasahomma/dotfiles/blob/f4fe1fac3e0722b173b5291a06e98e1e066786f1/.bootstrap-mise.sh#L46
     title: Observed mise bootstrap implementation
+  - id: claude-memory
+    resource: https://code.claude.com/docs/en/memory
+    title: Claude Code — CLAUDE.mdとAGENTS.mdの読込規則
+  - id: gemini-md
+    resource: https://github.com/google-gemini/gemini-cli/blob/main/docs/cli/gemini-md.md
+    title: Gemini CLI — GEMINI.mdと取り込み構文
+  - id: copilot
+    resource: https://docs.github.com/en/copilot/how-tos/configure-custom-instructions/add-repository-instructions
+    title: GitHub Copilot — リポジトリのカスタム指示
 ---
 # 判断と反映状況
 
@@ -98,7 +107,7 @@ OKF v0.2を対象にする。標準の常時必須項目は`type`だけだが、
 
 PRテンプレートは廃止する。変更内容・検証結果・残る制約を簡潔に説明するという用途はdevelopmentに残し、固定のチェック表は移植しない。共通契約を上流installerで上書きする運用と、Repomixを必須とする文書・設定を退役させる。repo内に同期jobは見当たらず、repo外で設定された同期の有無は未確認。Repomixのtool宣言の削除は別の依存整理として残す。[^maintainer]
 
-既存文書からは、コードと照合できる所有境界、identity schema、環境固有の前提、副作用、検証範囲、判断理由を救出する。汎用契約の重複、未記入のpolicy表、固定の多段承認・全検査手順は移植しない。既存の[Claude](../../CLAUDE.md)・[Gemini](../../GEMINI.md)・[Copilot](../../.github/copilot-instructions.md)入口は、利用実態が未確認のため互換用の薄い案内として残す。独自の規約を追加しない。実際のconsumerによるfrontmatter・参照の読込は未検証であり、使わない入口は利用実態を確認して削除できる。
+既存文書からは、コードと照合できる所有境界、identity schema、環境固有の前提、副作用、検証範囲、判断理由を救出する。汎用契約の重複、未記入のpolicy表、固定の多段承認・全検査手順は移植しない。[Claude](../../CLAUDE.md)と[Gemini](../../GEMINI.md)の入口は、AGENTSを`@`で取り込む1行だけにする。Claude CodeはCLAUDE.mdがあるとAGENTSを自動では読まず、文章で案内するだけでは読込が保証されない。[^claude-memory] Gemini CLIは既定でGEMINI.mdだけを読み、同じ取り込み構文を持つ。[^gemini-md] CopilotはAGENTSを直接読むので、専用の入口は置かない。[^copilot] 入口に独自の規約を追加しない。frontmatterつきの入口で取り込みが実際に展開されることは、どのconsumerでも未検証である。
 
 参照先の本文が揃ってから入口を切り替える。旧文書を外すときは非Markdown設定の参照とchezmoiの除外設定も確認する。参照先が揃わない途中の文書だけを先にrepoへ適用しない。文書整理に実機apply・repairは伴わせない。
 
@@ -122,3 +131,6 @@ PRテンプレートは廃止する。変更内容・検証結果・残る制約
 [^hooks]: [chezmoi: Hooks](https://www.chezmoi.io/reference/configuration-file/hooks/)。
 [^repo-hook]: [read-source-state hook](https://github.com/tsubasahomma/dotfiles/blob/f4fe1fac3e0722b173b5291a06e98e1e066786f1/.chezmoi.toml.tmpl#L203)。観測時の固定HEAD。
 [^repo-bootstrap]: [mise bootstrap](https://github.com/tsubasahomma/dotfiles/blob/f4fe1fac3e0722b173b5291a06e98e1e066786f1/.bootstrap-mise.sh#L46)。観測時の固定HEAD。
+[^claude-memory]: [Claude Code: Memory](https://code.claude.com/docs/en/memory)。AGENTS.mdの直接読込はv2.1.277以降。閲覧日2026-11-13。
+[^gemini-md]: [Gemini CLI: GEMINI.md files](https://github.com/google-gemini/gemini-cli/blob/main/docs/cli/gemini-md.md)。mainブランチの文書で、リリース版との対応は未確認。
+[^copilot]: [GitHub Docs: repository custom instructions](https://docs.github.com/en/copilot/how-tos/configure-custom-instructions/add-repository-instructions)。対応状況は機能ごとに異なる。
