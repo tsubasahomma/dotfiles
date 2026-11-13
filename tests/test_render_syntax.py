@@ -38,8 +38,7 @@ class RenderSyntax(unittest.TestCase):
                    'WSL_DISTRO_NAME': 'FixtureDistro', 'GIT_CONFIG_NOSYSTEM': '1',
                    'GIT_CONFIG_GLOBAL': str(home / '.gitconfig')}
             paths = {'home': str(home), 'mise': str(home / '.local/bin/mise'),
-                     'op': str(bin_dir / 'op'), 'op_sign': '/fixture/sign-helper',
-                     'true_cmd': '/usr/bin/true'}
+                     'op': str(bin_dir / 'op'), 'op_sign': '/fixture/sign-helper'}
             for key, part in [('config', '.config'), ('cache', '.cache'),
                               ('data', '.local/share'), ('state', '.local/state')]:
                 paths['xdg_' + key] = str(home / part)
@@ -71,10 +70,9 @@ class RenderSyntax(unittest.TestCase):
                         else:
                             env.pop('CI', None)
                         data = dict(paths=paths, identities=[identity], is_wsl=wsl,
-                                    osid=osid, arch=arch, windows_user='fixture',
+                                    osid=osid, arch=arch,
                                     brew_prefix='/opt/homebrew' if osid == 'darwin' else '/home/linuxbrew/.linuxbrew',
-                                    ssh_auth_sock=r'\\.\pipe\openssh-ssh-agent' if wsl else '',
-                                    op_status='ready', ssh_keys_hash='fixture')
+                                    ssh_auth_sock=r'\\.\pipe\openssh-ssh-agent' if wsl else '')
                         config.write_text(json.dumps({'data': data}))
                         rendered = root / f'{platform}-{ci}'; rendered.mkdir()
                         shell_count = 0
