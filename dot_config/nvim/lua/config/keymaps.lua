@@ -2,7 +2,9 @@
 -- When Neovim reaches a window boundary, it delegates pane movement
 -- to WezTerm's event listener.
 local function signal_move_to_wezterm(direction)
-  if vim.env.TERM_PROGRAM ~= "WezTerm" then return end
+  if vim.env.TERM_PROGRAM ~= "WezTerm" then
+    return
+  end
   local osc = string.format("\027]1337;SetUserVar=MOVE_SIGNAL=%s\007", vim.base64.encode(direction))
   local f = io.open("/dev/tty", "wb")
   if f then
@@ -20,7 +22,15 @@ local function move_or_signal(key, direction)
   end
 end
 
-vim.keymap.set("n", "<C-h>", function() move_or_signal("h", "Left") end)
-vim.keymap.set("n", "<C-j>", function() move_or_signal("j", "Down") end)
-vim.keymap.set("n", "<C-k>", function() move_or_signal("k", "Up") end)
-vim.keymap.set("n", "<C-l>", function() move_or_signal("l", "Right") end)
+vim.keymap.set("n", "<C-h>", function()
+  move_or_signal("h", "Left")
+end)
+vim.keymap.set("n", "<C-j>", function()
+  move_or_signal("j", "Down")
+end)
+vim.keymap.set("n", "<C-k>", function()
+  move_or_signal("k", "Up")
+end)
+vim.keymap.set("n", "<C-l>", function()
+  move_or_signal("l", "Right")
+end)

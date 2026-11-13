@@ -1,11 +1,11 @@
 ---
 type: Policy
 title: このdotfilesで作業するエージェントへ
-description: 変更と実機操作の境界を確認し、作業に必要な文書へ進む。
+description: 変更と実機操作の境界、変更の確かめ方を確認し、作業に必要な文書へ進む。
 status: draft
 generated:
-  by: codex/gpt-6
-  at: "2026-11-11T05:19:46+00:00"
+  by: claude-code/claude-fable-5-2
+  at: "2026-11-13T05:46:14+00:00"
 ---
 # 作業の境界
 
@@ -16,6 +16,20 @@ generated:
 - 秘密鍵・認証情報・生成identityの個人情報を文書や共有出力に載せない。
 - 検査結果は実行した対象と環境の範囲で述べる。CI合格を実機のWSL・認証・正常動作の証拠に置き換えない。
 - 現行コード、利用者からの報告、採用した方針、未実装の案を区別する。既存の判断も前提が崩れていれば見直し、推奨には一次資料と代案・不確実性を添える。
+
+# 変更を確かめる
+
+repo rootで実行します。どちらも一時HOMEを使い、実機のHOMEや認証には触れません。
+
+```sh
+python3 tests/run_checks.py render      # 全templateの展開と構文検査。約15秒
+python3 tests/run_checks.py regression  # 隔離回帰の全件。約5分
+```
+
+- Python 3.11以上で起動します。chezmoi・Neovim・miseはshimではなく実体が必要で、`CHEZMOI_BIN`・`NVIM_BIN`・`MISE_BIN`で指定できます。実体は通常`~/.local/share/mise/installs/`と`~/.local/bin/mise`にあります。
+- 入口が受け付けるのはこの2つだけです。module単位では実行できません。
+- 完了とするのは、変更に関係する検査が成功し、確認していない範囲を報告に書いたときです。skipや未実行を成功に数えません。
+- 検査の対象と限界は[検証の範囲](docs/validation.md)にあります。
 
 # 必要なときに読む
 
