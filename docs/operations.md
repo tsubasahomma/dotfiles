@@ -4,8 +4,8 @@ title: 現行のbootstrap・apply・修復・診断
 description: 現行の入口、実行前提、副作用、失敗時の扱いを確認し、将来の成功条件と区別する。
 status: draft
 generated:
-  by: codex/gpt-6
-  at: "2026-11-12T15:54:02+00:00"
+  by: claude-code/claude-opus-5-5
+  at: "2026-11-13T06:04:18+00:00"
 sources:
   - id: apply-implementation
     resource: "https://github.com/twpayne/chezmoi/blob/v2.70.4/internal/cmd/config.go#L750"
@@ -276,7 +276,7 @@ source更新だけでは既存taskは変わらない。入口とcheck/probe一�
 | config生成（init等） | ホスト判定、op項目取得、identity入力とパスを設定へ保存 | 認証・Windows照会・config更新。通常applyのたびに最新identityへ更新する段階ではない[^config] |
 | source読込 | read-source-state.pre → `.bootstrap-mise.sh --check` | `~/.local/bin/mise`が実行属性を持つ通常file（symlink参照先も可）かだけを検査。mise実行・pin照合・取得・mkdir・chmodはしない。不在・非実行file等では必要な明示操作を示して停止[^bootstrap] |
 | before scripts | identityのlegacy参照保存、OS別package導入 | identityのbefore_05はGit/Pythonを使い、旧routingを新しいentryへ保存する（詳細は[identity](identity.md#生成の切替と既存配置からの移行)）。Python不足・移行衝突ではtarget反映前に停止する。Linuxのpackage DB・sudo、macOSの`brew bundle install --no-upgrade`（[制御と限界](#homebrew-packages)）、WSLのWinGet。task配置前に必要な依存を用意する経路。WinGetは完全IDとsourceを指定し、正常な未導入だけをinstallする。照会障害・曖昧な出力・hash不一致は停止する（[Windows package契約](platforms/wsl.md#windows-packages)）[^linux-script][^brew-script][^win-script] |
-| target反映 | chezmoiの静的配置・symlink・external・remove | ホーム配下への配置。旧パス名だけによる恒久削除は停止。externalには固定版とfloating参照が混在[^ignore][^remove][^externals] |
+| target反映 | chezmoiの静的配置・symlink・external・remove | ホーム配下への配置。旧パス名だけによる恒久削除は停止。externalは不変の参照（commit SHAまたは版とchecksum）に固定[^ignore][^remove][^externals] |
 | identity after_10 | 毎回、所有・個別出力・入力digestを検査 | Python engineを直接起動する。正常同一入力は生成しない。所有根拠喪失は停止する。[R10a契約](identity.md#identity-convergence)を参照 |
 | afterの共通wrapper | XDG / PATHを設定し、固定パスのmise install → lifecycle:post-apply | tool導入・通信。GitHub token系環境変数がなければop読取コマンドをinstallの環境に渡す経路がある。毎回認証が発生するとの断定ではない[^wrapper] |
 | post-apply graph | security互換入口・pnpm、Linux shell | 依存graphなので全taskが表記順に直列実行されるわけではない。生成物はgraph終了後の専用after_30/40/41/42へ分離した[^lifecycle][^identity][^completions][^mise-tasks] |

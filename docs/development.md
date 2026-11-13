@@ -4,8 +4,8 @@ title: sourceの変更・ツール更新・レビュー
 description: 設定や依存を変更するときに正本、更新taskの副作用、必要なレビュー情報を確認する。
 status: draft
 generated:
-  by: claude-code/claude-fable-5-2
-  at: "2026-11-13T05:49:10+00:00"
+  by: claude-code/claude-opus-5-5
+  at: "2026-11-13T06:49:21+00:00"
 sources:
   - id: pin
     resource: "../.mise-version"
@@ -141,7 +141,7 @@ GitHub側はmainに`Required CI`を必須とし、発行元をGitHub Actionsに�
 
 `config:best-practices`は設定の土台であり、全toolの互換性保証ではない。npm向けrelease-ageの待機を維持するが、minor/patchも破壊変更がないとはみなさない。実際に不具合が確認された版だけ理由と解除条件を付けて除外する。切り戻す場合は次回の自動再更新も抑える。仕事固有のtool制約はプロジェクト側mise設定へ分離する。例えばkubectlはAPI serverの±1 minorが公式範囲であり、globalの最新CLIをすべてのclusterへ使えるとは限らない。[^automerge][^kubectl-skew]
 
-Homebrew/WinGet/OS package、Neovim plugin lock・Mason・parser、chezmoi externalのURL、Vale stylesはこの設定の版更新対象ではない。gcloudは2026-11-12のDashboard検出一覧にない。workflowのvalidator env pinとpre-commit hookは2026-11-13に追跡設定を加えた。設定がpresetの正規表現に一致することは確認したが、botによる実際の検出はmerge後のDashboardで確かめる。同日のRenovate 43.150.0によるnative抽出ではgcloudに`unsupported-datasource`が返った。gcloudの既存「manual review」コメントは承認ruleではなく、検出がない間は別途明示更新する。bot側の対応が変われば実抽出を確認してnative managerを優先する。mise pin更新でも既存mise本体は自動置換されず、Git revertはbinary・DB・remote stateのrollbackではない。実機更新と復旧の範囲は[操作](operations.md#mise-bootstrap)・[所有境界](ownership.md)に従う。
+Homebrew/WinGet/OS package、Neovim plugin lock・Mason・parser、Vale stylesはこの設定の版更新対象ではない。chezmoi externalはURLにcommit SHAを含めて固定し、直前行の`# renovate:`注釈とURL中のSHAをcustom regexで追う。tagのある取得元はtagとそのcommit、tagのない`catppuccin/bat`はbranch先頭のcommitを追う。release添付の`win32yank`は版をURLに固定して`checksum.sha256`で照合し、Renovateの追跡対象にしない。raw fileにchecksumを付けないのは、内容がcommit SHAで決まり、Renovateがchecksumを更新できないためである。botが実際に検出・更新することはmerge後のDashboardで確かめる。gcloudは2026-11-12のDashboard検出一覧にない。workflowのvalidator env pinとpre-commit hookは2026-11-13に追跡設定を加えた。設定がpresetの正規表現に一致することは確認したが、botによる実際の検出はmerge後のDashboardで確かめる。同日のRenovate 43.150.0によるnative抽出ではgcloudに`unsupported-datasource`が返った。gcloudの既存「manual review」コメントは承認ruleではなく、検出がない間は別途明示更新する。bot側の対応が変われば実抽出を確認してnative managerを優先する。mise pin更新でも既存mise本体は自動置換されず、Git revertはbinary・DB・remote stateのrollbackではない。実機更新と復旧の範囲は[操作](operations.md#mise-bootstrap)・[所有境界](ownership.md)に従う。
 
 Renovate validatorの版はCI workflow、Nodeの要求はworkflowが読むtool宣言を正本にする。変更時のcommandと結果の限界は[validation](validation.md)を参照する。workflowで指定したつもりのruntimeと、実際の`node --version`は分けて記録する。診断の入口は[operations](operations.md#diagnostic-entry)に従い、CIも必須driftを成功へ変えない。登録済みmoduleの隔離回帰は`python3 tests/run_checks.py regression`、OS分岐のrender/構文検査は`python3 tests/run_checks.py render`で再現する。tool準備と通常applyを前提にしないfixture実行、通信・導入を伴う統合jobの違いは[検証の入口](validation.md#isolated-regression)を参照する。通常Neovim初期化や実認証を使わない診断fixtureもこの回帰集合に含める。現行CIがUbuntu/macOSで合格しても、WSL・Windows・実認証の成功とはしない。[^ci]
 

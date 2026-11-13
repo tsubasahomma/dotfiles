@@ -23,6 +23,14 @@
       "datasourceTemplate": "github-releases",
       "extractVersionTemplate": "^v?(?<version>.+)$",
       "versioningTemplate": "semver-coerced"
+    },
+    {
+      "customType": "regex",
+      "description": "Track the revision pinned in each chezmoi external URL.",
+      "managerFilePatterns": ["/^\\.chezmoiexternal\\.toml\\.tmpl$/"],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>[^\\s]+) depName=(?<depName>[^\\s]+) currentValue=(?<currentValue>[^\\s]+)\\n[^\\n]*\\n[^\\n]*\\n\\s*url = \"[^\"]*/(?<currentDigest>[0-9a-f]{40})/"
+      ]
     }
   ],
   "packageRules": [

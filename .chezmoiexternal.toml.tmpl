@@ -2,45 +2,41 @@
 {{/*
 Source-only maintainer note:
 External resources are limited to assets that are not managed by package managers.
+Every URL names an immutable revision, so chezmoi fetches it once and reuses its cache.
+Raw files are pinned by commit SHA in the URL, which already fixes their content.
+The release asset is pinned by checksum because a release upload can be replaced.
+Renovate reads each "# renovate:" line together with the commit SHA in the URL
+below it and rewrites both. Keep that line directly above its table header.
 */}}
 
-{{/* 1. Platform Normalization */ -}}
-{{- $os_std := "linux" -}}
-{{- if eq .chezmoi.os "darwin" }}{{ $os_std = "macos" }}{{ end -}}
-
-{{- $arch := "amd64" -}}
-{{- if eq .chezmoi.arch "arm64" }}{{ $arch = "arm64" }}{{ end -}}
-
-{{- $mise_arch := "x64" -}}
-{{- if eq .chezmoi.arch "arm64" }}{{ $mise_arch = "arm64" }}{{ end -}}
-
-{{/* 2. Resource Definitions */ -}}
 {{- if .is_wsl }}
 [".local/bin/win32yank.exe"]
     type = "archive-file"
     url = "https://github.com/equalsraf/win32yank/releases/download/v0.1.1/win32yank-x64.zip"
+    checksum.sha256 = "247c9a05b94387a884b49d3db13f806b1677dfc38020f955f719be6902260cd6"
     executable = true
     path = "win32yank.exe"
 {{- end }}
 
 {{/* Ensure Catppuccin Mocha is available for delta and bat without manual setup. */}}
+{{/* The upstream repository has no tags, so Renovate follows the main branch head. */}}
+# renovate: datasource=git-refs depName=https://github.com/catppuccin/bat currentValue=main
 [".config/bat/themes/Catppuccin Mocha.tmTheme"]
     type = "file"
-    url = "https://github.com/catppuccin/bat/raw/main/themes/Catppuccin%20Mocha.tmTheme"
-    refreshPeriod = "168h"
+    url = "https://raw.githubusercontent.com/catppuccin/bat/6810349b28055dce54076712fc05fc68da4b8ec0/themes/Catppuccin%20Mocha.tmTheme"
 
 {{/* Completion definitions are fetched separately from binary packages for cross-platform parity. */}}
+# renovate: datasource=github-tags depName=eza-community/eza currentValue=v0.23.5
 [".config/zsh/completions/_eza"]
     type = "file"
-    url = "https://raw.githubusercontent.com/eza-community/eza/main/completions/zsh/_eza"
-    refreshPeriod = "168h"
+    url = "https://raw.githubusercontent.com/eza-community/eza/98442ab17c2c3738701b62a7e060b1431ae2d6ea/completions/zsh/_eza"
 
+# renovate: datasource=github-tags depName=git/git currentValue=v2.56.1
 [".config/zsh/completions/_git"]
     type = "file"
-    url = "https://raw.githubusercontent.com/git/git/master/contrib/completion/git-completion.zsh"
-    refreshPeriod = "168h"
+    url = "https://raw.githubusercontent.com/git/git/03b41523c576f26ad34085378717a0c1b287470f/contrib/completion/git-completion.zsh"
 
+# renovate: datasource=github-tags depName=git/git currentValue=v2.56.1
 [".config/zsh/completions/git-completion.bash"]
     type = "file"
-    url = "https://raw.githubusercontent.com/git/git/master/contrib/completion/git-completion.bash"
-    refreshPeriod = "168h"
+    url = "https://raw.githubusercontent.com/git/git/03b41523c576f26ad34085378717a0c1b287470f/contrib/completion/git-completion.bash"
