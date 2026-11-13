@@ -5,7 +5,7 @@ description: 文書・template・tool更新・認証の変更に対して、必�
 status: draft
 generated:
   by: claude-code/claude-opus-5-5
-  at: "2026-11-13T14:12:12+00:00"
+  at: "2026-11-13T14:19:38+00:00"
 sources:
   - id: evals
     resource: "https://www.anthropic.com/research/demystifying-evals-for-ai-agents"
@@ -224,6 +224,8 @@ CI stepへ接続するが、local実行結果はmacOSの隔離fixtureに限る�
 # 整形・Renovate・CI
 
 `python3 tests/run_checks.py lint`（[実装](../tests/test_lint.py)）はファイルを書き換えない。Pythonは[Ruff](../.ruff.toml)のlintと`format --check`、Luaは`.lua`の全件にStyLuaの`--check`（`.editorconfig`）、shellは`.tmpl`でないsh/bash scriptにshfmtの`-d`とShellCheck、templateは[render検査](../tests/render_fixture.py)と同じ6分岐でrenderしたsh/bashの各出力にShellCheck（`-S warning`）をかける。workflowはactionlint（`run:`のShellCheckを含む）とzizmorを`--offline`で実行する。zshはShellCheckの対象外で、render検査の`zsh -n`だけである。除外は設定か[実装](../tests/test_lint.py)の定数に理由と並べて置き、配備されるファイルの整形・修正を利用者の承認待ちにしているものは`PENDING`と書く。Ruff・zizmor・actionlintの版は[lint tool一覧](../tests/lint-tools.toml)、StyLua・ShellCheck・shfmtは`10-tools.toml`を正本にし、CIの`Lint` jobはこの版だけを一時manifestで導入する。zizmorのoffline実行はGitHubへの照会が要るaudit（既知の脆弱なaction等）を含まない。
+
+[規約検査](../tests/test_repo_rules.py)は`fast`に入り、文書に書いた規則のうち機械で読めるものを静的に確かめる。chezmoi dataの全キーをどこかのtemplateが読むこと、`.chezmoitemplates`の外の`.tmpl`がtemplate構文を含むこと、externalのURLに可変参照（`main`・`master`・`latest`等）がなくcommit SHAかchecksumで内容が決まること、OKF文書の`sources`と脚注が1対1で全脚注が引用されること、自repoへの旧commit固定リンクを増やさないこと、`stale_after`を過ぎた文書がないことを見る。直すと配備内容が変わるもの（未使用のdata `arch`）と文書の作り直しで直すもの（未引用の脚注5件、固定リンクの件数）は、検査側に理由つきで列挙し、減らす方向だけを許す。`.chezmoiscripts`の命名規則は規則が決まるまで検査しない。
 
 現行pre-commitには末尾空白・最終改行の修正、YAML/大file検査、`shfmt -w`、StyLuaがある。local hookは`language: unsupported`（pre-commit 4.4.0より前の名称は`system`）で実行pathに依存する。拡張子filterはtemplateを包括的には扱わず、専用のOKF frontmatter検査・Markdownリンク検査も定義されていない。初回実行ではhook環境の取得・導入もあり得る。必要なhookとfileを選び、変更された差分を確認する。`pre-commit run --all-files`を非変更検査と呼ばない。[^precommit][^precommit-docs]
 

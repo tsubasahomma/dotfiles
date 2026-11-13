@@ -46,6 +46,7 @@ REGRESSION = [
     'test_ci_verify',
     'test_shell_startup',
     'test_mason_log',
+    'test_repo_rules',
 ]
 MODULES = ['test_render_syntax'] + REGRESSION
 # The slow layer: tests that run chezmoi apply (also --dry-run or init --apply) on a
@@ -99,10 +100,11 @@ MANIFEST_TOOLS = {
 }
 BASE_TOOLS = ['chezmoi', 'nvim', 'zsh', 'git', 'ssh', 'ssh-keygen']
 # Modules that run without mise; every other module gets the pinned mise.
-WITHOUT_MISE = {'test_render_syntax', 'test_lint'}
+WITHOUT_MISE = {'test_render_syntax', 'test_lint', 'test_repo_rules'}
 # Modules that need more tools, and variables they may read.
 # Modules that need only these tools instead of BASE_TOOLS (no Neovim or Zsh).
 OWN_TOOLS = {
+    'test_repo_rules': ['git'],
     'test_lint': [
         'chezmoi',
         'git',
