@@ -2,10 +2,15 @@
 // https://docs.renovatebot.com/key-concepts/automerge/
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["config:best-practices"],
+  "extends": ["config:best-practices", "customManagers:githubActionsVersions"],
   "labels": ["dependencies", "renovate"],
   "mise": {
     "managerFilePatterns": ["/^\\.mise\\.toml$/", "/^dot_config/mise/conf\\.d/.*\\.toml$/"]
+  },
+  // Disabled by default upstream; opt in so hook revisions do not go stale.
+  // https://docs.renovatebot.com/modules/manager/pre-commit/
+  "pre-commit": {
+    "enabled": true
   },
   "customManagers": [
     {
@@ -23,7 +28,7 @@
   "packageRules": [
     {
       "description": "Validate routine tool and action updates together once a week.",
-      "matchManagers": ["mise", "github-actions", "custom.regex"],
+      "matchManagers": ["mise", "github-actions", "custom.regex", "pre-commit"],
       "groupName": "weekly dependencies",
       "groupSlug": "weekly-dependencies",
       "separateMajorMinor": false

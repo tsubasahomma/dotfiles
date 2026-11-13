@@ -4,8 +4,8 @@ title: 変更に応じた検証と結果の限界
 description: 文書・template・tool更新・認証の変更に対して、必要な検査と副作用を選ぶ。
 status: draft
 generated:
-  by: codex/gpt-6
-  at: "2026-11-12T05:49:18+00:00"
+  by: claude-code/claude-fable-5-2
+  at: "2026-11-13T05:49:10+00:00"
 sources:
   - id: evals
     resource: "https://www.anthropic.com/research/demystifying-evals-for-ai-agents"
@@ -221,7 +221,7 @@ CI stepへ接続するが、local実行結果はmacOSの隔離fixtureに限る�
 
 # 整形・Renovate・CI
 
-現行pre-commitには末尾空白・最終改行の修正、YAML/大file検査、`shfmt -w`、StyLuaがある。local hookは`language: system`で実行pathに依存する。拡張子filterはtemplateを包括的には扱わず、専用のOKF frontmatter検査・Markdownリンク検査も定義されていない。初回実行ではhook環境の取得・導入もあり得る。必要なhookとfileを選び、変更された差分を確認する。`pre-commit run --all-files`を非変更検査と呼ばない。[^precommit][^precommit-docs]
+現行pre-commitには末尾空白・最終改行の修正、YAML/大file検査、`shfmt -w`、StyLuaがある。local hookは`language: unsupported`（pre-commit 4.4.0より前の名称は`system`）で実行pathに依存する。拡張子filterはtemplateを包括的には扱わず、専用のOKF frontmatter検査・Markdownリンク検査も定義されていない。初回実行ではhook環境の取得・導入もあり得る。必要なhookとfileを選び、変更された差分を確認する。`pre-commit run --all-files`を非変更検査と呼ばない。[^precommit][^precommit-docs]
 
 Renovateを変更する場合は、repo rootでCIと同じvalidator版・Node runtimeを使う。版の正本はworkflowの`RENOVATE_VERSION`と参照先のtool宣言とし、この文書に別の固定版を増やさない。以下はその版を環境変数へ設定した後の現行相当の検査であり、`npx`は取得・cache書込を伴い得る。[^ci]
 
