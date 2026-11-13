@@ -10,21 +10,28 @@ class MasonLogTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             source = root / 'mason.log'
-            original = ('[DEBUG] curl https://example.invalid/registry\n'
-                        'token=sample-ci-token secret=sample-secret\n'
-                        'Authorization: Bearer other-credential\n'
-                        '[ERROR] ENOTCONN\n')
+            original = (
+                '[DEBUG] curl https://example.invalid/registry\n'
+                'token=sample-ci-token secret=sample-secret\n'
+                'Authorization: Bearer other-credential\n'
+                '[ERROR] ENOTCONN\n'
+            )
             source.write_text(original)
             (root / 'unrelated.log').write_text('must not be collected')
-            collect(source, root / 'out', {'GITHUB_TOKEN': 'sample-ci-token',
-                                          'TEST_SECRET': 'sample-secret'})
+            collect(
+                source,
+                root / 'out',
+                {'GITHUB_TOKEN': 'sample-ci-token', 'TEST_SECRET': 'sample-secret'},
+            )
             result = (root / 'out/mason.log').read_text()
             for secret in ['sample-ci-token', 'sample-secret', 'other-credential']:
                 self.assertNotIn(secret, result)
             self.assertIn('ENOTCONN', result)
             self.assertIn('https://example.invalid/registry', result)
             self.assertEqual(source.read_text(), original)
-            self.assertEqual({p.name for p in (root / 'out').iterdir()}, {'mason.log', 'status.txt'})
+            self.assertEqual(
+                {p.name for p in (root / 'out').iterdir()}, {'mason.log', 'status.txt'}
+            )
 
     def test_missing_log_records_early_failure(self):
         with tempfile.TemporaryDirectory() as temporary:

@@ -4,6 +4,7 @@
 Uses installed chezmoi with a minimal hookless source/config, temporary HOME/XDG,
 and dummy file contents. Never runs the host's apply, repair, doctor or mise.
 """
+
 import hashlib
 import json
 import os
@@ -74,6 +75,7 @@ RETIRED = '''
 def snapshot(root):
     """Capture exact names, type, modes, bytes and links without following links."""
     result = {}
+
     def visit(path):
         mode = path.lstat().st_mode
         key = str(path.relative_to(root))
@@ -86,6 +88,7 @@ def snapshot(root):
         else:
             data = ('file', hashlib.sha256(path.read_bytes()).hexdigest())
         result[key] = (stat.S_IMODE(mode), *data)
+
     visit(root)
     return result
 
@@ -105,26 +108,53 @@ class OwnershipBoundary(unittest.TestCase):
         shutil.copyfile(REPO / '.chezmoiremove.tmpl', self.source / '.chezmoiremove.tmpl')
         shutil.copytree(REPO / '.chezmoitemplates', self.source / '.chezmoitemplates')
         self.config = self.root / 'config.json'
-        self.env = {'HOME': str(self.home), 'PATH': '/usr/bin:/bin', 'LC_ALL': 'C',
-                    'TMPDIR': str(self.root), 'XDG_CONFIG_HOME': str(self.root / 'config'),
-                    'XDG_CACHE_HOME': str(self.root / 'cache'),
-                    'XDG_STATE_HOME': str(self.root / 'state'),
-                    'XDG_DATA_HOME': str(self.root / 'data')}
+        self.env = {
+            'HOME': str(self.home),
+            'PATH': '/usr/bin:/bin',
+            'LC_ALL': 'C',
+            'TMPDIR': str(self.root),
+            'XDG_CONFIG_HOME': str(self.root / 'config'),
+            'XDG_CACHE_HOME': str(self.root / 'cache'),
+            'XDG_STATE_HOME': str(self.root / 'state'),
+            'XDG_DATA_HOME': str(self.root / 'data'),
+        }
         self.write_config(False)
 
     def write_config(self, wsl):
-        self.config.write_text(json.dumps({'data': {'is_wsl': wsl, 'paths': {'home': str(self.home)}}}))
+        self.config.write_text(
+            json.dumps({'data': {'is_wsl': wsl, 'paths': {'home': str(self.home)}}})
+        )
 
     def run_ok(self, args, **kwargs):
-        p = subprocess.run([str(x) for x in args], env=self.env, cwd=self.root,
-                           text=True, capture_output=True, **kwargs)
+        p = subprocess.run(
+            [str(x) for x in args],
+            env=self.env,
+            cwd=self.root,
+            text=True,
+            capture_output=True,
+            **kwargs,
+        )
         self.assertEqual(p.returncode, 0, p.stderr)
         return p.stdout
 
     def chezmoi(self, *args, **kwargs):
-        return self.run_ok([CHEZMOI, '--config', self.config, '--source', self.source,
-                            '--destination', self.home, '--cache', self.root / 'cache',
-                            '--no-tty', '--color=false', *args], **kwargs)
+        return self.run_ok(
+            [
+                CHEZMOI,
+                '--config',
+                self.config,
+                '--source',
+                self.source,
+                '--destination',
+                self.home,
+                '--cache',
+                self.root / 'cache',
+                '--no-tty',
+                '--color=false',
+                *args,
+            ],
+            **kwargs,
+        )
 
     def file(self, path, mode=0o640):
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -133,9 +163,15 @@ class OwnershipBoundary(unittest.TestCase):
 
     def test_repair_preserves_keys_nested_files_and_links(self):
         ssh = self.home / '.ssh'
-        for name, mode in [('id_ed25519', 0o640), ('id_rsa', 0o400), ('id_unrelated', 0o644),
-                           ('id_ed25519.pub', 0o604), ('nested/id_private', 0o660),
-                           ('nested/deeper/id_other', 0o444), ('known_hosts', 0o600)]:
+        for name, mode in [
+            ('id_ed25519', 0o640),
+            ('id_rsa', 0o400),
+            ('id_unrelated', 0o644),
+            ('id_ed25519.pub', 0o604),
+            ('nested/id_private', 0o660),
+            ('nested/deeper/id_other', 0o444),
+            ('known_hosts', 0o600),
+        ]:
             self.file(ssh / name, mode)
         outside = self.home / 'outside'
         self.file(outside / 'id_external', 0o640)

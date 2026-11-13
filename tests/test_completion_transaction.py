@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Hookless rendering, stub CLIs and installed chezmoi completion in isolated HOME."""
+
 import json
 import os
 from pathlib import Path
@@ -36,19 +37,42 @@ class CompletionTransaction(unittest.TestCase):
         self.package = self.root / 'package'
         self.package.mkdir()
         (self.package / 'vendor').write_text('fixture package implementation')
-        (self.sdk / 'completion.zsh.inc').write_text('_python_argcomplete() { print -r -- gcloud-new; }\n')
+        (self.sdk / 'completion.zsh.inc').write_text(
+            '_python_argcomplete() { print -r -- gcloud-new; }\n'
+        )
         # No ambient optional CLI can be discovered, even if /usr/bin has WezTerm.
         utilities = self.root / 'utilities'
         utilities.mkdir()
         # Zsh's getent fallback uses grep during compaudit on Linux.
-        for name in ('mkdir', 'mktemp', 'mv', 'rm', 'rmdir', 'chmod', 'cat', 'tr', 'touch', 'sleep', 'python3', 'bash', 'grep'):
+        for name in (
+            'mkdir',
+            'mktemp',
+            'mv',
+            'rm',
+            'rmdir',
+            'chmod',
+            'cat',
+            'tr',
+            'touch',
+            'sleep',
+            'python3',
+            'bash',
+            'grep',
+        ):
             (utilities / name).symlink_to(shutil.which(name))
-        self.env = {'HOME': str(self.home), 'PATH': str(utilities), 'LC_ALL': 'C',
-                    'TMPDIR': str(self.root), 'XDG_CACHE_HOME': str(self.cache),
-                    'XDG_CONFIG_HOME': str(self.home / '.config'),
-                    'XDG_DATA_HOME': str(self.home / '.local/share'),
-                    'XDG_STATE_HOME': str(self.home / '.local/state'),
-                    'SDK': str(self.sdk), 'PACKAGE_ROOT': str(self.package), 'READY': str(self.root / 'ready')}
+        self.env = {
+            'HOME': str(self.home),
+            'PATH': str(utilities),
+            'LC_ALL': 'C',
+            'TMPDIR': str(self.root),
+            'XDG_CACHE_HOME': str(self.cache),
+            'XDG_CONFIG_HOME': str(self.home / '.config'),
+            'XDG_DATA_HOME': str(self.home / '.local/share'),
+            'XDG_STATE_HOME': str(self.home / '.local/state'),
+            'SDK': str(self.sdk),
+            'PACKAGE_ROOT': str(self.package),
+            'READY': str(self.root / 'ready'),
+        }
         self.stub = self.bin / 'mise'
         self.stub.write_text('''#!/bin/sh
 if [ "$1" = exec ] && [ "$3" = -- ]; then
@@ -81,8 +105,26 @@ fi
 printf '#compdef %s\\nprint -r -- %s-new\\n' "$name" "$name"
 ''')
         self.stub.chmod(0o755)
-        for name in ('gh', 'rg', 'fd', 'uv', 'starship', 'yq', 'doggo', 'kubectl',
-                     'helm', 'k9s', 'lazygit', 'pnpm', 'codex', 'scc', 'delta', 'zoxide', 'node', 'usage'):
+        for name in (
+            'gh',
+            'rg',
+            'fd',
+            'uv',
+            'starship',
+            'yq',
+            'doggo',
+            'kubectl',
+            'helm',
+            'k9s',
+            'lazygit',
+            'pnpm',
+            'codex',
+            'scc',
+            'delta',
+            'zoxide',
+            'node',
+            'usage',
+        ):
             (self.bin / name).write_text('#!/bin/sh\n# fixture dependency\n')
             (self.bin / name).chmod(0o755)
         source = self.root / 'source'
@@ -90,27 +132,57 @@ printf '#compdef %s\\nprint -r -- %s-new\\n' "$name" "$name"
         shutil.copytree(REPO / '.chezmoitemplates', source / '.chezmoitemplates')
         shutil.copytree(REPO / '.chezmoidata', source / '.chezmoidata')
         config = self.root / 'config.json'
-        config.write_text(json.dumps({'data': {'paths': {'home': str(self.home),
-                              'mise': str(self.stub), 'xdg_cache': str(self.cache)}}}))
-        result = subprocess.run([CHEZMOI, '--config', str(config), '--source', str(source),
-                                 '--destination', str(self.home), '--no-tty', 'execute-template'],
-                                input=TEMPLATE.read_text(), env=self.env, cwd=self.root,
-                                text=True, capture_output=True)
+        config.write_text(
+            json.dumps(
+                {
+                    'data': {
+                        'paths': {
+                            'home': str(self.home),
+                            'mise': str(self.stub),
+                            'xdg_cache': str(self.cache),
+                        }
+                    }
+                }
+            )
+        )
+        result = subprocess.run(
+            [
+                CHEZMOI,
+                '--config',
+                str(config),
+                '--source',
+                str(source),
+                '--destination',
+                str(self.home),
+                '--no-tty',
+                'execute-template',
+            ],
+            input=TEMPLATE.read_text(),
+            env=self.env,
+            cwd=self.root,
+            text=True,
+            capture_output=True,
+        )
         self.assertEqual(result.returncode, 0, result.stderr)
         self.script = self.root / 'generate.zsh'
         self.script.write_text(result.stdout)
         self.run_zsh(['-n', str(self.script)])
 
     def run_zsh(self, args):
-        p = subprocess.run([ZSH, '-f', *args], env=self.env, cwd=self.root,
-                           text=True, capture_output=True)
+        p = subprocess.run(
+            [ZSH, '-f', *args], env=self.env, cwd=self.root, text=True, capture_output=True
+        )
         self.assertEqual(p.returncode, 0, p.stderr)
         return p.stdout
 
     def run_generator(self, fail='', mode='fail'):
-        return subprocess.run([ZSH, '-f', str(self.script)], cwd=self.root,
-                              env={**self.env, 'FAIL': fail, 'MODE': mode},
-                              text=True, capture_output=True)
+        return subprocess.run(
+            [ZSH, '-f', str(self.script)],
+            cwd=self.root,
+            env={**self.env, 'FAIL': fail, 'MODE': mode},
+            text=True,
+            capture_output=True,
+        )
 
     def old(self, path, content='print -r -- old-good\n'):
         path.write_text(content)
@@ -129,8 +201,12 @@ printf '#compdef %s\\nprint -r -- %s-new\\n' "$name" "$name"
         old = self.comp / '_gh'
         self.old(old)
         self.old(self.init / 'zoxide.zsh')
-        unknown = [self.comp / '_unmanaged.zwc', self.init / 'unmanaged.zwc',
-                   self.cache / 'zsh/zcompdump.other', self.home / '.zcompdump']
+        unknown = [
+            self.comp / '_unmanaged.zwc',
+            self.init / 'unmanaged.zwc',
+            self.cache / 'zsh/zcompdump.other',
+            self.home / '.zcompdump',
+        ]
         for p in unknown:
             p.write_text('keep')
         dump = self.cache / 'zsh/zcompdump'
@@ -145,17 +221,41 @@ printf '#compdef %s\\nprint -r -- %s-new\\n' "$name" "$name"
         for path in unknown:
             self.assertEqual(path.read_text(), 'keep')
         self.assertFalse((self.init / 'gcloud.zsh.inc').is_symlink())
-        self.assertEqual(self.run_zsh(['-c', 'source "$1"', 'zsh', str(self.init / 'zoxide.zsh')]), 'zoxide-init-new\n')
-        self.assertEqual(self.run_zsh(['-c', 'fpath=("$1" $fpath); autoload -Uz _gh _gcloud; _gh; _gcloud', 'zsh', str(self.comp)]), 'gh-new\ngcloud-new\n')
+        self.assertEqual(
+            self.run_zsh(['-c', 'source "$1"', 'zsh', str(self.init / 'zoxide.zsh')]),
+            'zoxide-init-new\n',
+        )
+        self.assertEqual(
+            self.run_zsh(
+                [
+                    '-c',
+                    'fpath=("$1" $fpath); autoload -Uz _gh _gcloud; _gh; _gcloud',
+                    'zsh',
+                    str(self.comp),
+                ]
+            ),
+            'gh-new\ngcloud-new\n',
+        )
         # Parse every generated function via the real consumer without executing CLIs.
-        self.run_zsh(['-c', 'fpath=("$1" $fpath); for f in "$1"/_*; do autoload -Uz "${f:t}"; autoload +X "${f:t}" || exit; done', 'zsh', str(self.comp)])
+        self.run_zsh(
+            [
+                '-c',
+                'fpath=("$1" $fpath); for f in "$1"/_*; do autoload -Uz "${f:t}"; autoload +X "${f:t}" || exit; done',
+                'zsh',
+                str(self.comp),
+            ]
+        )
         self.assertFalse(list(self.cache.rglob('.completion-stage.*')))
 
     def test_required_generator_failures_preserve_source_and_compiled(self):
-        for name, path in [('mise', self.comp / '_mise'), ('gh', self.comp / '_gh'),
-                           ('pnpm', self.comp / '_pnpm'), ('delta', self.comp / '_delta'),
-                           ('zoxide-init', self.init / 'zoxide.zsh'),
-                           ('starship-init', self.init / 'starship.zsh')]:
+        for name, path in [
+            ('mise', self.comp / '_mise'),
+            ('gh', self.comp / '_gh'),
+            ('pnpm', self.comp / '_pnpm'),
+            ('delta', self.comp / '_delta'),
+            ('zoxide-init', self.init / 'zoxide.zsh'),
+            ('starship-init', self.init / 'starship.zsh'),
+        ]:
             for mode in ('fail', 'empty', 'invalid'):
                 with self.subTest(name=name, mode=mode):
                     before = self.old(path)
@@ -204,14 +304,18 @@ printf '#compdef %s\\nprint -r -- %s-new\\n' "$name" "$name"
                 ready = Path(self.env['READY'])
                 ready.unlink(missing_ok=True)
                 Path(str(ready) + ".release").unlink(missing_ok=True)
-                p = subprocess.Popen([ZSH, '-f', str(self.script)], cwd=self.root,
-                                     env={**self.env, 'FAIL': 'mise', 'MODE': 'wait'},
-                                     stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                                     start_new_session=True)
+                p = subprocess.Popen(
+                    [ZSH, '-f', str(self.script)],
+                    cwd=self.root,
+                    env={**self.env, 'FAIL': 'mise', 'MODE': 'wait'},
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    start_new_session=True,
+                )
                 try:
                     deadline = time.monotonic() + 5
                     while not ready.exists() and time.monotonic() < deadline:
-                        time.sleep(.02)
+                        time.sleep(0.02)
                     self.assertTrue(ready.exists())
                     os.killpg(p.pid, sig)
                     Path(str(ready) + ".release").touch()
@@ -246,20 +350,25 @@ printf 'print -r -- completed-after-termination\\n'
 ''')
         path = self.comp / '_mise'
         before = self.old(path)
-        p = subprocess.Popen([ZSH, '-f', str(self.script)], cwd=self.root,
-                             env=self.env, stdout=subprocess.PIPE,
-                             stderr=subprocess.PIPE, start_new_session=True)
+        p = subprocess.Popen(
+            [ZSH, '-f', str(self.script)],
+            cwd=self.root,
+            env=self.env,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            start_new_session=True,
+        )
         try:
             deadline = time.monotonic() + 5
             while not Path(self.env['READY']).exists() and time.monotonic() < deadline:
-                time.sleep(.02)
+                time.sleep(0.02)
             self.assertTrue(Path(self.env['READY']).exists())
             other_writer = self.run_generator()
             self.assertNotEqual(other_writer.returncode, 0)
             self.assertIn('Completion generator locked', other_writer.stderr)
             self.assert_old(path, before)
             p.send_signal(sig)
-            time.sleep(.1)
+            time.sleep(0.1)
             release.touch()
             p.communicate(timeout=5)
             self.assertNotEqual(p.returncode, 0)
@@ -278,9 +387,15 @@ printf 'print -r -- completed-after-termination\\n'
         # Keep Zsh's real cache/audit functions, but exclude ambient completions
         # and their directory permissions from this publication fixture.
         helpers = ('compinit', 'compaudit', 'compdump', 'compinstall')
-        sources = self.run_zsh(['-c', 'autoload -Uz "$@"; autoload +X "$@" || exit; '
-                               'for name in "$@"; do print -r -- "${functions_source[$name]}"; done',
-                               'zsh', *helpers]).splitlines()
+        sources = self.run_zsh(
+            [
+                '-c',
+                'autoload -Uz "$@"; autoload +X "$@" || exit; '
+                'for name in "$@"; do print -r -- "${functions_source[$name]}"; done',
+                'zsh',
+                *helpers,
+            ]
+        ).splitlines()
         self.assertEqual(len(sources), len(helpers))
         functions = self.root / 'completion-functions'
         functions.mkdir()
@@ -291,9 +406,22 @@ printf 'print -r -- completed-after-termination\\n'
         # fixture directory must still be rejected without an interactive tty.
         self.comp.chmod(0o777)
         try:
-            rejected = subprocess.run([ZSH, '-f', '-c', setup + 'compinit -d "$2"',
-                                       'zsh', str(self.comp), str(self.cache / 'rejected-dump'), str(functions)],
-                                      env=self.env, cwd=self.root, text=True, capture_output=True)
+            rejected = subprocess.run(
+                [
+                    ZSH,
+                    '-f',
+                    '-c',
+                    setup + 'compinit -d "$2"',
+                    'zsh',
+                    str(self.comp),
+                    str(self.cache / 'rejected-dump'),
+                    str(functions),
+                ],
+                env=self.env,
+                cwd=self.root,
+                text=True,
+                capture_output=True,
+            )
             self.assertNotEqual(rejected.returncode, 0)
             self.assertFalse((self.cache / 'rejected-dump').exists())
         finally:
@@ -314,14 +442,24 @@ printf 'print -r -- completed-after-termination\\n'
   builtin zf_mv "$@"
 }
 '''
-        self.script.write_text(injected + self.script.read_text().replace('builtin zf_mv', 'test_move'))
+        self.script.write_text(
+            injected + self.script.read_text().replace('builtin zf_mv', 'test_move')
+        )
         path = self.comp / '_mise'
         for mode in ('fail', 'before', 'after'):
             with self.subTest(mode=mode):
                 before = self.old(path, '#compdef old-mise-alias\nprint -r -- old-good\n')
                 dump = self.cache / 'zsh/zcompdump'
-                self.run_zsh(['-c', setup + 'compinit -d "$2"; zcompile "$2"',
-                              'zsh', str(self.comp), str(dump), str(functions)])
+                self.run_zsh(
+                    [
+                        '-c',
+                        setup + 'compinit -d "$2"; zcompile "$2"',
+                        'zsh',
+                        str(self.comp),
+                        str(dump),
+                        str(functions),
+                    ]
+                )
                 dump_before = dump.read_bytes(), Path(str(dump) + '.zwc').read_bytes()
                 self.env['MOVE_MODE'] = mode
                 p = self.run_generator()
@@ -333,13 +471,27 @@ printf 'print -r -- completed-after-termination\\n'
                     self.assertFalse(Path(str(dump) + '.zwc').exists())
                     # Exercise the exact .zshrc dispatch-cache decision after interruption.
                     consumer = (REPO / 'dot_config/zsh/dot_zshrc.tmpl').read_text()
-                    consumer = consumer[consumer.index('  local zcompdump='):consumer.index('  bashcompinit')]
-                    result = self.run_zsh(['-c', setup + 'ZSH_COMPDUMP_DIR="$2"; ' + consumer +
-                                           '; print -r -- "${_comps[mise]-missing}" "${_comps[old-mise-alias]-missing}"',
-                                           'zsh', str(self.comp), str(self.cache / 'zsh'), str(functions)])
+                    consumer = consumer[
+                        consumer.index('  local zcompdump=') : consumer.index('  bashcompinit')
+                    ]
+                    result = self.run_zsh(
+                        [
+                            '-c',
+                            setup
+                            + 'ZSH_COMPDUMP_DIR="$2"; '
+                            + consumer
+                            + '; print -r -- "${_comps[mise]-missing}" "${_comps[old-mise-alias]-missing}"',
+                            'zsh',
+                            str(self.comp),
+                            str(self.cache / 'zsh'),
+                            str(functions),
+                        ]
+                    )
                     self.assertEqual(result, '_mise missing\n')
                 else:
-                    self.assertEqual((dump.read_bytes(), Path(str(dump) + '.zwc').read_bytes()), dump_before)
+                    self.assertEqual(
+                        (dump.read_bytes(), Path(str(dump) + '.zwc').read_bytes()), dump_before
+                    )
                     self.assert_old(path, before)
                 self.assertFalse(list(self.cache.rglob('.completion-stage.*')))
 

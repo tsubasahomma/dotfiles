@@ -3,6 +3,7 @@
 
 Requires installed chezmoi, zsh, Git and ssh-keygen. No real op/auth/apply.
 """
+
 import copy
 import hashlib
 import json
@@ -57,25 +58,48 @@ class IdentityBoundary(unittest.TestCase):
         self.bin.mkdir()
         self.config = self.root / 'config.json'
         self.env = {
-            'HOME': str(self.home), 'PATH': f'{self.bin}:/usr/bin:/bin',
+            'HOME': str(self.home),
+            'PATH': f'{self.bin}:/usr/bin:/bin',
             'XDG_CONFIG_HOME': str(self.home / '.config'),
             'XDG_CACHE_HOME': str(self.home / '.cache'),
             'XDG_DATA_HOME': str(self.home / '.local/share'),
             'XDG_STATE_HOME': str(self.home / '.local/state'),
-            'TMPDIR': str(self.root), 'LC_ALL': 'C',
-            'GIT_CONFIG_NOSYSTEM': '1', 'GIT_CONFIG_GLOBAL': str(self.home / '.config/git/config'),
-            'FIXTURE': str(self.root / 'items.json'), 'ARGV_LOG': str(self.root / 'argv.json'),
+            'TMPDIR': str(self.root),
+            'LC_ALL': 'C',
+            'GIT_CONFIG_NOSYSTEM': '1',
+            'GIT_CONFIG_GLOBAL': str(self.home / '.config/git/config'),
+            'FIXTURE': str(self.root / 'items.json'),
+            'ARGV_LOG': str(self.root / 'argv.json'),
         }
-        self.run_ok(['ssh-keygen', '-q', '-t', 'ed25519', '-N', '', '-C', 'fixture', '-f', str(self.root / 'key')])
+        self.run_ok(
+            [
+                'ssh-keygen',
+                '-q',
+                '-t',
+                'ed25519',
+                '-N',
+                '',
+                '-C',
+                'fixture',
+                '-f',
+                str(self.root / 'key'),
+            ]
+        )
         self.key = (self.root / 'key.pub').read_text().strip().rsplit(' ', 1)[0]
-        self.ids = [self.identity('alpha', "~/work ' $(touch ROUTE_PWN) `touch ROUTE_BT`"),
-                    self.identity('beta', '~/other')]
-        self.paths = {'home': str(self.home), 'xdg_config': str(self.home / '.config'),
-                      'op': str(self.bin / 'op'), 'op_sign': '/fixture/sign-helper',
-                      'mise': str(self.home / '.local/bin/mise'),
-                      'xdg_data': str(self.home / '.local/share'),
-                      'xdg_state': str(self.home / '.local/state'),
-                      'xdg_cache': str(self.home / '.cache')}
+        self.ids = [
+            self.identity('alpha', "~/work ' $(touch ROUTE_PWN) `touch ROUTE_BT`"),
+            self.identity('beta', '~/other'),
+        ]
+        self.paths = {
+            'home': str(self.home),
+            'xdg_config': str(self.home / '.config'),
+            'op': str(self.bin / 'op'),
+            'op_sign': '/fixture/sign-helper',
+            'mise': str(self.home / '.local/bin/mise'),
+            'xdg_data': str(self.home / '.local/share'),
+            'xdg_state': str(self.home / '.local/state'),
+            'xdg_cache': str(self.home / '.cache'),
+        }
         (self.home / '.ssh').mkdir()
         (self.home / '.config/git/identities').mkdir(parents=True)
         self.old = self.home / '.config/git/identities/old'
@@ -83,15 +107,32 @@ class IdentityBoundary(unittest.TestCase):
         self.write_data()
 
     def identity(self, label, dirs):
-        key = self.key + ' ' + label + ' $(touch KEY_PWN) `touch KEY_BT` "quote" \\backslash #semi; EOF'
-        return {'item_id': label, 'account_id': 'fixture-account', 'key_type': 'ed25519',
-                'key_hash': hashlib.sha256(key.encode()).hexdigest()[:8], 'public_key': key,
-                'name': label + ' 日本語 " \' $(touch NAME_PWN) `touch NAME_BT` # ; \\  ',
-                'email': label + "+tag'$`@example.test", 'dirs': dirs}
+        key = (
+            self.key
+            + ' '
+            + label
+            + ' $(touch KEY_PWN) `touch KEY_BT` "quote" \\backslash #semi; EOF'
+        )
+        return {
+            'item_id': label,
+            'account_id': 'fixture-account',
+            'key_type': 'ed25519',
+            'key_hash': hashlib.sha256(key.encode()).hexdigest()[:8],
+            'public_key': key,
+            'name': label + ' 日本語 " \' $(touch NAME_PWN) `touch NAME_BT` # ; \\  ',
+            'email': label + "+tag'$`@example.test",
+            'dirs': dirs,
+        }
 
     def command(self, args, **kwargs):
-        return subprocess.run([str(x) for x in args], env=self.env, cwd=self.root,
-                              text=True, capture_output=True, **kwargs)
+        return subprocess.run(
+            [str(x) for x in args],
+            env=self.env,
+            cwd=self.root,
+            text=True,
+            capture_output=True,
+            **kwargs,
+        )
 
     def run_ok(self, args, **kwargs):
         result = self.command(args, **kwargs)
@@ -99,14 +140,37 @@ class IdentityBoundary(unittest.TestCase):
         return result.stdout
 
     def write_data(self, ids=None, wsl=False):
-        self.config.write_text(json.dumps({'data': {'identities': self.ids if ids is None else ids,
-                                                   'paths': self.paths, 'is_wsl': wsl,
-                                                   'ssh_auth_sock': r'\\.\pipe\openssh-ssh-agent' if wsl else ''}}))
+        self.config.write_text(
+            json.dumps(
+                {
+                    'data': {
+                        'identities': self.ids if ids is None else ids,
+                        'paths': self.paths,
+                        'is_wsl': wsl,
+                        'ssh_auth_sock': r'\\.\pipe\openssh-ssh-agent' if wsl else '',
+                    }
+                }
+            )
+        )
 
     def chezmoi(self, *args, **kwargs):
-        return self.command([CHEZMOI, '--config', self.config, '--source', self.source,
-                             '--destination', self.home, '--cache', self.home / '.cache/chezmoi',
-                             '--no-tty', '--color=false', *args], **kwargs)
+        return self.command(
+            [
+                CHEZMOI,
+                '--config',
+                self.config,
+                '--source',
+                self.source,
+                '--destination',
+                self.home,
+                '--cache',
+                self.home / '.cache/chezmoi',
+                '--no-tty',
+                '--color=false',
+                *args,
+            ],
+            **kwargs,
+        )
 
     def render(self, path):
         return self.chezmoi('execute-template', input=(self.source / path).read_text())
@@ -143,7 +207,10 @@ class IdentityBoundary(unittest.TestCase):
         return Path(self.run_ok(['git', 'config', '-f', entry, 'include.path']).strip()).parent
 
     def keypath(self, identity):
-        return self.generation() / f"id_{identity['key_type']}_{identity['email']}_{identity['key_hash']}.pub"
+        return (
+            self.generation()
+            / f"id_{identity['key_type']}_{identity['email']}_{identity['key_hash']}.pub"
+        )
 
     def git_value(self, repo, key):
         result = self.command(['git', '-C', repo, 'config', '--get', key])
@@ -152,7 +219,10 @@ class IdentityBoundary(unittest.TestCase):
 
     def test_literal_values_routing_and_ssh_argv(self):
         self.generate()
-        executable(self.bin / 'ssh', '#!/usr/bin/python3\nimport json,os,sys\nopen(os.environ["ARGV_LOG"],"w").write(json.dumps(sys.argv[1:]))\n')
+        executable(
+            self.bin / 'ssh',
+            '#!/usr/bin/python3\nimport json,os,sys\nopen(os.environ["ARGV_LOG"],"w").write(json.dumps(sys.argv[1:]))\n',
+        )
         expected_files = set()
         for identity in self.ids:
             route = identity['dirs'].replace('~/', str(self.home) + '/', 1)
@@ -160,12 +230,17 @@ class IdentityBoundary(unittest.TestCase):
             self.run_ok(['git', 'init', '-q', repo])
             for field in ('name', 'email'):
                 self.assertEqual(self.git_value(repo, 'user.' + field), identity[field])
-            self.assertEqual(self.git_value(repo, 'user.signingkey'), 'key::' + identity['public_key'])
+            self.assertEqual(
+                self.git_value(repo, 'user.signingkey'), 'key::' + identity['public_key']
+            )
             command = self.git_value(repo, 'core.sshcommand')
             self.run_ok(['/bin/sh', '-c', command])
             keypath = self.keypath(identity)
             expected_files.add(keypath.name)
-            self.assertEqual(json.loads((self.root / 'argv.json').read_text()), ['-i', str(keypath), '-o', 'IdentitiesOnly=yes', '-o', 'ControlPath=none'])
+            self.assertEqual(
+                json.loads((self.root / 'argv.json').read_text()),
+                ['-i', str(keypath), '-o', 'IdentitiesOnly=yes', '-o', 'ControlPath=none'],
+            )
             self.command(['git', '-C', repo, 'ls-remote', 'ssh://fixture.invalid/repo'])
             git_argv = json.loads((self.root / 'argv.json').read_text())
             self.assertEqual(git_argv[git_argv.index('-i') + 1], str(keypath))
@@ -173,9 +248,17 @@ class IdentityBoundary(unittest.TestCase):
             self.assertEqual(keypath.read_text(), identity['public_key'] + '\n')
             self.assertEqual(keypath.stat().st_mode & 0o777, 0o600)
             signers = self.generation() / 'allowed_signers'
-            self.assertIn(identity['email'] + ' namespaces="git" ' + identity['public_key'], signers.read_text())
+            self.assertIn(
+                identity['email'] + ' namespaces="git" ' + identity['public_key'],
+                signers.read_text(),
+            )
             self.assertEqual(signers.stat().st_mode & 0o777, 0o644)
-            self.assertEqual(self.run_ok(['ssh-keygen', '-Y', 'match-principals', '-I', identity['email'], '-f', signers]).strip(), identity['email'])
+            self.assertEqual(
+                self.run_ok(
+                    ['ssh-keygen', '-Y', 'match-principals', '-I', identity['email'], '-f', signers]
+                ).strip(),
+                identity['email'],
+            )
         self.assertEqual({p.name for p in self.generation().glob('id_*.pub')}, expected_files)
         for location in ('outside', 'other-sibling', 'work-sibling'):
             repo = self.home / location
@@ -198,7 +281,16 @@ class IdentityBoundary(unittest.TestCase):
         self.assertEqual(agent.returncode, 0, agent.stderr)
         self.assertEqual(len(tomllib.loads(agent.stdout)['ssh-keys']), len(self.ids))
         # Use exact marker paths; directory names deliberately contain their text.
-        for name in ('HOME_PWN', 'HOME_BT', 'KEY_PWN', 'KEY_BT', 'NAME_PWN', 'NAME_BT', 'ROUTE_PWN', 'ROUTE_BT'):
+        for name in (
+            'HOME_PWN',
+            'HOME_BT',
+            'KEY_PWN',
+            'KEY_BT',
+            'NAME_PWN',
+            'NAME_BT',
+            'ROUTE_PWN',
+            'ROUTE_BT',
+        ):
             self.assertFalse((self.root / name).exists())
 
     def test_absolute_routes_trim_and_trailing_slash(self):
@@ -206,14 +298,61 @@ class IdentityBoundary(unittest.TestCase):
         other = self.root / 'second route'
         self.ids = [self.identity('alpha', f'  {route}/ , {other}  ')]
         self.generate()
-        for location, expected in ((route, True), (route / 'nested', True),
-                                   (other, True), (Path(str(route) + '-sibling'), False)):
+        for location, expected in (
+            (route, True),
+            (route / 'nested', True),
+            (other, True),
+            (Path(str(route) + '-sibling'), False),
+        ):
             self.run_ok(['git', 'init', '-q', location])
-            self.assertEqual(self.git_value(location, 'user.email'), self.ids[0]['email'] if expected else None)
+            self.assertEqual(
+                self.git_value(location, 'user.email'), self.ids[0]['email'] if expected else None
+            )
 
     def test_invalid_set_rejected_by_every_consumer_before_outputs(self):
-        changes = [('dirs', value) for value in ('~/work,', '~/work,,~/other', ' ', ',~/work', 'relative', '/', '/**', '~/work/*', '~/work/?', '~/work/[a]', '~/work/../other', '~/work//nested', '~/work//', '~/work/./child', '~/work/\\escape', '~/work,~/work/', '~/work,~/WORK/child', '~/work/child,~/work')]
-        changes += [('name', '\nEOF\ntouch BAD\n'), ('name', '  '), ('name', 'tab\tname'), ('name', 'nul\x00name'), ('email', '../../escape@example.test'), ('email', '*@example.test'), ('email', 'a?@example.test'), ('email', 'a,b@example.test'), ('email', 'a b@example.test'), ('email', 'a%h@example.test'), ('email', 'a${HOME}@example.test'), ('email', 'a|b@example.test'), ('email', '!a@example.test'), ('key_type', '../../escape'), ('key_hash', '../escape'), ('public_key', 'ssh-ed25519 AAAA broken'), ('public_key', self.key + '\nEOF\ntouch BAD\n'), ('dirs', '~/work\n[include]')]
+        changes = [
+            ('dirs', value)
+            for value in (
+                '~/work,',
+                '~/work,,~/other',
+                ' ',
+                ',~/work',
+                'relative',
+                '/',
+                '/**',
+                '~/work/*',
+                '~/work/?',
+                '~/work/[a]',
+                '~/work/../other',
+                '~/work//nested',
+                '~/work//',
+                '~/work/./child',
+                '~/work/\\escape',
+                '~/work,~/work/',
+                '~/work,~/WORK/child',
+                '~/work/child,~/work',
+            )
+        ]
+        changes += [
+            ('name', '\nEOF\ntouch BAD\n'),
+            ('name', '  '),
+            ('name', 'tab\tname'),
+            ('name', 'nul\x00name'),
+            ('email', '../../escape@example.test'),
+            ('email', '*@example.test'),
+            ('email', 'a?@example.test'),
+            ('email', 'a,b@example.test'),
+            ('email', 'a b@example.test'),
+            ('email', 'a%h@example.test'),
+            ('email', 'a${HOME}@example.test'),
+            ('email', 'a|b@example.test'),
+            ('email', '!a@example.test'),
+            ('key_type', '../../escape'),
+            ('key_hash', '../escape'),
+            ('public_key', 'ssh-ed25519 AAAA broken'),
+            ('public_key', self.key + '\nEOF\ntouch BAD\n'),
+            ('dirs', '~/work\n[include]'),
+        ]
         before = self.old.read_bytes()
         for field, value in changes:
             with self.subTest(field=field, value=value):
@@ -235,15 +374,24 @@ class IdentityBoundary(unittest.TestCase):
             self.config.write_text(json.dumps(data))
             for consumer in (GEN, GIT, CHECK, AGENT):
                 self.assertNotEqual(self.render(consumer).returncode, 0)
-        for ids in ([self.ids[0], self.ids[0]], [self.ids[0], dict(self.ids[1], dirs=self.ids[0]['dirs'] + '/nested')]):
+        for ids in (
+            [self.ids[0], self.ids[0]],
+            [self.ids[0], dict(self.ids[1], dirs=self.ids[0]['dirs'] + '/nested')],
+        ):
             self.write_data(ids)
             self.assertNotEqual(self.render(GEN).returncode, 0)
 
     def test_wsl_command_preserves_converted_path(self):
         winpath = "C:\\Users\\O'Brien $(touch WIN_PWN) `touch WIN_BT`\\.ssh"
         self.env['WINDOWS_KEY_PATH'] = winpath
-        executable(self.bin / 'wslpath', '#!/bin/sh\n[ -d \"$2\" ] || exit 71\nprintf "%s\\n" "$WINDOWS_KEY_PATH"\n')
-        executable(self.bin / 'ssh.exe', '#!/usr/bin/python3\nimport json,os,sys\nopen(os.environ["ARGV_LOG"],"w").write(json.dumps(sys.argv[1:]))\n')
+        executable(
+            self.bin / 'wslpath',
+            '#!/bin/sh\n[ -d "$2" ] || exit 71\nprintf "%s\\n" "$WINDOWS_KEY_PATH"\n',
+        )
+        executable(
+            self.bin / 'ssh.exe',
+            '#!/usr/bin/python3\nimport json,os,sys\nopen(os.environ["ARGV_LOG"],"w").write(json.dumps(sys.argv[1:]))\n',
+        )
         self.generate(wsl=True)
         # R08: inspect the full generated WSL binding without auth/path-conversion probes.
         check = self.render(CHECK)
@@ -254,12 +402,25 @@ class IdentityBoundary(unittest.TestCase):
         self.run_ok(['/bin/sh', '-c', command])
         identity = next(i for i in self.ids if cfg.name == f"config_{i['email']}_{i['key_hash']}")
         filename = f"id_{identity['key_type']}_{identity['email']}_{identity['key_hash']}.pub"
-        self.assertEqual(json.loads((self.root / 'argv.json').read_text()), ['-i', winpath + '\\' + filename, '-o', 'IdentitiesOnly=yes', '-o', 'ControlPath=none',
-                         '-o', r'IdentityAgent="\\\\.\\pipe\\openssh-ssh-agent"'])
+        self.assertEqual(
+            json.loads((self.root / 'argv.json').read_text()),
+            [
+                '-i',
+                winpath + '\\' + filename,
+                '-o',
+                'IdentitiesOnly=yes',
+                '-o',
+                'ControlPath=none',
+                '-o',
+                r'IdentityAgent="\\\\.\\pipe\\openssh-ssh-agent"',
+            ],
+        )
         self.assertFalse((self.root / 'WIN_PWN').exists())
         self.assertFalse((self.root / 'WIN_BT').exists())
         # POSIX parser evidence only: Windows runtime/interop remains untested.
-        output = self.run_ok(['/usr/bin/ssh', '-G', '-F', '/dev/null', *shlex.split(command)[1:], 'fixture.invalid'])
+        output = self.run_ok(
+            ['/usr/bin/ssh', '-G', '-F', '/dev/null', *shlex.split(command)[1:], 'fixture.invalid']
+        )
         self.assertIn('identityagent ' + r'\\.\pipe\openssh-ssh-agent' + '\n', output)
         self.assertNotIn('controlpath ', output)
         for order in (self.ids, list(reversed(self.ids))):
@@ -268,21 +429,42 @@ class IdentityBoundary(unittest.TestCase):
                 self.run_ok(['git', 'init', '-q', repo])
                 self.command(['git', '-C', repo, 'ls-remote', 'git@fixture.invalid:repo'])
                 argv = json.loads((self.root / 'argv.json').read_text())
-                self.assertEqual(argv[argv.index('-i') + 1], winpath + '\\' + f"id_{identity['key_type']}_{identity['email']}_{identity['key_hash']}.pub")
+                self.assertEqual(
+                    argv[argv.index('-i') + 1],
+                    winpath
+                    + '\\'
+                    + f"id_{identity['key_type']}_{identity['email']}_{identity['key_hash']}.pub",
+                )
                 self.assertIn('ControlPath=none', argv)
                 self.assertIn(r'IdentityAgent="\\\\.\\pipe\\openssh-ssh-agent"', argv)
         # Execute only the generated shape checks, without their auth/network probes.
-        for template, var, options in ((CHECK, 'CORE_SSH_COMMAND', 'SSH_IDENTITY_OPTIONS'),
-                                       (WSL_CHECK, 'core_ssh_command', 'ssh_identity_options')):
+        for template, var, options in (
+            (CHECK, 'CORE_SSH_COMMAND', 'SSH_IDENTITY_OPTIONS'),
+            (WSL_CHECK, 'core_ssh_command', 'ssh_identity_options'),
+        ):
             rendered = self.render(template)
             self.assertEqual(rendered.returncode, 0, rendered.stderr)
             self.run_ok(['/bin/bash', '-n'], input=rendered.stdout)
-            assignment = next(line.strip().removeprefix('local ') for line in rendered.stdout.splitlines()
-                              if line.strip().removeprefix('local ').startswith(options + '='))
+            assignment = next(
+                line.strip().removeprefix('local ')
+                for line in rendered.stdout.splitlines()
+                if line.strip().removeprefix('local ').startswith(options + '=')
+            )
             block = re.search(r'case "\$' + var + r'" in.*?esac', rendered.stdout, re.S).group()
-            for value, valid in ((command, True), (command.replace('ControlPath=none', 'ControlPath=/wrong'), False)):
-                script = ('log_ok() { :; }; log_guide() { :; }; log_err() { exit 41; }; record_error() { exit 41; };\n'
-                          + var + '=' + shlex.quote(value) + '\n' + assignment + '\n' + block)
+            for value, valid in (
+                (command, True),
+                (command.replace('ControlPath=none', 'ControlPath=/wrong'), False),
+            ):
+                script = (
+                    'log_ok() { :; }; log_guide() { :; }; log_err() { exit 41; }; record_error() { exit 41; };\n'
+                    + var
+                    + '='
+                    + shlex.quote(value)
+                    + '\n'
+                    + assignment
+                    + '\n'
+                    + block
+                )
                 result = self.command(['/bin/bash'], input=script)
                 self.assertEqual(result.returncode, 0 if valid else 41, result.stderr)
 
@@ -294,9 +476,23 @@ class IdentityBoundary(unittest.TestCase):
         # ProxyCommand false prevents network; no agent or known_hosts use.
         args = shlex.split(command)
         args[0] = '/usr/bin/ssh'
-        result = self.command(args + ['-vvv', '-F', '/dev/null', '-o', 'IdentityAgent=none',
-                                     '-o', 'UserKnownHostsFile=none', '-o', 'GlobalKnownHostsFile=none',
-                                     '-o', 'ProxyCommand=/bin/false', 'localhost'])
+        result = self.command(
+            args
+            + [
+                '-vvv',
+                '-F',
+                '/dev/null',
+                '-o',
+                'IdentityAgent=none',
+                '-o',
+                'UserKnownHostsFile=none',
+                '-o',
+                'GlobalKnownHostsFile=none',
+                '-o',
+                'ProxyCommand=/bin/false',
+                'localhost',
+            ]
+        )
         self.assertNotEqual(result.returncode, 0)  # Deliberately no server.
         keypath = self.keypath(identity)
         self.assertIn(f'identity file {keypath} type ', result.stderr)
@@ -313,10 +509,18 @@ class IdentityBoundary(unittest.TestCase):
         self.paths['home'] = str(self.home)
         self.write_data(wsl=True)
         self.prepare_consumer()
-        for converted in ('C:\\Users\\key%h.pub', 'C:\\Users\\key${HOME}.pub', 'C:\\Users\\bad\nkey.pub', ''):
+        for converted in (
+            'C:\\Users\\key%h.pub',
+            'C:\\Users\\key${HOME}.pub',
+            'C:\\Users\\bad\nkey.pub',
+            '',
+        ):
             with self.subTest(converted=converted):
                 self.env['WINDOWS_KEY_PATH'] = converted
-                executable(self.bin / 'wslpath', '#!/bin/sh\n[ -d \"$2\" ] || exit 71\nprintf "%s\\n" "$WINDOWS_KEY_PATH"\n')
+                executable(
+                    self.bin / 'wslpath',
+                    '#!/bin/sh\n[ -d "$2" ] || exit 71\nprintf "%s\\n" "$WINDOWS_KEY_PATH"\n',
+                )
                 result = self.render(GEN)
                 self.assertEqual(result.returncode, 0, result.stderr)
                 result = self.command([ZSH], input=result.stdout)
@@ -324,6 +528,7 @@ class IdentityBoundary(unittest.TestCase):
                 self.assertIn('unsupported converted OpenSSH path', result.stderr)
                 self.assertEqual(self.old.read_text(), 'old usable config\n')
                 self.assertEqual(list((self.home / '.ssh').iterdir()), [])
+
     def test_post_apply_caller_with_stub_mise_and_identity_entry(self):
         for name, template in [('repair', REPAIR), ('generate', GEN)]:
             rendered = self.render(template)
@@ -331,7 +536,9 @@ class IdentityBoundary(unittest.TestCase):
             (self.root / name).write_text(rendered.stdout)
         self.env['FIXTURE_ROOT'] = str(self.root)
         self.env['ZSH_BIN'] = str(ZSH)
-        executable(Path(self.paths['mise']), '''#!/usr/bin/python3
+        executable(
+            Path(self.paths['mise']),
+            '''#!/usr/bin/python3
 import json, os, subprocess, sys
 root = os.environ['FIXTURE_ROOT']
 with open(root + '/mise-calls', 'a') as log:
@@ -341,7 +548,8 @@ if sys.argv[1:] == ['install']: pass
 elif sys.argv[1:] == ['run', 'lifecycle:post-apply']:
     subprocess.run(['/bin/bash', root + '/repair'], check=True)
 else: sys.exit(77)
-''')
+''',
+        )
         self.prepare_consumer()
         identity = self.render('.chezmoiscripts/run_after_10-identity.sh.tmpl')
         self.assertEqual(identity.returncode, 0, identity.stderr)
@@ -350,11 +558,18 @@ else: sys.exit(77)
         wrapper = self.render(WRAPPER)
         self.assertEqual(wrapper.returncode, 0, wrapper.stderr)
         self.run_ok(['/bin/bash'], input=wrapper.stdout)
-        self.assertEqual((self.root / 'mise-calls').read_text().splitlines(),
-                         ['["install"]', '["run", "lifecycle:post-apply"]'])
+        self.assertEqual(
+            (self.root / 'mise-calls').read_text().splitlines(),
+            ['["install"]', '["run", "lifecycle:post-apply"]'],
+        )
         self.assertTrue(self.old.exists())
         self.assertEqual(self.generation(), selected)
-        self.assertNotIn('generate:identity', (self.source / 'dot_config/mise/repo-tasks/lifecycle/executable_post-apply.tmpl').read_text())
+        self.assertNotIn(
+            'generate:identity',
+            (
+                self.source / 'dot_config/mise/repo-tasks/lifecycle/executable_post-apply.tmpl'
+            ).read_text(),
+        )
         self.assertEqual(len(list(self.generation().glob('id_*.pub'))), len(self.ids))
         self.assertFalse((self.root / 'HOME_PWN').exists())
         self.assertFalse((self.root / 'HOME_BT').exists())
@@ -377,6 +592,7 @@ else: sys.exit(77)
         agent.parent.mkdir(parents=True)
         agent.write_text(rendered.stdout)
         from test_windows_config_sync import install_windows_stubs
+
         winhome = self.root / "Windows ' home"
         winhome.mkdir()
         local = self.root / "Redirected ' Local"
@@ -392,7 +608,9 @@ else: sys.exit(77)
         self.assertFalse((self.root / 'HOME_BT').exists())
 
     def test_producer_validates_tagged_items_and_preserves_old_config(self):
-        executable(self.bin / 'op', '''#!/usr/bin/python3
+        executable(
+            self.bin / 'op',
+            '''#!/usr/bin/python3
 import json, os, sys
 args = sys.argv[1:]
 if args == ['account', 'get']: pass
@@ -400,13 +618,26 @@ elif args[:2] == ['account', 'list']: print(os.environ.get('ACCOUNT_LIST', '[{"a
 elif args[:2] == ['item', 'list']: print(os.environ.get('ITEM_LIST', '[{"id":"fixture-item"}]'))
 elif args[:2] == ['item', 'get']: print(open(os.environ['FIXTURE']).read())
 else: sys.exit(70)
-''')
+''',
+        )
         executable(self.home / '.local/bin/mise', '#!/bin/sh\nexit 0\n')
         item = self.ids[0]
+
         def write_item(item):
-            fields = [{'label': 'dotfiles_git_' + name, 'value': item[name], 'section': {'label': 'dotfiles'}} for name in ('name', 'email', 'dirs')]
-            fields += [{'label': 'public key', 'value': item['public_key']}, {'label': 'key type', 'value': 'Ed25519'}]
+            fields = [
+                {
+                    'label': 'dotfiles_git_' + name,
+                    'value': item[name],
+                    'section': {'label': 'dotfiles'},
+                }
+                for name in ('name', 'email', 'dirs')
+            ]
+            fields += [
+                {'label': 'public key', 'value': item['public_key']},
+                {'label': 'key type', 'value': 'Ed25519'},
+            ]
             (self.root / 'items.json').write_text(json.dumps({'fields': fields}))
+
         write_item(item)
         self.config = self.root / 'producer.toml'
         result = self.chezmoi('init')
@@ -421,7 +652,9 @@ else: sys.exit(70)
                 self.env['ITEM_LIST'] = '[]'  # Invalid account must not become a valid empty set.
             field = 'account_uuid' if key == 'ACCOUNT_LIST' else 'id'
             invalid_lists = ['null', '{}', '', '[null]', 'false', '"bad"']
-            invalid_lists += [json.dumps([{field: value}]) for value in ('', '   ', '\n', None, 123)]
+            invalid_lists += [
+                json.dumps([{field: value}]) for value in ('', '   ', '\n', None, 123)
+            ]
             for value in invalid_lists:
                 with self.subTest(key=key, value=value):
                     self.env[key] = value
@@ -431,7 +664,12 @@ else: sys.exit(70)
             del self.env[key]
             if key == 'ACCOUNT_LIST':
                 del self.env['ITEM_LIST']
-        for field, value in [('dirs', '~/work,'), ('name', ''), ('email', '../../bad@example.test'), ('public_key', self.key + '\nEOF')]:
+        for field, value in [
+            ('dirs', '~/work,'),
+            ('name', ''),
+            ('email', '../../bad@example.test'),
+            ('public_key', self.key + '\nEOF'),
+        ]:
             with self.subTest(field=field):
                 write_item(dict(item, **{field: value}))
                 result = self.chezmoi('init')
@@ -456,7 +694,13 @@ else: sys.exit(70)
                 self.env['SSH_AUTH_SOCK'] = env_sock
             output = self.run_ok(['/usr/bin/ssh', '-G', '-F', config, 'fixture.invalid'])
             self.assertIn('identityagent ' + agent + '\n', output)
-        for invalid in ('relative.sock', r'\\.\pipe\openssh-ssh-agent', '/tmp/%h', '/tmp/${HOME}', '/tmp/bad\npath'):
+        for invalid in (
+            'relative.sock',
+            r'\\.\pipe\openssh-ssh-agent',
+            '/tmp/%h',
+            '/tmp/${HOME}',
+            '/tmp/bad\npath',
+        ):
             data['data']['ssh_auth_sock'] = invalid
             self.config.write_text(json.dumps(data))
             self.assertNotEqual(self.render('dot_config/ssh/config.tmpl').returncode, 0)
@@ -469,7 +713,20 @@ else: sys.exit(70)
 
     def test_r04_real_openssh_does_not_contact_shared_master(self):
         # Different key material, not just different comments or filenames.
-        self.run_ok(['ssh-keygen', '-q', '-t', 'ed25519', '-N', '', '-C', 'fixture-b', '-f', self.root / 'key-b'])
+        self.run_ok(
+            [
+                'ssh-keygen',
+                '-q',
+                '-t',
+                'ed25519',
+                '-N',
+                '',
+                '-C',
+                'fixture-b',
+                '-f',
+                self.root / 'key-b',
+            ]
+        )
         self.key = (self.root / 'key-b.pub').read_text().strip().rsplit(' ', 1)[0]
         self.ids[1] = self.identity('beta', '~/other')
         self.generate()
@@ -477,16 +734,21 @@ else: sys.exit(70)
         with tempfile.TemporaryDirectory(prefix='r04-mux-', dir='/tmp') as sockdir:
             sockpath = str(Path(sockdir) / 'master')
             config = self.root / 'ssh_config'
-            config.write_text('Host *\n ControlMaster auto\n ControlPath ' + sockpath + '\n'
-                              ' IdentityAgent none\n UserKnownHostsFile none\n GlobalKnownHostsFile none\n'
-                              ' ProxyCommand /bin/false\n BatchMode yes\n')
+            config.write_text(
+                'Host *\n ControlMaster auto\n ControlPath ' + sockpath + '\n'
+                ' IdentityAgent none\n UserKnownHostsFile none\n GlobalKnownHostsFile none\n'
+                ' ProxyCommand /bin/false\n BatchMode yes\n'
+            )
             self.env['SSH_FIXTURE_CONFIG'] = str(config)
             # Git invokes this wrapper with its real argv, then runs real OpenSSH.
-            executable(self.bin / 'ssh', '''#!/usr/bin/python3
+            executable(
+                self.bin / 'ssh',
+                '''#!/usr/bin/python3
 import json, os, sys
 open(os.environ['ARGV_LOG'], 'w').write(json.dumps(sys.argv[1:]))
 os.execv('/usr/bin/ssh', ['/usr/bin/ssh', '-vvv', '-F', os.environ['SSH_FIXTURE_CONFIG']] + sys.argv[1:])
-''')
+''',
+            )
             repos = []
             for identity in self.ids:
                 repo = Path(identity['dirs'].replace('~/', str(self.home) + '/', 1)) / 'project'
@@ -515,15 +777,44 @@ os.execv('/usr/bin/ssh', ['/usr/bin/ssh', '-vvv', '-F', os.environ['SSH_FIXTURE_
                     # Positive controls prove the socket can detect the regression.
                     # ControlMaster=no alone still tries an existing master.
                     for extra in ('', ' -o ControlMaster=no'):
-                        command = self.git_value(repos[0], 'core.sshcommand').replace(' -o ControlPath=none', '') + extra
-                        result = self.command(['git', '-C', repos[0], '-c', 'core.sshCommand=' + command,
-                                               'ls-remote', 'git@fixture.invalid:repo'], timeout=10)
+                        command = (
+                            self.git_value(repos[0], 'core.sshcommand').replace(
+                                ' -o ControlPath=none', ''
+                            )
+                            + extra
+                        )
+                        result = self.command(
+                            [
+                                'git',
+                                '-C',
+                                repos[0],
+                                '-c',
+                                'core.sshCommand=' + command,
+                                'ls-remote',
+                                'git@fixture.invalid:repo',
+                            ],
+                            timeout=10,
+                        )
                         self.assertNotEqual(result.returncode, 0)
                     self.assertEqual(len(observed), 2)
-                    self.assertTrue(all(packet[:12] == b'\x00\x00\x00\x08\x00\x00\x00\x01\x00\x00\x00\x04' for packet in observed))
+                    self.assertTrue(
+                        all(
+                            packet[:12] == b'\x00\x00\x00\x08\x00\x00\x00\x01\x00\x00\x00\x04'
+                            for packet in observed
+                        )
+                    )
                     for order in ((0, 1), (1, 0)):
                         for index in order:
-                            result = self.command(['git', '-C', repos[index], 'ls-remote', 'git@fixture.invalid:repo'], timeout=10)
+                            result = self.command(
+                                [
+                                    'git',
+                                    '-C',
+                                    repos[index],
+                                    'ls-remote',
+                                    'git@fixture.invalid:repo',
+                                ],
+                                timeout=10,
+                            )
                             self.assertNotEqual(result.returncode, 0)  # No SSH server by design.
                             argv = json.loads((self.root / 'argv.json').read_text())
                             identity = self.ids[index]

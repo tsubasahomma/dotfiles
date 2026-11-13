@@ -1,0 +1,10 @@
+# Ruff is the Python formatter and linter: python3 tests/run_checks.py lint.
+# https://docs.astral.sh/ruff/configuration/
+line-length = 100
+target-version = "py311"
+# The entry point re-launches itself on 3.11+, so it must still parse on older Python 3.
+per-file-target-version = { "tests/run_checks.py" = "py39" }
+
+[format]
+# Keep the existing quote style; a quote rewrite would bury real changes.
+quote-style = "preserve"

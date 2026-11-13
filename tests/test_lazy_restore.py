@@ -1,4 +1,5 @@
 """Native Lua failure gates; upstream network/plugin behavior is tested in CI."""
+
 import json
 import os
 from pathlib import Path
@@ -16,17 +17,26 @@ class Restore(unittest.TestCase):
     def run_case(self, mode):
         with tempfile.TemporaryDirectory(prefix='restore-test-') as directory:
             root = Path(directory).resolve()
-            config = root / 'config/nvim'; config.mkdir(parents=True)
+            config = root / 'config/nvim'
+            config.mkdir(parents=True)
             plugins = root / 'data/nvim/lazy'
             for name in ('lazy.nvim', 'LazyVim', 'example'):
                 (plugins / name).mkdir(parents=True)
-            lock = {name: {'branch': 'main', 'commit': ENGINE if name == 'lazy.nvim' else '1' * 40}
-                    for name in ('lazy.nvim', 'LazyVim', 'example')}
+            lock = {
+                name: {'branch': 'main', 'commit': ENGINE if name == 'lazy.nvim' else '1' * 40}
+                for name in ('lazy.nvim', 'LazyVim', 'example')
+            }
             original = json.dumps(lock).encode()
             (config / 'lazy-lock.json').write_bytes(original)
-            (config / 'init.lua').write_text('require("lazy").setup({spec={}, rocks={enabled=false}})')
+            (config / 'init.lua').write_text(
+                'require("lazy").setup({spec={}, rocks={enabled=false}})'
+            )
             script = root / 'test.lua'
-            script.write_text('local mode = ' + json.dumps(mode) + '\n' + r'''
+            script.write_text(
+                'local mode = '
+                + json.dumps(mode)
+                + '\n'
+                + r'''
 local root = vim.fn.stdpath("data") .. "/lazy"
 local engine = "85c7ff3711b730b4030d03144f6db6375044ae82"
 local target = string.rep("1", 40)
@@ -110,14 +120,30 @@ package.preload["lazy"] = function() return {
     if mode == "drift" then head=string.rep("2", 40) end
   end,
 } end
-''' + '\ndofile(' + json.dumps(str(REPO / '.chezmoitemplates/lazy_restore.lua')) + ')\n')
-            env = {'HOME': str(root), 'PATH': '/usr/bin:/bin', 'XDG_CONFIG_HOME': str(root / 'config'),
-                   'XDG_DATA_HOME': str(root / 'data'), 'XDG_STATE_HOME': str(root / 'state'),
-                   'XDG_CACHE_HOME': str(root / 'cache'), 'DOTFILES_RESTORE_LOCK': str(root / 'work-lock.json')}
+'''
+                + '\ndofile('
+                + json.dumps(str(REPO / '.chezmoitemplates/lazy_restore.lua'))
+                + ')\n'
+            )
+            env = {
+                'HOME': str(root),
+                'PATH': '/usr/bin:/bin',
+                'XDG_CONFIG_HOME': str(root / 'config'),
+                'XDG_DATA_HOME': str(root / 'data'),
+                'XDG_STATE_HOME': str(root / 'state'),
+                'XDG_CACHE_HOME': str(root / 'cache'),
+                'DOTFILES_RESTORE_LOCK': str(root / 'work-lock.json'),
+            }
             if mode == 'debug':
                 env['DOTFILES_MASON_DEBUG'] = '1'
-            result = subprocess.run([NVIM, '--headless', '-u', 'NONE', '-i', 'NONE', '-n', '-l', str(script)],
-                                    cwd=root, env=env, capture_output=True, text=True, timeout=15)
+            result = subprocess.run(
+                [NVIM, '--headless', '-u', 'NONE', '-i', 'NONE', '-n', '-l', str(script)],
+                cwd=root,
+                env=env,
+                capture_output=True,
+                text=True,
+                timeout=15,
+            )
             self.assertEqual((config / 'lazy-lock.json').read_bytes(), original)
             return result
 
@@ -128,7 +154,19 @@ package.preload["lazy"] = function() return {
                 self.assertEqual(result.returncode, 0, result.stderr)
 
     def test_failures_are_nonzero_and_preserve_adopted_lock(self):
-        for mode in ('silent', 'submodule', 'build', 'spec', 'dirty', 'engine', 'origin', 'new-plugin', 'notify', 'callback', 'drift'):
+        for mode in (
+            'silent',
+            'submodule',
+            'build',
+            'spec',
+            'dirty',
+            'engine',
+            'origin',
+            'new-plugin',
+            'notify',
+            'callback',
+            'drift',
+        ):
             with self.subTest(mode=mode):
                 result = self.run_case(mode)
                 self.assertNotEqual(result.returncode, 0, result.stdout)

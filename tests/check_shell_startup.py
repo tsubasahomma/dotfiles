@@ -4,6 +4,7 @@
 The caller supplies the disposable HOME explicitly. No installation or apply is
 performed. Zsh/mise may write caches inside that HOME; authentication is denied.
 """
+
 import argparse
 import os
 from pathlib import Path
@@ -32,9 +33,14 @@ print -r -- DOTFILES_SHELL_READY
 
 def check_startup(home, zsh, timeout=30):
     home = Path(home).resolve(strict=True)
-    for relative in ['.zshenv', '.config/zsh/.zshrc', '.config/mise/config.toml',
-                     '.local/bin/mise', '.cache/zsh/init/zoxide.zsh',
-                     '.cache/zsh/init/starship.zsh']:
+    for relative in [
+        '.zshenv',
+        '.config/zsh/.zshrc',
+        '.config/mise/config.toml',
+        '.local/bin/mise',
+        '.cache/zsh/init/zoxide.zsh',
+        '.cache/zsh/init/starship.zsh',
+    ]:
         if not (home / relative).is_file():
             raise RuntimeError('missing shell prerequisite: ' + relative)
     config = (home / '.config/mise/config.toml').read_text()
@@ -46,23 +52,37 @@ def check_startup(home, zsh, timeout=30):
         op.write_text('#!/bin/sh\nprintf called >> "$SHELL_CHECK_STUB/auth-called"\nexit 91\n')
         op.chmod(0o700)
         # No ambient tokens, SSH agent, mise overrides, user config or CI secrets.
-        env = {'HOME': str(home), 'ZDOTDIR': str(home),
-               'PATH': f'{root}:/usr/bin:/bin:/usr/sbin:/sbin',
-               'TERM': 'xterm-256color', 'LC_ALL': 'C', 'TMPDIR': str(root),
-               'SHELL_CHECK_STUB': str(root),
-               'MISE_AUTO_INSTALL': 'false', 'MISE_TASK_RUN_AUTO_INSTALL': 'false',
-               'MISE_NOT_FOUND_AUTO_INSTALL': 'false',
-               'MISE_GITHUB_CREDENTIAL_COMMAND': str(op),
-               'GIT_CONFIG_NOSYSTEM': '1', 'GIT_CONFIG_GLOBAL': os.devnull}
-        result = subprocess.run([zsh, '-d', '-l', '-i', '-c', STARTUP_CHECK],
-                                env=env, cwd=home, stdin=subprocess.DEVNULL,
-                                capture_output=True, text=True, timeout=timeout)
+        env = {
+            'HOME': str(home),
+            'ZDOTDIR': str(home),
+            'PATH': f'{root}:/usr/bin:/bin:/usr/sbin:/sbin',
+            'TERM': 'xterm-256color',
+            'LC_ALL': 'C',
+            'TMPDIR': str(root),
+            'SHELL_CHECK_STUB': str(root),
+            'MISE_AUTO_INSTALL': 'false',
+            'MISE_TASK_RUN_AUTO_INSTALL': 'false',
+            'MISE_NOT_FOUND_AUTO_INSTALL': 'false',
+            'MISE_GITHUB_CREDENTIAL_COMMAND': str(op),
+            'GIT_CONFIG_NOSYSTEM': '1',
+            'GIT_CONFIG_GLOBAL': os.devnull,
+        }
+        result = subprocess.run(
+            [zsh, '-d', '-l', '-i', '-c', STARTUP_CHECK],
+            env=env,
+            cwd=home,
+            stdin=subprocess.DEVNULL,
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+        )
         if (root / 'auth-called').exists():
             raise RuntimeError('shell startup attempted authentication')
         if result.returncode or result.stderr or 'DOTFILES_SHELL_READY\n' not in result.stdout:
             # Do not publish shell output: future configs may print sensitive data.
-            raise RuntimeError(f'shell startup failed (exit={result.returncode}, '
-                               f'stderr={bool(result.stderr)})')
+            raise RuntimeError(
+                f'shell startup failed (exit={result.returncode}, stderr={bool(result.stderr)})'
+            )
 
 
 if __name__ == '__main__':
