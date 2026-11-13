@@ -19,9 +19,9 @@ select = ["E4", "E7", "E9", "F", "I", "B", "UP"]
 # The task templates exec() these fragments inside generated_files.py, which
 # defines the shared names (Path, sys, regular, fingerprint, ...).
 ".chezmoitemplates/{bat_cache,pbfile_build,vale_styles}.py" = ["F821"]
-# PENDING: deployed files; fixed in the pull requests that wait for the owner's
-# approval (E70x and I001 by the formatting one, B904 and E731 by the fix one).
-".chezmoitemplates/*.py" = ["E701", "E702", "I001", "B904", "E731"]
+# PENDING: deployed files; the formatting pull request that waits for the
+# owner's approval fixes these.
+".chezmoitemplates/*.py" = ["E701", "E702", "I001"]
 
 [lint.isort]
 # Match the existing order: plain and from-imports sorted together.

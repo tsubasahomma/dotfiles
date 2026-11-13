@@ -290,7 +290,7 @@ def main():
     try:
         lock.mkdir(mode=0o700)
     except FileExistsError:
-        raise Refusal('identity writer lock exists; inspect active/interrupted writer')
+        raise Refusal('identity writer lock exists; inspect active/interrupted writer') from None
     try:
         if action == 'prepare':
             prepare(parent, entry, data)
