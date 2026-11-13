@@ -113,7 +113,7 @@ def directories(path, *, create):
             info = current.lstat()
         except FileNotFoundError:
             if not create:
-                raise RuntimeError(f'Missing directory: {current}')
+                raise RuntimeError(f'Missing directory: {current}') from None
             current.mkdir()
             info = current.lstat()
         if not stat.S_ISDIR(info.st_mode):
@@ -126,14 +126,17 @@ def read_file(path, *, missing=True):
     except FileNotFoundError:
         if missing:
             return None
-        raise RuntimeError(f'Required source is missing: {path}')
+        raise RuntimeError(f'Required source is missing: {path}') from None
     with os.fdopen(fd, 'rb') as stream:
         info = os.fstat(stream.fileno())
         if not stat.S_ISREG(info.st_mode) or info.st_nlink != 1:
             raise RuntimeError(f'Expected a regular file with one hard link: {path}')
         data = stream.read()
         after = os.fstat(stream.fileno())
-        key = lambda s: (s.st_dev, s.st_ino, s.st_size, s.st_mtime_ns, s.st_ctime_ns, s.st_mode)
+
+        def key(s):
+            return (s.st_dev, s.st_ino, s.st_size, s.st_mtime_ns, s.st_ctime_ns, s.st_mode)
+
         if key(info) != key(after):
             raise RuntimeError(f'File changed while reading: {path}')
         return data, key(info), stat.S_IMODE(info.st_mode)
