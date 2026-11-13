@@ -1,4 +1,5 @@
 """Small shared I/O primitives for bat, Vale and pbfile (not a task scheduler)."""
+
 import contextlib
 import fcntl
 import hashlib
@@ -28,8 +29,9 @@ def fingerprint(value):
 
 
 def run(args, *, env=None, data=None):
-    result = subprocess.run([str(a) for a in args], input=data, text=True,
-                            capture_output=True, env=env, check=True)
+    result = subprocess.run(
+        [str(a) for a in args], input=data, text=True, capture_output=True, env=env, check=True
+    )
     return result.stdout.strip()
 
 
@@ -72,8 +74,13 @@ def input_tree(root):
 
 
 def selected_tool(mise, name):
-    env = dict(os.environ, MISE_AUTO_INSTALL='false', MISE_EXEC_AUTO_INSTALL='false',
-               MISE_TASK_RUN_AUTO_INSTALL='false', MISE_OFFLINE='true')
+    env = dict(
+        os.environ,
+        MISE_AUTO_INSTALL='false',
+        MISE_EXEC_AUTO_INSTALL='false',
+        MISE_TASK_RUN_AUTO_INSTALL='false',
+        MISE_OFFLINE='true',
+    )
     tool = Path(run([mise, 'which', '--tool', name, name], env=env))
     if not tool.is_absolute() or not tool.is_file() or not os.access(tool, os.X_OK):
         raise RuntimeError(f'Missing installed {name}: {tool}')
@@ -101,14 +108,24 @@ def load_receipt(path, name, allowed):
     if not regular(path):
         raise RuntimeError(f'Invalid receipt: {path}')
     value = json.loads(path.read_text())
-    if (set(value) != {'owner', 'input', 'files'} or value['owner'] != name + '-v1'
-            or not isinstance(value['input'], str) or not isinstance(value['files'], dict)
-            or not value['files']):
+    if (
+        set(value) != {'owner', 'input', 'files'}
+        or value['owner'] != name + '-v1'
+        or not isinstance(value['input'], str)
+        or not isinstance(value['files'], dict)
+        or not value['files']
+    ):
         raise RuntimeError(f'Unrecognized receipt: {path}')
     for key, item in value['files'].items():
-        if (not isinstance(key, str) or not allowed(key) or not isinstance(item, dict) or set(item) != {'sha256', 'mode'}
-                or not isinstance(item['sha256'], str) or len(item['sha256']) != 64
-                or item['mode'] not in (0o644, 0o755)):
+        if (
+            not isinstance(key, str)
+            or not allowed(key)
+            or not isinstance(item, dict)
+            or set(item) != {'sha256', 'mode'}
+            or not isinstance(item['sha256'], str)
+            or len(item['sha256']) != 64
+            or item['mode'] not in (0o644, 0o755)
+        ):
             raise RuntimeError(f'Invalid receipt entry: {key}')
     return value
 
@@ -189,7 +206,9 @@ def publish(root, stage, names, receipt, owner, inputs, previous):
                 committed = False
             except BaseException as observation_error:
                 keep_backup = True
-                raise RuntimeError(f'Cannot determine receipt commit; preserve/reconcile backup at {backup}') from observation_error
+                raise RuntimeError(
+                    f'Cannot determine receipt commit; preserve/reconcile backup at {backup}'
+                ) from observation_error
             if committed:
                 raise
             try:
@@ -200,7 +219,9 @@ def publish(root, stage, names, receipt, owner, inputs, previous):
                         path.unlink(missing_ok=True)
             except BaseException as recovery_error:
                 keep_backup = True
-                raise RuntimeError(f'Publish rollback failed; preserve/reconcile backup at {backup}') from recovery_error
+                raise RuntimeError(
+                    f'Publish rollback failed; preserve/reconcile backup at {backup}'
+                ) from recovery_error
             raise
     finally:
         if not keep_backup:

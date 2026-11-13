@@ -30,21 +30,31 @@ def read_config():
     else:
         path = Path(package)
         if not path.is_absolute() or not path.exists() or path.name not in ('Google', 'Google.zip'):
-            raise RuntimeError('Expected Google, HTTPS Google.zip, or absolute local Google package')
+            raise RuntimeError(
+                'Expected Google, HTTPS Google.zip, or absolute local Google package'
+            )
         dependency = input_tree(path) if path.is_dir() else file_hash(path)
     return text, package, dependency
 
 
 def inputs():
     text, package, dependency = read_config()
-    return fingerprint({'script': file_hash(script), 'config': text, 'package': dependency,
-                        'binary': file_hash(tool), 'path': str(tool.resolve()),
-                        'version': run([tool, '--version'])})
+    return fingerprint(
+        {
+            'script': file_hash(script),
+            'config': text,
+            'package': dependency,
+            'binary': file_hash(tool),
+            'path': str(tool.resolve()),
+            'version': run([tool, '--version']),
+        }
+    )
 
 
 def allowed(name):
     return name in ('Google/vocab.txt', 'Google/meta.json', 'Google/LICENSE') or bool(
-        re.fullmatch(r'Google/[A-Za-z0-9_-]+\.yml', name))
+        re.fullmatch(r'Google/[A-Za-z0-9_-]+\.yml', name)
+    )
 
 
 with locked(state, 'vale') as receipt:
@@ -64,8 +74,10 @@ with locked(state, 'vale') as receipt:
             staged_config = stage / 'vale.ini'
             # Construct a bounded sync config instead of text substitution:
             # INI accepts indentation/colon separators that a regex can miss.
-            staged_config.write_text(f'StylesPath = {styles}\nPackages = {package}\n'
-                                     'MinAlertLevel = suggestion\n\n[*]\nBasedOnStyles = Google\n')
+            staged_config.write_text(
+                f'StylesPath = {styles}\nPackages = {package}\n'
+                'MinAlertLevel = suggestion\n\n[*]\nBasedOnStyles = Google\n'
+            )
             env = {k: v for k, v in os.environ.items() if not k.startswith('VALE_')}
             run([tool, '--no-global', '--config=' + str(staged_config), 'sync'], env=env)
             names = []
@@ -88,9 +100,14 @@ with locked(state, 'vale') as receipt:
             # Parse every downloaded rule through the consumer. Alerts are fine;
             # parser/runtime errors remain failures. Never lint user documents.
             validation = stage / 'validate.ini'
-            validation.write_text(f'StylesPath = {styles}\nMinAlertLevel = suggestion\n[*]\nBasedOnStyles = Google\n')
-            run([tool, '--no-global', '--config=' + str(validation), '--no-exit', '--ext=.txt'],
-                env=env, data='A simple validation sentence.\n')
+            validation.write_text(
+                f'StylesPath = {styles}\nMinAlertLevel = suggestion\n[*]\nBasedOnStyles = Google\n'
+            )
+            run(
+                [tool, '--no-global', '--config=' + str(validation), '--no-exit', '--ext=.txt'],
+                env=env,
+                data='A simple validation sentence.\n',
+            )
             if key != inputs():
                 raise RuntimeError('Vale dependencies changed during sync')
             publish(root, styles, names, receipt, 'vale', key, previous)

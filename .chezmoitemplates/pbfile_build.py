@@ -15,12 +15,20 @@ def compiler_inputs():
     # SDK settings and selected driver/version are representative dependencies;
     # not a hash of every SDK header, compiler dylib or framework on the host.
     settings = sdk / 'SDKSettings.json'
-    key = fingerprint({'script': file_hash(script), 'source': file_hash(source),
-                       'compiler': str(compiler.resolve()), 'compiler_hash': file_hash(compiler),
-                       'version': run([compiler, '--version']), 'sdk': str(sdk.resolve()),
-                       'sdk_version': run(['xcrun', '--sdk', 'macosx', '--show-sdk-version']),
-                       'settings': file_hash(settings), 'arch': platform.machine(),
-                       'deployment_target': os.environ.get('MACOSX_DEPLOYMENT_TARGET', '')})
+    key = fingerprint(
+        {
+            'script': file_hash(script),
+            'source': file_hash(source),
+            'compiler': str(compiler.resolve()),
+            'compiler_hash': file_hash(compiler),
+            'version': run([compiler, '--version']),
+            'sdk': str(sdk.resolve()),
+            'sdk_version': run(['xcrun', '--sdk', 'macosx', '--show-sdk-version']),
+            'settings': file_hash(settings),
+            'arch': platform.machine(),
+            'deployment_target': os.environ.get('MACOSX_DEPLOYMENT_TARGET', ''),
+        }
+    )
     return compiler, sdk, key
 
 
@@ -32,10 +40,26 @@ with locked(state, 'pbfile') as receipt:
         with tempfile.TemporaryDirectory(prefix='.pbfile-stage-', dir=root) as temporary:
             stage = Path(temporary)
             target = stage / 'pbfile'
-            env = dict(os.environ, CLANG_MODULE_CACHE_PATH=str(stage / 'clang-cache'),
-                       SWIFT_MODULECACHE_PATH=str(stage / 'swift-cache'))
-            run([compiler, '-sdk', sdk, '-O', '-whole-module-optimization',
-                 '-module-cache-path', stage / 'swift-cache', source, '-o', target], env=env)
+            env = dict(
+                os.environ,
+                CLANG_MODULE_CACHE_PATH=str(stage / 'clang-cache'),
+                SWIFT_MODULECACHE_PATH=str(stage / 'swift-cache'),
+            )
+            run(
+                [
+                    compiler,
+                    '-sdk',
+                    sdk,
+                    '-O',
+                    '-whole-module-optimization',
+                    '-module-cache-path',
+                    stage / 'swift-cache',
+                    source,
+                    '-o',
+                    target,
+                ],
+                env=env,
+            )
             record(target)
             if target.stat().st_size == 0:
                 raise RuntimeError('Empty pbfile compiler output')

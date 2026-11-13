@@ -4,6 +4,7 @@ Each target has an adjacent receipt and exclusive directory lock shared by WSL
 writers. File/receipt publication is not a crash-atomic transaction. Windows
 editors do not participate in this lock; do not edit during synchronization.
 """
+
 import base64
 import contextlib
 import hashlib
@@ -65,10 +66,15 @@ try {
 }
 '''.replace('__VARIABLE__', variable).replace('__SUFFIX__', '\\'.join(parts))
     encoded = base64.b64encode(script.encode('utf-16le')).decode('ascii')
-    result = subprocess.run(['powershell.exe', '-NoLogo', '-NoProfile', '-NonInteractive',
-                             '-EncodedCommand', encoded], capture_output=True, check=False)
+    result = subprocess.run(
+        ['powershell.exe', '-NoLogo', '-NoProfile', '-NonInteractive', '-EncodedCommand', encoded],
+        capture_output=True,
+        check=False,
+    )
     if result.returncode or result.stderr.strip():
-        raise RuntimeError('Windows path query failed; check interop, environment and reparse points')
+        raise RuntimeError(
+            'Windows path query failed; check interop, environment and reparse points'
+        )
     try:
         obj = json.loads(base64.b64decode(result.stdout.strip(), validate=True).decode('utf-8'))
         if not isinstance(obj, dict) or set(obj) != {'root'}:
@@ -79,8 +85,8 @@ try {
         # No UNC/device paths, ADS, traversal or ambiguous Windows components.
         tail = root[3:]
         if any(c in tail for c in '<>:"|?*/') or any(
-                part in ('.', '..') or part.endswith((' ', '.'))
-                for part in tail.split('\\') if part):
+            part in ('.', '..') or part.endswith((' ', '.')) for part in tail.split('\\') if part
+        ):
             raise ValueError('unsupported root')
         return ntpath.normpath(root)
     except (ValueError, UnicodeError, TypeError) as exc:
@@ -159,7 +165,9 @@ def locked(target):
         yield
     finally:
         current = path.lstat()
-        if (current.st_dev, current.st_ino) != (info.st_dev, info.st_ino) or not stat.S_ISDIR(current.st_mode):
+        if (current.st_dev, current.st_ino) != (info.st_dev, info.st_ino) or not stat.S_ISDIR(
+            current.st_mode
+        ):
             raise RuntimeError('Sync lock changed; retained for inspection')
         path.rmdir()  # Only our empty lock, never recursive cleanup.
 
@@ -188,11 +196,13 @@ def publish(target, receipt, expected, metadata, before, old_receipt, recheck):
     backup = None
     try:
         output = staged(target, expected, before[2] if before else 0o600) if changed else None
-        if output: temporary.append(output)
+        if output:
+            temporary.append(output)
         new_receipt = staged(receipt, metadata, 0o600)
         temporary.append(new_receipt)
         if changed and before is not None:
-            backup = staged(target, before[0], before[2]); temporary.append(backup)
+            backup = staged(target, before[0], before[2])
+            temporary.append(backup)
         recheck()
         unchanged(target, before)
         unchanged(receipt, old_receipt)
@@ -219,7 +229,9 @@ def publish(target, receipt, expected, metadata, before, old_receipt, recheck):
                         target.unlink()
                 except Exception as rollback:
                     keep_backup = True
-                    raise RuntimeError(f'Receipt failed and rollback failed; retained backup {backup}') from rollback
+                    raise RuntimeError(
+                        f'Receipt failed and rollback failed; retained backup {backup}'
+                    ) from rollback
             raise RuntimeError('Receipt publication failed; previous target restored') from exc
     finally:
         for path in temporary:
@@ -256,11 +268,16 @@ def sync(kind, source):
         if old_receipt is not None:
             try:
                 record = json.loads(old_receipt[0])
-                if (not isinstance(record, dict) or set(record) != {'version', 'kind', 'destination', 'sha256'}
-                        or type(record['version']) is not int or record['version'] != 1
-                        or record['kind'] != kind or record['destination'] != destination
-                        or not isinstance(record['sha256'], str)
-                        or not re.fullmatch('[0-9a-f]{64}', record['sha256'])):
+                if (
+                    not isinstance(record, dict)
+                    or set(record) != {'version', 'kind', 'destination', 'sha256'}
+                    or type(record['version']) is not int
+                    or record['version'] != 1
+                    or record['kind'] != kind
+                    or record['destination'] != destination
+                    or not isinstance(record['sha256'], str)
+                    or not re.fullmatch('[0-9a-f]{64}', record['sha256'])
+                ):
                     raise ValueError('receipt schema or destination')
             except (ValueError, UnicodeError) as exc:
                 raise RuntimeError('Invalid or redirected Windows sync receipt; retained') from exc
@@ -268,22 +285,43 @@ def sync(kind, source):
                 raise RuntimeError('Windows setting was edited since last sync; retained')
         elif before is not None and before[0] != expected:
             raise RuntimeError('Existing unowned Windows setting differs; retained')
-        metadata = (json.dumps({'version': 1, 'kind': kind, 'destination': destination,
-                                'sha256': digest(expected)}, sort_keys=True) + '\n').encode()
-        if before is not None and before[0] == expected and old_receipt and old_receipt[0] == metadata:
+        metadata = (
+            json.dumps(
+                {
+                    'version': 1,
+                    'kind': kind,
+                    'destination': destination,
+                    'sha256': digest(expected),
+                },
+                sort_keys=True,
+            )
+            + '\n'
+        ).encode()
+        if (
+            before is not None
+            and before[0] == expected
+            and old_receipt
+            and old_receipt[0] == metadata
+        ):
             print(f'[UNCHANGED] Windows {kind} setting')
             return
         # Recreating a missing target with unchanged input need not rewrite receipt.
         if before is None and old_receipt and old_receipt[0] == metadata:
             temp = staged(target, expected, 0o600)
             try:
-                recheck(); unchanged(target, before); unchanged(receipt, old_receipt)
+                recheck()
+                unchanged(target, before)
+                unchanged(receipt, old_receipt)
                 os.replace(temp, target)
             finally:
                 temp.unlink(missing_ok=True)
         else:
             publish(target, receipt, expected, metadata, before, old_receipt, recheck)
-        status = ('RESTORED' if old_receipt else 'CREATED') if before is None else ('ADOPTED' if old_receipt is None and before[0] == expected else 'UPDATED')
+        status = (
+            ('RESTORED' if old_receipt else 'CREATED')
+            if before is None
+            else ('ADOPTED' if old_receipt is None and before[0] == expected else 'UPDATED')
+        )
         print(f'[{status}] Windows {kind} setting file (application use not verified)')
 
 
