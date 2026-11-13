@@ -1,7 +1,7 @@
 -- Chezmoi integration for source-state template editing.
 -- Treesitter gotmpl highlighting keeps source and target syntax easier to review
 -- while chezmoi.nvim handles source-target synchronization.
--- [Reference]: https://www.chezmoi.io/user-guide/advanced/ide-integration/#neovim
+-- [Reference]: https://www.chezmoi.io/user-guide/tools/editor/#use-chezmoi-with-vim
 
 return {
   {

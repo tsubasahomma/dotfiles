@@ -39,14 +39,6 @@ sourceDir = {{ .chezmoi.sourceDir | quote }}
 {{-   end -}}
 {{- end -}}
 
-{{- $windows_user := "unknown" -}}
-{{- if $is_wsl -}}
-{{-   $windows_user = env "WINDOWS_USER" | default (output "sh" "-c" "cmd.exe /c \"echo %USERNAME%\" 2>/dev/null | tr -d '\\r' || true" | trim) -}}
-{{-   if eq $windows_user "" -}}
-{{-     fail "[FATAL] Windows username discovery returned empty. Confirm 'cmd.exe /c echo %USERNAME%' returns a value from WSL or set WINDOWS_USER before running chezmoi." -}}
-{{-   end -}}
-{{- end -}}
-
 {{- $brew_prefix := "/usr/local" -}}
 {{- if eq $osid "darwin" -}}
 {{-   if eq $arch "arm64" }}{{$brew_prefix = "/opt/homebrew"}}{{end -}}
@@ -95,7 +87,6 @@ sourceDir = {{ .chezmoi.sourceDir | quote }}
 
 {{- /* --- 3. Content-Addressable Identity Aggregation --- */}}
 {{- $identities := list -}}
-{{- $ssh_keys_hash_input := "" -}}
 {{- if eq $op_status "ready" -}}
 {{-   $accounts_json := output $op_bin "account" "list" "--format" "json" -}}
 {{-   $accounts := fromJson $accounts_json -}}
@@ -108,7 +99,6 @@ sourceDir = {{ .chezmoi.sourceDir | quote }}
 {{-     $items_json := output $op_bin "item" "list" "--tags" "dotfiles-ssh-key" "--account" $account_id "--format" "json" -}}
 {{-     $items := fromJson $items_json -}}
 {{-     if not (kindIs "slice" $items) -}}{{- fail "identity: item list must be a JSON array" -}}{{- end -}}
-{{-     if $items -}}{{- $ssh_keys_hash_input = printf "%s%s" $ssh_keys_hash_input $items_json -}}{{- end -}}
 {{-     range $items -}}
 {{-       if not (kindIs "map" .) -}}{{- fail "identity: item must be a JSON object" -}}{{- end -}}
 {{-       $item_id := .id -}}
@@ -141,11 +131,6 @@ sourceDir = {{ .chezmoi.sourceDir | quote }}
 
 {{- $identities = includeTemplate "validated_identities.tmpl" (dict "identities" $identities "paths" (dict "home" $home "xdg_config" (joinPath $home ".config"))) | fromJson -}}
 
-{{- $ssh_keys_hash := "none" -}}
-{{- if ne $ssh_keys_hash_input "" -}}
-{{-   $ssh_keys_hash = sha256sum $ssh_keys_hash_input -}}
-{{- end -}}
-
 {{- /* --- 4. Tool & SSH Context Resolver --- */}}
 {{- $ssh_auth_sock := "" -}}
 {{- if eq $osid "darwin" -}}
@@ -174,19 +159,14 @@ sourceDir = {{ .chezmoi.sourceDir | quote }}
 {{-   end -}}
 {{- else -}}
 {{-   $op_sign = lookPath "op-ssh-sign" | default "" -}}
-{{- end -}}
-
-{{- $true_cmd := lookPath "true" | default "/usr/bin/true" }}
+{{- end }}
 
 [data]
     osid = {{ $osid | quote }}
     arch = {{ $arch | quote }}
     is_wsl = {{ $is_wsl }}
     brew_prefix = {{ $brew_prefix | quote }}
-    windows_user = {{ $windows_user | quote }}
     ssh_auth_sock = {{ $ssh_auth_sock | quote }}
-    op_status = {{ $op_status | quote }}
-    ssh_keys_hash = {{ $ssh_keys_hash | quote }}
     identities = [
     {{- range $i, $id := $identities -}}
       {{- if $i }},{{ end -}}
@@ -202,7 +182,6 @@ sourceDir = {{ .chezmoi.sourceDir | quote }}
         xdg_data = {{ joinPath $home ".local/share" | quote }}
         xdg_state = {{ joinPath $home ".local/state" | quote }}
         xdg_cache = {{ joinPath $home ".cache" | quote }}
-        true_cmd = {{ $true_cmd | quote }}
         op_sign = {{ $op_sign | quote }}
 
 [edit]
