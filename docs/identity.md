@@ -4,8 +4,8 @@ title: Git・SSH identityの入力と生成物
 description: 1Passwordの入力、Gitの選択、SSH認証と署名の経路を変更・調査するときに読む。
 status: draft
 generated:
-  by: claude-code/claude-fable-5-2
-  at: "2026-11-13T05:44:03+00:00"
+  by: claude-code/claude-opus-5-5
+  at: "2026-11-13T06:49:36+00:00"
 sources:
   - id: identity-after
     resource: "../.chezmoiscripts/run_after_10-identity.sh.tmpl"
@@ -169,7 +169,8 @@ Windows公式はControlMasterを未対応機能に挙げる。一方、PowerShel
 | 観測した挙動 | 影響・まだ確認していないこと |
 |---|---|
 | 旧世代・旧公開鍵fileを自動回収しない | 既存readerと未知fileを保持するための意図的な制約。容量整理は参照・所有確認後の別操作 |
-| SSH共通設定に`ForwardAgent yes`と`StrictHostKeyChecking accept-new`がある | 全host向けの現在の既定値。必須要件・最善の設定と認定していない |
+| SSH共通設定に`StrictHostKeyChecking accept-new`がある | 全host向けの現在の既定値。必須要件・最善の設定と認定していない |
+| agent転送（`ForwardAgent`）は全host向けの既定で無効 | 転送が必要なhostは`conf.d`のhost別設定で有効にする。`conf.d`は共通設定より先に読まれるので、host別の値が優先される。どのhostで必要かは未調査 |
 
 上記は現行codeの制約である。R05では生成と参照切替を変更した。socket契約とGit接続の分離はR04で修正した。[^generate][^config][^git][^ssh][^zshenv]
 
