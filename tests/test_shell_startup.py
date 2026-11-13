@@ -1,4 +1,5 @@
 """Fault injection for the CI startup probe; no workstation config or tools."""
+
 from pathlib import Path
 import shutil
 import subprocess
@@ -15,20 +16,30 @@ class ShellStartup(unittest.TestCase):
         self.temporary = tempfile.TemporaryDirectory(prefix='shell-fixture-')
         self.addCleanup(self.temporary.cleanup)
         self.home = Path(self.temporary.name)
-        self.write('.zshenv', '''export ZDOTDIR="$HOME/.config/zsh"
+        self.write(
+            '.zshenv',
+            '''export ZDOTDIR="$HOME/.config/zsh"
 export XDG_CONFIG_HOME="$HOME/.config"
 export XDG_DATA_HOME="$HOME/.local/share"
-''')
+''',
+        )
         self.write('.config/mise/config.toml', '[settings]\n')
-        self.write('.local/bin/mise', '''#!/bin/sh
+        self.write(
+            '.local/bin/mise',
+            '''#!/bin/sh
 cat <<'ACTIVATION'
 mise() { command mise "$@"; }
 _mise_hook() { path=("$XDG_DATA_HOME/mise/installs/fixture/bin" $path); }
 ACTIVATION
-''', executable=True)
+''',
+            executable=True,
+        )
         for name in ['node', 'chezmoi']:
-            self.write('.local/share/mise/installs/fixture/bin/' + name,
-                       '#!/bin/sh\nexit 0\n', executable=True)
+            self.write(
+                '.local/share/mise/installs/fixture/bin/' + name,
+                '#!/bin/sh\nexit 0\n',
+                executable=True,
+            )
         self.write('.cache/zsh/init/zoxide.zsh', '__zoxide_z() { :; }\n')
         self.write('.cache/zsh/init/starship.zsh', 'prompt_starship_precmd() { :; }\n')
         self.rc = '''path=("$HOME/.local/bin" $path)

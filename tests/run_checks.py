@@ -27,11 +27,25 @@ import unittest
 TESTS = Path(__file__).resolve().parent
 REPO = TESTS.parent
 REGRESSION = [
-    'test_mise_read_boundary', 'test_identity_boundary', 'test_identity_transaction',
-    'test_identity_convergence', 'test_ownership_boundary', 'test_completion_transaction', 'test_completion_convergence', 'test_git_fetch',
-    'test_diagnostic_boundary', 'test_generated_convergence', 'test_windows_packages', 'test_windows_config_sync', 'test_homebrew_packages',
-    'test_first_install_order', 'test_lazy_lock_update', 'test_lazy_restore', 'test_ci_verify',
-    'test_shell_startup', 'test_mason_log',
+    'test_mise_read_boundary',
+    'test_identity_boundary',
+    'test_identity_transaction',
+    'test_identity_convergence',
+    'test_ownership_boundary',
+    'test_completion_transaction',
+    'test_completion_convergence',
+    'test_git_fetch',
+    'test_diagnostic_boundary',
+    'test_generated_convergence',
+    'test_windows_packages',
+    'test_windows_config_sync',
+    'test_homebrew_packages',
+    'test_first_install_order',
+    'test_lazy_lock_update',
+    'test_lazy_restore',
+    'test_ci_verify',
+    'test_shell_startup',
+    'test_mason_log',
 ]
 MODULES = ['test_render_syntax'] + REGRESSION
 # The slow layer: tests that run chezmoi apply (also --dry-run or init --apply) on a
@@ -44,7 +58,9 @@ SLOW = {
     'test_first_install_order': None,
     'test_generated_convergence': None,
     'test_identity_convergence': None,
-    'test_identity_transaction': ['Transaction.test_r05_before_failure_prevents_target_change_and_retry'],
+    'test_identity_transaction': [
+        'Transaction.test_r05_before_failure_prevents_target_change_and_retry'
+    ],
     'test_ownership_boundary': [
         'OwnershipBoundary.test_owned_source_modes_still_apply',
         'OwnershipBoundary.test_retired_files_and_manual_docker_install',
@@ -120,8 +136,10 @@ def find_installed(name):
         root = mise_data_dir() / 'installs' / directory / version
         if not root.is_dir():
             continue
-        matches = sorted((p for p in root.rglob(executable) if p.is_file() and os.access(p, os.X_OK)),
-                         key=lambda p: (p.parent.name != 'bin', len(p.parts)))
+        matches = sorted(
+            (p for p in root.rglob(executable) if p.is_file() and os.access(p, os.X_OK)),
+            key=lambda p: (p.parent.name != 'bin', len(p.parts)),
+        )
         if matches:
             return matches[0]
     return None
@@ -130,9 +148,18 @@ def find_installed(name):
 def mise_version(path):
     """Read a mise binary's version without user config, tasks or update checks."""
     with tempfile.TemporaryDirectory(prefix='run-checks-mise-') as home:
-        result = subprocess.run([str(path), '--version'], capture_output=True, text=True, timeout=30,
-                                env={'HOME': home, 'PATH': '/usr/bin:/bin', 'MISE_NO_CONFIG': '1',
-                                     'MISE_LOG_LEVEL': 'error'})
+        result = subprocess.run(
+            [str(path), '--version'],
+            capture_output=True,
+            text=True,
+            timeout=30,
+            env={
+                'HOME': home,
+                'PATH': '/usr/bin:/bin',
+                'MISE_NO_CONFIG': '1',
+                'MISE_LOG_LEVEL': 'error',
+            },
+        )
     words = result.stdout.split()
     return words[0] if result.returncode == 0 and words else None
 
@@ -156,7 +183,9 @@ def resolve(name):
             hint = f'set {variable}'
             if name in MANIFEST_TOOLS:
                 manifest, key, _ = MANIFEST_TOOLS[name]
-                hint += f' or install {key} {declared_version(manifest, key)} declared in {manifest}'
+                hint += (
+                    f' or install {key} {declared_version(manifest, key)} declared in {manifest}'
+                )
             state = 'only a shim on PATH' if found else 'not found'
             raise LookupError(f'{name} is required ({state}); {hint}')
     if name == 'mise':
@@ -164,8 +193,10 @@ def resolve(name):
         expected = (REPO / '.mise-version').read_text().strip()
         actual = mise_version(path)
         if actual != expected:
-            raise LookupError(f'mise {expected} from .mise-version is required, but {path} reports '
-                              f'{actual or "no version"}; set MISE_BIN to a {expected} binary')
+            raise LookupError(
+                f'mise {expected} from .mise-version is required, but {path} reports '
+                f'{actual or "no version"}; set MISE_BIN to a {expected} binary'
+            )
     return path, origin
 
 
@@ -175,8 +206,10 @@ def ensure_python():
         return
     installed = None if os.environ.get('RUN_CHECKS_REEXEC') else find_installed('python3')
     if not installed:
-        sys.exit('Python 3.11+ is required (tomllib); run with python3.11+ or install the '
-                 'python version declared in dot_config/mise/conf.d/10-tools.toml')
+        sys.exit(
+            'Python 3.11+ is required (tomllib); run with python3.11+ or install the '
+            'python version declared in dot_config/mise/conf.d/10-tools.toml'
+        )
     os.environ['RUN_CHECKS_REEXEC'] = '1'
     os.execv(str(installed), [str(installed), str(Path(__file__).resolve())] + sys.argv[1:])
 
@@ -191,8 +224,12 @@ def unit_for(module, layer):
     if layer == 'fast':
         if slow is None:
             return None
-        return (f'{module} (fast)' if module in SLOW else module, [module],
-                [f'{module}.{name}' for name in slow], True)
+        return (
+            f'{module} (fast)' if module in SLOW else module,
+            [module],
+            [f'{module}.{name}' for name in slow],
+            True,
+        )
     if layer == 'slow':
         names = [module] if slow is None else [f'{module}.{name}' for name in slow]
         return (f'{module} (slow)' if slow else module, names, [], False) if names else None
@@ -212,8 +249,10 @@ def expand(targets, parser):
             explicit.setdefault(target.split('.')[0], []).append(target)
             continue
         else:
-            parser.error(f'unknown target {target!r}; use a suite ({", ".join(SUITES)}) '
-                         f'or a module: {", ".join(sorted(modules))}')
+            parser.error(
+                f'unknown target {target!r}; use a suite ({", ".join(SUITES)}) '
+                f'or a module: {", ".join(sorted(modules))}'
+            )
         units += [unit for unit in selected if unit and unit not in units]
     for module, names in explicit.items():
         # A whole module wins over single tests of the same module.
@@ -248,13 +287,24 @@ def run_child(names, excluded, report):
     loaded = list(flatten(unittest.defaultTestLoader.loadTestsFromNames(names)))
     missing = [name for name in excluded if name not in {test.id() for test in loaded}]
     tests = unittest.TestSuite(test for test in loaded if test.id() not in excluded)
-    result = unittest.TextTestRunner(stream=sys.stdout, verbosity=2, resultclass=TimedResult).run(tests)
+    result = unittest.TextTestRunner(stream=sys.stdout, verbosity=2, resultclass=TimedResult).run(
+        tests
+    )
     if missing:
         print('Listed in SLOW but not found: ' + ', '.join(missing))
-    Path(report).write_text(json.dumps({
-        'run': result.testsRun, 'failures': len(result.failures), 'errors': len(result.errors),
-        'skipped': len(result.skipped), 'expected_failures': len(result.expectedFailures),
-        'unexpected_successes': len(result.unexpectedSuccesses), 'seconds': TimedResult.seconds}))
+    Path(report).write_text(
+        json.dumps(
+            {
+                'run': result.testsRun,
+                'failures': len(result.failures),
+                'errors': len(result.errors),
+                'skipped': len(result.skipped),
+                'expected_failures': len(result.expectedFailures),
+                'unexpected_successes': len(result.unexpectedSuccesses),
+                'seconds': TimedResult.seconds,
+            }
+        )
+    )
     return 0 if result.wasSuccessful() and not missing else 1
 
 
@@ -272,8 +322,10 @@ exec {chezmoi} "$@"
 
 
 def isolated_env(root, binaries, module, guard):
-    home = root / 'home'; home.mkdir()
-    bin_dir = root / 'bin'; bin_dir.mkdir()
+    home = root / 'home'
+    home.mkdir()
+    bin_dir = root / 'bin'
+    bin_dir.mkdir()
     binaries = dict(binaries)
     if guard:
         wrapper = root / 'guard' / 'chezmoi'
@@ -283,12 +335,22 @@ def isolated_env(root, binaries, module, guard):
         binaries['chezmoi'] = str(wrapper)
     for name, path in dict(binaries, python3=sys.executable).items():
         (bin_dir / name).symlink_to(path)
-    env = {'HOME': str(home), 'PATH': f'{bin_dir}:/usr/bin:/bin:/usr/sbin:/sbin',
-           'TMPDIR': str(root), 'LC_ALL': 'C', 'PYTHONDONTWRITEBYTECODE': '1',
-           'GIT_CONFIG_NOSYSTEM': '1', 'GIT_CONFIG_GLOBAL': str(home / '.gitconfig'),
-           'GIT_TERMINAL_PROMPT': '0'}
-    for key, part in [('CONFIG', '.config'), ('DATA', '.local/share'),
-                      ('CACHE', '.cache'), ('STATE', '.local/state')]:
+    env = {
+        'HOME': str(home),
+        'PATH': f'{bin_dir}:/usr/bin:/bin:/usr/sbin:/sbin',
+        'TMPDIR': str(root),
+        'LC_ALL': 'C',
+        'PYTHONDONTWRITEBYTECODE': '1',
+        'GIT_CONFIG_NOSYSTEM': '1',
+        'GIT_CONFIG_GLOBAL': str(home / '.gitconfig'),
+        'GIT_TERMINAL_PROMPT': '0',
+    }
+    for key, part in [
+        ('CONFIG', '.config'),
+        ('DATA', '.local/share'),
+        ('CACHE', '.cache'),
+        ('STATE', '.local/state'),
+    ]:
         env[f'XDG_{key}_HOME'] = str(home / part)
     for name, path in binaries.items():
         env[env_name(name)] = path
@@ -307,27 +369,45 @@ def run_unit(unit, binaries):
     with tempfile.TemporaryDirectory(prefix=f'dotfiles-checks-{module}-') as temporary:
         root = Path(temporary).resolve()
         report = root / 'report.json'
-        command = [sys.executable, str(Path(__file__).resolve()), '--isolated-child',
-                   '--report', str(report)]
+        command = [
+            sys.executable,
+            str(Path(__file__).resolve()),
+            '--isolated-child',
+            '--report',
+            str(report),
+        ]
         for name in excluded:
             command += ['--exclude', name]
-        result = subprocess.run(command + names, cwd=root,
-                                env=isolated_env(root, binaries, module, guard),
-                                stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+        result = subprocess.run(
+            command + names,
+            cwd=root,
+            env=isolated_env(root, binaries, module, guard),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+        )
         data = json.loads(report.read_text()) if report.is_file() else None
     return label, result.returncode, result.stdout, data, time.monotonic() - started
 
 
 def main():
     ensure_python()
-    parser = argparse.ArgumentParser(description=__doc__,
-                                     formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument('targets', nargs='+', metavar='target',
-                        help=f'suite ({", ".join(SUITES)}) or test module')
-    parser.add_argument('-j', '--jobs', type=int, default=max(2, os.cpu_count() or 2),
-                        help='modules to run at once (default: CPU count)')
-    parser.add_argument('-v', '--verbose', action='store_true',
-                        help='print the output of passing modules too')
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    parser.add_argument(
+        'targets', nargs='+', metavar='target', help=f'suite ({", ".join(SUITES)}) or test module'
+    )
+    parser.add_argument(
+        '-j',
+        '--jobs',
+        type=int,
+        default=max(2, os.cpu_count() or 2),
+        help='modules to run at once (default: CPU count)',
+    )
+    parser.add_argument(
+        '-v', '--verbose', action='store_true', help='print the output of passing modules too'
+    )
     parser.add_argument('--isolated-child', action='store_true', help=argparse.SUPPRESS)
     parser.add_argument('--report', help=argparse.SUPPRESS)
     parser.add_argument('--exclude', action='append', default=[], help=argparse.SUPPRESS)
@@ -350,23 +430,40 @@ def main():
             parser.error(str(error))
         binaries[name] = str(path)
         print(f'{name}: {path} ({origin})', flush=True)
-    print(f'Running {len(units)} unit(s) from {len(modules)} module(s), {args.jobs} at a time', flush=True)
+    print(
+        f'Running {len(units)} unit(s) from {len(modules)} module(s), {args.jobs} at a time',
+        flush=True,
+    )
     failed, counts, slowest = [], {'run': 0, 'skipped': 0}, []
     # Longest modules first keeps the wall time near the slowest single module.
-    order = sorted(units, key=lambda unit: SLOW_FIRST.index(unit[1][0].split('.')[0])
-                   if unit[1][0].split('.')[0] in SLOW_FIRST else len(SLOW_FIRST))
+    order = sorted(
+        units,
+        key=lambda unit: (
+            SLOW_FIRST.index(unit[1][0].split('.')[0])
+            if unit[1][0].split('.')[0] in SLOW_FIRST
+            else len(SLOW_FIRST)
+        ),
+    )
     with ThreadPoolExecutor(max_workers=max(1, args.jobs)) as pool:
         futures = [pool.submit(run_unit, unit, binaries) for unit in order]
         for future in as_completed(futures):
             module, code, output, data, seconds = future.result()
-            ok = code == 0 and data and data['run'] and not (
-                data['skipped'] or data['expected_failures'] or data['unexpected_successes'])
+            ok = (
+                code == 0
+                and data
+                and data['run']
+                and not (
+                    data['skipped'] or data['expected_failures'] or data['unexpected_successes']
+                )
+            )
             if data:
                 counts['run'] += data['run']
                 counts['skipped'] += data['skipped'] + data['expected_failures']
                 slowest += list(data['seconds'].items())
             tests = data['run'] if data else '?'
-            print(f'{"ok  " if ok else "FAIL"} {module}: {tests} tests in {seconds:.1f}s', flush=True)
+            print(
+                f'{"ok  " if ok else "FAIL"} {module}: {tests} tests in {seconds:.1f}s', flush=True
+            )
             if not ok:
                 failed.append(module)
             if args.verbose or not ok:
@@ -378,15 +475,25 @@ def main():
     if counts['skipped']:
         print('NOT PASSED: skipped or expected-failure tests are not evidence.')
     status = 'passed' if not failed and not counts['skipped'] else 'FAILED'
-    print(f'{" ".join(args.targets)}: {status}, {counts["run"]} tests, {len(units)} units, '
-          f'{elapsed:.1f}s wall' + (f'; failed: {", ".join(failed)}' if failed else ''))
+    print(
+        f'{" ".join(args.targets)}: {status}, {counts["run"]} tests, {len(units)} units, '
+        f'{elapsed:.1f}s wall' + (f'; failed: {", ".join(failed)}' if failed else '')
+    )
     return 0 if status == 'passed' else 1
 
 
 # Started first so they do not extend the wall time at the end of the queue.
-SLOW_FIRST = ['test_completion_convergence', 'test_generated_convergence', 'test_windows_config_sync',
-              'test_identity_convergence', 'test_identity_transaction', 'test_completion_transaction',
-              'test_diagnostic_boundary', 'test_identity_boundary', 'test_lazy_lock_update']
+SLOW_FIRST = [
+    'test_completion_convergence',
+    'test_generated_convergence',
+    'test_windows_config_sync',
+    'test_identity_convergence',
+    'test_identity_transaction',
+    'test_completion_transaction',
+    'test_diagnostic_boundary',
+    'test_identity_boundary',
+    'test_lazy_lock_update',
+]
 
 if __name__ == '__main__':
     sys.exit(main())

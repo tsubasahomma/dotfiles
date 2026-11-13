@@ -4,6 +4,7 @@
 No real apply/auth/install. One reduced chezmoi apply contains only the Git
 consumer, identity before script and identity generator (no hooks/externals).
 """
+
 import copy
 import hashlib
 import json
@@ -51,20 +52,29 @@ class Transaction(boundary.IdentityBoundary):
 
     def selected_snapshot(self):
         generation = self.generation()
-        return (self.entry().read_bytes(), {p.name: (p.read_bytes(), p.stat().st_mode & 0o777)
-                                          for p in generation.iterdir()})
+        return (
+            self.entry().read_bytes(),
+            {p.name: (p.read_bytes(), p.stat().st_mode & 0o777) for p in generation.iterdir()},
+        )
 
     def assert_adopted(self, ids):
         for identity in ids:
             repo = self.repo(identity)
             self.assertEqual(self.git_value(repo, 'user.name'), identity['name'])
             self.assertEqual(self.git_value(repo, 'user.email'), identity['email'])
-            self.assertEqual(self.git_value(repo, 'user.signingkey'), 'key::' + identity['public_key'])
+            self.assertEqual(
+                self.git_value(repo, 'user.signingkey'), 'key::' + identity['public_key']
+            )
             command = self.git_value(repo, 'core.sshcommand')
             keypath = Path(shlex.split(command)[2])
             self.assertEqual(keypath.read_text(), identity['public_key'] + '\n')
             signers = Path(self.git_value(repo, 'gpg.ssh.allowedsignersfile'))
-            self.assertEqual(self.run_ok(['ssh-keygen', '-Y', 'match-principals', '-I', identity['email'], '-f', signers]).strip(), identity['email'])
+            self.assertEqual(
+                self.run_ok(
+                    ['ssh-keygen', '-Y', 'match-principals', '-I', identity['email'], '-f', signers]
+                ).strip(),
+                identity['email'],
+            )
 
     def change_inputs(self):
         self.ids = [self.identity('next' + str(i), '~/new' + str(i)) for i in range(2)]
@@ -75,7 +85,9 @@ class Transaction(boundary.IdentityBoundary):
         self.env['REAL_GIT'] = real
         self.env['FAIL_BEHAVIOR'] = behavior
         self.env['FAIL_COUNT'] = str(self.root / 'fail-count')
-        boundary.executable(self.bin / 'git', '''#!/usr/bin/python3
+        boundary.executable(
+            self.bin / 'git',
+            '''#!/usr/bin/python3
 import os,signal,sys
 from pathlib import Path
 if 'core.sshCommand' in sys.argv:
@@ -85,7 +97,8 @@ if 'core.sshCommand' in sys.argv:
             os.kill(os.getppid(), getattr(signal, os.environ['FAIL_BEHAVIOR']))
         sys.exit(73)
 os.execv(os.environ['REAL_GIT'], [os.environ['REAL_GIT'], *sys.argv[1:]])
-''')
+''',
+        )
 
     def unfail(self):
         (self.bin / 'git').unlink()
@@ -95,7 +108,9 @@ os.execv(os.environ['REAL_GIT'], [os.environ['REAL_GIT'], *sys.argv[1:]])
         # Healthy pre-R05 placement, including a sibling unknown file.
         parent = self.home / '.config/git'
         signers = parent / 'allowed_signers'
-        signers.write_text(''.join(i['email'] + ' namespaces="git" ' + i['public_key'] + '\n' for i in self.ids))
+        signers.write_text(
+            ''.join(i['email'] + ' namespaces="git" ' + i['public_key'] + '\n' for i in self.ids)
+        )
         config = parent / 'config'
         config.write_text('[user]\n useConfigOnly = true\n')
         self.run_ok(['git', 'config', '-f', config, 'gpg.ssh.allowedSignersFile', signers])
@@ -106,10 +121,32 @@ os.execv(os.environ['REAL_GIT'], [os.environ['REAL_GIT'], *sys.argv[1:]])
             fragment.write_text('')
             for field in ('name', 'email'):
                 self.run_ok(['git', 'config', '-f', fragment, 'user.' + field, i[field]])
-            self.run_ok(['git', 'config', '-f', fragment, 'user.signingkey', 'key::' + i['public_key']])
-            self.run_ok(['git', 'config', '-f', fragment, 'core.sshCommand', 'ssh -i ' + shlex.quote(str(pubkey)) + ' -o IdentitiesOnly=yes -o ControlPath=none'])
+            self.run_ok(
+                ['git', 'config', '-f', fragment, 'user.signingkey', 'key::' + i['public_key']]
+            )
+            self.run_ok(
+                [
+                    'git',
+                    'config',
+                    '-f',
+                    fragment,
+                    'core.sshCommand',
+                    'ssh -i '
+                    + shlex.quote(str(pubkey))
+                    + ' -o IdentitiesOnly=yes -o ControlPath=none',
+                ]
+            )
             route = i['dirs'].replace('~/', str(self.home) + '/', 1)
-            self.run_ok(['git', 'config', '-f', config, 'includeIf.gitdir/i:' + route + '/**.path', fragment])
+            self.run_ok(
+                [
+                    'git',
+                    'config',
+                    '-f',
+                    config,
+                    'includeIf.gitdir/i:' + route + '/**.path',
+                    fragment,
+                ]
+            )
             self.run_ok(['git', 'init', '-q', self.repo(i)])
         self.assert_adopted(self.ids)
 
@@ -165,7 +202,9 @@ os.execv(os.environ['REAL_GIT'], [os.environ['REAL_GIT'], *sys.argv[1:]])
         for ids in ([], None, {}):
             self.write_data(ids=ids) if ids is not None else self.write_data()
             if ids is None:
-                data = json.loads(self.config.read_text()); del data['data']['identities']; self.config.write_text(json.dumps(data))
+                data = json.loads(self.config.read_text())
+                del data['data']['identities']
+                self.config.write_text(json.dumps(data))
             result = self.render(boundary.GEN)
             if result.returncode == 0:
                 result = self.command([boundary.ZSH], input=result.stdout)
@@ -202,7 +241,11 @@ os.execv(os.environ['REAL_GIT'], [os.environ['REAL_GIT'], *sys.argv[1:]])
         self.legacy()
         old_ids = copy.deepcopy(self.ids)
         parent = self.entry().parent
-        protected = [*list((parent / 'identities').iterdir()), *list((self.home / '.ssh').iterdir()), parent / 'allowed_signers']
+        protected = [
+            *list((parent / 'identities').iterdir()),
+            *list((self.home / '.ssh').iterdir()),
+            parent / 'allowed_signers',
+        ]
         before = {p: (p.read_bytes(), p.stat().st_mode) for p in protected}
         self.change_inputs()
         self.prepare()
@@ -224,16 +267,19 @@ os.execv(os.environ['REAL_GIT'], [os.environ['REAL_GIT'], *sys.argv[1:]])
             self.assertNotEqual(self.script(template).returncode, 0)
             self.assertEqual(self.entry().read_text(), 'unknown entry\n')
         self.entry().unlink()
-        foreign = self.root / 'foreign'; foreign.write_text('foreign\n')
+        foreign = self.root / 'foreign'
+        foreign.write_text('foreign\n')
         self.entry().symlink_to(foreign)
         self.assertNotEqual(self.script(boundary.GEN).returncode, 0)
         self.assertEqual(foreign.read_text(), 'foreign\n')
         self.entry().unlink()
         unknown_dir = parent / '.identity-generation-unknown'
-        unknown_dir.mkdir(); (unknown_dir / 'precious').write_text('keep\n')
+        unknown_dir.mkdir()
+        (unknown_dir / 'precious').write_text('keep\n')
         self.adopt()
         self.assertEqual((unknown_dir / 'precious').read_text(), 'keep\n')
-        key = self.keypath(self.ids[0]); key.write_text('manually edited\n')
+        key = self.keypath(self.ids[0])
+        key.write_text('manually edited\n')
         before = self.entry().read_bytes()
         self.assertNotEqual(self.script(boundary.GEN).returncode, 0)
         self.assertEqual(key.read_text(), 'manually edited\n')
@@ -243,13 +289,16 @@ os.execv(os.environ['REAL_GIT'], [os.environ['REAL_GIT'], *sys.argv[1:]])
         self.legacy()
         original = (self.home / '.config/git/config').read_bytes()
         # Reduced source: only real before, Git target and real generator after.
-        reduced = self.root / 'reduced'; reduced.mkdir()
+        reduced = self.root / 'reduced'
+        reduced.mkdir()
         shutil.copytree(self.source / '.chezmoitemplates', reduced / '.chezmoitemplates')
         (reduced / '.chezmoiscripts').mkdir()
         shutil.copy2(self.source / PREPARE, reduced / PREPARE)
         (reduced / 'dot_config/git').mkdir(parents=True)
         shutil.copy2(self.source / boundary.GIT, reduced / boundary.GIT)
-        shutil.copy2(self.source / boundary.GEN, reduced / '.chezmoiscripts/run_after_identity.sh.tmpl')
+        shutil.copy2(
+            self.source / boundary.GEN, reduced / '.chezmoiscripts/run_after_identity.sh.tmpl'
+        )
         self.source = reduced
         old_ids = copy.deepcopy(self.ids)
         self.change_inputs()
@@ -276,7 +325,9 @@ os.execv(os.environ['REAL_GIT'], [os.environ['REAL_GIT'], *sys.argv[1:]])
         self.prepare()
         before = self.entry().read_bytes()
         config = self.home / '.config/git/config'
-        self.run_ok(['git', 'config', '-f', config, 'includeIf.gitdir/i:/new-manual/**.path', str(self.old)])
+        self.run_ok(
+            ['git', 'config', '-f', config, 'includeIf.gitdir/i:/new-manual/**.path', str(self.old)]
+        )
         changed = config.read_bytes()
         result = self.script(PREPARE)
         self.assertNotEqual(result.returncode, 0)
@@ -302,13 +353,16 @@ os.execv(os.environ['REAL_GIT'], [os.environ['REAL_GIT'], *sys.argv[1:]])
         original = (self.home / '.config/git/config').read_bytes()
         real = self.run_ok(['/usr/bin/which', 'git']).strip()
         self.env['REAL_GIT'] = real
-        boundary.executable(self.bin / 'git', '''#!/usr/bin/python3
+        boundary.executable(
+            self.bin / 'git',
+            '''#!/usr/bin/python3
 import os,signal,sys
 if '--list' in sys.argv and any(arg.endswith('/dispatch') for arg in sys.argv):
     os.kill(os.getppid(), signal.SIGTERM)
     sys.exit(73)
 os.execv(os.environ['REAL_GIT'], [os.environ['REAL_GIT'], *sys.argv[1:]])
-''')
+''',
+        )
         self.assertNotEqual(self.script(PREPARE).returncode, 0)
         self.assertFalse(self.entry().exists())
         self.assertEqual((self.home / '.config/git/config').read_bytes(), original)
@@ -335,7 +389,8 @@ os.execv(os.environ['REAL_GIT'], [os.environ['REAL_GIT'], *sys.argv[1:]])
 
     def test_r05_fresh_ci_empty_has_no_stub_and_non_ci_fails(self):
         self.write_data(ids=[])
-        self.prepare(); self.put_consumer()
+        self.prepare()
+        self.put_consumer()
         self.assertNotEqual(self.script(boundary.GEN).returncode, 0)
         self.env['CI'] = 'true'
         self.assertEqual(self.script(boundary.GEN).returncode, 0)
@@ -346,7 +401,9 @@ os.execv(os.environ['REAL_GIT'], [os.environ['REAL_GIT'], *sys.argv[1:]])
 
 def load_tests(loader, tests, pattern):
     # Reuse the fixture helpers, not the inherited R02/R04 test cases.
-    return unittest.TestSuite(Transaction(name) for name in Transaction.__dict__ if name.startswith('test_r05_'))
+    return unittest.TestSuite(
+        Transaction(name) for name in Transaction.__dict__ if name.startswith('test_r05_')
+    )
 
 
 if __name__ == '__main__':
