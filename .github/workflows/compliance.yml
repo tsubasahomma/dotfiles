@@ -4,9 +4,9 @@ name: compliance
 
 on:
   push:
-    branches: [main, master]
+    branches: [main]
   pull_request:
-    branches: [main, master]
+    branches: [main]
   workflow_dispatch:
   schedule:
     - cron: "0 0 * * 0"
@@ -22,10 +22,12 @@ jobs:
   renovate-config:
     name: Renovate Config Validation
     runs-on: ubuntu-24.04
+    timeout-minutes: 10
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
       # Pin the validator distribution so CI and local checks use the same Renovate schema.
       # [Reference]: https://docs.renovatebot.com/config-validation/
+      # renovate: datasource=npm depName=renovate
       RENOVATE_VERSION: "43.150.0"
 
     steps:
@@ -69,6 +71,7 @@ jobs:
         os: [ubuntu-24.04, macos-15]
         suite: [render, regression]
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
@@ -135,6 +138,7 @@ jobs:
       matrix:
         os: [ubuntu-24.04, macos-15]
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
       GITHUB_TOKEN: ${{ github.token }}
@@ -306,6 +310,7 @@ jobs:
     if: ${{ always() }}
     needs: [renovate-config, isolated, integration]
     runs-on: ubuntu-24.04
+    timeout-minutes: 5
     steps:
       - name: Require Every Validation Job to Succeed
         env:

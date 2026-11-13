@@ -1,5 +1,6 @@
 # Local hooks use binaries managed by mise.
-# This keeps developer and CI hook execution aligned.
+# `unsupported` is the 4.4.0 name for `language: system`; the old alias will be removed.
+minimum_pre_commit_version: "4.4.0"
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
@@ -14,7 +15,7 @@ repos:
       - id: shfmt
         name: shfmt
         entry: shfmt
-        language: system
+        language: unsupported
         # Target only pure shell scripts; templates are excluded to avoid AST collisions.
         files: \.(sh|zsh|zshrc|zshenv)$
         args: ["-i", "2", "-ci", "-sr", "-w"]
@@ -22,7 +23,7 @@ repos:
       - id: stylua
         name: stylua
         entry: stylua
-        language: system
+        language: unsupported
         # Target only pure Lua files; templates are excluded to avoid AST collisions.
         files: \.lua$
         # StyLua auto-detects .editorconfig, so no --config-path is needed.
