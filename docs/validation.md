@@ -5,7 +5,7 @@ description: 文書・template・tool更新・認証の変更に対して、必�
 status: draft
 generated:
   by: claude-code/claude-opus-5-5
-  at: "2026-11-13T14:03:00+00:00"
+  at: "2026-11-13T14:12:12+00:00"
 sources:
   - id: evals
     resource: "https://www.anthropic.com/research/demystifying-evals-for-ai-agents"
@@ -82,14 +82,15 @@ sources:
 repo rootから次を実行する。runner自身はtoolを導入しない。不足・shimだけ・版違いを検出したら検査前に非zeroで停止する。
 
 ```sh
+python3 tests/run_checks.py lint            # 全言語のlintと整形の確認
 python3 tests/run_checks.py fast            # applyを伴わないtest
-python3 tests/run_checks.py full            # 全test（fastとslow）
+python3 tests/run_checks.py full            # lintと全test（fastとslow）
 python3 tests/run_checks.py test_git_fetch  # module・class・test単位（複数可）
 ```
 
 chezmoi・Neovim・Zsh・Git/OpenSSHとOS utilityが必要で、render検査以外にはmise実体も要る。各実体は`CHEZMOI_BIN`・`NVIM_BIN`・`MISE_BIN`・`ZSH_BIN`等の環境変数、PATH上の実体、repoが宣言した版のmise install（chezmoiは`.mise.toml`、NeovimとPythonは`dot_config/mise/conf.d/10-tools.toml`）の順に探す。PATHの先頭がmiseのshimなら宣言版のinstallを使う。miseは`~/.local/bin/mise`を候補にし、版が`.mise-version`と一致しなければ停止する。Python 3.11未満で起動した場合は宣言版のPythonで起動し直す。fixture内の一部stubと本番scriptは`/usr/bin/python3`・`/bin/zsh`・`/usr/bin/ssh`等も使うため、任意OSへの可搬性を保証する入口ではない。macOS/Ubuntuを対象にする。
 
-[runner](../tests/run_checks.py)はmoduleごとに一時HOME/XDGと限定PATHの子processを起動し、CPU数まで並列に実行する。実ユーザーのGit/mise設定override、SSH agent、OP環境変数、tokenを引き継がない。各fixtureも自身の一時HOME/XDGと明示configを使う。moduleごとの件数・所要時間と遅いtestを表示し、失敗したmoduleの出力だけを表示する（`-v`で全出力）。`slow`は同runnerの`SLOW`に列挙した、縮小sourceへchezmoi applyを（`--dry-run`・`init --apply`も含めて）実行するtestである。`fast`はそれ以外の全testで、chezmoiを`apply`・`--apply`・`update`を拒否するwrapperに差し替えて実行する。applyを始めたtestは`SLOW`へ移すまでfastで失敗する。`full`は`fast`と`slow`の和で、Windows設定同期とlazy-lock候補生成の検査も含む。CIは移行まで旧名の`render`（render検査だけ）と`regression`（render以外の全module）を使う。R17のVale native検査は[別入口](#vale-lint)である。R05は既存`load_tests`で自身の12件を選択する。失敗・例外・skip・expected failure・空suiteは非zeroになる。
+[runner](../tests/run_checks.py)はmoduleごとに一時HOME/XDGと限定PATHの子processを起動し、CPU数まで並列に実行する。実ユーザーのGit/mise設定override、SSH agent、OP環境変数、tokenを引き継がない。各fixtureも自身の一時HOME/XDGと明示configを使う。moduleごとの件数・所要時間と遅いtestを表示し、失敗したmoduleの出力だけを表示する（`-v`で全出力）。`slow`は同runnerの`SLOW`に列挙した、縮小sourceへchezmoi applyを（`--dry-run`・`init --apply`も含めて）実行するtestである。`fast`はそれ以外の全testで、chezmoiを`apply`・`--apply`・`update`を拒否するwrapperに差し替えて実行する。applyを始めたtestは`SLOW`へ移すまでfastで失敗する。`full`は`lint`・`fast`・`slow`の和で、Windows設定同期とlazy-lock候補生成の検査も含む。CIは移行まで旧名の`render`（render検査だけ）と`regression`（render以外の全module）を使う。R17のVale native検査は[別入口](#vale-lint)である。R05は既存`load_tests`で自身の12件を選択する。失敗・例外・skip・expected failure・空suiteは非zeroになる。
 
 R01とR13のinit検査は実config template・読込hook・bootstrapを保持し、取得/認証をstubに置き換える。R02のconfig生成fixtureは入力検証を保持してhook部分をsourceコピーから除き、生成configにhookがないことを検査する。他はhookなしconfigを使い、external取得を空定義または最小sourceで除外する。縮小sourceへのapply、使い捨て鍵の署名、ローカルbare remoteのfetch、UNIX socketのmux検査を含むが、実機applyや実認証は行わない。socket bindが許されない環境は失敗となり、skipで代替しない。
 
@@ -221,6 +222,8 @@ CI stepへ接続するが、local実行結果はmacOSの隔離fixtureに限る�
 縮小したsourceでbefore script・Git target・identity after scriptだけを通すchezmoi applyも含む。実repoのhooks、package導入、externals、mise graph全体、実1Passwordは実行しない。CIのUbuntu/macOS jobに接続するが、local合格はCI runの合格ではない。WSLはwslpath/ssh.exe stubであり、実Windowsのfile共有・interop・認証、停電耐久性は対象外。既存R02/R04の入力・引用・routing・SSH分離検査とR06の未知file保持検査も併用する。
 
 # 整形・Renovate・CI
+
+`python3 tests/run_checks.py lint`（[実装](../tests/test_lint.py)）はファイルを書き換えない。Pythonは[Ruff](../.ruff.toml)のlintと`format --check`、Luaは`.lua`の全件にStyLuaの`--check`（`.editorconfig`）、shellは`.tmpl`でないsh/bash scriptにshfmtの`-d`とShellCheck、templateは[render検査](../tests/render_fixture.py)と同じ6分岐でrenderしたsh/bashの各出力にShellCheck（`-S warning`）をかける。workflowはactionlint（`run:`のShellCheckを含む）とzizmorを`--offline`で実行する。zshはShellCheckの対象外で、render検査の`zsh -n`だけである。除外は設定か[実装](../tests/test_lint.py)の定数に理由と並べて置き、配備されるファイルの整形・修正を利用者の承認待ちにしているものは`PENDING`と書く。Ruff・zizmor・actionlintの版は[lint tool一覧](../tests/lint-tools.toml)、StyLua・ShellCheck・shfmtは`10-tools.toml`を正本にし、CIの`Lint` jobはこの版だけを一時manifestで導入する。zizmorのoffline実行はGitHubへの照会が要るaudit（既知の脆弱なaction等）を含まない。
 
 現行pre-commitには末尾空白・最終改行の修正、YAML/大file検査、`shfmt -w`、StyLuaがある。local hookは`language: unsupported`（pre-commit 4.4.0より前の名称は`system`）で実行pathに依存する。拡張子filterはtemplateを包括的には扱わず、専用のOKF frontmatter検査・Markdownリンク検査も定義されていない。初回実行ではhook環境の取得・導入もあり得る。必要なhookとfileを選び、変更された差分を確認する。`pre-commit run --all-files`を非変更検査と呼ばない。[^precommit][^precommit-docs]
 

@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 """R14/R10 Windows: real reduced apply and file policy, Windows boundary stubs."""
 
-import base64
-import hashlib
 import importlib.util
 import json
 import os
@@ -407,7 +405,8 @@ printf '%s\n' "$*" >> "$HOME/calls"
         for fail_at in [1, 2]:
             calls = []
 
-            def replacement(a, b):
+            # Bind this iteration's values; the patch only lives inside this iteration.
+            def replacement(a, b, calls=calls, fail_at=fail_at):
                 calls.append((a, b))
                 if len(calls) == fail_at:
                     raise OSError('injected copy/publish failure')

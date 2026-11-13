@@ -1,5 +1,5 @@
-import tempfile
 from pathlib import Path
+import tempfile
 import unittest
 
 from collect_mason_log import collect

@@ -1,0 +1,7 @@
+# Lint tools for `python3 tests/run_checks.py lint` that workstations do not declare.
+# CI installs exactly these pins; Renovate tracks this file with its mise manager.
+# StyLua, ShellCheck and shfmt come from dot_config/mise/conf.d/10-tools.toml.
+[tools]
+"aqua:astral-sh/ruff" = "0.17.4"
+"aqua:zizmorcore/zizmor" = "1.32.0"
+"aqua:rhysd/actionlint" = "1.7.12"

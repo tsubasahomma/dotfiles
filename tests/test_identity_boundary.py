@@ -10,14 +10,14 @@ import json
 import os
 from pathlib import Path
 import re
-import shutil
-import subprocess
 import shlex
+import shutil
 import socket
+import subprocess
 import tempfile
 import threading
-import unittest
 import tomllib
+import unittest
 
 REPO = Path(__file__).resolve().parents[1]
 CHEZMOI = os.environ.get('CHEZMOI_BIN') or shutil.which('chezmoi')

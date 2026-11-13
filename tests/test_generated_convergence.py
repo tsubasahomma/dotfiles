@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 """R10c: real reduced apply ordering, native generator stubs, isolated HOME."""
 
-import json
 import importlib.util
-from unittest import mock
+import json
 import os
 from pathlib import Path
 import shutil
@@ -11,6 +10,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest import mock
 
 REPO = Path(__file__).resolve().parents[1]
 CHEZMOI = os.environ.get('CHEZMOI_BIN') or shutil.which('chezmoi')
