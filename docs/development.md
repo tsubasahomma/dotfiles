@@ -5,7 +5,7 @@ description: 設定や依存を変更するときに正本、更新taskの副作
 status: draft
 generated:
   by: claude-code/claude-opus-5-5
-  at: "2026-11-16T09:10:00+00:00"
+  at: "2026-11-16T11:00:00+00:00"
 sources:
   - id: pin
     resource: "../.mise-version"
@@ -138,13 +138,13 @@ Renovateはrootの`.mise.toml`、`dot_config/mise/conf.d/*.toml`、CIのlintだ�
 
 `Required CI`に合格したPRはsquashで自動マージする。既存のPRが最新mainに追随するためのrebaseとCI完了後のマージは、月曜の作成枠外でも進む。失敗した場合はログを調べ、原因の更新を特定して分離する。
 
-2026-11-12の利用者決定により、Renovate PRには元SHAを保持する純粋なFFに代えてsquashを許可する。merge commitは禁止する。GitHub rebaseも元SHAを保持せず、Renovateの`fast-forward` enumはGitHub対応の根拠にならない。実機への取り込みは利用者が都合のよい時点で開始する。[^merge-methods]
+利用者の決定により、Renovate PRには元SHAを保持する純粋なFFに代えてsquashを許可する。merge commitは禁止する。GitHub rebaseも元SHAを保持せず、Renovateの`fast-forward` enumはGitHub対応の根拠にならない。実機への取り込みは利用者が都合のよい時点で開始する。[^merge-methods]
 
 GitHub側はmainに`Required CI`を必須とし、発行元をGitHub Actionsに限定、最新baseへの追随とlinear historyを要求する。adminにも適用し、恒常bypass・force-push・deleteを許可しない。required reviewやPR経由の一律必須化は加えないが、必須checkはdirect pushにも作用する。GitHub設定はrepo内のJSONだけでは反映されない。導入・修復時は[固定gateの検証](validation.md#isolated-regression)と保護設定を先に確認してからautomergeを有効にする。runner版で変わる内部job名を必須名にしない。[^protected-branches][^automerge]
 
 `config:best-practices`は設定の土台であり、全toolの互換性保証ではない。presetの待機期間はnpmだけなので、全datasourceへの待機はrepo側で設定する。CIの合格は互換性を保証しないため、majorは自動mergeせず利用者が確認する。minor/patchも破壊変更がないとはみなさない。実際に不具合が確認された版だけ理由と解除条件を付けて除外する。切り戻す場合は次回の自動再更新も抑える。仕事固有のtool制約はプロジェクト側mise設定へ分離する。例えばkubectlはAPI serverの±1 minorが公式範囲であり、globalの最新CLIをすべてのclusterへ使えるとは限らない。[^automerge][^kubectl-skew]
 
-Homebrew/WinGet/OS package、Neovim plugin lock・Mason・parser、Vale stylesはこの設定の版更新対象ではない。chezmoi externalはURLにcommit SHAを含めて固定し、直前行の`# renovate:`注釈とURL中のSHAをcustom regexで追う。tagのある取得元はtagとそのcommit、tagのない`catppuccin/bat`はbranch先頭のcommitを追う。release添付の`win32yank`は版をURLに固定して`checksum.sha256`で照合し、Renovateの追跡対象にしない。raw fileにchecksumを付けないのは、内容がcommit SHAで決まり、Renovateがchecksumを更新できないためである。botが実際に検出・更新することはmerge後のDashboardで確かめる。gcloudは2026-11-12のDashboard検出一覧にない。workflowのvalidator env pinとpre-commit hookは2026-11-13に追跡設定を加え、2026-11-16のDashboardとPR #436で、validator・pre-commit hook・externalの4件の検出を確かめた。externalの4件は検出時点で上流の最新を指していた。同日のRenovate 43.150.0によるnative抽出ではgcloudに`unsupported-datasource`が返った。gcloudの既存「manual review」コメントは承認ruleではなく、検出がない間は別途明示更新する。bot側の対応が変われば実抽出を確認してnative managerを優先する。mise pin更新でも既存mise本体は自動置換されず、Git revertはbinary・DB・remote stateのrollbackではない。実機更新と復旧の範囲は[操作](operations.md#mise-bootstrap)・[所有境界](ownership.md)に従う。
+Homebrew/WinGet/OS package、Neovim plugin lock・Mason・parser、Vale stylesはこの設定の版更新対象ではない。chezmoi externalはURLにcommit SHAを含めて固定し、直前行の`# renovate:`注釈とURL中のSHAをcustom regexで追う。tagのある取得元はtagとそのcommit、tagのない`catppuccin/bat`はbranch先頭のcommitを追う。release添付の`win32yank`は版をURLに固定して`checksum.sha256`で照合し、Renovateの追跡対象にしない。raw fileにchecksumを付けないのは、内容がcommit SHAで決まり、Renovateがchecksumを更新できないためである。追跡対象を足したら、botが実際に検出することをDependency Dashboardで確かめる。gcloudはRenovateのmise managerが`unsupported-datasource`を返して検出しないので、明示的に更新する。`10-tools.toml`の「manual review」コメントは承認ruleではない。bot側が対応したら、実際の抽出を確かめてnative managerに任せる。mise pin更新でも既存mise本体は自動置換されず、Git revertはbinary・DB・remote stateのrollbackではない。実機更新と復旧の範囲は[操作](operations.md#mise-bootstrap)・[所有境界](ownership.md)に従う。
 
 Renovate validatorの版はCI workflow、Nodeの要求はworkflowが読むtool宣言を正本にする。変更時のcommandと結果の限界は[validation](validation.md)を参照する。workflowで指定したつもりのruntimeと、実際の`node --version`は分けて記録する。診断の入口は[operations](operations.md#diagnostic-entry)に従い、CIも必須driftを成功へ変えない。登録済みmoduleの隔離回帰は`python3 tests/run_checks.py regression`、OS分岐のrender/構文検査は`python3 tests/run_checks.py render`で再現する。tool準備と通常applyを前提にしないfixture実行、通信・導入を伴う統合jobの違いは[検証の入口](validation.md#isolated-regression)を参照する。通常Neovim初期化や実認証を使わない診断fixtureもこの回帰集合に含める。現行CIがUbuntu/macOSで合格しても、WSL・Windows・実認証の成功とはしない。[^ci]
 
