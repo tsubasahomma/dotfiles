@@ -38,13 +38,30 @@
       ]
     }
   ],
+  // Hold every update until its release is 3 days old, the age the official npm,
+  // crate and PyPI presets use. Security updates bypass the wait. Updates without a
+  // release timestamp stay pending (timestamp-required), and strict keeps pending
+  // versions off branches; both are the defaults, spelled out here.
+  // https://docs.renovatebot.com/key-concepts/minimum-release-age/
+  "minimumReleaseAge": "3 days",
+  "minimumReleaseAgeBehaviour": "timestamp-required",
+  "internalChecksFilter": "strict",
   "packageRules": [
     {
-      "description": "Validate routine tool and action updates together once a week.",
+      "description": "Validate routine tool and action updates together once a week. Majors get their own branch.",
       "matchManagers": ["mise", "github-actions", "custom.regex", "pre-commit"],
       "groupName": "weekly dependencies",
-      "groupSlug": "weekly-dependencies",
-      "separateMajorMinor": false
+      "groupSlug": "weekly-dependencies"
+    },
+    {
+      "description": "Passing CI does not prove compatibility across a major release; merge majors by hand.",
+      "matchUpdateTypes": ["major"],
+      "automerge": false
+    },
+    {
+      "description": "git-refs gives no release timestamp, so the wait would hold catppuccin/bat forever. Its URL pins the commit.",
+      "matchDatasources": ["git-refs"],
+      "minimumReleaseAge": null
     }
   ],
   "automerge": true,
@@ -56,7 +73,8 @@
   // Create new branches in the Monday window. Existing branches can rebase
   // between windows to keep Required CI current with main.
   "schedule": ["* * * * 1"],
-  "prConcurrentLimit": 1,
+  // One automerged PR and one major PR waiting for review.
+  "prConcurrentLimit": 2,
   "lockFileMaintenance": {
     "enabled": false
   }
