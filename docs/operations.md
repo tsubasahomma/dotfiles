@@ -5,7 +5,7 @@ description: 現行の入口、実行前提、副作用、失敗時の扱いを�
 status: draft
 generated:
   by: claude-code/claude-opus-5-5
-  at: "2026-11-16T11:00:00+00:00"
+  at: "2026-11-16T10:12:07+00:00"
 sources:
   - id: apply-implementation
     resource: "https://github.com/twpayne/chezmoi/blob/v2.70.4/internal/cmd/config.go#L750"
@@ -244,37 +244,12 @@ GitHub tokenは常時必須という旧記述を引き継ぎません。source�
 
 今回の検証は隔離configで実施し、利用者の生成済みconfigや別sourceの更新・実機適用は行っていません。hookの分離はchezmoiのexternal取得・cache書込や他taskの自動導入を無効化するものではありません。
 
-<a id="chezmoiroot-migration"></a>
-# `home/`へのsource移動と各端末の移行
+<a id="source-root"></a>
+# source stateの置き場所
 
-repo直下の`.chezmoiroot`が`home`を指し、chezmoiは`home/`だけをsource stateとして読みます。root直下の文書・テスト・CI・`.bootstrap-mise.sh`・`.mise-version`は配備対象になりません。chezmoiの仕様では`.chezmoi.toml.tmpl`などroot系のfileも`home/`へ移す必要があります。[^chezmoiroot] templateの`.chezmoi.sourceDir`は`home/`、`.chezmoi.workingTree`はrepo rootを指します。[^template-vars] [config template](../home/.chezmoi.toml.tmpl)は`sourceDir`とread hookの`.bootstrap-mise.sh`をworkingTree基準で書くため、生成されるconfigの値は移動前と同じpathのままです。[^config]
+repo直下の`.chezmoiroot`が`home`を指し、chezmoiは`home/`だけをsource stateとして読みます。root直下の文書・テスト・CI・`.bootstrap-mise.sh`・`.mise-version`は配備対象になりません。[^chezmoiroot] [config template](../home/.chezmoi.toml.tmpl)は`sourceDir`とread hookの`.bootstrap-mise.sh`を`.chezmoi.workingTree`（repo root）基準で書きます。source state内のfileは`.chezmoi.sourceDir`（`home/`）で指します。[^template-vars][^config] 使い分けの理由と代案は[source stateの置き場所の判断](decisions/source-root.md)にあります。
 
-移動前に生成したconfigのまま移動後のsourceを読んだ場合を、隔離HOME（chezmoi 2.74.1、CI分岐、opは失敗するstub、scriptsとexternalは除外）で確かめました。確かめた結果は次のとおりです。
-
-- `chezmoi source-path`は`<source>/home`を返し、hookは同じ絶対pathの`.bootstrap-mise.sh --check`を実行する。
-- 管理対象の集合は変わらない。差分は`check:nvim`と`update:lazy-lock`の配置taskだけで、どちらもsource内のpathを持つ。
-- `chezmoi init`をやり直すまで、読込のたびに`config file template has changed`の警告が出る。
-- `init`をやり直したconfigは移動前のconfigとbyte単位で同じ。その後のapplyでverifyが合格する。
-- 移動前のcommitへsourceを戻し、`init`と`apply`をやり直すと、移動前のtargetへ戻る。
-
-各端末では次の順に進めます。`chezmoi update`はpullとapplyを続けて行うため、差分を見てから反映する場合は使いません。
-
-1. `git -C "$DOTFILES_SOURCE" status --short`で未commitの変更がないことを確かめる。移動するpathに変更があれば、先にcommitするか退避する。
-2. `git -C "$DOTFILES_SOURCE" pull --ff-only`で取得する。取得はsourceの更新だけで、targetは変わらない。
-3. `chezmoi source-path`が`$DOTFILES_SOURCE/home`を返すこと、`chezmoi diff`の差分が上の2つの配置taskと、移動とは別に取り込んだ変更だけであることを確かめる。
-4. `chezmoi init`を`--apply`なしで実行し、configを生成し直す。op/host照会とconfigの書込を伴う。生成されたconfigの`sourceDir`とhookのpathが移動前と同じであることを確かめる。
-5. `chezmoi apply`で反映する。
-
-initを省いてもapplyは動きますが、警告は残ります。戻す場合は、`git -C "$DOTFILES_SOURCE" switch --detach <移動前のcommit>`でsourceを戻し、`chezmoi init`と`chezmoi apply`をやり直します。その後、`git -C "$DOTFILES_SOURCE" switch main`で元のbranchへ戻ります。
-
-script templateのrender結果は、macOS・Linux・WSLとCIの各分岐で移動の前後とも同じでした。そのため`run_onchange_`のscriptは移動を理由に再実行されないと考えます（推論）。
-
-次の点は確かめていません（未確認）。
-
-- 実機のmacOS・WSLでの上の手順の結果。
-- 1Passwordのidentityを含む実際のconfigが再生成で同じになるか。その差は移動ではなく、取得時点の入力で決まる。
-- scriptとexternalを含めた通常applyの結果。
-- 2.74.1以外のchezmoiの挙動。
+`chezmoi source-path`は`$DOTFILES_SOURCE/home`を返します。config templateを変更すると、`chezmoi init`で生成し直すまで読込のたびに`config file template has changed`の警告が出ます。
 
 # 現行の入口
 
@@ -406,8 +381,8 @@ HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_NO_INSTALL_CLEANUP=1 brew upgrade --formula c
 
 ログを共有する際は鍵・アカウント識別子・生成identityの個人情報を除き、対象の種類、段階、成否、未確認事項を残します。未実行の検査を成功として記録しません。
 
-[^chezmoiroot]: [chezmoi .chezmoiroot](https://www.chezmoi.io/reference/special-files/chezmoiroot/)。source stateを読むdirectoryと、移すべきroot file。2026-11-16参照。
-[^template-vars]: [chezmoi template variables](https://www.chezmoi.io/reference/templates/variables/)。`.chezmoi.sourceDir`と`.chezmoi.workingTree`。2026-11-16参照。
+[^chezmoiroot]: [chezmoi .chezmoiroot](https://www.chezmoi.io/reference/special-files/chezmoiroot/)。source stateを読むdirectoryと、移すべきroot file。
+[^template-vars]: [chezmoi template variables](https://www.chezmoi.io/reference/templates/variables/)。`.chezmoi.sourceDir`と`.chezmoi.workingTree`。
 [^bootstrap]: [mise本体の読込検査・明示導入](../.bootstrap-mise.sh).
 [^config]: [identity入力・ホスト情報の取得とread-source-state hook](../home/.chezmoi.toml.tmpl).
 [^hooks]: [chezmoi Hooks：dry-runでもhookは動く](https://www.chezmoi.io/reference/configuration-file/hooks/).
