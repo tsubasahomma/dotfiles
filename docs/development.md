@@ -5,7 +5,7 @@ description: 設定や依存を変更するときに正本、更新taskの副作
 status: draft
 generated:
   by: claude-code/claude-opus-5-5
-  at: "2026-11-13T14:12:17+00:00"
+  at: "2026-11-16T09:10:00+00:00"
 sources:
   - id: pin
     resource: "../.mise-version"
@@ -73,6 +73,9 @@ sources:
   - id: protected-branches
     resource: "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches"
     title: "必須check・strict・linear history・admin適用"
+  - id: release-age
+    resource: "https://docs.renovatebot.com/key-concepts/minimum-release-age/"
+    title: "Renovateの公開後の待機期間"
   - id: automerge
     resource: "https://docs.renovatebot.com/key-concepts/automerge/"
     title: "Renovate automergeの前提と限界"
@@ -131,7 +134,7 @@ build・通常plugin init/config・editor event・submodule取得は行わない
 
 # RenovateとCIの現行
 
-Renovateはrootの`.mise.toml`、`dot_config/mise/conf.d/*.toml`、CIのlintだけが使う`tests/lint-tools.toml`をnative mise managerで扱い、`.mise-version`にはmise release向けのcustom regexを使う。CI workflowの`RENOVATE_VERSION`は直前行の`# renovate:`注釈を公式preset `customManagers:githubActionsVersions`で読み、pre-commit hookの`rev`は既定で無効のpre-commit managerを有効にして追う。mise・GitHub Actions・custom regex・pre-commitの通常更新を、majorを含めて一つのPRにまとめる。作成枠は日本時間の月曜で、同時PR上限は1件。月曜の枠内にbotが実行され、対象の更新があるときに作成する。対応lockfileがないためweekly lock maintenanceは無効にする。[^renovate]
+Renovateはrootの`.mise.toml`、`dot_config/mise/conf.d/*.toml`、CIのlintだけが使う`tests/lint-tools.toml`をnative mise managerで扱い、`.mise-version`にはmise release向けのcustom regexを使う。CI workflowの`RENOVATE_VERSION`は直前行の`# renovate:`注釈を公式preset `customManagers:githubActionsVersions`で読み、pre-commit hookの`rev`は既定で無効のpre-commit managerを有効にして追う。mise・GitHub Actions・custom regex・pre-commitの通常更新を一つのPRにまとめ、majorは別のPRに分ける。全datasourceで公開から3日たつまで更新を出さない。公開日時を返さないdatasourceの更新は待機のまま止まる（Renovate 42以降の既定`timestamp-required`）ので、公開日時のない`git-refs`だけ待機を外す。security更新は待機を経ない。作成枠は日本時間の月曜で、同時PR上限は自動mergeする1件とmajorの1件の2件。[^release-age]月曜の枠内にbotが実行され、対象の更新があるときに作成する。対応lockfileがないためweekly lock maintenanceは無効にする。[^renovate]
 
 `Required CI`に合格したPRはsquashで自動マージする。既存のPRが最新mainに追随するためのrebaseとCI完了後のマージは、月曜の作成枠外でも進む。失敗した場合はログを調べ、原因の更新を特定して分離する。
 
@@ -139,9 +142,9 @@ Renovateはrootの`.mise.toml`、`dot_config/mise/conf.d/*.toml`、CIのlintだ�
 
 GitHub側はmainに`Required CI`を必須とし、発行元をGitHub Actionsに限定、最新baseへの追随とlinear historyを要求する。adminにも適用し、恒常bypass・force-push・deleteを許可しない。required reviewやPR経由の一律必須化は加えないが、必須checkはdirect pushにも作用する。GitHub設定はrepo内のJSONだけでは反映されない。導入・修復時は[固定gateの検証](validation.md#isolated-regression)と保護設定を先に確認してからautomergeを有効にする。runner版で変わる内部job名を必須名にしない。[^protected-branches][^automerge]
 
-`config:best-practices`は設定の土台であり、全toolの互換性保証ではない。npm向けrelease-ageの待機を維持するが、minor/patchも破壊変更がないとはみなさない。実際に不具合が確認された版だけ理由と解除条件を付けて除外する。切り戻す場合は次回の自動再更新も抑える。仕事固有のtool制約はプロジェクト側mise設定へ分離する。例えばkubectlはAPI serverの±1 minorが公式範囲であり、globalの最新CLIをすべてのclusterへ使えるとは限らない。[^automerge][^kubectl-skew]
+`config:best-practices`は設定の土台であり、全toolの互換性保証ではない。presetの待機期間はnpmだけなので、全datasourceへの待機はrepo側で設定する。CIの合格は互換性を保証しないため、majorは自動mergeせず利用者が確認する。minor/patchも破壊変更がないとはみなさない。実際に不具合が確認された版だけ理由と解除条件を付けて除外する。切り戻す場合は次回の自動再更新も抑える。仕事固有のtool制約はプロジェクト側mise設定へ分離する。例えばkubectlはAPI serverの±1 minorが公式範囲であり、globalの最新CLIをすべてのclusterへ使えるとは限らない。[^automerge][^kubectl-skew]
 
-Homebrew/WinGet/OS package、Neovim plugin lock・Mason・parser、Vale stylesはこの設定の版更新対象ではない。chezmoi externalはURLにcommit SHAを含めて固定し、直前行の`# renovate:`注釈とURL中のSHAをcustom regexで追う。tagのある取得元はtagとそのcommit、tagのない`catppuccin/bat`はbranch先頭のcommitを追う。release添付の`win32yank`は版をURLに固定して`checksum.sha256`で照合し、Renovateの追跡対象にしない。raw fileにchecksumを付けないのは、内容がcommit SHAで決まり、Renovateがchecksumを更新できないためである。botが実際に検出・更新することはmerge後のDashboardで確かめる。gcloudは2026-11-12のDashboard検出一覧にない。workflowのvalidator env pinとpre-commit hookは2026-11-13に追跡設定を加えた。設定がpresetの正規表現に一致することは確認したが、botによる実際の検出はmerge後のDashboardで確かめる。同日のRenovate 43.150.0によるnative抽出ではgcloudに`unsupported-datasource`が返った。gcloudの既存「manual review」コメントは承認ruleではなく、検出がない間は別途明示更新する。bot側の対応が変われば実抽出を確認してnative managerを優先する。mise pin更新でも既存mise本体は自動置換されず、Git revertはbinary・DB・remote stateのrollbackではない。実機更新と復旧の範囲は[操作](operations.md#mise-bootstrap)・[所有境界](ownership.md)に従う。
+Homebrew/WinGet/OS package、Neovim plugin lock・Mason・parser、Vale stylesはこの設定の版更新対象ではない。chezmoi externalはURLにcommit SHAを含めて固定し、直前行の`# renovate:`注釈とURL中のSHAをcustom regexで追う。tagのある取得元はtagとそのcommit、tagのない`catppuccin/bat`はbranch先頭のcommitを追う。release添付の`win32yank`は版をURLに固定して`checksum.sha256`で照合し、Renovateの追跡対象にしない。raw fileにchecksumを付けないのは、内容がcommit SHAで決まり、Renovateがchecksumを更新できないためである。botが実際に検出・更新することはmerge後のDashboardで確かめる。gcloudは2026-11-12のDashboard検出一覧にない。workflowのvalidator env pinとpre-commit hookは2026-11-13に追跡設定を加え、2026-11-16のDashboardとPR #436で、validator・pre-commit hook・externalの4件の検出を確かめた。externalの4件は検出時点で上流の最新を指していた。同日のRenovate 43.150.0によるnative抽出ではgcloudに`unsupported-datasource`が返った。gcloudの既存「manual review」コメントは承認ruleではなく、検出がない間は別途明示更新する。bot側の対応が変われば実抽出を確認してnative managerを優先する。mise pin更新でも既存mise本体は自動置換されず、Git revertはbinary・DB・remote stateのrollbackではない。実機更新と復旧の範囲は[操作](operations.md#mise-bootstrap)・[所有境界](ownership.md)に従う。
 
 Renovate validatorの版はCI workflow、Nodeの要求はworkflowが読むtool宣言を正本にする。変更時のcommandと結果の限界は[validation](validation.md)を参照する。workflowで指定したつもりのruntimeと、実際の`node --version`は分けて記録する。診断の入口は[operations](operations.md#diagnostic-entry)に従い、CIも必須driftを成功へ変えない。登録済みmoduleの隔離回帰は`python3 tests/run_checks.py regression`、OS分岐のrender/構文検査は`python3 tests/run_checks.py render`で再現する。tool準備と通常applyを前提にしないfixture実行、通信・導入を伴う統合jobの違いは[検証の入口](validation.md#isolated-regression)を参照する。通常Neovim初期化や実認証を使わない診断fixtureもこの回帰集合に含める。現行CIがUbuntu/macOSで合格しても、WSL・Windows・実認証の成功とはしない。[^ci]
 
@@ -193,5 +196,6 @@ PR templateの廃止理由と再検討条件は[OKF Decision](decisions/okf.md)�
 
 [^merge-methods]: [GitHubのsquash/rebaseと元SHAの扱い](https://docs.github.com/en/pull-requests/reference/pull-request-merges)。
 [^protected-branches]: [必須check・strict・linear history・admin適用](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches)。
+[^release-age]: [Renovateの公開後の待機期間](https://docs.renovatebot.com/key-concepts/minimum-release-age/)。
 [^automerge]: [Renovate automergeの前提と限界](https://docs.renovatebot.com/key-concepts/automerge/)。
 [^kubectl-skew]: [kubectlとAPI serverの対応範囲](https://kubernetes.io/releases/version-skew-policy/#kubectl)。
