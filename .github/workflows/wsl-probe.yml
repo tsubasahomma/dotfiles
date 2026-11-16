@@ -45,6 +45,23 @@ jobs:
         run: |
           wsl -d Ubuntu-24.04 -u root -- sh -c 'useradd -m -s /bin/bash runner && echo "runner ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/runner && apt-get update -qq && apt-get install -y -qq git curl python3 openssh-client > /dev/null && echo ready'
 
+      - name: Repeat the Config Template op.exe Discovery as the Runner User
+        continue-on-error: true
+        shell: pwsh
+        run: |
+          wsl -d Ubuntu-24.04 -u runner --cd ~ -- bash -c 'command -v powershell.exe; echo "PATH has $(printf %s "$PATH" | tr : "\n" | grep -c /mnt/c) Windows entries"; powershell.exe -NoProfile -NonInteractive -Command '"'"'$cmd = Get-Command "op.exe" -ErrorAction SilentlyContinue; if ($cmd) { [Console]::Write($cmd.Source) }'"'"'; echo "rc=$?"'
+
+      - name: Place Stand-In op.exe and WezTerm on Windows
+        # Stand-ins only make discovery succeed; they do not run 1Password or WezTerm.
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force C:\probe-bin, "C:\Program Files\WezTerm" | Out-Null
+          Copy-Item C:\Windows\System32\whoami.exe C:\probe-bin\op.exe
+          Copy-Item C:\Windows\System32\whoami.exe "C:\Program Files\WezTerm\wezterm.exe"
+          [Environment]::SetEnvironmentVariable("Path", [Environment]::GetEnvironmentVariable("Path", "Machine") + ";C:\probe-bin", "Machine")
+          wsl --shutdown
+          wsl -d Ubuntu-24.04 -u runner -- bash -c 'powershell.exe -NoProfile -NonInteractive -Command "(Get-Command op.exe).Source"'
+
       - name: Run the First Install Inside WSL
         continue-on-error: true
         shell: pwsh
