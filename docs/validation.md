@@ -5,7 +5,7 @@ description: 文書・template・tool更新・認証の変更に対して、必�
 status: draft
 generated:
   by: claude-code/claude-opus-5-5
-  at: "2026-11-16T10:00:00+00:00"
+  at: "2026-11-16T10:30:00+00:00"
 sources:
   - id: evals
     resource: "https://www.anthropic.com/research/demystifying-evals-for-ai-agents"
@@ -198,6 +198,7 @@ macOSで隔離検証に成功し、Ubuntu/macOSのCI stepへ接続した。workf
 | identity | op account、agent一覧、WSL環境照会、生成binding | 認証prompt・agent/Windowsプロセス起動が起こり得る。CIでも実行不能を成功へ変えない |
 | wsl-openssh | 下記のWindows認証・署名probe | 非WSLでは`[N/A]`、WSLで明示flagなしは`[NOT RUN]`と非zero |
 
+<a id="wsl-openssh-probe"></a>
 # WSL OpenSSH probeを使う前に
 
 `dotfiles-diagnose --probe wsl-openssh`はinterop、Windows SSH command、pipe形状、agent鍵一覧、GitHub SSH認証を調べる。最初のidentity configを使ってGit remoteを参照し、一時repositoryで署名commitを作る。`git -c gpg.minTrustLevel=fully verify-commit HEAD`の終了結果でallowed signersの信頼判定を行う。署名表示文字列の一致だけでは合格にしない。[^wsl-check]
@@ -210,6 +211,27 @@ macOSで隔離検証に成功し、Ubuntu/macOSのCI stepへ接続した。workf
 | 最初のconfigを選ぶ | 全identity、directory routing、他hostの認証成功は保証しない |
 
 cleanupで外部通信やWindows側の状態まで元に戻るわけではない。timeout utility不在では時間制限なしの箇所もある。静的棚卸しの代わりに実行しない。[^wsl-check]
+
+<a id="wsl-manual"></a>
+# WSLの確認方法と頻度
+
+WSLは自動のCIで検証せず、利用者が実機のWSL2 Ubuntuで手動で確認する。2026-11-16にGitHubの`windows-2025` runnerで試した結果、WSL2のUbuntu 24.04の起動（導入から48秒）、WSLからの`cmd.exe`・`wslpath`、[初回導入の入口](../.first-install.sh)の1〜3段階は通った。4段階の`chezmoi init`は、config templateのWSL経路がCIでも求めるWindows側`op.exe`の探索で止まった。Windowsの`Path`に代用の`op.exe`を足しても、WSLから起動したPowerShellには見えなかった。先へ進めるには1Password CLI・WezTerm・WinGetを代用品にする必要があり、代用するとWSLで確かめたい1Passwordとinteropの経路が検査から外れる。そのため自動化しない。runは[試験PR](https://github.com/tsubasahomma/dotfiles/pull/442)に記録した。
+
+**いつ行うか。** 次のどれかを変えるPRをmergeした後、その変更を実機に取り込むとき。ほかに変更がなくても、月に1回行う。
+
+- `.chezmoi.toml.tmpl`のWSL経路、`.chezmoiexternal.toml.tmpl`の`is_wsl`分岐
+- WSL・Windows向けのscriptとtask（`run_after_50-wsl-sync-services`、`run_onchange_before_provision-windows-packages`、`lifecycle:wsl-post-apply`、`check:wsl-openssh`、`sync:*`）
+- `.mise-version`・`.mise.toml`・`dot_config/mise/`の更新を含むRenovateのPR
+
+**手順。** WSLのshellで行う。どれも実機を変更し得るので、副作用は[操作と副作用](operations.md)の該当節で確かめてから行う。
+
+1. sourceが取り込む予定のcommitにあることを確かめる：`git -C ~/.local/share/chezmoi status --short`と`git -C ~/.local/share/chezmoi rev-parse HEAD`。
+2. 差分を読む：`chezmoi diff`。読込hookはmiseを導入しないが、externalの取得とcacheの書込は起こり得る。
+3. 適用する：`chezmoi apply`。失敗したら[操作と副作用](operations.md)の「失敗したとき」に従う。
+4. local診断：`dotfiles-diagnose`。
+5. 認証と署名：`dotfiles-diagnose --probe wsl-openssh`（[上の表](#wsl-openssh-probe)の通信・認証・一時署名を伴う）。
+
+**記録。** 日付、sourceのcommit、WSLのdistro名、各手順の終了結果、失敗した検査名を、取り込んだPRかissueのコメントに残す。秘密・鍵・identityの値は載せない。手動確認をしていない変更は「WSL未確認」と書き、CIの合格で置き換えない。
 
 # 診断境界の隔離検証
 
