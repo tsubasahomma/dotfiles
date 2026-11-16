@@ -22,7 +22,7 @@ class Classifier(unittest.TestCase):
         for paths in (
             [],
             ['docs/validation.md', 'tests/run_checks.py'],
-            ['dot_config/nvim/README.md'],
+            ['home/dot_config/nvim/README.md'],
             ['docs/image.png'],
             ['NOTES.md'],
             ['.github/workflows/compliance.yml'],

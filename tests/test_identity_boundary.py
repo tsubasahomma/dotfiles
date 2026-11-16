@@ -20,6 +20,7 @@ import tomllib
 import unittest
 
 REPO = Path(__file__).resolve().parents[1]
+SOURCE_STATE = REPO / 'home'
 CHEZMOI = os.environ.get('CHEZMOI_BIN') or shutil.which('chezmoi')
 ZSH = shutil.which('zsh')
 REPAIR = 'dot_config/mise/repo-tasks/repair/executable_security.tmpl'
@@ -47,7 +48,9 @@ class IdentityBoundary(unittest.TestCase):
         self.home = self.root / "home ' \"quoted\" $(touch HOME_PWN) `touch HOME_BT`"
         self.home.mkdir()
         self.source = self.root / 'source'
-        shutil.copytree(REPO, self.source, ignore=shutil.ignore_patterns('.git', '__pycache__'))
+        shutil.copytree(
+            SOURCE_STATE, self.source, ignore=shutil.ignore_patterns('.git', '__pycache__')
+        )
         (self.source / '.chezmoiexternal.toml.tmpl').write_text('')
         producer = self.source / '.chezmoi.toml.tmpl'
         text = producer.read_text()

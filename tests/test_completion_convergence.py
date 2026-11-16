@@ -6,7 +6,7 @@ import shutil
 import subprocess
 import unittest
 
-from test_completion_transaction import CHEZMOI, REPO, CompletionTransaction
+from test_completion_transaction import CHEZMOI, SOURCE_STATE, CompletionTransaction
 
 AFTER = '.chezmoiscripts/run_after_30-completions.sh.tmpl'
 WRAPPER = '.chezmoiscripts/run_onchange_after_20-mise-post-apply-graph.sh.tmpl'
@@ -37,14 +37,14 @@ class Convergence(CompletionTransaction):
             'dot_local/share/pbcopy/pbfile.swift',
         ]
         references += [
-            str(p.relative_to(REPO))
-            for p in (REPO / 'dot_config/mise/repo-tasks').rglob('*')
+            str(p.relative_to(SOURCE_STATE))
+            for p in (SOURCE_STATE / 'dot_config/mise/repo-tasks').rglob('*')
             if p.is_file()
         ]
         for name in references:
             p = self.source / name
             p.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(REPO / name, p)
+            shutil.copy2(SOURCE_STATE / name, p)
         (self.source / '.chezmoiexternal.toml.tmpl').write_text(
             '# Fixture: no external downloads.\n'
         )
@@ -189,7 +189,7 @@ if [ "$1" = which ]; then
                 'execute-template',
             ],
             input=(
-                REPO / 'dot_config/mise/repo-tasks/check/executable_completion.tmpl'
+                SOURCE_STATE / 'dot_config/mise/repo-tasks/check/executable_completion.tmpl'
             ).read_text(),
             env=self.env,
             cwd=self.root,

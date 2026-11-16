@@ -13,7 +13,7 @@
 
 # GitHub Linguist overrides.
 # Mark data and templates as their underlying language for better UI
-.chezmoidata/*.yaml linguist-language=yaml
+home/.chezmoidata/*.yaml linguist-language=yaml
 *.sh.tmpl linguist-language=shell
 *.lua.tmpl linguist-language=lua
 

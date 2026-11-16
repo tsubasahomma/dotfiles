@@ -4,11 +4,11 @@ title: 状態の正本と書き込み主体
 description: 設定・生成物・手動管理状態について、現行の所有境界と未決の引受け範囲を確認する。
 status: draft
 generated:
-  by: codex/gpt-6
-  at: "2026-11-12T00:24:47+00:00"
+  by: claude-code/claude-opus-5-5
+  at: "2026-11-16T08:59:53+00:00"
 sources:
   - id: config
-    resource: "../.chezmoi.toml.tmpl"
+    resource: "../home/.chezmoi.toml.tmpl"
     title: "identity入力・ホスト情報の取得とread-source-state hook"
   - id: bootstrap
     resource: "../.bootstrap-mise.sh"
@@ -17,7 +17,7 @@ sources:
     resource: "https://github.com/tsubasahomma/dotfiles/blob/f4fe1fac3e0722b173b5291a06e98e1e066786f1/.chezmoiignore.tmpl"
     title: "chezmoiによる配置の除外"
   - id: remove
-    resource: "../.chezmoiremove.tmpl"
+    resource: "../home/.chezmoiremove.tmpl"
     title: "旧パスの恒久削除を停止したremove定義"
   - id: externals
     resource: "https://github.com/tsubasahomma/dotfiles/blob/f4fe1fac3e0722b173b5291a06e98e1e066786f1/.chezmoiexternal.toml.tmpl"
@@ -29,13 +29,13 @@ sources:
     resource: "https://github.com/tsubasahomma/dotfiles/blob/f4fe1fac3e0722b173b5291a06e98e1e066786f1/dot_config/mise/config.toml.tmpl"
     title: "mise task discovery・自動導入設定"
   - id: wrapper
-    resource: "../.chezmoiscripts/run_onchange_after_20-mise-post-apply-graph.sh.tmpl"
+    resource: "../home/.chezmoiscripts/run_onchange_after_20-mise-post-apply-graph.sh.tmpl"
     title: "post-applyの起動条件・mise install・認証の受け渡し"
   - id: mise-install
     resource: "https://github.com/jdx/mise/blob/v2026.6.11/docs/cli/install.md"
     title: "mise v2026.6.11 install：導入と有効化は別"
   - id: packages
-    resource: "../.chezmoidata/packages.yaml"
+    resource: "../home/.chezmoidata/packages.yaml"
     title: "OS別packageの宣言"
   - id: brewfile
     resource: "https://github.com/tsubasahomma/dotfiles/blob/f4fe1fac3e0722b173b5291a06e98e1e066786f1/dot_config/homebrew/Brewfile.tmpl"
@@ -44,25 +44,25 @@ sources:
     resource: "https://docs.brew.sh/Brew-Bundle-and-Brewfile"
     title: "Homebrew Bundle：既定upgrade・no-upgrade・lock非対応"
   - id: identity
-    resource: "../dot_config/mise/repo-tasks/generate/executable_identity.tmpl"
+    resource: "../home/dot_config/mise/repo-tasks/generate/executable_identity.tmpl"
     title: "identity入力の検証と世代切替"
   - id: security
-    resource: "../dot_config/mise/repo-tasks/repair/executable_security.tmpl"
+    resource: "../home/dot_config/mise/repo-tasks/repair/executable_security.tmpl"
     title: "権限変更を行わない互換task"
   - id: completions
-    resource: "../dot_config/mise/repo-tasks/generate/executable_completions.tmpl"
+    resource: "../home/dot_config/mise/repo-tasks/generate/executable_completions.tmpl"
     title: "補完・initの個別検証と切替"
   - id: tasks
     resource: "https://github.com/tsubasahomma/dotfiles/tree/f4fe1fac3e0722b173b5291a06e98e1e066786f1/dot_config/mise/repo-tasks"
     title: "repo所有taskの実装"
   - id: repair-nvim
-    resource: "../dot_config/mise/repo-tasks/repair/executable_nvim.tmpl"
+    resource: "../home/dot_config/mise/repo-tasks/repair/executable_nvim.tmpl"
     title: "採用lockからのLazy restore"
   - id: lifecycle
-    resource: "../dot_config/mise/repo-tasks/lifecycle/executable_post-apply.tmpl"
+    resource: "../home/dot_config/mise/repo-tasks/lifecycle/executable_post-apply.tmpl"
     title: "OS別post-apply依存graph"
   - id: update-nvim
-    resource: "../dot_config/mise/repo-tasks/update/executable_lazy-lock.tmpl"
+    resource: "../home/dot_config/mise/repo-tasks/update/executable_lazy-lock.tmpl"
     title: "選択revisionからの隔離lock候補生成"
   - id: scripts
     resource: "https://www.chezmoi.io/user-guide/use-scripts-to-perform-actions/"
@@ -91,7 +91,7 @@ R02ではidentity集合を取得・render時に検証し、不正入力を出力
 | mise本体 | `.mise-version`とbootstrap実装 | `.bootstrap-mise.sh --install`が不在時だけ`~/.local/bin/mise`へ導入 | 読込hookと引数なし呼出しは存在・実行属性のみ検査。既存の旧版・新版は保持し、明示導入でも版不一致・symlink・非通常fileを置換しない。PATH上のmiseとは別の実体になり得る[^bootstrap][^config] |
 | chezmoiのホスト設定・identity入力 | `.chezmoi.toml.tmpl`、ホスト情報、1Password | config生成時に外部入力を取得し、chezmoi設定へ保持 | 1Passwordが入力の出所、生成済みconfigは取得時点の値。通常applyを毎回の再取得とみなさない[^config] |
 | 静的設定・symlink・外部asset | source、ignore、remove、external定義 | chezmoiがtargetへ配置・削除・外部取得 | ignoreはchezmoiの境界。後段shell taskの書込権限を制限しない[^ignore][^remove][^externals] |
-| miseで使うCLI/runtime | `dot_config/mise/conf.d/10-tools.toml`、動的config、実行時に読まれる他の設定 | post-applyのmise install、mise exec等 | 宣言・導入済み版・有効版・実行パスは別。repo宣言だけから端末の実行版を断定しない[^tools][^mise-config][^wrapper][^mise-install] |
+| miseで使うCLI/runtime | `home/dot_config/mise/conf.d/10-tools.toml`、動的config、実行時に読まれる他の設定 | post-applyのmise install、mise exec等 | 宣言・導入済み版・有効版・実行パスは別。repo宣言だけから端末の実行版を断定しない[^tools][^mise-config][^wrapper][^mise-install] |
 | OS package・アプリ | `packages.yaml`、macOSは生成Brewfile | OS別before script → brew / Linux package manager / WinGet | repoの宣言一覧は端末全体の所有一覧ではない。brewは[不足導入と明示更新](operations.md#homebrew-packages)を分離。依存変更までは禁止しない[^packages][^brewfile][^brew-bundle] |
 | Git identity includes・公開鍵・allowed_signers | config内のidentity入力と生成template | identity専用after入口 / generate:identity → XDG Git配下の固有`.identity-generation-*`と固定`identity.inc` | 新入力は新しい世代へ書き、manifestとentry照合後に参照を切替。所有照合済み世代の欠損は元の内容だけを復旧する（[R10a契約](identity.md#identity-convergence)）。before scriptは旧routing参照を保存する。旧identities・signers・SSH公開鍵と未知fileは変更・削除しない。旧世代の回収は行わない[^identity] |
 | SSH秘密鍵・known_hosts | 利用者・SSH・認証システム側の状態 | chezmoiは鍵等を除外し、repair:securityは変更しない互換入口 | ファイル名から所有を推定しない。公開鍵とallowed_signersのmodeはgenerate:identityが出力時に設定する[^ignore][^security][^identity] |
@@ -128,25 +128,25 @@ macOSのjust・atuin・duckdb・deno・AWS CLIは、2026-11-11の利用者決定
 
 維持候補はsourceとtargetの区別、toolの明示的な要求、repo taskの分離、導入先の型検査です。読み取り時のmise差替えは分離済みです。未所有鍵へのchmodと旧パスの恒久削除は停止した。identity先行削除はR05で世代切替へ変更した。Windows設定の無条件copyはR14で2fileのreceipt照合へ変更した。OS/miseの担当整理は採用した範囲に限る。採否と理由・代案は[convergence](decisions/convergence.md)を正本とし、この文書に将来の成功保証を混ぜません。
 
-[^config]: [identity入力・ホスト情報の取得とread-source-state hook](../.chezmoi.toml.tmpl).
+[^config]: [identity入力・ホスト情報の取得とread-source-state hook](../home/.chezmoi.toml.tmpl).
 [^bootstrap]: [mise本体の読込検査・明示導入](../.bootstrap-mise.sh).
 [^ignore]: [chezmoiによる配置の除外](https://github.com/tsubasahomma/dotfiles/blob/f4fe1fac3e0722b173b5291a06e98e1e066786f1/.chezmoiignore.tmpl).
-[^remove]: [旧パスの恒久削除を停止したremove定義](../.chezmoiremove.tmpl).
+[^remove]: [旧パスの恒久削除を停止したremove定義](../home/.chezmoiremove.tmpl).
 [^externals]: [外部assetとrefresh指定](https://github.com/tsubasahomma/dotfiles/blob/f4fe1fac3e0722b173b5291a06e98e1e066786f1/.chezmoiexternal.toml.tmpl).
 [^tools]: [観測時のmise tool宣言](https://github.com/tsubasahomma/dotfiles/blob/f4fe1fac3e0722b173b5291a06e98e1e066786f1/dot_config/mise/conf.d/10-tools.toml).
 [^mise-config]: [mise task discovery・自動導入設定](https://github.com/tsubasahomma/dotfiles/blob/f4fe1fac3e0722b173b5291a06e98e1e066786f1/dot_config/mise/config.toml.tmpl).
-[^wrapper]: [post-applyの起動条件・mise install・認証の受け渡し](../.chezmoiscripts/run_onchange_after_20-mise-post-apply-graph.sh.tmpl).
+[^wrapper]: [post-applyの起動条件・mise install・認証の受け渡し](../home/.chezmoiscripts/run_onchange_after_20-mise-post-apply-graph.sh.tmpl).
 [^mise-install]: [mise v2026.6.11 install：導入と有効化は別](https://github.com/jdx/mise/blob/v2026.6.11/docs/cli/install.md).
-[^packages]: [OS別packageの宣言](../.chezmoidata/packages.yaml).
+[^packages]: [OS別packageの宣言](../home/.chezmoidata/packages.yaml).
 [^brewfile]: [macOS Brewfileの生成とCI分岐](https://github.com/tsubasahomma/dotfiles/blob/f4fe1fac3e0722b173b5291a06e98e1e066786f1/dot_config/homebrew/Brewfile.tmpl).
 [^brew-bundle]: [Homebrew Bundle：既定upgrade・no-upgrade・lock非対応](https://docs.brew.sh/Brew-Bundle-and-Brewfile).
-[^identity]: [identityの検証・世代切替](../dot_config/mise/repo-tasks/generate/executable_identity.tmpl).
-[^security]: [権限変更を行わない互換task](../dot_config/mise/repo-tasks/repair/executable_security.tmpl).
-[^completions]: [補完・initの個別検証と切替](../dot_config/mise/repo-tasks/generate/executable_completions.tmpl).
+[^identity]: [identityの検証・世代切替](../home/dot_config/mise/repo-tasks/generate/executable_identity.tmpl).
+[^security]: [権限変更を行わない互換task](../home/dot_config/mise/repo-tasks/repair/executable_security.tmpl).
+[^completions]: [補完・initの個別検証と切替](../home/dot_config/mise/repo-tasks/generate/executable_completions.tmpl).
 [^tasks]: [repo所有taskの実装](https://github.com/tsubasahomma/dotfiles/tree/f4fe1fac3e0722b173b5291a06e98e1e066786f1/dot_config/mise/repo-tasks).
-[^repair-nvim]: [採用lockからのLazy restore](../dot_config/mise/repo-tasks/repair/executable_nvim.tmpl).
-[^lifecycle]: [OS別post-apply依存graph](../dot_config/mise/repo-tasks/lifecycle/executable_post-apply.tmpl).
-[^update-nvim]: [選択revisionからの隔離lock候補生成](../dot_config/mise/repo-tasks/update/executable_lazy-lock.tmpl).
+[^repair-nvim]: [採用lockからのLazy restore](../home/dot_config/mise/repo-tasks/repair/executable_nvim.tmpl).
+[^lifecycle]: [OS別post-apply依存graph](../home/dot_config/mise/repo-tasks/lifecycle/executable_post-apply.tmpl).
+[^update-nvim]: [選択revisionからの隔離lock候補生成](../home/dot_config/mise/repo-tasks/update/executable_lazy-lock.tmpl).
 [^scripts]: [chezmoi scripts：onchangeの成功済み内容による再実行判定](https://www.chezmoi.io/user-guide/use-scripts-to-perform-actions/).
 [^mise-tasks]: [mise v2026.6.11：task省略と依存順序](https://github.com/jdx/mise/blob/v2026.6.11/docs/tasks/running-tasks.md).
 [^user]: 端末構築後にmise関連・brewを直接更新したとの利用者報告。実機観測ではない.
@@ -154,7 +154,7 @@ macOSのjust・atuin・duckdb・deno・AWS CLIは、2026-11-11の利用者決定
 
 # R10b補完の依存とcache所有
 
-補完・initは[専用after_30](../.chezmoiscripts/run_after_30-completions.sh.tmpl)が毎apply直接検査する。R07の個別source/zwc/dumpに加え、各出力の隠し`.<basename>.generation.json`を成功内容の照合用に生成する。未知schemaやsymlinkのreceiptは保持して停止する。これは外部fileを所有認定するmanifestではない。管理外cacheやSDKの変更・削除範囲を増やさず、入力として実体を読むだけである。[詳細契約](operations.md#completion-convergence)を参照。
+補完・initは[専用after_30](../home/.chezmoiscripts/run_after_30-completions.sh.tmpl)が毎apply直接検査する。R07の個別source/zwc/dumpに加え、各出力の隠し`.<basename>.generation.json`を成功内容の照合用に生成する。未知schemaやsymlinkのreceiptは保持して停止する。これは外部fileを所有認定するmanifestではない。管理外cacheやSDKの変更・削除範囲を増やさず、入力として実体を読むだけである。[詳細契約](operations.md#completion-convergence)を参照。
 
 <a id="windows-settings-sync"></a>
 # Windows同期の所有範囲

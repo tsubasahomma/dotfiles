@@ -16,6 +16,7 @@ import tempfile
 import unittest
 
 REPO = Path(__file__).resolve().parents[1]
+SOURCE_STATE = REPO / 'home'
 CHEZMOI = os.environ.get('CHEZMOI_BIN') or shutil.which('chezmoi')
 ZSH = os.environ.get('ZSH_BIN') or shutil.which('zsh')
 SCRIPT = '.chezmoiscripts/run_onchange_before_provision-macos-homebrew.sh.tmpl'
@@ -74,7 +75,7 @@ class HomebrewPackages(unittest.TestCase):
         for rel in (SCRIPT, BREWFILE, '.chezmoidata/packages.yaml'):
             target = self.source / rel
             target.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copyfile(REPO / rel, target)
+            shutil.copyfile(SOURCE_STATE / rel, target)
         self.bin = self.root / 'bin'
         self.bin.mkdir()
         stub = self.bin / 'brew'

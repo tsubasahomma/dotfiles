@@ -43,6 +43,9 @@ class Renderer:
         self.home.mkdir()
         self.source = self.root / 'source'
         shutil.copytree(REPO, self.source, ignore=shutil.ignore_patterns('.git', '__pycache__'))
+        # Render the copied checkout through .chezmoiroot; name templates by
+        # their path in the source state.
+        self.state = self.source / 'home'
         # No init/apply, hooks or external resolution. Retain source includes.
         self.config = self.root / 'config.json'
         bin_dir = self.root / 'bin'
@@ -104,7 +107,7 @@ class Renderer:
         }
         self.templates = sorted(
             p
-            for p in self.source.rglob('*.tmpl')
+            for p in self.state.rglob('*.tmpl')
             if '.chezmoitemplates' not in p.parts and p.name != '.chezmoi.toml.tmpl'
         )
 
@@ -142,7 +145,7 @@ class Renderer:
         rendered.mkdir()
         records = []
         for number, template in enumerate(self.templates):
-            relative = template.relative_to(self.source)
+            relative = template.relative_to(self.state)
             # Simulate the builtin fields too; this is render coverage,
             # not execution on the simulated OS/architecture.
             prefix = '{{- $_ := set .chezmoi "os" .osid -}}{{- $_ := set .chezmoi "arch" .arch -}}'

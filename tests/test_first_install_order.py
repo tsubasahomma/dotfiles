@@ -15,6 +15,7 @@ import tempfile
 import unittest
 
 REPO = Path(__file__).resolve().parents[1]
+SOURCE_STATE = REPO / 'home'
 CHEZMOI = os.environ.get('CHEZMOI_BIN') or shutil.which('chezmoi')
 PREPARE = '.chezmoiscripts/run_before_05-identity-dispatch.sh.tmpl'
 LINUX = '.chezmoiscripts/run_onchange_before_00-provision-linux-packages.sh.tmpl'
@@ -71,7 +72,7 @@ class FirstInstallOrder(unittest.TestCase):
     def copy(self, name):
         target = self.source / name
         target.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(REPO / name, target)
+        shutil.copy2(SOURCE_STATE / name, target)
         return target
 
     def executable(self, path, text):
@@ -126,7 +127,8 @@ class FirstInstallOrder(unittest.TestCase):
         self.config = self.root / 'config.toml'
         self.copy('.chezmoi.toml.tmpl')
         self.copy('.chezmoitemplates/validated_identities.tmpl')
-        self.copy('.bootstrap-mise.sh')
+        # A flat source is its own working tree, where the read hook looks.
+        shutil.copy2(REPO / '.bootstrap-mise.sh', self.source / '.bootstrap-mise.sh')
         self.markers()
         # Keep the actual generated read hook; its required executable is a stub.
         self.executable(self.home / '.local/bin/mise', '#!/bin/sh\nexit 95\n')
@@ -181,7 +183,7 @@ esac
         self.copy(LINK)
         self.data['osid'] = 'darwin'
         self.write_config()
-        result = self.chezmoi('execute-template', (REPO / LINK).read_text())
+        result = self.chezmoi('execute-template', (SOURCE_STATE / LINK).read_text())
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(result.stdout.strip(), '/Applications/WezTerm.app/Contents/MacOS/wezterm')
 
@@ -266,7 +268,7 @@ esac
         self.assertIn('apt-get/dnf/pacman permissions', result.stderr)
         self.assertNotIn('NOPASSWD', result.stderr)
         # The later Linux shell task must give bounded guidance too.
-        rendered = self.chezmoi('execute-template', (REPO / SHELL).read_text())
+        rendered = self.chezmoi('execute-template', (SOURCE_STATE / SHELL).read_text())
         self.assertEqual(rendered.returncode, 0, rendered.stderr)
         result = subprocess.run(
             ['/bin/bash'],

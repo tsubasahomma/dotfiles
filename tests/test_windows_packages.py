@@ -17,6 +17,7 @@ import tempfile
 import unittest
 
 REPO = Path(__file__).resolve().parents[1]
+SOURCE_STATE = REPO / 'home'
 CHEZMOI = os.environ.get('CHEZMOI_BIN') or shutil.which('chezmoi')
 SCRIPT = '.chezmoiscripts/run_onchange_before_provision-windows-packages.sh.tmpl'
 GUI = 'AgileBits.1Password'
@@ -104,7 +105,7 @@ class WindowsPackages(unittest.TestCase):
         for path in (SCRIPT, '.chezmoitemplates/windows_packages.py'):
             target = self.source / path
             target.parent.mkdir(exist_ok=True)
-            shutil.copyfile(REPO / path, target)
+            shutil.copyfile(SOURCE_STATE / path, target)
         (self.source / '.chezmoidata').mkdir()
         self.bin = self.root / 'bin'
         self.bin.mkdir()
@@ -365,7 +366,7 @@ class WindowsPackages(unittest.TestCase):
         # Use the real package YAML in addition to focused fixture IDs.
         self.render()
         shutil.copyfile(
-            REPO / '.chezmoidata/packages.yaml', self.source / '.chezmoidata/packages.yaml'
+            SOURCE_STATE / '.chezmoidata/packages.yaml', self.source / '.chezmoidata/packages.yaml'
         )
         result = subprocess.run(
             [

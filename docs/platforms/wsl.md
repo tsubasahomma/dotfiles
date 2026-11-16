@@ -4,20 +4,20 @@ title: WSL・Windowsの前提と認証境界
 description: WSLのLinux側とWindows側で異なる設定・認証・copy先・検査を切り分ける。
 status: draft
 generated:
-  by: codex/gpt-6
-  at: "2026-11-11T15:42:39+00:00"
+  by: claude-code/claude-opus-5-5
+  at: "2026-11-16T08:59:53+00:00"
 sources:
   - id: config
-    resource: "../../.chezmoi.toml.tmpl"
+    resource: "../../home/.chezmoi.toml.tmpl"
     title: "ホスト入力と1Password identity取得"
   - id: wezterm
-    resource: "../../dot_config/wezterm/wezterm.lua.tmpl"
+    resource: "../../home/dot_config/wezterm/wezterm.lua.tmpl"
     title: "WezTermのWSL domainとmux認証環境"
   - id: wezterm-link
-    resource: "../../dot_local/bin/symlink_wezterm.tmpl"
+    resource: "../../home/dot_local/bin/symlink_wezterm.tmpl"
     title: "macOS/WSLのWezTerm実体探索"
   - id: linux-script
-    resource: "../../.chezmoiscripts/run_onchange_before_00-provision-linux-packages.sh.tmpl"
+    resource: "../../home/.chezmoiscripts/run_onchange_before_00-provision-linux-packages.sh.tmpl"
     title: "Linux package導入とsudo要件"
   - id: order
     resource: "https://www.chezmoi.io/reference/application-order/"
@@ -26,13 +26,13 @@ sources:
     resource: "https://www.1password.dev/ssh/integrations/wsl"
     title: "1Password公式：Windows OpenSSHとWSL署名"
   - id: agent-sync
-    resource: "../../dot_config/mise/repo-tasks/sync/executable_1password-agent.tmpl"
+    resource: "../../home/dot_config/mise/repo-tasks/sync/executable_1password-agent.tmpl"
     title: "Windows側agent設定へのcopy"
   - id: wezterm-sync
-    resource: "../../dot_config/mise/repo-tasks/sync/executable_wezterm.tmpl"
+    resource: "../../home/dot_config/mise/repo-tasks/sync/executable_wezterm.tmpl"
     title: "Windows側WezTerm設定へのcopy"
   - id: wsl-sync
-    resource: "../../.chezmoiscripts/run_after_50-wsl-sync-services.sh.tmpl"
+    resource: "../../home/.chezmoiscripts/run_after_50-wsl-sync-services.sh.tmpl"
     title: "WSL Windows sync起動条件"
   - id: zshenv
     resource: "https://github.com/tsubasahomma/dotfiles/blob/f4fe1fac3e0722b173b5291a06e98e1e066786f1/dot_zshenv.tmpl"
@@ -47,7 +47,7 @@ sources:
     resource: "https://wezterm.org/config/lua/config/mux_env_remove.html"
     title: "WezTerm公式：mux環境変数の除去"
   - id: win-script
-    resource: "../../.chezmoiscripts/run_onchange_before_provision-windows-packages.sh.tmpl"
+    resource: "../../home/.chezmoiscripts/run_onchange_before_provision-windows-packages.sh.tmpl"
     title: "Windows packageの完全一致照会とhash検証"
   - id: packages
     resource: "https://github.com/tsubasahomma/dotfiles/blob/f4fe1fac3e0722b173b5291a06e98e1e066786f1/.chezmoidata/packages.yaml"
@@ -186,7 +186,7 @@ installも終了値0だけでは成功としない。stderrが空で、最初の
 
 ## WSLとWindowsの引数・終了値
 
-[Python helper](../../.chezmoitemplates/windows_packages.py)を実templateへ埋め込み、package一覧はBase64化したJSONとして渡す。IDは非空のASCII英数字から始まる英数字・dot・underscore・hyphenだけに制限し、全IDをWindows起動前に検証する。PowerShellへは`-NoLogo -NoProfile -NonInteractive -EncodedCommand <UTF-16LEのBase64>`だけを渡す。codeを通常の`-Command`引数やstdinの逐次解釈へ流さず、WSLの引用境界を一つのBase64 tokenに限定する。[^win-script][^powershell-exe]
+[Python helper](../../home/.chezmoitemplates/windows_packages.py)を実templateへ埋め込み、package一覧はBase64化したJSONとして渡す。IDは非空のASCII英数字から始まる英数字・dot・underscore・hyphenだけに制限し、全IDをWindows起動前に検証する。PowerShellへは`-NoLogo -NoProfile -NonInteractive -EncodedCommand <UTF-16LEのBase64>`だけを渡す。codeを通常の`-Command`引数やstdinの逐次解釈へ流さず、WSLの引用境界を一つのBase64 tokenに限定する。[^win-script][^powershell-exe]
 
 Windows側では`Get-Command -CommandType Application`の実体を`.NET ProcessStartInfo.FileName`へ入れ、固定optionと検証済みASCII tokenを空白で結合して`Arguments`へ設定する。空白・引用符を含む汎用argvをこの方式で扱う設計ではない。`UseShellExecute=false`、標準入力を閉じ、stdout/stderrを両方非同期に読み、終了後の`Process.ExitCode`（signed Int32）と出力をJSONで返す。bridge自身は0/1で終了し、PythonはJSONの型・範囲も検証する。[^process-arguments][^process-exit][^process-read]
 
@@ -204,20 +204,20 @@ Windowsの限定2file管理を採用した理由と代案は[convergenceのWindo
 
 認証調査に使う`dotfiles-diagnose --probe wsl-openssh`は外部通信と一時署名commitを含み、doctorの構成要素でもない。[validation](../validation.md)で範囲を確認してから必要なprobeを選ぶ。全identityやGit directory routingの検証を、この一つの成功結果で代替しない。
 
-[^config]: [ホスト入力と1Password identity取得](../../.chezmoi.toml.tmpl)。
-[^wezterm]: [WezTermのWSL domainとmux認証環境](../../dot_config/wezterm/wezterm.lua.tmpl)。
-[^wezterm-link]: [macOS/WSLのWezTerm実体探索](../../dot_local/bin/symlink_wezterm.tmpl)。
-[^linux-script]: [Linux package導入とsudo要件](../../.chezmoiscripts/run_onchange_before_00-provision-linux-packages.sh.tmpl)。
+[^config]: [ホスト入力と1Password identity取得](../../home/.chezmoi.toml.tmpl)。
+[^wezterm]: [WezTermのWSL domainとmux認証環境](../../home/dot_config/wezterm/wezterm.lua.tmpl)。
+[^wezterm-link]: [macOS/WSLのWezTerm実体探索](../../home/dot_local/bin/symlink_wezterm.tmpl)。
+[^linux-script]: [Linux package導入とsudo要件](../../home/.chezmoiscripts/run_onchange_before_00-provision-linux-packages.sh.tmpl)。
 [^order]: [chezmoi公式：target計算とbefore/afterの順序](https://www.chezmoi.io/reference/application-order/)。
 [^op-wsl]: [1Password公式：Windows OpenSSHとWSL署名](https://www.1password.dev/ssh/integrations/wsl)。
-[^agent-sync]: [Windows側agent設定へのcopy](../../dot_config/mise/repo-tasks/sync/executable_1password-agent.tmpl)。
-[^wezterm-sync]: [Windows側WezTerm設定へのcopy](../../dot_config/mise/repo-tasks/sync/executable_wezterm.tmpl)。
-[^wsl-sync]: [WSL Windows sync起動条件](../../.chezmoiscripts/run_after_50-wsl-sync-services.sh.tmpl)。
+[^agent-sync]: [Windows側agent設定へのcopy](../../home/dot_config/mise/repo-tasks/sync/executable_1password-agent.tmpl)。
+[^wezterm-sync]: [Windows側WezTerm設定へのcopy](../../home/dot_config/mise/repo-tasks/sync/executable_wezterm.tmpl)。
+[^wsl-sync]: [WSL Windows sync起動条件](../../home/.chezmoiscripts/run_after_50-wsl-sync-services.sh.tmpl)。
 [^zshenv]: [XDG・認証用環境変数とWSLENV](https://github.com/tsubasahomma/dotfiles/blob/f4fe1fac3e0722b173b5291a06e98e1e066786f1/dot_zshenv.tmpl)。
 [^wsl-env]: [Microsoft公式：WSL interopとWSLENV](https://learn.microsoft.com/en-us/windows/wsl/filesystems)。
 [^wez-mux]: [WezTerm公式：muxによるSSH_AUTH_SOCK設定](https://wezterm.org/config/lua/config/mux_enable_ssh_agent.html)。
 [^wez-remove]: [WezTerm公式：mux環境変数の除去](https://wezterm.org/config/lua/config/mux_env_remove.html)。
-[^win-script]: [Windows packageの完全一致照会とhash検証](../../.chezmoiscripts/run_onchange_before_provision-windows-packages.sh.tmpl)。
+[^win-script]: [Windows packageの完全一致照会とhash検証](../../home/.chezmoiscripts/run_onchange_before_provision-windows-packages.sh.tmpl)。
 [^packages]: [OS別package宣言](https://github.com/tsubasahomma/dotfiles/blob/f4fe1fac3e0722b173b5291a06e98e1e066786f1/.chezmoidata/packages.yaml)。
 [^docker-wsl]: [Docker公式：WSL 2統合とbackendの差](https://docs.docker.com/desktop/features/wsl/)。
 

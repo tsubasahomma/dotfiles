@@ -5,11 +5,11 @@ description: 変更と実機操作の境界、変更の確かめ方を確認し�
 status: draft
 generated:
   by: claude-code/claude-opus-5-5
-  at: "2026-11-13T14:12:12+00:00"
+  at: "2026-11-16T08:59:53+00:00"
 ---
 # 作業の境界
 
-このrepoはchezmoiのsource stateです。継続して再現したい変更はsourceへ反映します。実機への操作は依頼された対象範囲と、確認できた状態の所有境界に従って行います。
+このrepoはchezmoiのsource stateです。`.chezmoiroot`により`home/`だけが配備対象になり、root直下にはテスト・文書・CIを置きます。継続して再現したい変更はsourceへ反映します。実機への操作は依頼された対象範囲と、確認できた状態の所有境界に従って行います。
 
 - 宣言と実機の一致を前提にしない。手動のmise・brew更新や管理外の状態を、未宣言という理由だけで巻き戻したり削除したりしない。
 - 文書の確認だけを理由にbootstrap・apply・repair・doctorを実行しない。読み取りやdry-runという名前だけで非変更と判断せず、実行前に該当する操作の副作用を確認する。

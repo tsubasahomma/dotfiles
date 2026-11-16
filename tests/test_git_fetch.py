@@ -10,6 +10,7 @@ import tempfile
 import unittest
 
 REPO = Path(__file__).resolve().parents[1]
+SOURCE_STATE = REPO / 'home'
 CHEZMOI = os.environ.get('CHEZMOI_BIN') or shutil.which('chezmoi')
 GIT = shutil.which('git')
 
@@ -23,7 +24,7 @@ class GitFetch(unittest.TestCase):
             home.mkdir()
             source = root / 'source'
             source.mkdir()
-            shutil.copytree(REPO / '.chezmoitemplates', source / '.chezmoitemplates')
+            shutil.copytree(SOURCE_STATE / '.chezmoitemplates', source / '.chezmoitemplates')
             config = root / 'chezmoi.json'
             config.write_text(
                 json.dumps(
@@ -81,7 +82,7 @@ class GitFetch(unittest.TestCase):
                     '--no-tty',
                     'execute-template',
                 ],
-                input=(REPO / 'dot_config/git/config.tmpl').read_text(),
+                input=(SOURCE_STATE / 'dot_config/git/config.tmpl').read_text(),
             )
             global_config.write_text(rendered + '\n')
 

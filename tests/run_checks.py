@@ -84,16 +84,16 @@ SUITES = {
 # name -> (manifest, mise tool key, executable).
 MANIFEST_TOOLS = {
     'chezmoi': ('.mise.toml', 'aqua:twpayne/chezmoi', 'chezmoi'),
-    'nvim': ('dot_config/mise/conf.d/10-tools.toml', 'aqua:neovim/neovim', 'nvim'),
-    'python3': ('dot_config/mise/conf.d/10-tools.toml', 'python', 'python3'),
-    'vale': ('dot_config/mise/conf.d/10-tools.toml', 'aqua:errata-ai/vale', 'vale'),
-    'stylua': ('dot_config/mise/conf.d/10-tools.toml', 'aqua:JohnnyMorganz/StyLua', 'stylua'),
+    'nvim': ('home/dot_config/mise/conf.d/10-tools.toml', 'aqua:neovim/neovim', 'nvim'),
+    'python3': ('home/dot_config/mise/conf.d/10-tools.toml', 'python', 'python3'),
+    'vale': ('home/dot_config/mise/conf.d/10-tools.toml', 'aqua:errata-ai/vale', 'vale'),
+    'stylua': ('home/dot_config/mise/conf.d/10-tools.toml', 'aqua:JohnnyMorganz/StyLua', 'stylua'),
     'shellcheck': (
-        'dot_config/mise/conf.d/10-tools.toml',
+        'home/dot_config/mise/conf.d/10-tools.toml',
         'aqua:koalaman/shellcheck',
         'shellcheck',
     ),
-    'shfmt': ('dot_config/mise/conf.d/10-tools.toml', 'aqua:mvdan/sh', 'shfmt'),
+    'shfmt': ('home/dot_config/mise/conf.d/10-tools.toml', 'aqua:mvdan/sh', 'shfmt'),
     'ruff': ('tests/lint-tools.toml', 'aqua:astral-sh/ruff', 'ruff'),
     'zizmor': ('tests/lint-tools.toml', 'aqua:zizmorcore/zizmor', 'zizmor'),
     'actionlint': ('tests/lint-tools.toml', 'aqua:rhysd/actionlint', 'actionlint'),
@@ -236,7 +236,7 @@ def ensure_python():
     if not installed:
         sys.exit(
             'Python 3.11+ is required (tomllib); run with python3.11+ or install the '
-            'python version declared in dot_config/mise/conf.d/10-tools.toml'
+            'python version declared in home/dot_config/mise/conf.d/10-tools.toml'
         )
     os.environ['RUN_CHECKS_REEXEC'] = '1'
     os.execv(str(installed), [str(installed), str(Path(__file__).resolve())] + sys.argv[1:])

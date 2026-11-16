@@ -14,10 +14,10 @@ sources:
     resource: "https://github.com/jdx/mise/blob/v2026.6.11/src/cli/completion.rs"
     title: "mise補完のusage呼出しとfallback"
   - id: completion-after
-    resource: "../.chezmoiscripts/run_after_30-completions.sh.tmpl"
+    resource: "../home/.chezmoiscripts/run_after_30-completions.sh.tmpl"
     title: "毎回補完検査"
   - id: completion-state
-    resource: "../.chezmoitemplates/completion_state.py"
+    resource: "../home/.chezmoitemplates/completion_state.py"
     title: "補完入力・出力hash"
   - id: completion-exec
     resource: "https://github.com/jdx/mise/blob/v2026.6.11/src/cli/exec.rs"
@@ -47,7 +47,7 @@ sources:
     resource: "../.bootstrap-mise.sh"
     title: "mise本体の読込検査・明示導入"
   - id: config
-    resource: "../.chezmoi.toml.tmpl"
+    resource: "../home/.chezmoi.toml.tmpl"
     title: "identity入力・ホスト情報の取得とread-source-state hook"
   - id: hooks
     resource: "https://www.chezmoi.io/reference/configuration-file/hooks/"
@@ -59,16 +59,16 @@ sources:
     resource: "https://github.com/tsubasahomma/dotfiles/blob/f4fe1fac3e0722b173b5291a06e98e1e066786f1/dot_config/mise/conf.d/10-tools.toml"
     title: "観測時のmise tool宣言"
   - id: linux-script
-    resource: "../.chezmoiscripts/run_onchange_before_00-provision-linux-packages.sh.tmpl"
+    resource: "../home/.chezmoiscripts/run_onchange_before_00-provision-linux-packages.sh.tmpl"
     title: "Linuxのsudo・package導入"
   - id: brew-script
-    resource: "../.chezmoiscripts/run_onchange_before_provision-macos-homebrew.sh.tmpl"
+    resource: "../home/.chezmoiscripts/run_onchange_before_provision-macos-homebrew.sh.tmpl"
     title: "Homebrew不足導入と前提検査"
   - id: win-script
-    resource: "../.chezmoiscripts/run_onchange_before_provision-windows-packages.sh.tmpl"
+    resource: "../home/.chezmoiscripts/run_onchange_before_provision-windows-packages.sh.tmpl"
     title: "WinGetによるWindows package導入"
   - id: wrapper
-    resource: "../.chezmoiscripts/run_onchange_after_20-mise-post-apply-graph.sh.tmpl"
+    resource: "../home/.chezmoiscripts/run_onchange_after_20-mise-post-apply-graph.sh.tmpl"
     title: "post-applyの起動条件・mise install・認証の受け渡し"
   - id: init
     resource: "https://www.chezmoi.io/reference/commands/init/"
@@ -83,28 +83,28 @@ sources:
     resource: "https://www.chezmoi.io/reference/commands/status/"
     title: "chezmoi statusのR表示"
   - id: doctor
-    resource: "../dot_config/mise/repo-tasks/doctor/executable__default.tmpl"
+    resource: "../home/dot_config/mise/repo-tasks/doctor/executable__default.tmpl"
     title: "doctorの共通検査集合"
   - id: check-nvim
-    resource: "../dot_config/mise/repo-tasks/check/executable_nvim.tmpl"
+    resource: "../home/dot_config/mise/repo-tasks/check/executable_nvim.tmpl"
     title: "Neovim lockの直接比較と実体の存在検査"
   - id: lazy
     resource: "https://github.com/tsubasahomma/dotfiles/blob/f4fe1fac3e0722b173b5291a06e98e1e066786f1/dot_config/nvim/lua/config/lazy.lua"
     title: "Neovim起動時のlazy.nvim取得"
   - id: repair-nvim
-    resource: "../dot_config/mise/repo-tasks/repair/executable_nvim.tmpl"
+    resource: "../home/dot_config/mise/repo-tasks/repair/executable_nvim.tmpl"
     title: "採用lockからのLazy restore"
   - id: security
-    resource: "../dot_config/mise/repo-tasks/repair/executable_security.tmpl"
+    resource: "../home/dot_config/mise/repo-tasks/repair/executable_security.tmpl"
     title: "権限変更を行わない互換task"
   - id: identity
-    resource: "../dot_config/mise/repo-tasks/generate/executable_identity.tmpl"
+    resource: "../home/dot_config/mise/repo-tasks/generate/executable_identity.tmpl"
     title: "identity入力の検証と世代切替"
   - id: mise-tasks
     resource: "https://github.com/jdx/mise/blob/v2026.6.11/docs/tasks/running-tasks.md"
     title: "mise v2026.6.11：task省略と依存順序"
   - id: update-nvim
-    resource: "../dot_config/mise/repo-tasks/update/executable_lazy-lock.tmpl"
+    resource: "../home/dot_config/mise/repo-tasks/update/executable_lazy-lock.tmpl"
     title: "選択revisionからの隔離lock候補生成"
   - id: tasks
     resource: "https://github.com/tsubasahomma/dotfiles/tree/f4fe1fac3e0722b173b5291a06e98e1e066786f1/dot_config/mise/repo-tasks"
@@ -116,19 +116,19 @@ sources:
     resource: "https://github.com/tsubasahomma/dotfiles/blob/f4fe1fac3e0722b173b5291a06e98e1e066786f1/.chezmoiignore.tmpl"
     title: "chezmoiによる配置の除外"
   - id: remove
-    resource: "../.chezmoiremove.tmpl"
+    resource: "../home/.chezmoiremove.tmpl"
     title: "旧パスの恒久削除を停止したremove定義"
   - id: externals
     resource: "https://github.com/tsubasahomma/dotfiles/blob/f4fe1fac3e0722b173b5291a06e98e1e066786f1/.chezmoiexternal.toml.tmpl"
     title: "外部assetとrefresh指定"
   - id: lifecycle
-    resource: "../dot_config/mise/repo-tasks/lifecycle/executable_post-apply.tmpl"
+    resource: "../home/dot_config/mise/repo-tasks/lifecycle/executable_post-apply.tmpl"
     title: "OS別post-apply依存graph"
   - id: completions
-    resource: "../dot_config/mise/repo-tasks/generate/executable_completions.tmpl"
+    resource: "../home/dot_config/mise/repo-tasks/generate/executable_completions.tmpl"
     title: "補完・initの個別検証と切替"
   - id: wsl-wrapper
-    resource: "../.chezmoiscripts/run_after_50-wsl-sync-services.sh.tmpl"
+    resource: "../home/.chezmoiscripts/run_after_50-wsl-sync-services.sh.tmpl"
     title: "WSL syncの起動条件とCI除外"
   - id: ci
     resource: "../.github/workflows/compliance.yml"
@@ -145,6 +145,12 @@ sources:
   - id: brew-man
     resource: "https://docs.brew.sh/Manpage"
     title: "Homebrew brew(1)：導入に伴う依存変更と自動cleanup"
+  - id: chezmoiroot
+    resource: "https://www.chezmoi.io/reference/special-files/chezmoiroot/"
+    title: "chezmoi .chezmoiroot：source stateを読むdirectoryと移すべきroot file"
+  - id: template-vars
+    resource: "https://www.chezmoi.io/reference/templates/variables/"
+    title: "chezmoi template variables：sourceDirとworkingTree"
   - id: user
     resource: "Maintainer report in the repository OKF design conversation, 2026-11-11"
     title: "端末構築後にmise関連・brewを直接更新したとの利用者報告。実機観測ではない"
@@ -238,6 +244,38 @@ GitHub tokenは常時必須という旧記述を引き継ぎません。source�
 
 今回の検証は隔離configで実施し、利用者の生成済みconfigや別sourceの更新・実機適用は行っていません。hookの分離はchezmoiのexternal取得・cache書込や他taskの自動導入を無効化するものではありません。
 
+<a id="chezmoiroot-migration"></a>
+# `home/`へのsource移動と各端末の移行
+
+repo直下の`.chezmoiroot`が`home`を指し、chezmoiは`home/`だけをsource stateとして読みます。root直下の文書・テスト・CI・`.bootstrap-mise.sh`・`.mise-version`は配備対象になりません。chezmoiの仕様では`.chezmoi.toml.tmpl`などroot系のfileも`home/`へ移す必要があります。[^chezmoiroot] templateの`.chezmoi.sourceDir`は`home/`、`.chezmoi.workingTree`はrepo rootを指します。[^template-vars] [config template](../home/.chezmoi.toml.tmpl)は`sourceDir`とread hookの`.bootstrap-mise.sh`をworkingTree基準で書くため、生成されるconfigの値は移動前と同じpathのままです。[^config]
+
+移動前に生成したconfigのまま移動後のsourceを読んだ場合を、隔離HOME（chezmoi 2.74.1、CI分岐、opは失敗するstub、scriptsとexternalは除外）で確かめました。確かめた結果は次のとおりです。
+
+- `chezmoi source-path`は`<source>/home`を返し、hookは同じ絶対pathの`.bootstrap-mise.sh --check`を実行する。
+- 管理対象の集合は変わらない。差分は`check:nvim`と`update:lazy-lock`の配置taskだけで、どちらもsource内のpathを持つ。
+- `chezmoi init`をやり直すまで、読込のたびに`config file template has changed`の警告が出る。
+- `init`をやり直したconfigは移動前のconfigとbyte単位で同じ。その後のapplyでverifyが合格する。
+- 移動前のcommitへsourceを戻し、`init`と`apply`をやり直すと、移動前のtargetへ戻る。
+
+各端末では次の順に進めます。`chezmoi update`はpullとapplyを続けて行うため、差分を見てから反映する場合は使いません。
+
+1. `git -C "$DOTFILES_SOURCE" status --short`で未commitの変更がないことを確かめる。移動するpathに変更があれば、先にcommitするか退避する。
+2. `git -C "$DOTFILES_SOURCE" pull --ff-only`で取得する。取得はsourceの更新だけで、targetは変わらない。
+3. `chezmoi source-path`が`$DOTFILES_SOURCE/home`を返すこと、`chezmoi diff`の差分が上の2つの配置taskと、移動とは別に取り込んだ変更だけであることを確かめる。
+4. `chezmoi init`を`--apply`なしで実行し、configを生成し直す。op/host照会とconfigの書込を伴う。生成されたconfigの`sourceDir`とhookのpathが移動前と同じであることを確かめる。
+5. `chezmoi apply`で反映する。
+
+initを省いてもapplyは動きますが、警告は残ります。戻す場合は、`git -C "$DOTFILES_SOURCE" switch --detach <移動前のcommit>`でsourceを戻し、`chezmoi init`と`chezmoi apply`をやり直します。その後、`git -C "$DOTFILES_SOURCE" switch main`で元のbranchへ戻ります。
+
+script templateのrender結果は、macOS・Linux・WSLとCIの各分岐で移動の前後とも同じでした。そのため`run_onchange_`のscriptは移動を理由に再実行されないと考えます（推論）。
+
+次の点は確かめていません（未確認）。
+
+- 実機のmacOS・WSLでの上の手順の結果。
+- 1Passwordのidentityを含む実際のconfigが再生成で同じになるか。その差は移動ではなく、取得時点の入力で決まる。
+- scriptとexternalを含めた通常applyの結果。
+- 2.74.1以外のchezmoiの挙動。
+
 # 現行の入口
 
 以下は用途を選ぶための既存入口です。順に全部実行する手順ではありません。
@@ -306,10 +344,10 @@ source更新だけでは既存taskは変わらない。入口とcheck/probe一�
 
 | 残る対象 | 現行sourceから分かる影響 |
 |---|---|
-| `~/.config/nvim/lua/plugins/fzf.lua` | [Lazy設定](../dot_config/nvim/lua/config/lazy.lua)が`import = "plugins"`を指定しているため、残存fileは通常起動で読まれ、plugin構成へ作用し得る。履歴上の旧specは`fzf-lua`と`<leader>ff/fg/fb`を設定するため、現行pickerと競合し得る。削除停止は旧pluginの無効化を意味しない[^legacy-fzf] |
-| `~/.config/mise/repo-tasks`内の旧task | [task discovery設定](../dot_config/mise/config.toml.tmpl)のincludes配下に残る。明示呼出しや利用者側依存から実行され得る。現行の[lifecycle](../dot_config/mise/repo-tasks/lifecycle/executable_post-apply.tmpl)と[doctor](../dot_config/mise/repo-tasks/doctor/executable__default.tmpl)は新task名を参照するが、旧task自体の無害化はしない。特に履歴上の`setup:security`は未所有の`id_*`秘密鍵を再帰chmodし、旧`setup`もこれに依存する。旧実体が残る端末の`mise run setup`／`setup:security`は同じ危険へ到達し得る[^legacy-security] |
+| `~/.config/nvim/lua/plugins/fzf.lua` | [Lazy設定](../home/dot_config/nvim/lua/config/lazy.lua)が`import = "plugins"`を指定しているため、残存fileは通常起動で読まれ、plugin構成へ作用し得る。履歴上の旧specは`fzf-lua`と`<leader>ff/fg/fb`を設定するため、現行pickerと競合し得る。削除停止は旧pluginの無効化を意味しない[^legacy-fzf] |
+| `~/.config/mise/repo-tasks`内の旧task | [task discovery設定](../home/dot_config/mise/config.toml.tmpl)のincludes配下に残る。明示呼出しや利用者側依存から実行され得る。現行の[lifecycle](../home/dot_config/mise/repo-tasks/lifecycle/executable_post-apply.tmpl)と[doctor](../home/dot_config/mise/repo-tasks/doctor/executable__default.tmpl)は新task名を参照するが、旧task自体の無害化はしない。特に履歴上の`setup:security`は未所有の`id_*`秘密鍵を再帰chmodし、旧`setup`もこれに依存する。旧実体が残る端末の`mise run setup`／`setup:security`は同じ危険へ到達し得る[^legacy-security] |
 | `~/.config/mise/tasks`内の旧task | 同設定の`disable_paths`で通常の探索から外している。ただし直接path指定や別設定からの利用まで停止しない |
-| WSLの旧`1password-bridge.service`と`default.target.wants`リンク | 有効なwantsリンクが残れば旧bridgeはuser serviceの自動起動候補のまま。現行[WSL lifecycle](../dot_config/mise/repo-tasks/lifecycle/executable_wsl-post-apply.tmpl)にbridgeの停止・無効化はなく、履歴上のunitは`agent.sock`の削除・relay起動と`Restart=always`を持ち、旧service taskは`enable --now`を実行する。Windows OpenSSHへの移行完了をこの保持検査で証明しない[^legacy-bridge] |
+| WSLの旧`1password-bridge.service`と`default.target.wants`リンク | 有効なwantsリンクが残れば旧bridgeはuser serviceの自動起動候補のまま。現行[WSL lifecycle](../home/dot_config/mise/repo-tasks/lifecycle/executable_wsl-post-apply.tmpl)にbridgeの停止・無効化はなく、履歴上のunitは`agent.sock`の削除・relay起動と`Restart=always`を持ち、旧service taskは`enable --now`を実行する。Windows OpenSSHへの移行完了をこの保持検査で証明しない[^legacy-bridge] |
 
 これらの自動読込・起動を確実に止める必要がある端末では、現在の内容・参照・利用意図を確認してから個別の移行を行う。未知のfileを名前だけで消す処理には戻さず、実機を調べていない今回の変更で機能面まで安全になったとは主張しない。
 
@@ -368,35 +406,37 @@ HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_NO_INSTALL_CLEANUP=1 brew upgrade --formula c
 
 ログを共有する際は鍵・アカウント識別子・生成identityの個人情報を除き、対象の種類、段階、成否、未確認事項を残します。未実行の検査を成功として記録しません。
 
+[^chezmoiroot]: [chezmoi .chezmoiroot](https://www.chezmoi.io/reference/special-files/chezmoiroot/)。source stateを読むdirectoryと、移すべきroot file。2026-11-16参照。
+[^template-vars]: [chezmoi template variables](https://www.chezmoi.io/reference/templates/variables/)。`.chezmoi.sourceDir`と`.chezmoi.workingTree`。2026-11-16参照。
 [^bootstrap]: [mise本体の読込検査・明示導入](../.bootstrap-mise.sh).
-[^config]: [identity入力・ホスト情報の取得とread-source-state hook](../.chezmoi.toml.tmpl).
+[^config]: [identity入力・ホスト情報の取得とread-source-state hook](../home/.chezmoi.toml.tmpl).
 [^hooks]: [chezmoi Hooks：dry-runでもhookは動く](https://www.chezmoi.io/reference/configuration-file/hooks/).
 [^mise-config]: [mise task discovery・自動導入設定](https://github.com/tsubasahomma/dotfiles/blob/f4fe1fac3e0722b173b5291a06e98e1e066786f1/dot_config/mise/config.toml.tmpl).
 [^tools]: [観測時のmise tool宣言](https://github.com/tsubasahomma/dotfiles/blob/f4fe1fac3e0722b173b5291a06e98e1e066786f1/dot_config/mise/conf.d/10-tools.toml).
-[^linux-script]: [Linuxのsudo・package導入](../.chezmoiscripts/run_onchange_before_00-provision-linux-packages.sh.tmpl).
-[^brew-script]: [Homebrew不足導入と前提検査](../.chezmoiscripts/run_onchange_before_provision-macos-homebrew.sh.tmpl).
-[^win-script]: [WinGetによるWindows package導入](../.chezmoiscripts/run_onchange_before_provision-windows-packages.sh.tmpl).
-[^wrapper]: [post-applyの起動条件・mise install・認証の受け渡し](../.chezmoiscripts/run_onchange_after_20-mise-post-apply-graph.sh.tmpl).
+[^linux-script]: [Linuxのsudo・package導入](../home/.chezmoiscripts/run_onchange_before_00-provision-linux-packages.sh.tmpl).
+[^brew-script]: [Homebrew不足導入と前提検査](../home/.chezmoiscripts/run_onchange_before_provision-macos-homebrew.sh.tmpl).
+[^win-script]: [WinGetによるWindows package導入](../home/.chezmoiscripts/run_onchange_before_provision-windows-packages.sh.tmpl).
+[^wrapper]: [post-applyの起動条件・mise install・認証の受け渡し](../home/.chezmoiscripts/run_onchange_after_20-mise-post-apply-graph.sh.tmpl).
 [^init]: [chezmoi init](https://www.chezmoi.io/reference/commands/init/).
 [^scripts]: [chezmoi scripts：onchangeの成功済み内容による再実行判定](https://www.chezmoi.io/user-guide/use-scripts-to-perform-actions/).
 [^verify]: [chezmoi verifyの確認範囲](https://www.chezmoi.io/reference/commands/verify/).
 [^status]: [chezmoi statusの表示と除外オプション](https://www.chezmoi.io/reference/commands/status/)。
-[^doctor]: [doctorの共通検査集合](../dot_config/mise/repo-tasks/doctor/executable__default.tmpl).
-[^check-nvim]: [Neovim lockの直接比較と実体の存在検査](../dot_config/mise/repo-tasks/check/executable_nvim.tmpl).
+[^doctor]: [doctorの共通検査集合](../home/dot_config/mise/repo-tasks/doctor/executable__default.tmpl).
+[^check-nvim]: [Neovim lockの直接比較と実体の存在検査](../home/dot_config/mise/repo-tasks/check/executable_nvim.tmpl).
 [^lazy]: [Neovim起動時のlazy.nvim取得](https://github.com/tsubasahomma/dotfiles/blob/f4fe1fac3e0722b173b5291a06e98e1e066786f1/dot_config/nvim/lua/config/lazy.lua).
-[^repair-nvim]: [採用lockからのLazy restore](../dot_config/mise/repo-tasks/repair/executable_nvim.tmpl).
-[^security]: [権限変更を行わない互換task](../dot_config/mise/repo-tasks/repair/executable_security.tmpl).
-[^identity]: [identityの検証・世代切替](../dot_config/mise/repo-tasks/generate/executable_identity.tmpl).
+[^repair-nvim]: [採用lockからのLazy restore](../home/dot_config/mise/repo-tasks/repair/executable_nvim.tmpl).
+[^security]: [権限変更を行わない互換task](../home/dot_config/mise/repo-tasks/repair/executable_security.tmpl).
+[^identity]: [identityの検証・世代切替](../home/dot_config/mise/repo-tasks/generate/executable_identity.tmpl).
 [^mise-tasks]: [mise v2026.6.11：task省略と依存順序](https://github.com/jdx/mise/blob/v2026.6.11/docs/tasks/running-tasks.md).
-[^update-nvim]: [選択revisionからの隔離lock候補生成](../dot_config/mise/repo-tasks/update/executable_lazy-lock.tmpl).
+[^update-nvim]: [選択revisionからの隔離lock候補生成](../home/dot_config/mise/repo-tasks/update/executable_lazy-lock.tmpl).
 [^tasks]: [repo所有taskの実装](https://github.com/tsubasahomma/dotfiles/tree/f4fe1fac3e0722b173b5291a06e98e1e066786f1/dot_config/mise/repo-tasks).
 [^order]: [chezmoi application order](https://www.chezmoi.io/reference/application-order/).
 [^ignore]: [chezmoiによる配置の除外](https://github.com/tsubasahomma/dotfiles/blob/f4fe1fac3e0722b173b5291a06e98e1e066786f1/.chezmoiignore.tmpl).
-[^remove]: [旧パスの恒久削除を停止したremove定義](../.chezmoiremove.tmpl).
+[^remove]: [旧パスの恒久削除を停止したremove定義](../home/.chezmoiremove.tmpl).
 [^externals]: [外部assetとrefresh指定](https://github.com/tsubasahomma/dotfiles/blob/f4fe1fac3e0722b173b5291a06e98e1e066786f1/.chezmoiexternal.toml.tmpl).
-[^lifecycle]: [OS別post-apply依存graph](../dot_config/mise/repo-tasks/lifecycle/executable_post-apply.tmpl).
-[^completions]: [補完・initの個別検証と切替](../dot_config/mise/repo-tasks/generate/executable_completions.tmpl).
-[^wsl-wrapper]: [WSL syncの起動条件とCI除外](../.chezmoiscripts/run_after_50-wsl-sync-services.sh.tmpl).
+[^lifecycle]: [OS別post-apply依存graph](../home/dot_config/mise/repo-tasks/lifecycle/executable_post-apply.tmpl).
+[^completions]: [補完・initの個別検証と切替](../home/dot_config/mise/repo-tasks/generate/executable_completions.tmpl).
+[^wsl-wrapper]: [WSL syncの起動条件とCI除外](../home/.chezmoiscripts/run_after_50-wsl-sync-services.sh.tmpl).
 [^ci]: [隔離検査とUbuntu/macOSの一回apply統合](../.github/workflows/compliance.yml).
 [^mise-install]: [mise v2026.6.11 install：導入と有効化は別](https://github.com/jdx/mise/blob/v2026.6.11/docs/cli/install.md).
 [^mise-upgrade]: [mise v2026.6.11 upgrade：更新とbump](https://github.com/jdx/mise/blob/v2026.6.11/docs/cli/upgrade.md).
@@ -417,7 +457,7 @@ HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_NO_INSTALL_CLEANUP=1 brew upgrade --formula c
 <a id="completion-generation"></a>
 # 補完・init生成の切替
 
-`generate:completions`は宣言済みCLIの補完（pnpm・delta・gcloudも含む）、mise・chezmoi補完、zoxide・starship initを必須とする。PATH検出のWezTermのみ任意で、不在・生成失敗・空/構文不正は警告し旧出力を保持する。必須項目は同じ条件で非zero終了する。これは全CLIの補完を提供する契約ではなく、[現在の生成対象](../dot_config/mise/repo-tasks/generate/executable_completions.tmpl)に限る。[^completions]
+`generate:completions`は宣言済みCLIの補完（pnpm・delta・gcloudも含む）、mise・chezmoi補完、zoxide・starship initを必須とする。PATH検出のWezTermのみ任意で、不在・生成失敗・空/構文不正は警告し旧出力を保持する。必須項目は同じ条件で非zero終了する。これは全CLIの補完を提供する契約ではなく、[現在の生成対象](../home/dot_config/mise/repo-tasks/generate/executable_completions.tmpl)に限る。[^completions]
 
 出力の隣に一時directoryを作り、generator終了値・非空・`zcompile -U`の構文検査が通ったsourceだけをZshの`zf_mv` builtinでrenameする。backup/復元も同じbuiltinを使い、task終了後に外部mvだけが残ってpublishしないようにする。新しいzwcは配置せず、旧対象zwcと正確なconsumer dumpはcommit直前に退避し、rename失敗/捕捉した中断では復元する。source rename後は退避cacheを削除する。完了済みの別出力は巻き戻さない。SIGKILLや停電では一時directory・退避zwcが残り得るが、未commitの旧sourceは保持される。同じgeneratorの並行実行は`$XDG_CACHE_HOME/zsh/.completion-generation.lock`の通常fileに対する`zsystem flock`で拒否する。Zshのsystem/flock・files/zf_mv対応がない環境は非zeroで止まる。lockはprocess終了時（SIGKILLも含む）にkernelが解除する。file自体は残し、利用中writerと異なるinodeをlockしないよう削除しない。残存stageは自動回収せず、active writerがなく旧source/退避cacheの状態を確認できた場合だけ個別に整理する。[^completions]
 
@@ -443,8 +483,8 @@ gcloudは選択したSDKのincludeを検証済みの通常fileとして保存し
 
 診断consumerはR08の非変更・存在検査のままで、receiptやCLIを実行しない。診断合格は鮮度保証ではない。外部assetの`_git`/`_eza`/git-completion.bashはこのgeneratorの入力でなく別consumerなので、それだけの変更による再生成はしない。tool宣言の文面・mise pinだけの変更も、採用実体が同じなら補完入力にしない（共通graphの既存triggerとは別）。gcloud本体/Python版は保存includeの内容に影響せず対象外。OSライブラリ、ユーザーCLI設定、任意環境変数全体、外部package stateを網羅するfingerprintではない。
 
-[^completion-after]: [毎回の補完after入口](../.chezmoiscripts/run_after_30-completions.sh.tmpl)。[chezmoi application order](https://www.chezmoi.io/reference/application-order/)に従う。
-[^completion-state]: [入力・出力hashの照合](../.chezmoitemplates/completion_state.py)。
+[^completion-after]: [毎回の補完after入口](../home/.chezmoiscripts/run_after_30-completions.sh.tmpl)。[chezmoi application order](https://www.chezmoi.io/reference/application-order/)に従う。
+[^completion-state]: [入力・出力hashの照合](../home/.chezmoitemplates/completion_state.py)。
 [^completion-exec]: [mise v2026.6.11 exec実装](https://github.com/jdx/mise/blob/v2026.6.11/src/cli/exec.rs)。auto_installとexec_auto_install、no_deps、絶対pathの実行。2026-11-11参照。
 [^completion-which]: [mise v2026.6.11 which実装](https://github.com/jdx/mise/blob/v2026.6.11/src/cli/which.rs)。tool指定・有効toolsetから実体を解決。2026-11-11参照。
 [^completion-where]: [mise v2026.6.11 where実装](https://github.com/jdx/mise/blob/v2026.6.11/src/cli/where.rs)。選択した導入directoryを解決。2026-11-11参照。
@@ -489,7 +529,7 @@ generatorは既存identityと同じPython 3.9+を使う（検証runnerはtomllib
 
 WSL・非CIでは`after_50`が配置済み2taskをbashで直接順番に呼ぶ。common `after_20`やmise taskのauto-installを毎回起動せず、Python 3.9+、Windows PowerShell interop、wslpathは準備済みの実体を使う。明示`lifecycle:wsl-post-apply`も同じ2taskへの既存入口だが、mise run自身の環境解決は専用afterとは別。同期の成功は設定fileの配送結果であり、アプリ導入・起動・GUI採用・unlock・認証の成功ではない。アプリ未導入の前提は[初回手順](#first-install)とpackage段階、同期元未配置は必須入力エラーとして区別する。同期taskはアプリを導入しない。
 
-[helper](../.chezmoitemplates/windows_config_sync.py)はWindowsプロセスからUSERPROFILE / LOCALAPPDATAを取得し、wslpathで実際のmount先へ変換する。sourceはその回に配置されたbytesを読む。SOURCE欠損を成功skipにせず、空identity由来の有効なagent設定とは区別する。Windows設定先やreceipt・parentの不正、bridge/query/変換失敗は非zeroとなる。
+[helper](../home/.chezmoitemplates/windows_config_sync.py)はWindowsプロセスからUSERPROFILE / LOCALAPPDATAを取得し、wslpathで実際のmount先へ変換する。sourceはその回に配置されたbytesを読む。SOURCE欠損を成功skipにせず、空identity由来の有効なagent設定とは区別する。Windows設定先やreceipt・parentの不正、bridge/query/変換失敗は非zeroとなる。
 
 | 検出状態 | 動作 |
 |---|---|

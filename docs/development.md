@@ -23,10 +23,10 @@ sources:
     resource: "https://github.com/tsubasahomma/dotfiles/blob/f4fe1fac3e0722b173b5291a06e98e1e066786f1/.chezmoidata/packages.yaml"
     title: "OS別package宣言"
   - id: repair-nvim
-    resource: "../dot_config/mise/repo-tasks/repair/executable_nvim.tmpl"
+    resource: "../home/dot_config/mise/repo-tasks/repair/executable_nvim.tmpl"
     title: "採用lockによるLazy restore"
   - id: update-nvim
-    resource: "../dot_config/mise/repo-tasks/update/executable_lazy-lock.tmpl"
+    resource: "../home/dot_config/mise/repo-tasks/update/executable_lazy-lock.tmpl"
     title: "選択revisionからの隔離lock候補生成"
   - id: wrapper
     resource: "https://github.com/tsubasahomma/dotfiles/blob/f4fe1fac3e0722b173b5291a06e98e1e066786f1/.chezmoiscripts/run_onchange_after_20-mise-post-apply-graph.sh.tmpl"
@@ -53,7 +53,7 @@ sources:
     resource: "https://github.com/folke/lazy.nvim/blob/85c7ff3711b730b4030d03144f6db6375044ae82/lua/lazy/manage/task/init.lua"
     title: "採用版のtaskとprocess失敗処理"
   - id: lazy-restore
-    resource: "../.chezmoitemplates/lazy_restore.lua"
+    resource: "../home/.chezmoitemplates/lazy_restore.lua"
     title: "採用lockを保持するrestore adapter"
   - id: git-clone
     resource: "https://git-scm.com/docs/git-clone"
@@ -94,10 +94,10 @@ sources:
 | 変更したいもの | 現行の主なsource | 先に確認する境界 |
 |---|---|---|
 | mise本体の採用版 | `.mise-version`と`.bootstrap-mise.sh` | pinは明示導入とcheck:toolchainの基準。読込hookは版を強制せず、--installも既存不一致を保持して停止する。版変更時は実体の所有者と採用・置換を決める |
-| repo内および端末のtool要求 | `.mise.toml`、`dot_config/mise/conf.d/10-tools.toml`等 | どのconfigが有効か、PATH上の実体とinstall済み版を分ける。version要求の編集とupgrade実行を同じものとしない |
-| OS package・GUI app | `.chezmoidata/packages.yaml`、Brewfile template、OS別script | Homebrew・Linux・WinGet・miseで同名toolが重なる場合、どれを使うかを先に決める |
-| 生成・修復・検査の処理 | `dot_config/mise/repo-tasks/**`、chezmoi script/hook | source/output指定・task依存・実行順・skip条件と、実際の書込先を一緒に確認する |
-| Neovim pluginの採用状態 | `dot_config/nvim/lazy-lock.json`とNeovim設定 | 既定lockへのrestoreか、lockを更新する作業かを分ける |
+| repo内および端末のtool要求 | `.mise.toml`、`home/dot_config/mise/conf.d/10-tools.toml`等 | どのconfigが有効か、PATH上の実体とinstall済み版を分ける。version要求の編集とupgrade実行を同じものとしない |
+| OS package・GUI app | `home/.chezmoidata/packages.yaml`、Brewfile template、OS別script | Homebrew・Linux・WinGet・miseで同名toolが重なる場合、どれを使うかを先に決める |
+| 生成・修復・検査の処理 | `home/dot_config/mise/repo-tasks/**`、chezmoi script/hook | source/output指定・task依存・実行順・skip条件と、実際の書込先を一緒に確認する |
+| Neovim pluginの採用状態 | `home/dot_config/nvim/lazy-lock.json`とNeovim設定 | 既定lockへのrestoreか、lockを更新する作業かを分ける |
 | 文書・入口 | [OKF Decision](decisions/okf.md)の11文書構成 | 常時ルールをAGENTSへ増やす前に、必要時知識の正本で足りるかを見る |
 
 最初の三行は現在の宣言位置の説明であり、現行の重複所有を維持する決定ではない。手動mise・brew更新を採用宣言へ取り込む手順案は[convergence](decisions/convergence.md)に集める。端末ごとの採用／戻す／管理外の分類はまだ済んでいない。[^pin][^bootstrap][^mise-root][^tools][^packages]
@@ -110,7 +110,7 @@ sources:
 
 新規cloneでは現在のbranchを展開せず、採用親commitのcheckout後にその版のsubmoduleを初期化する。kulalaのfmt等を省略して成功扱いにしない。通常startupは止めるが、plugin managerのbuild taskは実行する。Masonに限り、このsessionのconfigを`mason.setup(opts)`へ限定し、LazyVimによる並行registry refresh・`ensure_installed`導入・FileType再triggerを実行しない。`:MasonUpdate` buildは維持する。その他のbuildがplugin configやparser等の背景処理を起動する可能性は残る。例えばTreesitterのbuildがMason経由でtree-sitter-cliを導入する経路は維持する。成功条件はactive pluginのrevision一致、managerが観測するtaskの成功と検査時点のNeovimエラー不在であり、背景処理の完了やeditor/provider/Mason/parserの正常動作を保証しない。失敗時は非zeroで止まり、途中まで変更されたpluginを自動rollback・削除しない。失敗したdirectoryやlocal変更は内容を確認してから個別に扱う。[^lazy-restore][^git-clone][^git-submodule][^lazyvim-mason][^nvim-errmsg]
 
-`update:lazy-lock`は、既存local revision（既定`HEAD`）の`dot_config/nvim`をGit objectから一時directoryへ展開し、lock候補だけを作る。staged・unstaged・untrackedは入力外で、通常branch/index/sourceや配置済みNeovimには書かない。remote branchのfetch、checkout切替、`chezmoi add`、commit/push/PR作成は行わない。plugin取得・更新は一時HOME/XDG内で通信を伴う。[^update-nvim]
+`update:lazy-lock`は、既存local revision（既定`HEAD`）の`home/dot_config/nvim`をGit objectから一時directoryへ展開し、lock候補だけを作る。staged・unstaged・untrackedは入力外で、通常branch/index/sourceや配置済みNeovimには書かない。remote branchのfetch、checkout切替、`chezmoi add`、commit/push/PR作成は行わない。plugin取得・更新は一時HOME/XDG内で通信を伴う。[^update-nvim]
 
 導入済みPython 3.9+、Git、Neovim 0.12以上が必要。miseの自動導入を避ける場合は、更新済みの配置taskを直接呼ぶ。source変更だけでは古い配置taskは更新されない。実機反映は別操作として[operations](operations.md)の境界を確認する。
 
@@ -134,7 +134,7 @@ build・通常plugin init/config・editor event・submodule取得は行わない
 
 # RenovateとCIの現行
 
-Renovateはrootの`.mise.toml`、`dot_config/mise/conf.d/*.toml`、CIのlintだけが使う`tests/lint-tools.toml`をnative mise managerで扱い、`.mise-version`にはmise release向けのcustom regexを使う。CI workflowの`RENOVATE_VERSION`は直前行の`# renovate:`注釈を公式preset `customManagers:githubActionsVersions`で読み、pre-commit hookの`rev`は既定で無効のpre-commit managerを有効にして追う。mise・GitHub Actions・custom regex・pre-commitの通常更新を一つのPRにまとめ、majorは別のPRに分ける。全datasourceで公開から3日たつまで更新を出さない。公開日時を返さないdatasourceの更新は待機のまま止まる（Renovate 42以降の既定`timestamp-required`）ので、公開日時のない`git-refs`だけ待機を外す。security更新は待機を経ない。作成枠は日本時間の月曜で、同時PR上限は自動mergeする1件とmajorの1件の2件。[^release-age]月曜の枠内にbotが実行され、対象の更新があるときに作成する。対応lockfileがないためweekly lock maintenanceは無効にする。[^renovate]
+Renovateはrootの`.mise.toml`、`home/dot_config/mise/conf.d/*.toml`、CIのlintだけが使う`tests/lint-tools.toml`をnative mise managerで扱い、`.mise-version`にはmise release向けのcustom regexを使う。CI workflowの`RENOVATE_VERSION`は直前行の`# renovate:`注釈を公式preset `customManagers:githubActionsVersions`で読み、pre-commit hookの`rev`は既定で無効のpre-commit managerを有効にして追う。mise・GitHub Actions・custom regex・pre-commitの通常更新を一つのPRにまとめ、majorは別のPRに分ける。全datasourceで公開から3日たつまで更新を出さない。公開日時を返さないdatasourceの更新は待機のまま止まる（Renovate 42以降の既定`timestamp-required`）ので、公開日時のない`git-refs`だけ待機を外す。security更新は待機を経ない。作成枠は日本時間の月曜で、同時PR上限は自動mergeする1件とmajorの1件の2件。[^release-age]月曜の枠内にbotが実行され、対象の更新があるときに作成する。対応lockfileがないためweekly lock maintenanceは無効にする。[^renovate]
 
 `Required CI`に合格したPRはsquashで自動マージする。既存のPRが最新mainに追随するためのrebaseとCI完了後のマージは、月曜の作成枠外でも進む。失敗した場合はログを調べ、原因の更新を特定して分離する。
 
@@ -152,7 +152,7 @@ Renovate validatorの版はCI workflow、Nodeの要求はworkflowが読むtool�
 
 repo全体を一つのOKF bundleにすること、PR templateを廃止することは利用者の決定である。共通契約の上流同期を終了し、Repomixを必須とする経路を退役する。旧文書を保存するための同型移植や、新しいpacking手順は作らない。[^user]
 
-入口や文書を変更するときは、[chezmoi除外](../.chezmoiignore.tmpl)、[Issue Form](../.github/ISSUE_TEMPLATE/change-request.yml)、[更新taskの採用案内](../dot_config/mise/repo-tasks/update/executable_lazy-lock.tmpl)も確認する。Issue Formは問題・範囲・確認方法・参照の短い入力を残す。Repomix設定は撤去し、既存生成packのignoreは誤配置・誤追跡を避けるため維持する。`npm:repomix`のtool宣言は別の依存整理で退役する。[^tools]
+入口や文書を変更するときは、[chezmoi除外](../home/.chezmoiignore.tmpl)、[Issue Form](../.github/ISSUE_TEMPLATE/change-request.yml)、[更新taskの採用案内](../home/dot_config/mise/repo-tasks/update/executable_lazy-lock.tmpl)も確認する。Issue Formは問題・範囲・確認方法・参照の短い入力を残す。Repomix設定は撤去し、既存生成packのignoreは誤配置・誤追跡を避けるため維持する。`npm:repomix`のtool宣言は別の依存整理で退役する。[^tools]
 
 更新taskはPR本文を生成しない。配置taskの更新とlifecycleの再実行条件は別であり、実機への反映時は[operations](operations.md)で起動範囲を確認する。
 
@@ -169,8 +169,8 @@ PR templateの廃止理由と再検討条件は[OKF Decision](decisions/okf.md)�
 [^mise-root]: [repo内tool要求](https://github.com/tsubasahomma/dotfiles/blob/f4fe1fac3e0722b173b5291a06e98e1e066786f1/.mise.toml)。
 [^tools]: [観測時のmise tool宣言](https://github.com/tsubasahomma/dotfiles/blob/f4fe1fac3e0722b173b5291a06e98e1e066786f1/dot_config/mise/conf.d/10-tools.toml)。
 [^packages]: [OS別package宣言](https://github.com/tsubasahomma/dotfiles/blob/f4fe1fac3e0722b173b5291a06e98e1e066786f1/.chezmoidata/packages.yaml)。
-[^repair-nvim]: [採用lockによるLazy restore](../dot_config/mise/repo-tasks/repair/executable_nvim.tmpl)。
-[^update-nvim]: [選択revisionからの隔離lock候補生成](../dot_config/mise/repo-tasks/update/executable_lazy-lock.tmpl)。
+[^repair-nvim]: [採用lockによるLazy restore](../home/dot_config/mise/repo-tasks/repair/executable_nvim.tmpl)。
+[^update-nvim]: [選択revisionからの隔離lock候補生成](../home/dot_config/mise/repo-tasks/update/executable_lazy-lock.tmpl)。
 [^wrapper]: [post-apply wrapperのhash入力と起動条件](https://github.com/tsubasahomma/dotfiles/blob/f4fe1fac3e0722b173b5291a06e98e1e066786f1/.chezmoiscripts/run_onchange_after_20-mise-post-apply-graph.sh.tmpl)。
 [^scripts]: [chezmoi公式：render後のscript内容によるonchange判定](https://www.chezmoi.io/user-guide/use-scripts-to-perform-actions/)。
 [^renovate]: [Renovateのmanagerと更新単位](../renovate.json5)。
@@ -184,7 +184,7 @@ PR templateの廃止理由と再検討条件は[OKF Decision](decisions/okf.md)�
 
 [^lazy-task]: [採用版のtaskとprocess失敗処理](https://github.com/folke/lazy.nvim/blob/85c7ff3711b730b4030d03144f6db6375044ae82/lua/lazy/manage/task/init.lua)。
 
-[^lazy-restore]: [採用lockを保持するrestore adapter](../.chezmoitemplates/lazy_restore.lua)。
+[^lazy-restore]: [採用lockを保持するrestore adapter](../home/.chezmoitemplates/lazy_restore.lua)。
 
 [^git-clone]: [Git clone：no-checkoutとsubmodule](https://git-scm.com/docs/git-clone)。
 

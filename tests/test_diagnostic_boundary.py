@@ -15,6 +15,7 @@ import tempfile
 import unittest
 
 REPO = Path(__file__).resolve().parents[1]
+SOURCE_STATE = REPO / 'home'
 CHEZMOI = os.environ.get('CHEZMOI_BIN') or shutil.which('chezmoi')
 MISE = os.environ.get('MISE_BIN') or shutil.which('mise')
 NVIM = os.environ.get('NVIM_BIN') or shutil.which('nvim')
@@ -51,7 +52,7 @@ class DiagnosticBoundary(unittest.TestCase):
         self.home.mkdir()
         self.source = self.root / 'source'
         self.source.mkdir()
-        shutil.copytree(REPO / '.chezmoitemplates', self.source / '.chezmoitemplates')
+        shutil.copytree(SOURCE_STATE / '.chezmoitemplates', self.source / '.chezmoitemplates')
         self.config = self.root / 'config.json'
         self.paths = {
             'home': str(self.home),
@@ -86,7 +87,7 @@ class DiagnosticBoundary(unittest.TestCase):
         }
         self.tasks = self.home / '.config/mise/repo-tasks'
         for category in ['check', 'probe', 'doctor']:
-            for p in (REPO / 'dot_config/mise/repo-tasks' / category).glob('*.tmpl'):
+            for p in (SOURCE_STATE / 'dot_config/mise/repo-tasks' / category).glob('*.tmpl'):
                 self.render(
                     p,
                     self.tasks
@@ -94,7 +95,7 @@ class DiagnosticBoundary(unittest.TestCase):
                     / p.name.removeprefix('executable_').removesuffix('.tmpl'),
                 )
         self.entry = self.home / '.local/bin/dotfiles-diagnose'
-        self.render(REPO / 'dot_local/bin/executable_dotfiles-diagnose.tmpl', self.entry)
+        self.render(SOURCE_STATE / 'dot_local/bin/executable_dotfiles-diagnose.tmpl', self.entry)
         for name in [
             'nvim',
             'vale',
@@ -243,7 +244,7 @@ printf '2026.6.11 fixture\n'
         self.assertIn('[N/A]', result.stdout)
         self.data.update(is_wsl=True, ssh_auth_sock=r'\\.\pipe\openssh-ssh-agent')
         self.render(
-            REPO / 'dot_config/mise/repo-tasks/check/executable_wsl-openssh.tmpl',
+            SOURCE_STATE / 'dot_config/mise/repo-tasks/check/executable_wsl-openssh.tmpl',
             self.tasks / 'check/wsl-openssh',
         )
         result = self.diagnose('check:wsl-openssh')
@@ -302,7 +303,7 @@ case "$1" in --help) exit 0;; completion) printf 'touch "$MARKER"\n';; *) exit 1
         }
         self.data['identities'] = [identity]
         self.render(
-            REPO / 'dot_config/mise/repo-tasks/check/executable_identity.tmpl',
+            SOURCE_STATE / 'dot_config/mise/repo-tasks/check/executable_identity.tmpl',
             self.tasks / 'check/identity',
         )
         self.env['CI'] = 'true'
@@ -310,15 +311,18 @@ case "$1" in --help) exit 0;; completion) printf 'touch "$MARKER"\n';; *) exit 1
         self.paths['op_sign'] = '/fixture/sign-helper'
         # Produce a complete generation through the actual R05 scripts and Git consumer.
         before = self.render(
-            REPO / '.chezmoiscripts/run_before_05-identity-dispatch.sh.tmpl', self.root / 'before'
+            SOURCE_STATE / '.chezmoiscripts/run_before_05-identity-dispatch.sh.tmpl',
+            self.root / 'before',
         )
         result = self.run_cmd(['/bin/sh', before])
         self.assertEqual(result.returncode, 0, result.stderr)
         self.render(
-            REPO / 'dot_config/git/config.tmpl', self.home / '.config/git/config', shell=False
+            SOURCE_STATE / 'dot_config/git/config.tmpl',
+            self.home / '.config/git/config',
+            shell=False,
         )
         generator = self.render(
-            REPO / 'dot_config/mise/repo-tasks/generate/executable_identity.tmpl',
+            SOURCE_STATE / 'dot_config/mise/repo-tasks/generate/executable_identity.tmpl',
             self.root / 'generate',
         )
         result = self.run_cmd([shutil.which('zsh'), '-f', generator])
@@ -413,7 +417,8 @@ case "$1" in --help) exit 0;; completion) printf 'touch "$MARKER"\n';; *) exit 1
         self.run_cmd(['git', 'config', '--global', 'gpg.ssh.program', shutil.which('ssh-keygen')])
         self.data.update(is_wsl=True, ssh_auth_sock=r'\\.\pipe\openssh-ssh-agent')
         full = self.render(
-            REPO / 'dot_config/mise/repo-tasks/check/executable_wsl-openssh.tmpl', self.root / 'wsl'
+            SOURCE_STATE / 'dot_config/mise/repo-tasks/check/executable_wsl-openssh.tmpl',
+            self.root / 'wsl',
         )
         # Run the actual signing function, excluding OS/network/auth functions.
         text = full.read_text().split('echo "--- WSL Windows OpenSSH / 1Password preflight ---"')[0]

@@ -11,16 +11,16 @@ sources:
     resource: "https://www.anthropic.com/research/demystifying-evals-for-ai-agents"
     title: "Anthropic, 2026-01-09：結果状態と評価範囲"
   - id: doctor
-    resource: "../dot_config/mise/repo-tasks/doctor/executable__default.tmpl"
+    resource: "../home/dot_config/mise/repo-tasks/doctor/executable__default.tmpl"
     title: "doctorの共通検査集合"
   - id: checks
-    resource: "../dot_config/mise/repo-tasks/check"
+    resource: "../home/dot_config/mise/repo-tasks/check"
     title: "現行check taskの集合"
   - id: hooks
     resource: "https://www.chezmoi.io/reference/configuration-file/hooks/"
     title: "chezmoi公式：dry-runでもhookが動く"
   - id: wsl-check
-    resource: "../dot_config/mise/repo-tasks/check/executable_wsl-openssh.tmpl"
+    resource: "../home/dot_config/mise/repo-tasks/check/executable_wsl-openssh.tmpl"
     title: "WSL認証・通信・一時署名probe"
   - id: precommit
     resource: "https://github.com/tsubasahomma/dotfiles/blob/f4fe1fac3e0722b173b5291a06e98e1e066786f1/.pre-commit-config.yaml"
@@ -91,7 +91,7 @@ python3 tests/run_checks.py full            # lintと全test（fastとslow）
 python3 tests/run_checks.py test_git_fetch  # module・class・test単位（複数可）
 ```
 
-chezmoi・Neovim・Zsh・Git/OpenSSHとOS utilityが必要で、render検査以外にはmise実体も要る。各実体は`CHEZMOI_BIN`・`NVIM_BIN`・`MISE_BIN`・`ZSH_BIN`等の環境変数、PATH上の実体、repoが宣言した版のmise install（chezmoiは`.mise.toml`、NeovimとPythonは`dot_config/mise/conf.d/10-tools.toml`）の順に探す。PATHの先頭がmiseのshimなら宣言版のinstallを使う。miseは`~/.local/bin/mise`を候補にし、版が`.mise-version`と一致しなければ停止する。Python 3.11未満で起動した場合は宣言版のPythonで起動し直す。fixture内の一部stubと本番scriptは`/usr/bin/python3`・`/bin/zsh`・`/usr/bin/ssh`等も使うため、任意OSへの可搬性を保証する入口ではない。macOS/Ubuntuを対象にする。
+chezmoi・Neovim・Zsh・Git/OpenSSHとOS utilityが必要で、render検査以外にはmise実体も要る。各実体は`CHEZMOI_BIN`・`NVIM_BIN`・`MISE_BIN`・`ZSH_BIN`等の環境変数、PATH上の実体、repoが宣言した版のmise install（chezmoiは`.mise.toml`、NeovimとPythonは`home/dot_config/mise/conf.d/10-tools.toml`）の順に探す。PATHの先頭がmiseのshimなら宣言版のinstallを使う。miseは`~/.local/bin/mise`を候補にし、版が`.mise-version`と一致しなければ停止する。Python 3.11未満で起動した場合は宣言版のPythonで起動し直す。fixture内の一部stubと本番scriptは`/usr/bin/python3`・`/bin/zsh`・`/usr/bin/ssh`等も使うため、任意OSへの可搬性を保証する入口ではない。macOS/Ubuntuを対象にする。
 
 [runner](../tests/run_checks.py)はmoduleごとに一時HOME/XDGと限定PATHの子processを起動し、CPU数まで並列に実行する。実ユーザーのGit/mise設定override、SSH agent、OP環境変数、tokenを引き継がない。各fixtureも自身の一時HOME/XDGと明示configを使う。moduleごとの件数・所要時間と遅いtestを表示し、失敗したmoduleの出力だけを表示する（`-v`で全出力）。`slow`は同runnerの`SLOW`に列挙した、縮小sourceへchezmoi applyを（`--dry-run`・`init --apply`も含めて）実行するtestである。`fast`はそれ以外の全testで、chezmoiを`apply`・`--apply`・`update`を拒否するwrapperに差し替えて実行する。applyを始めたtestは`SLOW`へ移すまでfastで失敗する。`full`は`lint`・`fast`・`slow`の和で、Windows設定同期とlazy-lock候補生成の検査も含む。R17のVale native検査は[別入口](#vale-lint)である。R05は既存`load_tests`で自身の12件を選択する。失敗・例外・skip・expected failure・空suiteは非zeroになる。
 
@@ -282,10 +282,10 @@ CIのjob分離・tool準備順・実施範囲は[隔離回帰の入口](#isolate
 identityのR10a・補完のR10b・bat/Vale/pbfileのR10c・Windows2設定のR14範囲を除き、全生成物の欠損復旧、同じ入力での再適用と保護対象の比較は[convergence](decisions/convergence.md)の未実装案である。診断専用入口の採用理由・代案は同Decisionで扱う。文書の構造検査を実機成功の代替にしない。
 
 [^evals]: [Anthropic, 2026-01-09：結果状態と評価範囲](https://www.anthropic.com/research/demystifying-evals-for-ai-agents)。
-[^doctor]: [doctorの共通検査集合](../dot_config/mise/repo-tasks/doctor/executable__default.tmpl)。
-[^checks]: [現行check taskの集合](../dot_config/mise/repo-tasks/check)。
+[^doctor]: [doctorの共通検査集合](../home/dot_config/mise/repo-tasks/doctor/executable__default.tmpl)。
+[^checks]: [現行check taskの集合](../home/dot_config/mise/repo-tasks/check)。
 [^hooks]: [chezmoi公式：dry-runでもhookが動く](https://www.chezmoi.io/reference/configuration-file/hooks/)。
-[^wsl-check]: [WSL認証・通信・一時署名probe](../dot_config/mise/repo-tasks/check/executable_wsl-openssh.tmpl)。
+[^wsl-check]: [WSL認証・通信・一時署名probe](../home/dot_config/mise/repo-tasks/check/executable_wsl-openssh.tmpl)。
 [^precommit]: [変更を伴う整形hookと対象filter](https://github.com/tsubasahomma/dotfiles/blob/f4fe1fac3e0722b173b5291a06e98e1e066786f1/.pre-commit-config.yaml)。
 [^precommit-docs]: [pre-commit公式：対象指定とhook環境の導入](https://pre-commit.com/)。
 [^ci]: [CIの対象・実行段階・validator版](../.github/workflows/compliance.yml)。

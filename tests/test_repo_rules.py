@@ -14,8 +14,15 @@ import subprocess
 import unittest
 
 REPO = Path(__file__).resolve().parents[1]
-CONFIG = REPO / '.chezmoi.toml.tmpl'
-EXTERNALS = REPO / '.chezmoiexternal.toml.tmpl'
+# .chezmoiroot names the source state; everything else in REPO maintains it.
+SOURCE_STATE = REPO / 'home'
+CONFIG = SOURCE_STATE / '.chezmoi.toml.tmpl'
+EXTERNALS = SOURCE_STATE / '.chezmoiexternal.toml.tmpl'
+# Source state attributes and special names chezmoi reads.
+SOURCE_NAME = re.compile(
+    r'^(?:\.chezmoi(?!root$)|(?:after|before|create|dot|empty|encrypted|exact|executable'
+    r'|external|literal|modify|once|onchange|private|readonly|remove|run|symlink)_|Library$)'
+)
 # PENDING: data keys no template reads. Removing one changes the config that
 # `chezmoi init` generates on every workstation, so it waits for approval.
 UNUSED_DATA = {'arch': 'templates use .chezmoi.arch; the data copy is unused'}
@@ -87,7 +94,7 @@ class RepoRules(unittest.TestCase):
             key = re.match(r'\s*(\w+)\s*=', line)
             if key:
                 (nested if section else top).append((section, key.group(1)))
-        for path in (REPO / '.chezmoidata').iterdir():
+        for path in (SOURCE_STATE / '.chezmoidata').iterdir():
             top += [(None, key) for key in re.findall(r'^(\w+):', path.read_text(), re.M)]
         self.assertGreater(len(top) + len(nested), 10)
         readers = '\n'.join(
@@ -101,6 +108,24 @@ class RepoRules(unittest.TestCase):
             if not re.search(r'(?<![\w.])\$?\.' + re.escape(name) + r'\b', readers):
                 unused.add(name)
         self.assertEqual(unused, set(UNUSED_DATA), 'data keys without a template reader')
+
+    def test_source_state_and_repository_files_are_apart(self):
+        self.assertEqual((REPO / '.chezmoiroot').read_text(), 'home\n')
+        outside = sorted(
+            {
+                p.relative_to(REPO).parts[0]
+                for p in files()
+                if SOURCE_STATE not in p.parents and SOURCE_NAME.match(p.relative_to(REPO).parts[0])
+            }
+        )
+        self.assertEqual(outside, [], 'source state belongs under home/')
+        maintenance = [
+            str(p.relative_to(REPO))
+            for p in files('home')
+            if {'tests', 'docs', '.github'} & set(p.relative_to(SOURCE_STATE).parts)
+            or p.name.startswith('test_')
+        ]
+        self.assertEqual(maintenance, [], 'tests, documents and CI stay outside home/')
 
     def test_tmpl_files_contain_template_syntax(self):
         # The suffix makes chezmoi render the file. Files in .chezmoitemplates are

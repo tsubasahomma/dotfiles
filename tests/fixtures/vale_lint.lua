@@ -2,7 +2,7 @@ local root, source = arg[1], arg[2]
 vim.opt.runtimepath:prepend(root .. "/nvim-lint")
 local lint = require("lint")
 local base = dofile(root .. "/LazyVim/lua/lazyvim/plugins/linting.lua")[1]
-local spec = dofile(source .. "/dot_config/nvim/lua/plugins/lint.lua")[1]
+local spec = dofile(source .. "/home/dot_config/nvim/lua/plugins/lint.lua")[1]
 local opts = vim.deepcopy(base.opts)
 -- Model the inherited markdown extra and an unrelated linter option.
 opts.linters_by_ft.markdown = { "markdownlint-cli2" }

@@ -13,7 +13,7 @@ import sys
 import tempfile
 
 ENGINE = '85c7ff3711b730b4030d03144f6db6375044ae82'
-PREFIX = 'dot_config/nvim/'
+PREFIX = 'home/dot_config/nvim/'
 # Only literal .tmpl suffixes are supported, not chezmoi's target-name transforms.
 ATTRIBUTES = tuple(
     x + '_'
@@ -136,7 +136,7 @@ def generate(args, artifact):
     config.mkdir()
     inputs = {}
     lock_source = None
-    for entry in source_git('ls-tree', '-r', '-z', oid, '--', 'dot_config/nvim').split(b'\0'):
+    for entry in source_git('ls-tree', '-r', '-z', oid, '--', 'home/dot_config/nvim').split(b'\0'):
         if not entry:
             continue
         meta, raw = entry.split(b'\t', 1)
