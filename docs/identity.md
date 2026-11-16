@@ -5,19 +5,19 @@ description: 1Passwordの入力、Gitの選択、SSH認証と署名の経路を�
 status: draft
 generated:
   by: claude-code/claude-opus-5-5
-  at: "2026-11-13T06:49:36+00:00"
+  at: "2026-11-16T08:59:53+00:00"
 sources:
   - id: identity-after
-    resource: "../.chezmoiscripts/run_after_10-identity.sh.tmpl"
+    resource: "../home/.chezmoiscripts/run_after_10-identity.sh.tmpl"
     title: "毎回のidentity専用after入口"
   - id: identity-link
     resource: "https://docs.python.org/3/library/os.html#os.link"
     title: "Python os.link：検証済みfileへのlink作成"
   - id: transaction
-    resource: "../.chezmoitemplates/identity_transaction.py"
+    resource: "../home/.chezmoitemplates/identity_transaction.py"
     title: "identity世代の生成と参照切替"
   - id: prepare
-    resource: "../.chezmoiscripts/run_before_05-identity-dispatch.sh.tmpl"
+    resource: "../home/.chezmoiscripts/run_before_05-identity-dispatch.sh.tmpl"
     title: "target前のlegacy routing保存"
   - id: application-order
     resource: "https://www.chezmoi.io/reference/application-order/"
@@ -44,22 +44,22 @@ sources:
     resource: "https://learn.microsoft.com/en-us/windows/win32/fileio/naming-a-file"
     title: "Windows：filenameの予約文字"
   - id: validation
-    resource: "../.chezmoitemplates/validated_identities.tmpl"
+    resource: "../home/.chezmoitemplates/validated_identities.tmpl"
     title: "identity集合・routing・公開鍵の共通検証"
   - id: quote
-    resource: "../.chezmoitemplates/posix_shell_quote.tmpl"
+    resource: "../home/.chezmoitemplates/posix_shell_quote.tmpl"
     title: "POSIX shell単語の互換引用helper"
   - id: signers
     resource: "https://man.openbsd.org/ssh-keygen#ALLOWED_SIGNERS"
     title: "OpenSSH：allowed signersのprincipalと公開鍵形式"
   - id: config
-    resource: "../.chezmoi.toml.tmpl"
+    resource: "../home/.chezmoi.toml.tmpl"
     title: "ホスト入力と1Password identity取得"
   - id: git
-    resource: "../dot_config/git/config.tmpl"
+    resource: "../home/dot_config/git/config.tmpl"
     title: "Git共通設定とincludeIf routing"
   - id: fragment
-    resource: "../.chezmoitemplates/git_identity_config.tmpl"
+    resource: "../home/.chezmoitemplates/git_identity_config.tmpl"
     title: "identity別Git設定の生成fragment"
   - id: git-config
     resource: "https://git-scm.com/docs/git-config"
@@ -68,13 +68,13 @@ sources:
     resource: "https://www.1password.dev/ssh/agent/config"
     title: "1Password公式：SSH agent設定と鍵の選択"
   - id: generate
-    resource: "../dot_config/mise/repo-tasks/generate/executable_identity.tmpl"
+    resource: "../home/dot_config/mise/repo-tasks/generate/executable_identity.tmpl"
     title: "identity生成と入力空集合の扱い"
   - id: agent
-    resource: "../dot_config/1Password/ssh/private_agent.toml.tmpl"
+    resource: "../home/dot_config/1Password/ssh/private_agent.toml.tmpl"
     title: "1Password agentのitem/account選択"
   - id: ssh
-    resource: "../dot_config/ssh/config.tmpl"
+    resource: "../home/dot_config/ssh/config.tmpl"
     title: "SSH共通設定とsocket値の参照"
   - id: zshenv
     resource: "https://github.com/tsubasahomma/dotfiles/blob/f4fe1fac3e0722b173b5291a06e98e1e066786f1/dot_zshenv.tmpl"
@@ -124,7 +124,7 @@ shellの単語はPOSIX単一引用（apostropheを引用の外で連結）、Git
 
 | 経路 | 生成・参照するもの | 成功しても証明しないこと |
 |---|---|---|
-| Git authorの選択 | `dot_config/git/config.tmpl`が固定の`identity.inc`を読み、採用世代のdispatchにある`includeIf "gitdir/i:…/**"`から同じ世代のidentity別configを読む | 任意の作業directoryで望むidentityが選ばれること。条件はGit directoryに対して評価される |
+| Git authorの選択 | `home/dot_config/git/config.tmpl`が固定の`identity.inc`を読み、採用世代のdispatchにある`includeIf "gitdir/i:…/**"`から同じ世代のidentity別configを読む | 任意の作業directoryで望むidentityが選ばれること。条件はGit directoryに対して評価される |
 | Git署名 | `gpg.format=ssh`、`gpg.ssh.program`、`user.signingkey=key::<public key>`、allowed signers | Git remoteへのアクセスや、すべての署名者の信頼判断 |
 | GitからのSSH認証 | identity別`core.sshCommand`が公開鍵fileを`-i`で指定し、`IdentitiesOnly=yes`と`ControlPath=none`を付ける | shellから直接起動したSSHも同じidentityになること |
 | 1Password agentの鍵選択 | `agent.toml`にitem/accountを列挙 | Desktopの起動・unlock・agent有効化、remoteへの公開鍵登録 |
@@ -182,19 +182,19 @@ WSLの認証経路は[WSL文書](platforms/wsl.md)と1Password公式の対応条
 
 調査結果にはschema・件数・不一致の種類だけを残し、item JSON、実email、公開鍵と個人の対応表、認証情報を共有文書へ転記しない。検査の対象と副作用は[validation](validation.md)で選ぶ。そこで説明する検査を、文書閲覧だけで実行する必要はない。
 
-[^config]: [ホスト入力と1Password identity取得](../.chezmoi.toml.tmpl)。
-[^git]: [Git共通設定とincludeIf routing](../dot_config/git/config.tmpl)。
-[^fragment]: [identity別Git設定の生成fragment](../.chezmoitemplates/git_identity_config.tmpl)。
+[^config]: [ホスト入力と1Password identity取得](../home/.chezmoi.toml.tmpl)。
+[^git]: [Git共通設定とincludeIf routing](../home/dot_config/git/config.tmpl)。
+[^fragment]: [identity別Git設定の生成fragment](../home/.chezmoitemplates/git_identity_config.tmpl)。
 [^git-config]: [Git公式：条件付きincludeとSSH署名設定](https://git-scm.com/docs/git-config)。
 [^op-agent]: [1Password公式：SSH agent設定と鍵の選択](https://www.1password.dev/ssh/agent/config)。
-[^generate]: [identity生成と入力空集合の扱い](../dot_config/mise/repo-tasks/generate/executable_identity.tmpl)。
-[^agent]: [1Password agentのitem/account選択](../dot_config/1Password/ssh/private_agent.toml.tmpl)。
-[^ssh]: [SSH共通設定とsocket値の参照](../dot_config/ssh/config.tmpl)。
+[^generate]: [identity生成と入力空集合の扱い](../home/dot_config/mise/repo-tasks/generate/executable_identity.tmpl)。
+[^agent]: [1Password agentのitem/account選択](../home/dot_config/1Password/ssh/private_agent.toml.tmpl)。
+[^ssh]: [SSH共通設定とsocket値の参照](../home/dot_config/ssh/config.tmpl)。
 [^zshenv]: [XDG・認証用環境変数とWSLENV](https://github.com/tsubasahomma/dotfiles/blob/f4fe1fac3e0722b173b5291a06e98e1e066786f1/dot_zshenv.tmpl)。
 [^op-wsl]: [1Password公式：Windows OpenSSHとWSL署名](https://www.1password.dev/ssh/integrations/wsl)。
 
-[^validation]: [identity集合の共通検証](../.chezmoitemplates/validated_identities.tmpl)。
-[^quote]: [POSIX単語引用helper](../.chezmoitemplates/posix_shell_quote.tmpl)。
+[^validation]: [identity集合の共通検証](../home/.chezmoitemplates/validated_identities.tmpl)。
+[^quote]: [POSIX単語引用helper](../home/.chezmoitemplates/posix_shell_quote.tmpl)。
 [^signers]: [OpenSSH allowed signers](https://man.openbsd.org/ssh-keygen#ALLOWED_SIGNERS)。
 
 [^ssh-paths]: [OpenSSH IdentityFile](https://man.openbsd.org/ssh_config#IdentityFile)。
@@ -210,8 +210,8 @@ WSLの認証経路は[WSL文書](platforms/wsl.md)と1Password公式の対応条
 
 [^win-pipe]: [Windows OpenSSH：named pipe接続](https://github.com/PowerShell/openssh-portable/blob/v9.5.0.0/contrib/win32/win32compat/fileio.c)。2026-11-11参照。
 
-[^transaction]: [identity transaction実装](../.chezmoitemplates/identity_transaction.py)。
-[^prepare]: [target反映前のlegacy参照保存](../.chezmoiscripts/run_before_05-identity-dispatch.sh.tmpl)。
+[^transaction]: [identity transaction実装](../home/.chezmoitemplates/identity_transaction.py)。
+[^prepare]: [target反映前のlegacy参照保存](../home/.chezmoiscripts/run_before_05-identity-dispatch.sh.tmpl)。
 [^application-order]: [chezmoi application order](https://www.chezmoi.io/reference/application-order/)。target計算後にbefore scripts、target反映、after scriptsの順。
 
 <a id="identity-convergence"></a>
@@ -233,5 +233,5 @@ v2 manifestは生成時に検証した公開出力の内容を0600で保存す�
 
 空入力の拒否・明示clear、初回CI空集合の例外はR05と同じ。所有根拠の喪失を含めた「全必須出力の自動復旧」は未達であり、R10全体の完了ではない。実WSLや実認証は未確認。[隔離検証](validation.md#identity-convergence)を参照。
 
-[^identity-after]: [毎回のidentity専用after入口](../.chezmoiscripts/run_after_10-identity.sh.tmpl)。[chezmoi scripts](https://www.chezmoi.io/user-guide/use-scripts-to-perform-actions/)の毎回実行／onchangeの区別に基づく。2026-11-11閲覧。
+[^identity-after]: [毎回のidentity専用after入口](../home/.chezmoiscripts/run_after_10-identity.sh.tmpl)。[chezmoi scripts](https://www.chezmoi.io/user-guide/use-scripts-to-perform-actions/)の毎回実行／onchangeの区別に基づく。2026-11-11閲覧。
 [^identity-link]: [Python os.link](https://docs.python.org/3/library/os.html#os.link)。同一filesystemで検証済みfileへのlinkを作成する。2026-11-11閲覧。

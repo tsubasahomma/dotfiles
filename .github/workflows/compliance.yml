@@ -67,7 +67,7 @@ jobs:
       - name: Resolve Renovate Shell Node Runtime
         id: renovate-node
         run: |
-          node_version="$(sed -n 's/^node = "\([^"]*\)"$/\1/p' dot_config/mise/conf.d/10-tools.toml)"
+          node_version="$(sed -n 's/^node = "\([^"]*\)"$/\1/p' home/dot_config/mise/conf.d/10-tools.toml)"
           case "$node_version" in
             ""|*$'\n'*) exit 1 ;;
           esac
@@ -112,7 +112,7 @@ jobs:
           version = (root / '.mise-version').read_text().strip()
           assert re.fullmatch(r'[0-9]+\.[0-9]+\.[0-9]+', version), 'invalid mise pin'
           # The pins the lint entry resolves; no global config, tasks or init/apply.
-          tools = root / 'dot_config/mise/conf.d/10-tools.toml'
+          tools = root / 'home/dot_config/mise/conf.d/10-tools.toml'
           lint = root / 'tests/lint-tools.toml'
           sources = [(root / '.mise.toml', '"aqua:twpayne/chezmoi"'),
                      (tools, '"aqua:JohnnyMorganz/StyLua"'), (tools, '"aqua:koalaman/shellcheck"'),
@@ -138,7 +138,7 @@ jobs:
           install: true
           cache: true
           add_shims_to_path: false
-          cache_key: lint-v1-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('.mise-version', '.mise.toml', 'dot_config/mise/conf.d/10-tools.toml', 'tests/lint-tools.toml') }}
+          cache_key: lint-v1-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('.mise-version', '.mise.toml', 'home/dot_config/mise/conf.d/10-tools.toml', 'tests/lint-tools.toml') }}
 
       - name: Run Lint and Repository Rules Without Authentication
         run: python3 tests/run_checks.py lint test_repo_rules
@@ -177,8 +177,8 @@ jobs:
           assert re.fullmatch(r'[0-9]+\.[0-9]+\.[0-9]+', version), 'invalid mise pin'
           # Only these three declared runtimes: no global config, tasks or init/apply.
           sources = [(root / '.mise.toml', '"aqua:twpayne/chezmoi"'),
-                     (root / 'dot_config/mise/conf.d/10-tools.toml', 'python'),
-                     (root / 'dot_config/mise/conf.d/10-tools.toml', '"aqua:neovim/neovim"')]
+                     (root / 'home/dot_config/mise/conf.d/10-tools.toml', 'python'),
+                     (root / 'home/dot_config/mise/conf.d/10-tools.toml', '"aqua:neovim/neovim"')]
           lines = ['[tools]']
           for path, key in sources:
               matches = re.findall(r'^' + re.escape(key) + r' = "([0-9.]+)"$', path.read_text(), re.M)
@@ -201,7 +201,7 @@ jobs:
           install: true
           cache: true
           add_shims_to_path: false
-          cache_key: fixture-v1-${{ runner.os }}-${{ runner.arch }}-${{ matrix.os }}-${{ hashFiles('.mise-version', '.mise.toml', 'dot_config/mise/conf.d/10-tools.toml') }}
+          cache_key: fixture-v1-${{ runner.os }}-${{ runner.arch }}-${{ matrix.os }}-${{ hashFiles('.mise-version', '.mise.toml', 'home/dot_config/mise/conf.d/10-tools.toml') }}
 
       - name: Install Fixture System Utilities (Linux)
         if: runner.os == 'Linux'
@@ -310,7 +310,7 @@ jobs:
         uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
         with:
           path: ${{ steps.post_apply_mise_cache_scope.outputs.installs-dir }}
-          key: mise-post-apply-installs-v1-${{ runner.os }}-${{ runner.arch }}-${{ matrix.os }}-mise-${{ steps.mise_version.outputs.version }}-${{ hashFiles('.mise-version', '.mise.toml', 'dot_config/mise/conf.d/10-tools.toml', 'dot_config/mise/config.toml.tmpl') }}
+          key: mise-post-apply-installs-v1-${{ runner.os }}-${{ runner.arch }}-${{ matrix.os }}-mise-${{ steps.mise_version.outputs.version }}-${{ hashFiles('.mise-version', '.mise.toml', 'home/dot_config/mise/conf.d/10-tools.toml', 'home/dot_config/mise/config.toml.tmpl') }}
           restore-keys: |
             mise-post-apply-installs-v1-${{ runner.os }}-${{ runner.arch }}-${{ matrix.os }}-mise-${{ steps.mise_version.outputs.version }}-
 

@@ -4,20 +4,20 @@ title: macOSの前提と管理境界
 description: macOSでbootstrap・apply・認証・GUI app・生成物を扱う前提を確認する。
 status: draft
 generated:
-  by: codex/gpt-6
-  at: "2026-11-12T00:01:15+00:00"
+  by: claude-code/claude-opus-5-5
+  at: "2026-11-16T08:59:53+00:00"
 sources:
   - id: config
-    resource: "../../.chezmoi.toml.tmpl"
+    resource: "../../home/.chezmoi.toml.tmpl"
     title: "ホスト入力と1Password identity取得"
   - id: pbfile
     resource: "https://github.com/tsubasahomma/dotfiles/blob/f4fe1fac3e0722b173b5291a06e98e1e066786f1/dot_config/mise/repo-tasks/build/executable_pbfile.tmpl"
     title: "macOS Swift build"
   - id: wezterm-link
-    resource: "../../dot_local/bin/symlink_wezterm.tmpl"
+    resource: "../../home/dot_local/bin/symlink_wezterm.tmpl"
     title: "macOS/WSLのWezTerm実体探索"
   - id: brew-script
-    resource: "../../.chezmoiscripts/run_onchange_before_provision-macos-homebrew.sh.tmpl"
+    resource: "../../home/.chezmoiscripts/run_onchange_before_provision-macos-homebrew.sh.tmpl"
     title: "Homebrew不足導入と前提検査"
   - id: order
     resource: "https://www.chezmoi.io/reference/application-order/"
@@ -26,7 +26,7 @@ sources:
     resource: "https://developer.apple.com/documentation/xcode/installing-the-command-line-tools"
     title: "Apple公式：command-line tools"
   - id: packages
-    resource: "../../.chezmoidata/packages.yaml"
+    resource: "../../home/.chezmoidata/packages.yaml"
     title: "OS別package宣言"
   - id: brewfile
     resource: "https://github.com/tsubasahomma/dotfiles/blob/f4fe1fac3e0722b173b5291a06e98e1e066786f1/dot_config/homebrew/Brewfile.tmpl"
@@ -92,13 +92,13 @@ brewの版管理・更新をapplyへ含めるかの比較は[convergenceの手�
 
 Full Disk Accessや無制限のpasswordless sudoが本repoの全操作に必要という確認はしていない。実際の操作で不足する権限が分かった場合に、その操作と対象を絞って扱う。
 
-[^config]: [ホスト入力と1Password identity取得](../../.chezmoi.toml.tmpl)。
+[^config]: [ホスト入力と1Password identity取得](../../home/.chezmoi.toml.tmpl)。
 [^pbfile]: [macOS Swift build](https://github.com/tsubasahomma/dotfiles/blob/f4fe1fac3e0722b173b5291a06e98e1e066786f1/dot_config/mise/repo-tasks/build/executable_pbfile.tmpl)。
-[^wezterm-link]: [macOS/WSLのWezTerm実体探索](../../dot_local/bin/symlink_wezterm.tmpl)。
-[^brew-script]: [Homebrew不足導入と前提検査](../../.chezmoiscripts/run_onchange_before_provision-macos-homebrew.sh.tmpl)。
+[^wezterm-link]: [macOS/WSLのWezTerm実体探索](../../home/dot_local/bin/symlink_wezterm.tmpl)。
+[^brew-script]: [Homebrew不足導入と前提検査](../../home/.chezmoiscripts/run_onchange_before_provision-macos-homebrew.sh.tmpl)。
 [^order]: [chezmoi公式：target計算とbefore/afterの順序](https://www.chezmoi.io/reference/application-order/)。
 [^apple-tools]: [Apple公式：command-line tools](https://developer.apple.com/documentation/xcode/installing-the-command-line-tools)。
-[^packages]: [OS別package宣言](../../.chezmoidata/packages.yaml)。
+[^packages]: [OS別package宣言](../../home/.chezmoidata/packages.yaml)。
 [^brewfile]: [macOS BrewfileとCI分岐](https://github.com/tsubasahomma/dotfiles/blob/f4fe1fac3e0722b173b5291a06e98e1e066786f1/dot_config/homebrew/Brewfile.tmpl)。
 [^brew]: [Homebrew公式：bundleの更新と版管理の限界](https://docs.brew.sh/Brew-Bundle-and-Brewfile)。
 [^docker-mac]: [Docker公式：Macへの導入と起動](https://docs.docker.com/desktop/setup/install/mac-install/)。

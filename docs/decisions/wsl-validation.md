@@ -5,10 +5,10 @@ description: WSLの検証方法を見直すときに、CIで自動化しない�
 status: stable
 generated:
   by: claude-code/claude-opus-5-5
-  at: "2026-11-16T11:00:00+00:00"
+  at: "2026-11-16T10:12:07+00:00"
 sources:
   - id: config
-    resource: "../../.chezmoi.toml.tmpl"
+    resource: "../../home/.chezmoi.toml.tmpl"
     title: "chezmoi config template（WSLのop.exe探索）"
   - id: runner-image
     resource: "https://github.com/actions/runner-images/blob/main/images/windows/Windows2025-Readme.md"
@@ -39,5 +39,5 @@ GitHubの`windows-2025` runnerはWSL2を備え、Ubuntuを導入して起動で�
 - hosted runnerで、1Password CLIのサービス用認証などの、実物の連携をsecretなしで検査できる手段が出たとき。
 - config templateのWSL経路が、Windows側のtoolを必須としない形に変わったとき。
 
-[^config]: [chezmoi config template](../../.chezmoi.toml.tmpl)のWSL分岐。`op.exe`の探索に失敗するとinitを止める。
+[^config]: [chezmoi config template](../../home/.chezmoi.toml.tmpl)のWSL分岐。`op.exe`の探索に失敗するとinitを止める。
 [^runner-image]: [windows-2025 runner imageの内容](https://github.com/actions/runner-images/blob/main/images/windows/Windows2025-Readme.md)。WSL（既定はWSL2）が入っている。

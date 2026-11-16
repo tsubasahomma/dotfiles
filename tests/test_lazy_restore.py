@@ -122,7 +122,7 @@ package.preload["lazy"] = function() return {
 } end
 '''
                 + '\ndofile('
-                + json.dumps(str(REPO / '.chezmoitemplates/lazy_restore.lua'))
+                + json.dumps(str(REPO / 'home/.chezmoitemplates/lazy_restore.lua'))
                 + ')\n'
             )
             env = {

@@ -47,7 +47,7 @@ class MiseBoundary(unittest.TestCase):
         )
         # Unrelated remote assets are excluded at the source-copy boundary.
         # Keep the actual config template, read hook and bootstrap unchanged.
-        (self.source / ".chezmoiexternal.toml.tmpl").write_text("")
+        (self.source / "home/.chezmoiexternal.toml.tmpl").write_text("")
         self.bin = self.root / "bin"
         self.log = self.root / "calls"
         self.config = self.home / ".config/chezmoi/chezmoi.toml"

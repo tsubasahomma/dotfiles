@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # [MISE] description="Generate an isolated Neovim lock candidate from a local revision"
 set -euo pipefail
-exec python3 - {{ template "posix_shell_quote.tmpl" .chezmoi.sourceDir }} "$@" <<'PY_LAZY_LOCK'
+exec python3 - {{ template "posix_shell_quote.tmpl" .chezmoi.workingTree }} "$@" <<'PY_LAZY_LOCK'
 LUA_DRIVER = r'''
 {{ include ".chezmoitemplates/lazy_lock_update.lua" }}
 '''

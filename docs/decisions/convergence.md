@@ -5,7 +5,7 @@ description: 採用した検討方針と未実装案を分け、成功条件・�
 status: draft
 generated:
   by: claude-code/claude-opus-5-5
-  at: "2026-11-13T13:50:15+00:00"
+  at: "2026-11-16T08:59:53+00:00"
 sources:
   - id: order
     resource: "https://www.chezmoi.io/reference/application-order/"
@@ -23,10 +23,10 @@ sources:
     resource: "https://zsh.sourceforge.io/Doc/Release/Functions.html"
     title: "Zsh autoloadとcompiled fileの優先順位"
   - id: identity-transaction
-    resource: "../../.chezmoitemplates/identity_transaction.py"
+    resource: "../../home/.chezmoitemplates/identity_transaction.py"
     title: "identity世代の生成と参照切替"
   - id: identity-prepare
-    resource: "../../.chezmoiscripts/run_before_05-identity-dispatch.sh.tmpl"
+    resource: "../../home/.chezmoiscripts/run_before_05-identity-dispatch.sh.tmpl"
     title: "target前のlegacy routing保存"
   - id: python-replace
     resource: "https://docs.python.org/3/library/os.html#os.replace"
@@ -47,7 +47,7 @@ sources:
     resource: "../../.bootstrap-mise.sh"
     title: "mise本体の読込検査・明示導入"
   - id: config
-    resource: "../../.chezmoi.toml.tmpl"
+    resource: "../../home/.chezmoi.toml.tmpl"
     title: "identity入力・ホスト情報の取得とread-source-state hook"
   - id: hooks
     resource: "https://www.chezmoi.io/reference/configuration-file/hooks/"
@@ -65,16 +65,16 @@ sources:
     resource: "https://github.com/jdx/mise/blob/v2026.6.11/docs/tasks/running-tasks.md"
     title: "mise v2026.6.11：task省略と依存順序"
   - id: identity
-    resource: "../../dot_config/mise/repo-tasks/generate/executable_identity.tmpl"
+    resource: "../../home/dot_config/mise/repo-tasks/generate/executable_identity.tmpl"
     title: "identity入力の検証と世代切替"
   - id: security
-    resource: "../../dot_config/mise/repo-tasks/repair/executable_security.tmpl"
+    resource: "../../home/dot_config/mise/repo-tasks/repair/executable_security.tmpl"
     title: "権限変更を行わない互換task"
   - id: doctor
-    resource: "../../dot_config/mise/repo-tasks/doctor/executable__default.tmpl"
+    resource: "../../home/dot_config/mise/repo-tasks/doctor/executable__default.tmpl"
     title: "doctorの共通検査集合"
   - id: check-nvim
-    resource: "../../dot_config/mise/repo-tasks/check/executable_nvim.tmpl"
+    resource: "../../home/dot_config/mise/repo-tasks/check/executable_nvim.tmpl"
     title: "Neovim lockの直接比較と実体の存在検査"
   - id: lazy
     resource: "https://github.com/tsubasahomma/dotfiles/blob/f4fe1fac3e0722b173b5291a06e98e1e066786f1/dot_config/nvim/lua/config/lazy.lua"
@@ -89,7 +89,7 @@ sources:
     resource: "https://www.chezmoi.io/reference/commands/verify/"
     title: "chezmoi verifyの確認範囲"
   - id: completions
-    resource: "../../dot_config/mise/repo-tasks/generate/executable_completions.tmpl"
+    resource: "../../home/dot_config/mise/repo-tasks/generate/executable_completions.tmpl"
     title: "補完・initの個別検証と切替"
   - id: mise-upgrade
     resource: "https://github.com/jdx/mise/blob/v2026.6.11/docs/cli/upgrade.md"
@@ -361,27 +361,27 @@ R01のmise読込分離は上記の隔離検証を行った。以下の収束設�
 [^tools]: [観測時のmise tool宣言](https://github.com/tsubasahomma/dotfiles/blob/f4fe1fac3e0722b173b5291a06e98e1e066786f1/dot_config/mise/conf.d/10-tools.toml).
 [^mise-config]: [mise task discovery・自動導入設定](https://github.com/tsubasahomma/dotfiles/blob/f4fe1fac3e0722b173b5291a06e98e1e066786f1/dot_config/mise/config.toml.tmpl).
 [^bootstrap]: [mise本体の読込検査・明示導入](../../.bootstrap-mise.sh).
-[^config]: [identity入力・ホスト情報の取得とread-source-state hook](../../.chezmoi.toml.tmpl).
+[^config]: [identity入力・ホスト情報の取得とread-source-state hook](../../home/.chezmoi.toml.tmpl).
 [^hooks]: [chezmoi Hooks：dry-runでもhookは動く](https://www.chezmoi.io/reference/configuration-file/hooks/).
 [^wrapper]: [post-applyの起動条件・mise install・認証の受け渡し](https://github.com/tsubasahomma/dotfiles/blob/f4fe1fac3e0722b173b5291a06e98e1e066786f1/.chezmoiscripts/run_onchange_after_20-mise-post-apply-graph.sh.tmpl).
 [^tasks]: [repo所有taskの実装](https://github.com/tsubasahomma/dotfiles/tree/f4fe1fac3e0722b173b5291a06e98e1e066786f1/dot_config/mise/repo-tasks).
 [^scripts]: [chezmoi scripts：onchangeの成功済み内容による再実行判定](https://www.chezmoi.io/user-guide/use-scripts-to-perform-actions/).
 [^mise-tasks]: [mise v2026.6.11：task省略と依存順序](https://github.com/jdx/mise/blob/v2026.6.11/docs/tasks/running-tasks.md).
-[^identity]: [identity入力の検証と世代切替](../../dot_config/mise/repo-tasks/generate/executable_identity.tmpl).
-[^security]: [権限変更を行わない互換task](../../dot_config/mise/repo-tasks/repair/executable_security.tmpl).
-[^doctor]: [doctorの共通検査集合](../../dot_config/mise/repo-tasks/doctor/executable__default.tmpl).
-[^check-nvim]: [Neovim lockの直接比較と実体の存在検査](../../dot_config/mise/repo-tasks/check/executable_nvim.tmpl).
+[^identity]: [identity入力の検証と世代切替](../../home/dot_config/mise/repo-tasks/generate/executable_identity.tmpl).
+[^security]: [権限変更を行わない互換task](../../home/dot_config/mise/repo-tasks/repair/executable_security.tmpl).
+[^doctor]: [doctorの共通検査集合](../../home/dot_config/mise/repo-tasks/doctor/executable__default.tmpl).
+[^check-nvim]: [Neovim lockの直接比較と実体の存在検査](../../home/dot_config/mise/repo-tasks/check/executable_nvim.tmpl).
 [^lazy]: [Neovim起動時のlazy.nvim取得](https://github.com/tsubasahomma/dotfiles/blob/f4fe1fac3e0722b173b5291a06e98e1e066786f1/dot_config/nvim/lua/config/lazy.lua).
 [^evals]: [Anthropic, 2026-01-09：結果状態に基づくagent評価](https://www.anthropic.com/research/demystifying-evals-for-ai-agents).
 [^mise-install]: [mise v2026.6.11 install：導入と有効化は別](https://github.com/jdx/mise/blob/v2026.6.11/docs/cli/install.md).
 [^verify]: [chezmoi verifyの確認範囲](https://www.chezmoi.io/reference/commands/verify/).
-[^completions]: [補完・initの個別検証と切替](../../dot_config/mise/repo-tasks/generate/executable_completions.tmpl).
+[^completions]: [補完・initの個別検証と切替](../../home/dot_config/mise/repo-tasks/generate/executable_completions.tmpl).
 [^mise-upgrade]: [mise v2026.6.11 upgrade：更新とbump](https://github.com/jdx/mise/blob/v2026.6.11/docs/cli/upgrade.md).
 [^brew-bundle]: [Homebrew Bundle：既定upgrade・no-upgrade・lock非対応](https://docs.brew.sh/Brew-Bundle-and-Brewfile).
 [^brew-man]: [Homebrew brew(1)：導入に伴う依存変更と自動cleanup](https://docs.brew.sh/Manpage).
 
-[^identity-transaction]: [identity世代生成と単一entry切替](../../.chezmoitemplates/identity_transaction.py)。
-[^identity-prepare]: [before scriptの移行入口](../../.chezmoiscripts/run_before_05-identity-dispatch.sh.tmpl)。[chezmoi application order](https://www.chezmoi.io/reference/application-order/)に従いtarget前に保存する。
+[^identity-transaction]: [identity世代生成と単一entry切替](../../home/.chezmoitemplates/identity_transaction.py)。
+[^identity-prepare]: [before scriptの移行入口](../../home/.chezmoiscripts/run_before_05-identity-dispatch.sh.tmpl)。[chezmoi application order](https://www.chezmoi.io/reference/application-order/)に従いtarget前に保存する。
 [^python-replace]: [Python os.replace](https://docs.python.org/3/library/os.html#os.replace)。同一filesystemでの成功したrenameの原子性を参照。
 
 # 補完・initの失敗時保持で採用した契約
@@ -430,7 +430,7 @@ identityだけを毎回動く小さいafter scriptへ分離し、所有・全出
 <a id="generated-assets"></a>
 # R10cで採用したbat・Vale・pbfileの収束範囲
 
-外側onchangeとdirectory outputsを外して専用afterから個別checkerへ到達させる。配置後のthemeを処理時に読むため、配置前targetをtemplate hashへ埋めて次回まで遅れる問題も避ける。共通graph自体を毎apply化する代案はtool準備・pnpm・Linux shellまで広げるため採らない。実装は[bat](../../.chezmoitemplates/bat_cache.py)、[Vale](../../.chezmoitemplates/vale_styles.py)、[pbfile](../../.chezmoitemplates/pbfile_build.py)を分け、共有部分をlock・file照合・限定publishに留める。receiptは各系統に一つ、固定entryや世代pointerは追加しない。
+外側onchangeとdirectory outputsを外して専用afterから個別checkerへ到達させる。配置後のthemeを処理時に読むため、配置前targetをtemplate hashへ埋めて次回まで遅れる問題も避ける。共通graph自体を毎apply化する代案はtool準備・pnpm・Linux shellまで広げるため採らない。実装は[bat](../../home/.chezmoitemplates/bat_cache.py)、[Vale](../../home/.chezmoitemplates/vale_styles.py)、[pbfile](../../home/.chezmoitemplates/pbfile_build.py)を分け、共有部分をlock・file照合・限定publishに留める。receiptは各系統に一つ、固定entryや世代pointerは追加しない。
 
 batは[公式build実装](https://github.com/sharkdp/bat/blob/v0.26.1/src/assets/build_assets.rs)と[CLI](https://github.com/sharkdp/bat/blob/v0.26.1/src/bin/bat/clap_app.rs)にある別source/target指定を使う。default cacheへの直書きや`cache --clear`は必要ない。themes/syntaxesの利用者追加も入力として含める。cache形式依存は選択binaryと版、三つの出力で扱う。[metadata実装](https://github.com/sharkdp/bat/blob/v0.26.1/src/assets/assets_metadata.rs)が生成時刻を含むため、既存cacheのbyte再生成比較による自動所有認定は採らない。input内symlinkは追跡範囲を拡張せず停止する制約がある。
 

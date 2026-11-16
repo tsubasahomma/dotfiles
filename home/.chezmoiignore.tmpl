@@ -50,28 +50,6 @@ Thumbs.db
 package-lock.json
 pnpm-lock.yaml
 
-# --- 4. Repository Orchestration (Strict Isolation) ---
-{{/* Do not deploy repository management files to $HOME. */}}
-README.md
-LICENSE
-AGENTS.md
-CLAUDE.md
-GEMINI.md
-docs/
-docs/**
-tests/
-tests/**
-.github/
-.github/**
-.context/repomix/**
-repomix-*.xml
-.editorconfig
-.gitattributes
-.gitignore
-.pre-commit-config.yaml
-renovate.json5
-.mise.toml
-
 # --- 5. OS-Specific Overrides ---
 {{ if not .is_wsl -}}
 {{/*

@@ -14,8 +14,8 @@ import tempfile
 import unittest
 
 REPO = Path(__file__).resolve().parents[1]
-HELPER = REPO / '.chezmoitemplates/lazy_lock_update.py'
-DRIVER = REPO / '.chezmoitemplates/lazy_lock_update.lua'
+HELPER = REPO / 'home/.chezmoitemplates/lazy_lock_update.py'
+DRIVER = REPO / 'home/.chezmoitemplates/lazy_lock_update.lua'
 ENGINE = '85c7ff3711b730b4030d03144f6db6375044ae82'
 GIT = shutil.which('git')
 NVIM = os.environ.get('NVIM_BIN') or shutil.which('nvim')
@@ -37,7 +37,7 @@ class LockCandidate(unittest.TestCase):
         self.repo = self.root / 'source'
         self.repo.mkdir()
         self.git('init', '-q', '-b', 'main')
-        self.config = self.repo / 'dot_config/nvim'
+        self.config = self.repo / 'home/dot_config/nvim'
         self.config.mkdir(parents=True)
         (self.config / 'lua/config').mkdir(parents=True)
         (self.config / 'lua/config/options.lua.tmpl').write_text('selected options A')
@@ -155,7 +155,9 @@ Path(os.environ['DOTFILES_LAZY_REPORT']).write_text(json.dumps({'phase':os.envir
                 (out / 'config/nvim/lua/config/options.lua').read_text(),
             )
             self.assertEqual(json.loads((out / 'before.json').read_text()), self.lock)
-            self.assertIn('a/dot_config/nvim/lazy-lock.json', (out / 'lazy-lock.patch').read_text())
+            self.assertIn(
+                'a/home/dot_config/nvim/lazy-lock.json', (out / 'lazy-lock.patch').read_text()
+            )
             self.assertEqual(
                 json.loads((out / 'manifest.json').read_text())['engine_retained'], ENGINE
             )
@@ -237,7 +239,7 @@ Path(os.environ['DOTFILES_LAZY_REPORT']).write_text(json.dumps({'phase':os.envir
                         capture_output=True,
                     )
                 self.assertEqual(
-                    (adoption / 'dot_config/nvim' / lock_path.name).read_bytes(),
+                    (adoption / 'home/dot_config/nvim' / lock_path.name).read_bytes(),
                     (out / 'candidate.json').read_bytes(),
                 )
 

@@ -19,7 +19,7 @@ log_guide() { printf "  ${BLUE}👉 %s${NC}\n" "$1"; }
 
 IS_CI="${CI:-false}"
 HOME_DIR={{ includeTemplate "posix_shell_quote.tmpl" .paths.home }}
-SOURCE_DIR={{ includeTemplate "posix_shell_quote.tmpl" .chezmoi.sourceDir }}
+SOURCE_DIR={{ includeTemplate "posix_shell_quote.tmpl" .chezmoi.workingTree }}
 RENDERED_MISE_BIN={{ includeTemplate "posix_shell_quote.tmpl" .paths.mise }}
 MISE_CONFIG_FILE={{ includeTemplate "posix_shell_quote.tmpl" (joinPath .paths.xdg_config "mise/config.toml") }}
 MISE_VERSION_FILE="$SOURCE_DIR/.mise-version"

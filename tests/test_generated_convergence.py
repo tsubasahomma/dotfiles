@@ -13,6 +13,7 @@ import unittest
 from unittest import mock
 
 REPO = Path(__file__).resolve().parents[1]
+SOURCE_STATE = REPO / 'home'
 CHEZMOI = os.environ.get('CHEZMOI_BIN') or shutil.which('chezmoi')
 TASKS = {'bat': 'cache/bat', 'vale': 'sync/vale', 'pbfile': 'build/pbfile'}
 STUB = r'''#!PYTHON
@@ -90,8 +91,8 @@ class GeneratedConvergence(unittest.TestCase):
         self.home.mkdir()
         self.source = self.root / 'source'
         self.source.mkdir()
-        shutil.copytree(REPO / '.chezmoitemplates', self.source / '.chezmoitemplates')
-        shutil.copytree(REPO / '.chezmoidata', self.source / '.chezmoidata')
+        shutil.copytree(SOURCE_STATE / '.chezmoitemplates', self.source / '.chezmoitemplates')
+        shutil.copytree(SOURCE_STATE / '.chezmoidata', self.source / '.chezmoidata')
         files = [
             '.chezmoiscripts/run_onchange_after_20-mise-post-apply-graph.sh.tmpl',
             '.chezmoiscripts/run_after_40-bat-cache.sh.tmpl',
@@ -103,14 +104,14 @@ class GeneratedConvergence(unittest.TestCase):
             'dot_local/share/pbcopy/pbfile.swift',
         ]
         files += [
-            str(p.relative_to(REPO))
-            for p in (REPO / 'dot_config/mise/repo-tasks').rglob('*')
+            str(p.relative_to(SOURCE_STATE))
+            for p in (SOURCE_STATE / 'dot_config/mise/repo-tasks').rglob('*')
             if p.is_file()
         ]
         for name in files:
             target = self.source / name
             target.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(REPO / name, target)
+            shutil.copy2(SOURCE_STATE / name, target)
         (self.source / '.chezmoiexternal.toml.tmpl').write_text('# no external downloads\n')
         ignores = ['.config/mise/config.toml', '.config/mise/conf.d']
         for p in (self.source / 'dot_config/mise/repo-tasks').rglob('*'):
@@ -462,7 +463,7 @@ class PublicationBoundary(unittest.TestCase):
         self.stage.mkdir()
         self.receipt = self.root / 'receipt.json'
         spec = importlib.util.spec_from_file_location(
-            'generated_files', REPO / '.chezmoitemplates/generated_files.py'
+            'generated_files', SOURCE_STATE / '.chezmoitemplates/generated_files.py'
         )
         self.io = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(self.io)
@@ -582,7 +583,7 @@ class PublicationBoundary(unittest.TestCase):
     def test_process_death_mid_publish_is_detected_on_retry(self):
         script = self.root / 'interrupt.py'
         script.write_text(
-            (REPO / '.chezmoitemplates/generated_files.py').read_text()
+            (SOURCE_STATE / '.chezmoitemplates/generated_files.py').read_text()
             + "\nroot=Path(sys.argv[1]); stage=root/'stage'; receipt=root/'receipt.json'\n"
             "previous=json.loads(receipt.read_text()); replace=os.replace\n"
             "def interrupt(src,dst):\n"

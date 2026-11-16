@@ -12,9 +12,10 @@ import time
 import unittest
 
 REPO = Path(__file__).resolve().parents[1]
+SOURCE_STATE = REPO / 'home'
 CHEZMOI = os.environ.get('CHEZMOI_BIN') or shutil.which('chezmoi')
 ZSH = shutil.which('zsh')
-TEMPLATE = REPO / 'dot_config/mise/repo-tasks/generate/executable_completions.tmpl'
+TEMPLATE = SOURCE_STATE / 'dot_config/mise/repo-tasks/generate/executable_completions.tmpl'
 
 
 class CompletionTransaction(unittest.TestCase):
@@ -129,8 +130,8 @@ printf '#compdef %s\\nprint -r -- %s-new\\n' "$name" "$name"
             (self.bin / name).chmod(0o755)
         source = self.root / 'source'
         source.mkdir()
-        shutil.copytree(REPO / '.chezmoitemplates', source / '.chezmoitemplates')
-        shutil.copytree(REPO / '.chezmoidata', source / '.chezmoidata')
+        shutil.copytree(SOURCE_STATE / '.chezmoitemplates', source / '.chezmoitemplates')
+        shutil.copytree(SOURCE_STATE / '.chezmoidata', source / '.chezmoidata')
         config = self.root / 'config.json'
         config.write_text(
             json.dumps(
@@ -470,7 +471,7 @@ printf 'print -r -- completed-after-termination\\n'
                     self.assertFalse(dump.exists())
                     self.assertFalse(Path(str(dump) + '.zwc').exists())
                     # Exercise the exact .zshrc dispatch-cache decision after interruption.
-                    consumer = (REPO / 'dot_config/zsh/dot_zshrc.tmpl').read_text()
+                    consumer = (SOURCE_STATE / 'dot_config/zsh/dot_zshrc.tmpl').read_text()
                     consumer = consumer[
                         consumer.index('  local zcompdump=') : consumer.index('  bashcompinit')
                     ]

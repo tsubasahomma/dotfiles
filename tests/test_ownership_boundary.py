@@ -16,6 +16,7 @@ import tempfile
 import unittest
 
 REPO = Path(__file__).resolve().parents[1]
+SOURCE_STATE = REPO / 'home'
 CHEZMOI = os.environ.get('CHEZMOI_BIN') or shutil.which('chezmoi')
 REPAIR = 'dot_config/mise/repo-tasks/repair/executable_security.tmpl'
 # Historical names are fixtures, not an ownership list or deletion manifest.
@@ -105,8 +106,8 @@ class OwnershipBoundary(unittest.TestCase):
         self.source.mkdir()
         # Only these inputs are allowed into the removal fixture: no hooks,
         # scripts, externals, host config or full repo apply.
-        shutil.copyfile(REPO / '.chezmoiremove.tmpl', self.source / '.chezmoiremove.tmpl')
-        shutil.copytree(REPO / '.chezmoitemplates', self.source / '.chezmoitemplates')
+        shutil.copyfile(SOURCE_STATE / '.chezmoiremove.tmpl', self.source / '.chezmoiremove.tmpl')
+        shutil.copytree(SOURCE_STATE / '.chezmoitemplates', self.source / '.chezmoitemplates')
         self.config = self.root / 'config.json'
         self.env = {
             'HOME': str(self.home),
@@ -181,7 +182,7 @@ class OwnershipBoundary(unittest.TestCase):
         before = snapshot(self.home)
         for wsl in (False, True):
             self.write_config(wsl)
-            rendered = self.chezmoi('execute-template', input=(REPO / REPAIR).read_text())
+            rendered = self.chezmoi('execute-template', input=(SOURCE_STATE / REPAIR).read_text())
             self.run_ok(['/bin/bash', '-n'], input=rendered)
             message = self.run_ok(['/bin/bash'], input=rendered)
             self.assertEqual(snapshot(self.home), before)

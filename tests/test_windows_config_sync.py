@@ -13,6 +13,7 @@ import unittest
 from unittest import mock
 
 REPO = Path(__file__).resolve().parents[1]
+SOURCE_STATE = REPO / 'home'
 CHEZMOI = os.environ.get('CHEZMOI_BIN') or shutil.which('chezmoi')
 WRAPPER = '.chezmoiscripts/run_after_50-wsl-sync-services.sh.tmpl'
 SOURCES = {'wezterm': 'wezterm/wezterm.lua', '1password-agent': '1Password/ssh/agent.toml'}
@@ -56,7 +57,7 @@ def install_windows_stubs(bin_dir, env, profile, local):
 
 def engine():
     spec = importlib.util.spec_from_file_location(
-        'windows_config_sync', REPO / '.chezmoitemplates/windows_config_sync.py'
+        'windows_config_sync', SOURCE_STATE / '.chezmoitemplates/windows_config_sync.py'
     )
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
@@ -73,8 +74,8 @@ class WindowsSync(unittest.TestCase):
         self.home.mkdir()
         self.source = self.root / 'source'
         self.source.mkdir()
-        shutil.copytree(REPO / '.chezmoitemplates', self.source / '.chezmoitemplates')
-        shutil.copytree(REPO / '.chezmoidata', self.source / '.chezmoidata')
+        shutil.copytree(SOURCE_STATE / '.chezmoitemplates', self.source / '.chezmoitemplates')
+        shutil.copytree(SOURCE_STATE / '.chezmoidata', self.source / '.chezmoidata')
         files = [
             WRAPPER,
             '.chezmoiscripts/run_onchange_after_20-mise-post-apply-graph.sh.tmpl',
@@ -84,14 +85,14 @@ class WindowsSync(unittest.TestCase):
             'dot_config/mise/conf.d/10-tools.toml',
         ]
         files += [
-            str(p.relative_to(REPO))
-            for p in (REPO / 'dot_config/mise/repo-tasks').rglob('*')
+            str(p.relative_to(SOURCE_STATE))
+            for p in (SOURCE_STATE / 'dot_config/mise/repo-tasks').rglob('*')
             if p.is_file()
         ]
         for name in files:
             p = self.source / name
             p.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(REPO / name, p)
+            shutil.copy2(SOURCE_STATE / name, p)
         (self.source / '.chezmoiexternal.toml.tmpl').write_text('')
         ignores = ['.config/mise/config.toml', '.config/mise/conf.d']
         for p in (self.source / 'dot_config/mise/repo-tasks').rglob('*'):
@@ -524,7 +525,7 @@ m.sync('wezterm',Path(sys.argv[2]))
             [
                 sys.executable,
                 str(script),
-                str(REPO / '.chezmoitemplates/windows_config_sync.py'),
+                str(SOURCE_STATE / '.chezmoitemplates/windows_config_sync.py'),
                 str(self.home / '.config/wezterm/wezterm.lua'),
                 str(self.targets['wezterm']),
             ],

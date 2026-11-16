@@ -29,7 +29,7 @@ def binary(name):
 class ValeLintTest(unittest.TestCase):
     def test_adopted_integration(self):
         nvim, vale, git = binary('nvim'), binary('vale'), binary('git')
-        lock = json.loads((SOURCE / 'dot_config/nvim/lazy-lock.json').read_text())
+        lock = json.loads((SOURCE / 'home/dot_config/nvim/lazy-lock.json').read_text())
         with tempfile.TemporaryDirectory(prefix='vale-lint-') as temp:
             root = Path(temp)
             home = root / 'home'

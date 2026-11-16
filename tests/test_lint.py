@@ -118,7 +118,7 @@ class Lint(unittest.TestCase):
         )
 
     def test_shellcheck_rendered_templates(self):
-        unknown = [name for name in SHELLCHECK_FILE_EXCLUDE if not (REPO / name).is_file()]
+        unknown = [name for name in SHELLCHECK_FILE_EXCLUDE if not (REPO / 'home' / name).is_file()]
         self.assertEqual(unknown, [], 'SHELLCHECK_FILE_EXCLUDE names a missing template')
         with tempfile.TemporaryDirectory(prefix='lint-render-') as temporary:
             renderer = render_fixture.Renderer(temporary, tool('chezmoi'))

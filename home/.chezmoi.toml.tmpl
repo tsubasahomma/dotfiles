@@ -1,7 +1,7 @@
 {{- /* [Reference]: https://developer.1password.com/docs/ssh/integrations/wsl/ */ -}}
 {{- /* [Reference]: https://www.chezmoi.io/user-guide/password-managers/1password/ */ -}}
 
-sourceDir = {{ .chezmoi.sourceDir | quote }}
+sourceDir = {{ .chezmoi.workingTree | quote }}
 
 {{- /* --- 1. Platform & Interop Initialization --- */}}
 {{- $osid := .chezmoi.os -}}
@@ -188,5 +188,5 @@ sourceDir = {{ .chezmoi.sourceDir | quote }}
     command = "nvim"
 
 [hooks.read-source-state.pre]
-    command = {{ joinPath .chezmoi.sourceDir ".bootstrap-mise.sh" | quote }}
+    command = {{ joinPath .chezmoi.workingTree ".bootstrap-mise.sh" | quote }}
     args = ["--check"]
