@@ -3,9 +3,6 @@
 # Static tool versions live in dot_config/mise/conf.d/10-tools.toml.
 
 [env]
-# Skip Python GitHub attestation verification to reduce mise install latency and noise.
-# [Reference]: https://mise.jdx.dev/lang/python.html
-MISE_PYTHON_GITHUB_ATTESTATIONS = "false"
 PNPM_HOME = "{{ .paths.xdg_data }}/pnpm"
 
 
@@ -19,9 +16,9 @@ includes = [
 
 
 [settings]
-not_found_auto_install = true
-yes = true
-experimental = true
+# Leave python.github_attestations, not_found_auto_install, yes and experimental
+# at their defaults. yes = true would trust every project mise.toml without asking.
+# [Reference]: https://mise.jdx.dev/configuration/settings.html
 asdf_compat = false
 
 [settings.task]
