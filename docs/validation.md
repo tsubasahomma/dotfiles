@@ -5,7 +5,7 @@ description: 文書・template・tool更新・認証の変更に対して、必�
 status: draft
 generated:
   by: claude-code/claude-opus-5-5
-  at: "2026-11-13T15:14:18+00:00"
+  at: "2026-11-16T10:00:00+00:00"
 sources:
   - id: evals
     resource: "https://www.anthropic.com/research/demystifying-evals-for-ai-agents"
@@ -106,6 +106,11 @@ R01とR13のinit検査は実config template・読込hook・bootstrapを保持し
 | Isolated fast / slow（Ubuntu/macOSそれぞれ） | checkout → runnerのPythonで一時mise manifest作成 → mise-actionでpin版miseと宣言から抽出したPython/chezmoi/Neovimを導入 → LinuxのZsh/Git/OpenSSH導入 → `run_checks.py fast`または`slow` | fixture実行自体の前に通信・tool導入はある。端末のinit/apply・認証・全tool導入は前提にしない |
 | Network Integration - One Apply and Selected Diagnostics（Ubuntu/macOS） | 隔離jobの成功後、明示bootstrap → CI用init/apply一回 → 配置済みZsh起動検査 → managed target verify（`--exclude=scripts`） → Neovim restore → 配置済み入口のlocal診断 | 二回適用の無変更性、生成物欠損復旧、実1Password、Windows/WSL・GUIの動作 |
 | Renovate Config Validation | Node準備 → 固定版validatorの取得・実行 | 依存更新の動作や端末の正常性 |
+
+<a id="first-install-fresh"></a>
+別workflowの[first-install](../.github/workflows/first-install.yml)は、まっさらなGitHub runner（`ubuntu-24.04`と`macos-15`）で、credentialなしの`git clone`から[初回導入の入口](operations.md#first-install-command)を実行し、local診断まで通るかを確かめる。actionもcacheも使わず、mise本体とchezmoi configが無いことを先に確かめる。週1回（日曜03:00 UTC）、手動、入口・bootstrap・miseのpinを変えるPRで動く。`Required CI`には含めない。
+
+統合jobとの分担：統合jobは変更のたびにcacheつきで1回のapply、Zsh起動、verify、Neovim restore、診断を検査する。first-installはcacheと事前導入のない経路だけを週次で通し、統合jobの検査を繰り返さない。どちらの成功も、実機のmacOS・WSL、実1Password、2回目以降のapplyの正しさを示さない。
 
 Neovim restoreのCI stepだけでMasonのDEBUG logを有効にし、一時XDG stateへ保存する。step失敗時は`mason.log`だけを収集し、環境に渡されたtoken・secret・passwordの値とAuthorization headerを除去して、OS・run・attempt別の`mason-failure-*` artifactに7日間保存する。ログ未生成時もその旨を記した`status.txt`を保存する。収集・uploadは失敗を成功へ変えず、後続診断や自動マージを通さない。通常実機のrestoreではDEBUGを有効にしない。artifactには外部commandや取得URLが含まれ得るため、環境に渡されていない任意の秘密まで自動除去する保証ではない。
 

@@ -1,0 +1,59 @@
+# Cold-path check of the one-command first install: plain git clone on a fresh
+# runner, no cache and no pre-installed mise, then .first-install.sh through
+# diagnostics. The per-change cached apply stays in compliance.yml (integration).
+# Passing here is not evidence for a real macOS or WSL machine, or for 1Password.
+name: first-install
+
+on:
+  schedule:
+    - cron: "0 3 * * 0"
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - .first-install.sh
+      - .bootstrap-mise.sh
+      - .mise.toml
+      - .mise-version
+      - .github/workflows/first-install.yml
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  fresh:
+    name: Fresh Clone to Diagnostics (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, macos-15]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    env:
+      # The read-only job token, as in the integration job, keeps tool downloads
+      # under the authenticated GitHub API rate limit. No repository secret is used.
+      GITHUB_TOKEN: ${{ github.token }}
+    steps:
+      - name: Clone Repository Without Credentials
+        env:
+          REPOSITORY_URL: ${{ github.server_url }}/${{ github.repository }}.git
+          REVISION: ${{ github.event.pull_request.head.sha || github.sha }}
+        # The documented source location; nothing else is placed in HOME first.
+        run: |
+          SOURCE_DIR="$HOME/.local/share/chezmoi"
+          git -c credential.helper= clone --no-checkout "$REPOSITORY_URL" "$SOURCE_DIR"
+          git -C "$SOURCE_DIR" fetch --depth 1 origin "$REVISION"
+          git -C "$SOURCE_DIR" checkout --detach "$REVISION"
+          git -C "$SOURCE_DIR" log -1 --format='Testing %H'
+
+      - name: Confirm No Prior mise or chezmoi Config
+        run: |
+          test ! -e "$HOME/.local/bin/mise"
+          test ! -e "${XDG_CONFIG_HOME:-$HOME/.config}/chezmoi/chezmoi.toml"
+
+      - name: Run the One-Command First Install
+        run: sh "$HOME/.local/share/chezmoi/.first-install.sh"
