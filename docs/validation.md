@@ -5,7 +5,7 @@ description: 文書・template・tool更新・認証の変更に対して、必�
 status: draft
 generated:
   by: claude-code/claude-opus-5-5
-  at: "2026-11-16T10:30:00+00:00"
+  at: "2026-11-16T11:00:00+00:00"
 sources:
   - id: evals
     resource: "https://www.anthropic.com/research/demystifying-evals-for-ai-agents"
@@ -215,7 +215,7 @@ cleanupで外部通信やWindows側の状態まで元に戻るわけではない
 <a id="wsl-manual"></a>
 # WSLの確認方法と頻度
 
-WSLは自動のCIで検証せず、利用者が実機のWSL2 Ubuntuで手動で確認する。2026-11-16にGitHubの`windows-2025` runnerで試した結果、WSL2のUbuntu 24.04の起動（導入から48秒）、WSLからの`cmd.exe`・`wslpath`、[初回導入の入口](../.first-install.sh)の1〜3段階は通った。4段階の`chezmoi init`は、config templateのWSL経路がCIでも求めるWindows側`op.exe`の探索で止まった。Windowsの`Path`に代用の`op.exe`を足しても、WSLから起動したPowerShellには見えなかった。先へ進めるには1Password CLI・WezTerm・WinGetを代用品にする必要があり、代用するとWSLで確かめたい1Passwordとinteropの経路が検査から外れる。そのため自動化しない。runは[試験PR](https://github.com/tsubasahomma/dotfiles/pull/442)に記録した。
+WSLは自動のCIで検証せず、利用者が実機のWSL2 Ubuntuで手動で確認する。GitHubのWindows runnerで代用品を使って通さない理由は[WSL検証の判断](decisions/wsl-validation.md)にある。
 
 **いつ行うか。** 次のどれかを変えるPRをmergeした後、その変更を実機に取り込むとき。ほかに変更がなくても、月に1回行う。
 

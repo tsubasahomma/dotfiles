@@ -6,6 +6,7 @@
 # mise, install the pinned chezmoi through mise, init, apply, then diagnose.
 # It stops at the first failure and never re-initializes a machine that already
 # has a chezmoi config. The leading dot keeps chezmoi from deploying it.
+# It runs from a clone, not `curl | sh`, so what runs is the commit you checked out.
 # [Reference]: docs/operations.md#first-install
 # [Reference]: https://www.chezmoi.io/reference/commands/init/
 

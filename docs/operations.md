@@ -5,7 +5,7 @@ description: 現行の入口、実行前提、副作用、失敗時の扱いを�
 status: draft
 generated:
   by: claude-code/claude-opus-5-5
-  at: "2026-11-16T10:00:00+00:00"
+  at: "2026-11-16T11:00:00+00:00"
 sources:
   - id: apply-implementation
     resource: "https://github.com/twpayne/chezmoi/blob/v2.70.4/internal/cmd/config.go#L750"
@@ -192,7 +192,7 @@ git clone https://github.com/tsubasahomma/dotfiles.git "$HOME/.local/share/chezm
   sh "$HOME/.local/share/chezmoi/.first-install.sh"
 ```
 
-各段階の副作用は上表と同じで、initの照会・config書込とapplyのpackage導入・配置を含みます。cloneからこの入口までを通すCIは[検証](validation.md#first-install-fresh)にあり、GitHubのmacOS・Ubuntu runnerだけを対象にします。実機のmacOS・WSLでの通し実行と、1Password・WSL前提の準備はこの入口に含まれず、未確認です。
+各段階の副作用は上表と同じで、initの照会・config書込とapplyのpackage導入・配置を含みます。cloneからこの入口までを通すCIは[検証](validation.md#first-install-fresh)にあり、GitHubのmacOS・Ubuntu runnerだけを対象にします。その合格は実機のmacOS・WSLでの成功を示しません。1Password・WSL前提の準備はこの入口に含まれません。
 
 source取得の例です。Gitが利用可能で、取得先がまだ存在しない場合に限ります。HTTPS取得には、これから生成するSSH identityを前提にしません。
 
