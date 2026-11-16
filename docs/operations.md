@@ -5,7 +5,7 @@ description: 現行の入口、実行前提、副作用、失敗時の扱いを�
 status: draft
 generated:
   by: claude-code/claude-opus-5-5
-  at: "2026-11-13T06:04:18+00:00"
+  at: "2026-11-16T10:00:00+00:00"
 sources:
   - id: apply-implementation
     resource: "https://github.com/twpayne/chezmoi/blob/v2.70.4/internal/cmd/config.go#L750"
@@ -183,6 +183,16 @@ OS固有の先行条件は[macOS](platforms/macos.md)・[WSL](platforms/wsl.md)�
 | 5. configを初期化 | `chezmoi init --source "$DOTFILES_SOURCE"`を実行する | op/host照会とconfig書込を伴う。ここでは`--apply`を付けず、失敗した前提を解決してから次へ進む。initを無副作用の確認とは扱わない[^init][^config] |
 | 6. 採用したsourceを反映 | `chezmoi apply --source "$DOTFILES_SOURCE"`を実行する | 下の段階表のpackage導入、配置・生成・Windows copyが起こり得る。diff/dry-runの読込hookはmiseを導入しないが、external/cache等は別の副作用として扱う[^bootstrap][^hooks][^wrapper] |
 | 7. 結果を確認 | [validation](validation.md)から対象の確認を選び、静的配置、必要な生成物、実行実体、必要な認証経路を分けて確認する | `verify`だけで全生成物を保証しない。通常診断は下記の直接入口を使い、認証probeは別に選ぶ。Neovim restoreなど通常applyにない操作は必要性と範囲を定めて別途扱う[^verify][^doctor][^lifecycle] |
+
+<a id="first-install-command"></a>
+上表の1（初期toolのうちchezmoi以外）と3・4を済ませた端末では、2・4a・5・6と7の診断を1つのcommandで続けて実行できます。[入口script](../.first-install.sh)はGit・curl・Python 3.9+・ssh-keygenを確かめ、`.bootstrap-mise.sh --install`、`.mise.toml`が固定したchezmoiのmise経由の導入、`chezmoi init`、`chezmoi apply`、配置済み入口のlocal診断を順に行い、最初の失敗で止まります。chezmoiのconfigが既にある端末では何もせずに停止します。`.mise.toml`の信頼はこの実行中の環境変数だけで与え、記録しません。chezmoiは先頭が`.`のrootのfileを配備しないので、このscriptは端末に配られません。
+
+```sh
+git clone https://github.com/tsubasahomma/dotfiles.git "$HOME/.local/share/chezmoi" &&
+  sh "$HOME/.local/share/chezmoi/.first-install.sh"
+```
+
+各段階の副作用は上表と同じで、initの照会・config書込とapplyのpackage導入・配置を含みます。cloneからこの入口までを通すCIは[検証](validation.md#first-install-fresh)にあり、GitHubのmacOS・Ubuntu runnerだけを対象にします。実機のmacOS・WSLでの通し実行と、1Password・WSL前提の準備はこの入口に含まれず、未確認です。
 
 source取得の例です。Gitが利用可能で、取得先がまだ存在しない場合に限ります。HTTPS取得には、これから生成するSSH identityを前提にしません。
 
