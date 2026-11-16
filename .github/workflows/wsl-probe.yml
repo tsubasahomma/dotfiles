@@ -1,0 +1,59 @@
+# Experiment for roadmap P5-5; not for merge. Measures whether a GitHub Windows
+# runner can boot WSL 2 Ubuntu, reach Windows interop and run the first install.
+name: wsl-probe
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - .github/workflows/wsl-probe.yml
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    name: WSL Probe (windows-2025)
+    runs-on: windows-2025
+    timeout-minutes: 40
+    steps:
+      - name: Report WSL Status
+        shell: pwsh
+        run: |
+          wsl --version
+          wsl --status
+          wsl --list --verbose
+
+      - name: Install Ubuntu 24.04
+        shell: pwsh
+        run: |
+          $sw = [Diagnostics.Stopwatch]::StartNew()
+          wsl --install Ubuntu-24.04 --no-launch --web-download
+          wsl --list --verbose
+          wsl -d Ubuntu-24.04 -u root -- sh -c 'cat /etc/os-release | head -2; uname -r'
+          "install+boot seconds: $($sw.Elapsed.TotalSeconds)"
+
+      - name: Check Windows Interop From WSL
+        shell: pwsh
+        run: |
+          wsl -d Ubuntu-24.04 -u root -- sh -c 'command -v cmd.exe powershell.exe wslpath; cmd.exe /c ver; powershell.exe -NoProfile -Command "$PSVersionTable.PSVersion.ToString()"; wslpath -u "C:\\Windows"'
+
+      - name: Prepare a Runner User in WSL
+        shell: pwsh
+        run: |
+          wsl -d Ubuntu-24.04 -u root -- sh -c 'useradd -m -s /bin/bash runner && echo "runner ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/runner && apt-get update -qq && apt-get install -y -qq git curl python3 openssh-client > /dev/null && echo ready'
+
+      - name: Run the First Install Inside WSL
+        continue-on-error: true
+        shell: pwsh
+        env:
+          REVISION: ${{ github.event.pull_request.head.sha }}
+          REPOSITORY_URL: ${{ github.server_url }}/${{ github.repository }}.git
+          GITHUB_TOKEN: ${{ github.token }}
+          WSLENV: CI/u:REVISION/u:REPOSITORY_URL/u:GITHUB_TOKEN/u
+          CI: "true"
+        run: |
+          $sw = [Diagnostics.Stopwatch]::StartNew()
+          wsl -d Ubuntu-24.04 -u runner --cd ~ -- bash -c 'set -e; git clone -q --no-checkout "$REPOSITORY_URL" ~/.local/share/chezmoi; git -C ~/.local/share/chezmoi fetch -q --depth 1 origin "$REVISION"; git -C ~/.local/share/chezmoi checkout -q --detach "$REVISION"; sh ~/.local/share/chezmoi/.first-install.sh'
+          "exit: $LASTEXITCODE, seconds: $($sw.Elapsed.TotalSeconds)"
+          exit $LASTEXITCODE
