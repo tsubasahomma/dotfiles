@@ -22,7 +22,9 @@ jobs:
         run: |
           wsl --version
           wsl --status
+          # Exits 1 while no distribution is installed.
           wsl --list --verbose
+          exit 0
 
       - name: Install Ubuntu 24.04
         shell: pwsh
