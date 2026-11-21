@@ -24,13 +24,13 @@ jobs:
     # to skip a required workflow with path filters, so the jobs decide instead.
     # https://docs.github.com/en/pull-requests/how-tos/merge-and-close-pull-requests/troubleshooting-required-status-checks
     name: Classify Changes
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 5
     outputs:
       docs_only: ${{ steps.classify.outputs.docs_only }}
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0
           persist-credentials: false
@@ -47,19 +47,19 @@ jobs:
     name: Renovate Config Validation
     needs: changes
     if: needs.changes.outputs.docs_only != 'true'
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 10
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
       # Pin the validator distribution so CI and local checks use the same Renovate schema.
       # [Reference]: https://docs.renovatebot.com/config-validation/
       # renovate: datasource=npm depName=renovate
-      RENOVATE_VERSION: "43.150.0"
+      RENOVATE_VERSION: "44.252.0"
 
     steps:
       - name: Checkout Repository
         # Checkout runs on Node.js 24 through FORCE_JAVASCRIPT_ACTIONS_TO_NODE24; Renovate pins the action hash.
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0
           persist-credentials: false
@@ -75,7 +75,7 @@ jobs:
           printf 'node-version=%s\n' "$node_version" >> "$GITHUB_OUTPUT"
 
       - name: Setup Renovate Shell Node Runtime
-        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: ${{ steps.renovate-node.outputs.node-version }}
           package-manager-cache: false
@@ -90,13 +90,13 @@ jobs:
 
   lint:
     name: Lint
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 10
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
 
@@ -131,7 +131,7 @@ jobs:
       - name: Install Lint Tools (Network Setup Only)
         env:
           MISE_TRUSTED_CONFIG_PATHS: ${{ steps.lint-tools.outputs.directory }}
-        uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4
+        uses: jdx/mise-action@236a21c3b91f5db6d4e174b348674a0f0caac06d # v5
         with:
           version: ${{ steps.lint-tools.outputs.version }}
           working_directory: ${{ steps.lint-tools.outputs.directory }}
@@ -160,7 +160,7 @@ jobs:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
 
@@ -194,7 +194,7 @@ jobs:
           MISE_TRUSTED_CONFIG_PATHS: ${{ steps.fixture-tools.outputs.directory }}
         # Pinned action supports working_directory and install; no production bootstrap.
         # https://github.com/jdx/mise-action/blob/dba19683ed58901619b14f395a24841710cb4925/action.yml
-        uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4
+        uses: jdx/mise-action@236a21c3b91f5db6d4e174b348674a0f0caac06d # v5
         with:
           version: ${{ steps.fixture-tools.outputs.version }}
           working_directory: ${{ steps.fixture-tools.outputs.directory }}
@@ -234,7 +234,7 @@ jobs:
     steps:
       - name: Checkout Repository
         # Checkout runs on Node.js 24 through FORCE_JAVASCRIPT_ACTIONS_TO_NODE24; Renovate pins the action hash.
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0
           persist-credentials: false
@@ -259,7 +259,7 @@ jobs:
           printf 'version=%s\n' "$mise_version" >> "$GITHUB_OUTPUT"
 
       - name: Bootstrap Tier 0 Tools (mise)
-        uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4
+        uses: jdx/mise-action@236a21c3b91f5db6d4e174b348674a0f0caac06d # v5
         with:
           version: ${{ steps.mise_version.outputs.version }}
           install: true
@@ -307,7 +307,7 @@ jobs:
         # Cache only the supported installs surface; downloads, internal cache,
         # state, and credential paths stay outside the cache.
         # [Reference]: https://mise.jdx.dev/directories.html
-        uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: ${{ steps.post_apply_mise_cache_scope.outputs.installs-dir }}
           key: mise-post-apply-installs-v1-${{ runner.os }}-${{ runner.arch }}-${{ matrix.os }}-mise-${{ steps.mise_version.outputs.version }}-${{ hashFiles('.mise-version', '.mise.toml', 'home/dot_config/mise/conf.d/10-tools.toml', 'home/dot_config/mise/config.toml.tmpl') }}
@@ -386,7 +386,7 @@ jobs:
 
       - name: Save Post-Apply Mise Installs Cache
         if: ${{ success() && steps.post_apply_mise_installs_cache.outputs.cache-hit != 'true' }}
-        uses: actions/cache/save@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: ${{ steps.post_apply_mise_cache_scope.outputs.installs-dir }}
           key: ${{ steps.post_apply_mise_installs_cache.outputs.cache-primary-key }}
@@ -397,7 +397,7 @@ jobs:
     # successful skip. Keep the name stable across runner and matrix updates.
     if: ${{ always() }}
     needs: [changes, renovate-config, lint, isolated, integration]
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 5
     steps:
       - name: Require Every Validation Job to Succeed
